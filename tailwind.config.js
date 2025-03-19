@@ -3,5 +3,8 @@ module.exports = {
   theme: {
     extend: {},
   },
-  plugins: [require('daisyui')],
+  plugins: [
+    require('tailwindcss'),
+    require('daisyui'),
+  ],
 };
