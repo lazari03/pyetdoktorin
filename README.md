@@ -1,24 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portokalle Frontend
 
-## Getting Started
+A Next.js frontend application.
 
-First, run the development server:
+## Prerequisites
+
+- Node.js (v18 or higher recommended)
+- npm or yarn package manager
+
+## Development
+
+To run the development server:
 
 ```bash
+# Install dependencies
+npm install
+# or
+yarn install
+
+# Start development server
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The development server will start at [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Building for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To create a production build:
+
+```bash
+# Create production build using production environment variables
+npm run build:prod
+# or
+yarn build:prod
+```
+
+To test the production build locally:
+
+```bash
+# Start production server
+npm run start:prod
+# or
+yarn start:prod
+```
+
+The production server will start at [http://localhost:3000](http://localhost:3000).
+
+## Environment Variables
+
+The project uses two environment files:
+- `.env.development` - Used during development
+- `.env.production` - Used for production builds
+
+Make sure these files are properly configured before building or deploying.
+
+## Deployment
+
+1. First, build the project using production environment:
+   ```bash
+   npm run build:prod
+   # or
+   yarn build:prod
+   ```
+
+2. The build output will be generated in the `.next` directory
+
+3. Deploy the application:
+   - For Vercel deployment:
+     ```bash
+     vercel --prod
+     ```
+   - For other hosting platforms, follow their respective deployment guides using the production build output
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Create a production build
+- `npm run build:prod` - Create a production build with production env variables
+- `npm run start` - Start production server
+- `npm run start:prod` - Start production server with production env variables
+- `npm run lint` - Run linting checks
+
+## Project Structure
+
+```
+portokalle-frontend/
+├── app/              # Next.js app directory
+├── public/           # Static files
+├── .env.development  # Development environment variables
+├── .env.production   # Production environment variables
+└── next.config.ts    # Next.js configuration
+```
 
 ## Learn More
 
