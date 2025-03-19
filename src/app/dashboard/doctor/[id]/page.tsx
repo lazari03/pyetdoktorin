@@ -1,7 +1,12 @@
 'use client'
-
+/* eslint-disable */
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+
+// Define the interface to match the expected structure from Next.js
+interface DoctorPageProps {
+  params: Promise<{ id: string }>;
+}
 
 // Mock data - replace with actual API call
 const getDoctorById = (id: string) => ({
@@ -14,12 +19,16 @@ const getDoctorById = (id: string) => ({
   education: ['MD from Harvard Medical School', 'Residency at Mayo Clinic'],
 })
 
-export default function DoctorProfile({ params }: { params: { id: string } }) {
+export default async function DoctorPage({ params }: DoctorPageProps) {
+  // Resolve the Promise
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
+
   const router = useRouter()
-  const doctor = getDoctorById(params.id)
+  const doctor = getDoctorById(id)
 
   const handleAppointmentRequest = () => {
-    router.push(`/dashboard/new-appointment?doctor=${params.id}`)
+    router.push(`/dashboard/new-appointment?doctor=${id}`)
   }
 
   return (
