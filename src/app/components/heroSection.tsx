@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import NavBar from "./navBar";
-
 type HeroSectionProps = {
   title?: string;
   description?: string;
@@ -18,8 +15,6 @@ export default function HeroSection({
   buttonText = "Get Started",
   onButtonClick = () => alert("Button clicked!"),
 }: HeroSectionProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
     <div
       className="hero min-h-screen"

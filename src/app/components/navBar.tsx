@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function NavBar() {
   const router = useRouter();
@@ -29,7 +30,9 @@ export default function NavBar() {
             <li><a>Kontakt</a></li>
           </ul>
         </div>
-        <a className="btn btn-ghost text-xl" href='/'><Image src="/img/logo.png" alt={'logo'} width={200} height={100} /></a>
+        <Link href="/" className="btn btn-ghost text-xl">
+          <Image src="/img/logo.png" alt={'logo'} width={200} height={100} />
+        </Link>
       </div>
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1">

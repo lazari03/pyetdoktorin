@@ -1,5 +1,7 @@
 "use client";
 
+import Image from 'next/image'
+
 type ExampleProps = {
   title?: string;
   description?: string;
@@ -54,12 +56,12 @@ export default function CtaSection({
           </div>
 
           <div className="relative mt-16 h-80 lg:mt-8">
-            <img
-              alt="App screenshot"
+            <Image 
               src={imageSrc}
-              width={1824}
-              height={1080}
-              className="absolute top-0 left-0 w-[57rem] max-w-none rounded-md bg-white/5 ring-1 ring-white/10"
+              alt="App screenshot"
+              width={500}
+              height={300}
+              priority
             />
           </div>
         </div>
