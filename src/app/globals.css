@@ -4,7 +4,6 @@
 
 @plugin "daisyui";
 
-
 @plugin "daisyui/theme" {
   name: "light";
   default: false;
@@ -40,10 +39,12 @@
   --noise: 0;
 }
 
-
 :root {
+  color-scheme: light;
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: black;
+  --color-neutral-content: black;
+  --color-accent-content: black;
 }
 
 @theme inline {
@@ -53,15 +54,64 @@
   --font-mono: var(--font-geist-mono);
 }
 
+body {
+  background: var(--background);
+  color: #1a1a1a;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+}
+
+a {
+  color: #0056b3;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #003d80;
+}
+
+.navbar a {
+  color: #0056b3;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+  color: #003d80;
+}
+
+.dashboard a {
+  color: #0056b3;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.dashboard a:hover {
+  text-decoration: underline;
+  color: #003d80;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #1a1a1a;
+}
+
+.btn {
+  color: #ffffff;
+  background-color: #f97316; /* Orange-500 */
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btn:hover {
+  background-color: #ea580c; /* Orange-600 */
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #ffffff;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }

@@ -7,7 +7,7 @@ export default function NavBar() {
   const router = useRouter();
 
   const handleLoginClick = () => {
-    router.push('/dashboard'); // Redirect to the dashboard page
+    router.push('/login'); // Redirect to the dashboard page
   };
 
   return (
@@ -30,7 +30,7 @@ export default function NavBar() {
             <li><a>Kontakt</a></li>
           </ul>
         </div>
-        <Link href="/" className="btn btn-ghost text-xl">
+        <Link href="/">
           <Image src="/img/logo.png" alt={'logo'} width={200} height={100} />
         </Link>
       </div>

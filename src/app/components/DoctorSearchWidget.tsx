@@ -11,9 +11,9 @@ export default function DoctorSearchWidget() {
 
   return (
     <div className="card bg-base-100 shadow-xl mb-6">
-      <div className="card-body">
-        <h2 className="card-title">Find a Doctor</h2>
-        <div className="form-control">
+      <div className="card-body flex flex-col items-center">
+        <h2 className="card-title text-center mb-4">Find a Doctor</h2>
+        <div className="form-control w-full">
           <input
             type="text"
             placeholder="Search doctors..."

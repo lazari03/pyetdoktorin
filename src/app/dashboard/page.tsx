@@ -9,13 +9,13 @@ export default function Dashboard() {
           <div className="stat">
             <div className="stat-title">Total Appointments</div>
             <div className="stat-value">89</div>
-            <div className="stat-desc">21% more than last month</div>
+            <div className="stat-desc">Appointments in 30 days</div>
           </div>
           
           <div className="stat">
             <div className="stat-title">Upcoming</div>
             <div className="stat-value">3</div>
-            <div className="stat-desc">Next appointment in 2 days</div>
+            <div className="stat-desc">Next appointment @time</div>
           </div>
         </div>
 
