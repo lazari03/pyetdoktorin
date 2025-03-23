@@ -6,15 +6,36 @@ import { Bars3Icon } from '@heroicons/react/24/outline'
 import Image from 'next/image'
 
 export default function DashboardLayout({
-    children,
-    userRole,
+    children
 }: {
-    children: React.ReactNode,
-    userRole: string
+    children: React.ReactNode
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [userRole, setUserRole] = useState('patient') // Default role
     
     useEffect(() => {
+        // Function to fetch user role from backend/auth service
+        const fetchUserRole = async () => {
+            try {
+                // This would be replaced with your actual API call or auth service
+                // Example: const response = await fetch('/api/user/role');
+                // const data = await response.json();
+                // setUserRole(data.role);
+                
+                // For demonstration, we'll use localStorage or a simulated API response
+                const storedRole = localStorage.getItem('userRole');
+                if (storedRole) {
+                    setUserRole(storedRole);
+                }
+            } catch (error) {
+                console.error('Failed to fetch user role:', error);
+                // Keep default role in case of error
+            }
+        };
+        
+        fetchUserRole();
+        
+        // Window resize handler
         if (typeof window !== 'undefined') {
             const handleResize = () => {
                 if (window.innerWidth < 768) {
@@ -106,7 +127,27 @@ export default function DashboardLayout({
                     </div>
                 </header>
                 <main className="p-3 md:p-6">
-                    {/* Removed widgets */}
+                    {/* Widgets */}
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="card bg-base-100 shadow-xl">
+                            <div className="card-body">
+                                <h2 className="card-title">Overview</h2>
+                                <p>Quick summary of your activities.</p>
+                            </div>
+                        </div>
+                        <div className="card bg-base-100 shadow-xl">
+                            <div className="card-body">
+                                <h2 className="card-title">Notifications</h2>
+                                <p>Stay updated with the latest alerts.</p>
+                            </div>
+                        </div>
+                        <div className="card bg-base-100 shadow-xl">
+                            <div className="card-body">
+                                <h2 className="card-title">Statistics</h2>
+                                <p>View your performance metrics.</p>
+                            </div>
+                        </div>
+                    </div>
                     {children}
                 </main>
             </div>
