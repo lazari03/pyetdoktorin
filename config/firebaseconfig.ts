@@ -20,8 +20,18 @@ export const auth = getAuth(app); // Export the auth object
 export const db = getFirestore(app); // Export Firestore instance
 
 // Conditionally initialize analytics
-export const analytics = typeof window !== "undefined" && (await isSupported())
-  ? getAnalytics(app)
-  : null;
+let analyticsInstance: ReturnType<typeof getAnalytics> | null = null;
+if (typeof window !== "undefined") {
+  isSupported()
+    .then((supported) => {
+      if (supported) {
+        analyticsInstance = getAnalytics(app);
+      }
+    })
+    .catch((error) => {
+      console.error("Analytics initialization failed:", error);
+    });
+}
+export const analytics = analyticsInstance;
 
 export default app;

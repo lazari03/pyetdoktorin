@@ -1,10 +1,15 @@
-import DoctorSearch from '@/app/components/DoctorSearch'
+'use client';
 
-export default function SearchPage() {
+import RoleGuard from '../../components/RoleGuard';
+import DoctorSearch from '@/app/components/DoctorSearch';
+
+export default function SearchDoctorsPage() {
   return (
-    <div className="container mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Find a Doctor</h1>
-      <DoctorSearch />
-    </div>
-  )
+    <RoleGuard allowedRoles={['patient']}>
+      <div className="container mx-auto">
+        <h1 className="text-3xl font-bold mb-8">Find a Doctor</h1>
+        <DoctorSearch />
+      </div>
+    </RoleGuard>
+  );
 }

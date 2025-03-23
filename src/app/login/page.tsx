@@ -1,122 +1,154 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { login } from '../services/authService';
 import { testFirebaseConnection } from '../services/firebaseTest';
 
-export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
+function LoginPageContent() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const searchParams = useSearchParams();
 
-    // Test Firebase connectivity on component mount
-    useEffect(() => {
-        testFirebaseConnection().catch((error: Error) => {
-            console.error('Firebase connection test failed:', error.message);
-            alert('Unable to connect to Firebase. Please check your configuration.');
-        });
-    }, []);
+  // Get the 'from' parameter to redirect after login
+  const fromPath = searchParams?.get('from') || '/dashboard';
 
-    const handleLogin = async () => {
-        setLoading(true);
-        try {
-            if (!navigator.onLine) {
-                throw new Error('You are offline. Please check your internet connection and try again.');
-            }
-            const { user, role } = await login(email, password);
-            console.log('Logged in:', user.email, 'Role:', role);
-            console.log('Redirecting to /dashboard...');
-            router.push('/dashboard');
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            console.error('Login failed:', errorMessage);
-            alert(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
+  // Test Firebase connectivity on component mount, but don't block login if it fails
+  useEffect(() => {
+    testFirebaseConnection().catch((error: Error) => {
+      console.error('Firebase connection test failed:', error.message);
+      setErrorMsg('Warning: Firebase connection issues detected. Some features may be limited.');
+    });
+  }, []);
 
-    return (
-        <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
-            <div className="card w-full max-w-md bg-base-100 shadow-xl">
-                <div className="card-body">
-                    <div className="flex justify-center mb-6">
-                        <div className="w-48">
-                            <Link href="/">
-                                <Image
-                                    src="/img/logo.png"
-                                    alt="Portokalle"
-                                    width={200}
-                                    height={100}
-                                    className="w-full h-auto"
-                                />
-                            </Link>
-                        </div>
-                    </div>
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
 
-                    <h2 className="card-title text-2xl font-bold text-center mx-auto mb-4 text-gray-800">Login</h2>
+    try {
+      if (!navigator.onLine) {
+        throw new Error('You are offline. Please check your internet connection and try again.');
+      }
 
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            handleLogin();
-                        }}
-                        className="form-control gap-4"
-                    >
-                        <div>
-                            <label className="label">
-                                <span className="label-text text-gray-700">Email</span>
-                            </label>
-                            <input
-                                type="email"
-                                placeholder="your.email@example.com"
-                                className="input input-bordered w-full"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
+      const { user, role } = await login(email, password);
+      console.log('Login success - User:', user.email, 'Role:', role);
 
-                        <div>
-                            <label className="label">
-                                <span className="label-text text-gray-700">Password</span>
-                                <Link href="/forgot-password" className="label-text-alt link link-hover text-primary">
-                                    Forgot password?
-                                </Link>
-                            </label>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                className="input input-bordered w-full"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
+      // Check that cookies were set properly
+      if (!document.cookie.includes('auth-token=')) {
+        console.warn('Auth token cookie was not set properly');
+        setErrorMsg('Warning: Authentication token not set properly. Try again or contact support.');
+        setLoading(false);
+        return;
+      }
 
-                        <button
-                            type="submit"
-                            className={`btn btn-primary w-full mt-2 ${loading ? 'loading' : ''}`}
-                            disabled={loading}
-                        >
-                            {loading ? 'Logging in...' : 'Login'}
-                        </button>
-                    </form>
+      // Force a hard navigation instead of client-side navigation
+      // This ensures the page fully reloads and middleware re-runs
+      window.location.href = fromPath;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Login failed:', errorMessage);
+      setErrorMsg(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                    <div className="divider my-6">OR</div>
-
-                    <div className="text-center">
-                        <p className="mb-2 text-gray-700">Don&apos;t have an account?</p>
-                        <Link href="/register" className="btn btn-outline btn-wide">
-                            Register Now
-                        </Link>
-                    </div>
-                </div>
+  return (
+    <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
+      <div className="card w-full max-w-md bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex justify-center mb-6">
+            <div className="w-48">
+              <Link href="/">
+                <Image
+                  src="/img/logo.png"
+                  alt="Portokalle"
+                  width={200}
+                  height={100}
+                  className="w-full h-auto"
+                />
+              </Link>
             </div>
+          </div>
+
+          <h2 className="card-title text-2xl font-bold text-center mx-auto mb-4 text-gray-800">Login</h2>
+
+          {errorMsg && (
+            <div className="alert alert-error mt-4">
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleLogin(e);
+            }}
+            className="form-control gap-4"
+          >
+            <div>
+              <label className="label">
+                <span className="label-text text-gray-700">Email</span>
+              </label>
+              <input
+                type="email"
+                placeholder="your.email@example.com"
+                className="input input-bordered w-full"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text text-gray-700">Password</span>
+                <Link href="/forgot-password" className="label-text-alt link link-hover text-primary">
+                  Forgot password?
+                </Link>
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                className="input input-bordered w-full"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className={`btn btn-primary w-full mt-2 ${loading ? 'loading' : ''}`}
+              disabled={loading}
+            >
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
+          </form>
+
+          <div className="divider my-6">OR</div>
+
+          <div className="text-center">
+            <p className="mb-2 text-gray-700">Don&apos;t have an account?</p>
+            <Link href="/register" className="btn btn-outline btn-wide">
+              Register Now
+            </Link>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
+  );
 }

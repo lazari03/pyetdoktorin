@@ -1,35 +1,38 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Bars3Icon } from '@heroicons/react/24/outline'
-import Image from 'next/image'
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Bars3Icon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
+import { logout } from '../services/authService';
 
-export default function DashboardLayout({
-    children
-}: {
-    children: React.ReactNode
-}) {
-    const [sidebarOpen, setSidebarOpen] = useState(false)
-    const [userRole, setUserRole] = useState('patient') // Default role
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [userRole, setUserRole] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
-        // Function to fetch user role from backend/auth service
-        const fetchUserRole = async () => {
+        // Debug output
+        console.log('Dashboard Layout: Loading');
+        
+        // Function to fetch user role from localStorage
+        const fetchUserRole = () => {
             try {
-                // This would be replaced with your actual API call or auth service
-                // Example: const response = await fetch('/api/user/role');
-                // const data = await response.json();
-                // setUserRole(data.role);
-                
-                // For demonstration, we'll use localStorage or a simulated API response
+                // For demonstration, we'll use localStorage
                 const storedRole = localStorage.getItem('userRole');
+                console.log('Dashboard Layout: Role from localStorage:', storedRole);
+                
                 if (storedRole) {
                     setUserRole(storedRole);
+                } else {
+                    console.warn('No user role found in localStorage, using default');
+                    setUserRole('patient'); // Default fallback
                 }
             } catch (error) {
                 console.error('Failed to fetch user role:', error);
-                // Keep default role in case of error
+                setUserRole('patient'); // Keep default role in case of error
+            } finally {
+                setIsLoading(false);
             }
         };
         
@@ -39,35 +42,54 @@ export default function DashboardLayout({
         if (typeof window !== 'undefined') {
             const handleResize = () => {
                 if (window.innerWidth < 768) {
-                    setSidebarOpen(false)
+                    setSidebarOpen(false);
                 } else {
-                    setSidebarOpen(true)
+                    setSidebarOpen(true);
                 }
-            }
-            handleResize()
-            window.addEventListener('resize', handleResize)
+            };
+            handleResize();
+            window.addEventListener('resize', handleResize);
             
             return () => {
-                window.removeEventListener('resize', handleResize)
-            }
+                window.removeEventListener('resize', handleResize);
+            };
         }
-    }, [])
+    }, []);
+
+    // Debug - log when children prop changes
+    useEffect(() => {
+        console.log('Dashboard Layout: Children prop updated');
+    }, [children]);
+
+    const handleLogout = async () => {
+        const success = await logout();
+        if (success) {
+            // Use hard navigation for logout
+            window.location.href = '/login';
+        }
+    };
 
     const navItems = userRole === 'doctor'
         ? [
             { name: 'Dashboard', href: '/dashboard' },
-            { name: 'Appointments', href: '/dashboard/appointments' },
-            { name: 'Patients', href: '/dashboard/patients' },
-            { name: 'Profile', href: '/dashboard/profile' },
-            { name: 'Sent Requests', href: '/dashboard/sent-requests' },
+            { name: 'Upcoming Appointments', href: '/dashboard/appointments/upcoming' },
+            { name: 'Appointment History', href: '/dashboard/appointments' },
+            { name: 'My Profile', href: '/dashboard/profile' },
         ]
         : [
             { name: 'Dashboard', href: '/dashboard' },
             { name: 'Search Doctors', href: '/dashboard/search' },
             { name: 'New Appointment', href: '/dashboard/new-appointment' },
             { name: 'Appointment History', href: '/dashboard/appointments' },
-            { name: 'Sent Requests', href: '/dashboard/sent-requests' },
-        ]
+            { name: 'My Profile', href: '/dashboard/profile' },
+        ];
+
+    if (isLoading) {
+        return <div className="flex justify-center items-center min-h-screen">
+            <div className="loading loading-spinner loading-lg"></div>
+            <span className="ml-2">Loading dashboard...</span>
+        </div>;
+    }
 
     return (
         <div className="min-h-screen bg-base-200">
@@ -85,6 +107,9 @@ export default function DashboardLayout({
                     ${sidebarOpen ? 'w-64' : 'w-0'} overflow-hidden`}
             >
                 <div className="p-4 w-64">
+                    <div className="mb-6 text-center">
+                        <div className="text-lg font-bold">{userRole === 'doctor' ? 'Doctor Portal' : 'Patient Portal'}</div>
+                    </div>
                     <nav className="mt-8">
                         {navItems.map((item) => (
                             <Link
@@ -96,6 +121,14 @@ export default function DashboardLayout({
                                 {item.name}
                             </Link>
                         ))}
+                        
+                        {/* Logout button */}
+                        <button
+                            onClick={handleLogout}
+                            className="block w-full text-left py-2.5 px-4 rounded-lg hover:bg-base-200 transition-colors mt-8 text-error"
+                        >
+                            Logout
+                        </button>
                     </nav>
                 </div>
             </div>
@@ -123,13 +156,23 @@ export default function DashboardLayout({
                             />
                         </div>
                         
-                        <div className="w-10 invisible">{/* Spacer to balance the layout */}</div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium hidden md:inline-block">
+                                {userRole === 'doctor' ? 'Doctor Account' : 'Patient Account'}
+                            </span>
+                            <div className="avatar placeholder">
+                                <div className="bg-neutral text-neutral-content rounded-full w-8">
+                                    <span className="text-xs">{userRole?.charAt(0).toUpperCase()}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </header>
                 <main className="p-3 md:p-6">
+                    {/* Render children */}
                     {children}
                 </main>
             </div>
         </div>
-    )
+    );
 }
