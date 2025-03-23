@@ -37,7 +37,7 @@ export default function Dashboard() {
       )}
 
       {userRole === 'doctor' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
           {/* Doctor Dashboard Content */}
           <div className="stats shadow">
             <div className="stat">
@@ -83,7 +83,7 @@ export default function Dashboard() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mt-6">
           {/* Patient Dashboard Content */}
           <div className="stats shadow">
             <div className="stat">
