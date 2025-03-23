@@ -19,9 +19,10 @@ export const login = async (email: string, password: string) => {
         } else {
             throw new Error('User role not found in Firestore');
         }
-    } catch (error: any) {
-        console.error('Error during login:', error.message || error);
-        throw new Error(error.message || 'Failed to log in');
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to log in';
+        console.error('Error during login:', errorMessage);
+        throw new Error(errorMessage);
     }
 };
 
@@ -38,7 +39,8 @@ export const register = async (email: string, password: string, role: string) =>
         });
 
         return { user, role }; // Return user with role
-    } catch (error: any) {
-        throw new Error(error.message || 'Failed to register');
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to register';
+        throw new Error(errorMessage);
     }
 };

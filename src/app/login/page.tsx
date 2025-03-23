@@ -15,8 +15,8 @@ export default function LoginPage() {
 
     // Test Firebase connectivity on component mount
     useEffect(() => {
-        testFirebaseConnection().catch((error) => {
-            console.error('Firebase connection test failed:', error.message || error);
+        testFirebaseConnection().catch((error: Error) => {
+            console.error('Firebase connection test failed:', error.message);
             alert('Unable to connect to Firebase. Please check your configuration.');
         });
     }, []);
@@ -31,9 +31,10 @@ export default function LoginPage() {
             console.log('Logged in:', user.email, 'Role:', role);
             console.log('Redirecting to /dashboard...');
             router.push('/dashboard');
-        } catch (error: any) {
-            console.error('Login failed:', error.message || error);
-            alert(error.message || 'An error occurred during login. Please try again.');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            console.error('Login failed:', errorMessage);
+            alert(errorMessage);
         } finally {
             setLoading(false);
         }

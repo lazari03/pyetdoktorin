@@ -10,7 +10,8 @@ export const testFirebaseConnection = async () => {
         } else {
             console.log('Document does not exist.');
         }
-    } catch (error: any) {
-        console.error('Error testing Firebase connection:', error.message || error);
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        console.error('Error testing Firebase connection:', errorMessage);
     }
 };

@@ -25,9 +25,10 @@ export default function RegisterPage() {
                 setShowModal(false);
                 router.push('/login'); // Redirect to login
             }, 3000);
-        } catch (error: any) {
-            console.error('Registration failed:', error.message);
-            alert(error.message); // Show error message to the user
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            console.error('Registration failed:', errorMessage);
+            alert(errorMessage);
         } finally {
             setLoading(false);
         }
