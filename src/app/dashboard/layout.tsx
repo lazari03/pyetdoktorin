@@ -127,27 +127,6 @@ export default function DashboardLayout({
                     </div>
                 </header>
                 <main className="p-3 md:p-6">
-                    {/* Widgets */}
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        <div className="card bg-base-100 shadow-xl">
-                            <div className="card-body">
-                                <h2 className="card-title">Overview</h2>
-                                <p>Quick summary of your activities.</p>
-                            </div>
-                        </div>
-                        <div className="card bg-base-100 shadow-xl">
-                            <div className="card-body">
-                                <h2 className="card-title">Notifications</h2>
-                                <p>Stay updated with the latest alerts.</p>
-                            </div>
-                        </div>
-                        <div className="card bg-base-100 shadow-xl">
-                            <div className="card-body">
-                                <h2 className="card-title">Statistics</h2>
-                                <p>View your performance metrics.</p>
-                            </div>
-                        </div>
-                    </div>
                     {children}
                 </main>
             </div>
