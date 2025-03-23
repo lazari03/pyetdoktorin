@@ -1,35 +1,43 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { login } from '../services/authService';
+import { testFirebaseConnection } from '../services/firebaseTest';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [loading, setLoading] = useState(false)
-    const router = useRouter()
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
+    // Test Firebase connectivity on component mount
+    useEffect(() => {
+        testFirebaseConnection().catch((error) => {
+            console.error('Firebase connection test failed:', error.message || error);
+            alert('Unable to connect to Firebase. Please check your configuration.');
+        });
+    }, []);
 
+    const handleLogin = async () => {
+        setLoading(true);
         try {
-            // Here you would implement actual authentication logic
-            console.log('Login attempt with:', email, password)
-
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
-            // On success, redirect to dashboard
-            router.push('/dashboard')
-        } catch (error) {
-            console.error('Login failed:', error)
+            if (!navigator.onLine) {
+                throw new Error('You are offline. Please check your internet connection and try again.');
+            }
+            const { user, role } = await login(email, password);
+            console.log('Logged in:', user.email, 'Role:', role);
+            console.log('Redirecting to /dashboard...');
+            router.push('/dashboard');
+        } catch (error: any) {
+            console.error('Login failed:', error.message || error);
+            alert(error.message || 'An error occurred during login. Please try again.');
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }
+    };
 
     return (
         <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
@@ -51,7 +59,13 @@ export default function LoginPage() {
 
                     <h2 className="card-title text-2xl font-bold text-center mx-auto mb-4 text-gray-800">Login</h2>
 
-                    <form onSubmit={handleSubmit} className="form-control gap-4">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleLogin();
+                        }}
+                        className="form-control gap-4"
+                    >
                         <div>
                             <label className="label">
                                 <span className="label-text text-gray-700">Email</span>
@@ -103,5 +117,5 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
-    )
+    );
 }
