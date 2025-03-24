@@ -36,14 +36,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Dashboard', href: '/dashboard' },
         { name: 'Upcoming Appointments', href: '/dashboard/appointments/upcoming' },
         { name: 'Appointment History', href: '/dashboard/appointments' },
-        { name: 'My Profile', href: '/dashboard/profile' },
+        { name: 'My Profile', href: '/dashboard/myprofile' },
       ]
     : [
         { name: 'Dashboard', href: '/dashboard' },
         { name: 'Search Doctors', href: '/dashboard/search' },
         { name: 'New Appointment', href: '/dashboard/new-appointment' },
         { name: 'Appointment History', href: '/dashboard/appointments' },
-        { name: 'My Profile', href: '/dashboard/profile' },
+        { name: 'My Profile', href: '/dashboard/myprofile' },
       ];
 
   if (isLoading) {
