@@ -66,9 +66,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ${sidebarOpen ? 'w-64' : 'w-0'} overflow-hidden`}
       >
         <div className="p-4 w-64">
-          <div className="mb-6 text-center">
-            <div className="text-lg font-bold">{userRole === 'doctor' ? 'Doctor Portal' : 'Patient Portal'}</div>
-          </div>
           <nav className="mt-8">
             {navItems.map((item) => (
               <Link
