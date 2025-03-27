@@ -1,33 +1,54 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
+import { useState } from 'react';
 
 interface AppointmentModalProps {
-  doctor: { id: number; name: string; expertise: string }
-  onClose: () => void
+  doctor: { id: number; name: string; expertise: string };
+  onClose: () => void;
 }
 
 export default function AppointmentModal({ doctor, onClose }: AppointmentModalProps) {
-  const [appointmentType, setAppointmentType] = useState('Check-up')
-  const [preferredDate, setPreferredDate] = useState('')
-  const [notes, setNotes] = useState('')
+  const [appointmentType, setAppointmentType] = useState('Check-up');
+  const [preferredDate, setPreferredDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle form submission logic here
-    console.log({
-      doctorId: doctor.id,
-      appointmentType,
-      preferredDate,
-      notes,
-    })
-    onClose()
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Send appointment details to the backend
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          doctorId: doctor.id,
+          doctorName: doctor.name,
+          appointmentType,
+          preferredDate,
+          notes,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to book the appointment');
+      }
+
+      // Redirect to the "Appointment History" or "Upcoming Appointments" page
+      window.location.href = '/appointments/upcoming'; // Adjust the URL as needed
+    } catch (error) {
+      console.error('Error booking the appointment:', error);
+      alert('Failed to book the appointment. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-        <h2 className="text-xl font-bold mb-4">Request Appointment</h2>
+        <h2 className="text-xl font-bold mb-4">Book Appointment</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="label">
@@ -77,19 +98,19 @@ export default function AppointmentModal({ doctor, onClose }: AppointmentModalPr
             ></textarea>
           </div>
           <div className="flex justify-between space-x-2">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={onClose}
-            >
+            <button type="button" className="btn btn-ghost" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary">
-              Submit
+            <button
+              type="submit"
+              className={`btn btn-primary ${loading ? 'loading' : ''}`}
+              disabled={loading}
+            >
+              Book Appointment
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

@@ -92,3 +92,14 @@ export const logout = async () => {
         return false;
     }
 };
+
+export const isAuthenticated = (): { userId: string | null; error: string | null } => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+  
+    if (user) {
+      return { userId: user.uid, error: null };
+    } else {
+      return { userId: null, error: "User not authenticated. Please log in." };
+    }
+  };
