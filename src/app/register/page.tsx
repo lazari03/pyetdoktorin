@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { register } from '../services/authService';
+import { register } from '../services/authService'; // Ensure this function is updated as explained below
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -36,14 +36,19 @@ export default function RegisterPage() {
 
         setLoading(true);
         try {
+            // Call the register function and pass sanitized formData
             const { user, role: registeredRole } = await register(
                 formData.email,
                 formData.password,
                 formData.role,
-                formData // Pass all form data
+                {
+                    ...formData,
+                    about: null, // Default to null for optional fields
+                    specializations: null,
+                    education: null,
+                }
             );
             console.log('Registered:', user.email, 'Role:', registeredRole);
-            console.log('Redirecting to /login...');
             setShowModal(true);
 
             setTimeout(() => {

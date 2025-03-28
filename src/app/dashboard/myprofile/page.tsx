@@ -1,40 +1,45 @@
 'use client';
+
 import { useState, useEffect } from "react";
 import { db } from "../../../../config/firebaseconfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import Loader from "../../components/Loader";
+import { auth } from "../../../../config/firebaseconfig"; // Correct import for auth
+import { sendPasswordResetEmail } from "firebase/auth"; // Import the reset method
+import Loader from "@/app/components/Loader";
 
 export default function MyProfile() {
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
     email: "",
     phoneNumber: "",
-    oldPassword: "",
-    newPassword: "",
-    confirmNewPassword: "",
     about: "",
     specializations: [""],
     education: [""],
   });
+  const [resetEmailSent, setResetEmailSent] = useState(false); // Track reset email status
 
   useEffect(() => {
     const fetchUserData = async () => {
-      setLoading(true); // Start loading
-      const storedRole = localStorage.getItem("userRole") || "patient";
-      setUserRole(storedRole);
+      setLoading(true);
 
       try {
-        const userDoc = await getDoc(doc(db, "users", "userId123")); // Replace "userId123" with dynamic user ID
+        const userId = auth.currentUser?.uid; // Get the current user's ID
+        if (!userId) throw new Error("User not authenticated");
+
+        const userDoc = await getDoc(doc(db, "users", userId));
         if (userDoc.exists()) {
           setFormData((prev) => ({ ...prev, ...userDoc.data() }));
+          setUserRole(userDoc.data().role); // Set the user role (doctor or patient)
+        } else {
+          throw new Error("User data not found");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
-        setLoading(false); // Stop loading
+        setLoading(false);
       }
     };
 
@@ -68,15 +73,28 @@ export default function MyProfile() {
     setFormData((prev) => ({ ...prev, [field]: updatedArray }));
   };
 
+  const handlePasswordReset = async () => {
+    try {
+      const email = formData.email;
+      if (!email) throw new Error("Email is required to reset password");
+
+      await sendPasswordResetEmail(auth, email);
+      setResetEmailSent(true); // Indicate that the reset email was sent
+      alert("Password reset email sent. Please check your inbox.");
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      alert("Failed to send password reset email. Please try again.");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.newPassword !== formData.confirmNewPassword) {
-      alert("New Password and Confirm New Password do not match!");
-      return;
-    }
 
     try {
-      await setDoc(doc(db, "users", "userId123"), formData); // Replace "userId123" with dynamic user ID
+      const userId = auth.currentUser?.uid; // Get the current user's ID
+      if (!userId) throw new Error("User not authenticated");
+
+      await setDoc(doc(db, "users", userId), formData);
       alert("Profile updated successfully!");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -128,39 +146,6 @@ export default function MyProfile() {
               onChange={(e) => handleInputChange(e, "phoneNumber")}
               className="input input-bordered w-full"
             />
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Change Password</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Old Password</label>
-              <input
-                type="password"
-                value={formData.oldPassword}
-                onChange={(e) => handleInputChange(e, "oldPassword")}
-                className="input input-bordered w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">New Password</label>
-              <input
-                type="password"
-                value={formData.newPassword}
-                onChange={(e) => handleInputChange(e, "newPassword")}
-                className="input input-bordered w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Confirm New Password</label>
-              <input
-                type="password"
-                value={formData.confirmNewPassword}
-                onChange={(e) => handleInputChange(e, "confirmNewPassword")}
-                className="input input-bordered w-full"
-              />
-            </div>
           </div>
         </div>
 
@@ -240,6 +225,22 @@ export default function MyProfile() {
           </button>
         </div>
       </form>
+
+      <div className="mt-6">
+        <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+        <button
+          type="button"
+          onClick={handlePasswordReset}
+          className="btn btn-secondary"
+        >
+          Send Password Reset Email
+        </button>
+        {resetEmailSent && (
+          <p className="text-green-500 mt-2">
+            Password reset email sent successfully!
+          </p>
+        )}
+      </div>
     </div>
   );
 }

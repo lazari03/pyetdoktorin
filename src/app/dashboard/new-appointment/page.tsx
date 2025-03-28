@@ -61,7 +61,7 @@ export default function NewAppointmentPage() {
             <label className="label">
               <span className="label-text">Select Doctor</span>
             </label>
-            <DoctorSearchInput onSelect={setSelectedDoctorId} />
+            <DoctorSearchInput onSelect={(doctorId) => setSelectedDoctorId(Number(doctorId))} />
           </div>
 
           {selectedDoctorId && (

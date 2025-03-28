@@ -63,32 +63,33 @@ export const login = async (email: string, password: string) => {
 };
 
 // ✅ Register function (creates user & saves role and profile data)
-export const register = async (email: string, password: string, role: string, additionalData: any) => {
+export const register = async (email: string, password: string, role: string, formData: any) => {
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        // Initialize profile fields based on role
-        const profileData = {
-            name: additionalData.name || "",
-            surname: additionalData.surname || "",
-            phoneNumber: additionalData.phone || "",
-            email: user.email || "",
-            role: role,
-            about: role === "doctor" ? "" : undefined, // Only for doctors
-            specializations: role === "doctor" ? [] : undefined, // Only for doctors
-            education: role === "doctor" ? [] : undefined, // Only for doctors
-        };
-
-        // Save the user's profile in Firestore
-        await setDoc(doc(db, 'users', user.uid), profileData);
-
-        return { user, role }; // Return user with role
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to register';
-        throw new Error(errorMessage);
+      // Create the user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+  
+      // Sanitize formData to avoid undefined values
+      const sanitizedData = {
+        name: formData.name || null,
+        surname: formData.surname || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        role: formData.role || "patient", // Default to "patient" if role is undefined
+        about: formData.about || null, // Default to null for optional fields
+        specializations: formData.specializations || null,
+        education: formData.education || null,
+      };
+  
+      // Save the user data to Firestore
+      await setDoc(doc(db, "users", user.uid), sanitizedData);
+  
+      return { user, role: sanitizedData.role };
+    } catch (error) {
+      console.error("Error during registration:", error);
+      throw error;
     }
-};
+  };
 
 // Add logout function to clear cookies
 export const logout = async () => {
