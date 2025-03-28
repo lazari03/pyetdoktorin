@@ -15,7 +15,13 @@ export default function NewAppointmentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { userId, error } = isAuthenticated();
+    let userId: string | null = null;
+    let error: string | null = null;
+
+    isAuthenticated((authState) => {
+      userId = authState.userId;
+      error = authState.error;
+    });
     if (error) {
       alert(error);
       return;

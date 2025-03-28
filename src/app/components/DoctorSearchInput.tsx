@@ -1,22 +1,60 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { doctors } from '@/app/data/doctors' // You'll need to move the doctors array to a separate file
+import { useState, useEffect } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../../config/firebaseconfig';
+import { useRouter } from 'next/navigation';
 
 interface DoctorSearchInputProps {
-  onSelect: (doctorId: number) => void
+  onSelect: (doctorId: string) => void;
 }
 
 export default function DoctorSearchInput({ onSelect }: DoctorSearchInputProps) {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredDoctors, setFilteredDoctors] = useState<{ id: string; name?: string; expertise?: string }[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const filteredDoctors = searchTerm.length >= 2 
-    ? doctors.filter(doctor =>
-        doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doctor.expertise.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : []
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm.length >= 2) {
+        fetchDoctors(searchTerm);
+      } else {
+        setFilteredDoctors([]);
+      }
+    }, 1000);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  const fetchDoctors = async (term: string) => {
+    setLoading(true);
+    setIsSearching(true);
+    setFilteredDoctors([]);
+
+    try {
+      const doctorsCollection = collection(db, 'users'); 
+      const q = query(
+        doctorsCollection,
+        where('role', '==', 'doctor'),
+        where('name', '>=', term),
+        where('name', '<=', term + '\uf8ff')
+      );
+
+      const querySnapshot = await getDocs(q);
+      const doctors = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setFilteredDoctors(doctors);
+    } catch (err) {
+      console.error('Error fetching doctors:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="relative">
@@ -25,31 +63,32 @@ export default function DoctorSearchInput({ onSelect }: DoctorSearchInputProps) 
         placeholder="Search for a doctor..."
         className="input input-bordered w-full"
         value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value)
-          setIsSearching(true)
-        }}
+        onChange={(e) => setSearchTerm(e.target.value)}
         onFocus={() => setIsSearching(true)}
       />
-      
-      {isSearching && searchTerm.length >= 2 && (
+
+      {isSearching && (
         <div className="absolute z-10 w-full mt-1 bg-base-100 shadow-xl rounded-box max-h-64 overflow-auto">
-          {filteredDoctors.length === 0 ? (
+          {loading ? (
+            <div className="p-4 text-center text-gray-500">Loading...</div>
+          ) : filteredDoctors.length === 0 ? (
             <div className="p-4 text-center text-gray-500">No doctors found</div>
           ) : (
             <ul>
-              {filteredDoctors.map(doctor => (
-                <li 
+              {filteredDoctors.map((doctor) => (
+                <li
                   key={doctor.id}
                   className="p-2 hover:bg-base-200 cursor-pointer"
                   onClick={() => {
-                    onSelect(doctor.id)
-                    setSearchTerm(doctor.name)
-                    setIsSearching(false)
+                    setSearchTerm(doctor.name || '');
+                    setIsSearching(false);
+                    router.push(`/dashboard/doctor/${doctor.id}`);
                   }}
                 >
                   <div className="font-medium">{doctor.name}</div>
-                  <div className="text-sm text-gray-500">{doctor.expertise}</div>
+                  <div className="text-sm text-gray-500">
+                    {doctor.expertise || 'No expertise specified'}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -57,5 +96,5 @@ export default function DoctorSearchInput({ onSelect }: DoctorSearchInputProps) 
         </div>
       )}
     </div>
-  )
+  );
 }

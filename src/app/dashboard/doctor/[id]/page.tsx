@@ -1,12 +1,9 @@
-import DoctorProfile from '@/app/components/DoctorProfile'
+import DoctorProfile from "../../../components/DoctorProfile";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
-// This is a server component that will handle the params
-export default async function DoctorPage({ params }: PageProps) {
-  // Ensure we have resolved params
-  const resolvedParams = await params;
-  return <DoctorProfile id={resolvedParams.id} />
+// Make the component async to properly handle params
+export default async function DoctorPage({ params }: { params: { id: string } }) {
+  // Ensure the id is properly processed before passing to the component
+  const doctorId = params.id;
+  
+  return <DoctorProfile id={doctorId} />;
 }

@@ -38,6 +38,9 @@ function LoginPageContent() {
       const { user, role } = await login(email, password);
       console.log('Login success - User:', user.email, 'Role:', role);
 
+      // Debugging: Log all cookies to verify if 'auth-token' is set
+      console.log('Current cookies:', document.cookie);
+
       // Check that cookies were set properly
       if (!document.cookie.includes('auth-token=')) {
         console.warn('Auth token cookie was not set properly');
@@ -127,7 +130,33 @@ function LoginPageContent() {
               className={`btn btn-primary w-full mt-2 ${loading ? 'loading' : ''}`}
               disabled={loading}
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin h-5 w-5 mr-2 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    ></path>
+                  </svg>
+                  Logging in...
+                </span>
+              ) : (
+                'Login'
+              )}
             </button>
           </form>
 

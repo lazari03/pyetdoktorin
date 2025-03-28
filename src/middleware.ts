@@ -1,12 +1,28 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import crypto from 'crypto';
 
 const VALID_API_KEY = process.env.NEXT_PUBLIC_API_KEY; // Store securely in environment variables
 const ALLOWED_ORIGIN = process.env.NEXT_PUBLIC_ALLOWED_ORIGIN; // Your app's domain
 const SHARED_SECRET = process.env.NEXT_PUBLIC_SHARED_SECRET; // Shared secret for signing requests
 
-export function middleware(request: NextRequest) {
+async function verifySignature(path: string, timestamp: string, signature: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(SHARED_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const data = encoder.encode(`${timestamp}:${path}`);
+  const expectedSignature = await crypto.subtle.sign('HMAC', key, data);
+  const expectedSignatureHex = Array.from(new Uint8Array(expectedSignature))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return signature === expectedSignatureHex;
+}
+
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Check if the path is an API route
@@ -34,12 +50,8 @@ export function middleware(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const expectedSignature = crypto
-      .createHmac('sha256', SHARED_SECRET || '')
-      .update(`${timestamp}:${path}`)
-      .digest('hex');
-
-    if (signature !== expectedSignature) {
+    const isValidSignature = await verifySignature(path, timestamp, signature);
+    if (!isValidSignature) {
       console.log('Invalid signature');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

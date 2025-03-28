@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Allow read and write only if the authenticated user is accessing their own document
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Allow authenticated users to read doctor profiles
+      allow read: if request.auth != null && resource.data.role == "doctor";
+    }
+
+    // Rules for the 'appointments' collection
+    match /appointments/{appointmentId} {
+      // Allow creation of appointments if the user is authenticated
+      allow create: if request.auth != null;
+
+      // Allow reading appointments if the authenticated user is either the patient or the doctor
+      allow read: if request.auth != null &&
+        (resource.data.patientId == request.auth.uid || resource.data.doctorId == request.auth.uid);
+
+      // Allow updating appointments if the authenticated user is either the patient or the doctor
+      allow update: if request.auth != null &&
+        (request.auth.uid == resource.data.patientId || request.auth.uid == resource.data.doctorId);
+
+      // Prevent deletion of appointments (optional, for safety)
+      allow delete: if false;
+    }
+
+    // Rules for the 'doctors' subcollection under 'users'
+    match /users/{userId}/doctors/{doctorId} {
+      // Allow authenticated users to read doctor profiles
+      allow read: if request.auth != null;
+    }
+  }
+}

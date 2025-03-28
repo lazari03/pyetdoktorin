@@ -1,7 +1,7 @@
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../../config/firebaseconfig';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 // ✅ Login function (returns user + role)
 export const login = async (email: string, password: string) => {
@@ -47,8 +47,11 @@ export const login = async (email: string, password: string) => {
         const token = await userCredential.user.getIdToken();
         console.log('Token obtained successfully');
 
-        // Set the auth token as a cookie
-        document.cookie = `auth-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`; // 1 week expiry
+        // Set the auth token as a session cookie (expires when the browser is closed)
+        const isProduction = process.env.NODE_ENV === 'production';
+        const sameSite = isProduction ? 'Strict' : 'Lax'; // Use 'Lax' for local development
+        const secureFlag = isProduction ? 'Secure;' : ''; // Do not use 'Secure' in local development
+        document.cookie = `auth-token=${token}; path=/; ${secureFlag} SameSite=${sameSite}`;
         console.log('Auth cookie set');
 
         return { user: userCredential.user, role }; // Return user with role
@@ -59,17 +62,26 @@ export const login = async (email: string, password: string) => {
     }
 };
 
-// ✅ Register function (creates user & saves role)
-export const register = async (email: string, password: string, role: string) => {
+// ✅ Register function (creates user & saves role and profile data)
+export const register = async (email: string, password: string, role: string, additionalData: any) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Save the user's role in Firestore
-        await setDoc(doc(db, 'users', user.uid), {
-            email: user.email,
+        // Initialize profile fields based on role
+        const profileData = {
+            name: additionalData.name || "",
+            surname: additionalData.surname || "",
+            phoneNumber: additionalData.phone || "",
+            email: user.email || "",
             role: role,
-        });
+            about: role === "doctor" ? "" : undefined, // Only for doctors
+            specializations: role === "doctor" ? [] : undefined, // Only for doctors
+            education: role === "doctor" ? [] : undefined, // Only for doctors
+        };
+
+        // Save the user's profile in Firestore
+        await setDoc(doc(db, 'users', user.uid), profileData);
 
         return { user, role }; // Return user with role
     } catch (error: unknown) {
@@ -93,13 +105,23 @@ export const logout = async () => {
     }
 };
 
-export const isAuthenticated = (): { userId: string | null; error: string | null } => {
-    const auth = getAuth();
-    const user = auth.currentUser;
-  
+export const isAuthenticated = (callback: (authState: { userId: string | null; role: string | null; error: string | null }) => void) => {
+  const auth = getAuth();
+
+  onAuthStateChanged(auth, (user) => {
     if (user) {
-      return { userId: user.uid, error: null };
+      const role = localStorage.getItem("userRole"); // Retrieve role from localStorage
+      callback({
+        userId: user.uid,
+        role,
+        error: null,
+      });
     } else {
-      return { userId: null, error: "User not authenticated. Please log in." };
+      callback({
+        userId: null,
+        role: null,
+        error: "User not authenticated. Please log in.",
+      });
     }
-  };
+  });
+};

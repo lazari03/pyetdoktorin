@@ -79,8 +79,7 @@ a:hover {
 }
 
 .navbar a:hover {
-  text-decoration: underline;
-  color: #003d80;
+  text-decoration: none;
 }
 
 .dashboard a {
@@ -109,6 +108,9 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #ea580c; /* Orange-600 */
 }
 
+.btn-orange {
+  color: #ea580c;
+}
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
