@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../config/firebaseconfig';
+import { useDoctorProfile } from '../hooks/useDoctorProfile';
 import AppointmentModal from './AppointmentModal';
 
 interface DoctorProfileProps {
@@ -11,28 +10,8 @@ interface DoctorProfileProps {
 }
 
 export default function DoctorProfile({ id }: DoctorProfileProps) {
-  const [doctor, setDoctor] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { doctor, loading, error } = useDoctorProfile(id);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const doctorSnap = await getDoc(doc(db, 'users', id)); // Fetch from 'users' collection
-        if (doctorSnap.exists()) {
-          setDoctor({ id: doctorSnap.id, ...doctorSnap.data() });
-        } else {
-          setError('Doctor not found');
-        }
-      } catch (err) {
-        console.error('Error fetching doctor:', err);
-        setError('Failed to fetch doctor data');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [id]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
@@ -40,55 +19,71 @@ export default function DoctorProfile({ id }: DoctorProfileProps) {
   return (
     <div className="w-full max-w-4xl mx-auto p-3 md:p-6">
       <div className="card bg-base-100 shadow-xl overflow-hidden flex flex-col md:flex-row">
-        <figure className="w-full md:w-1/3 p-6 flex items-center justify-center">
-          <Image
-            src="/img/profile_placeholder.png"
-            alt={`${doctor.name || 'Doctor'} ${doctor.surname || ''}`}
-            width={192}
-            height={192}
-            className="object-cover rounded-full"
-          />
-        </figure>
-        <div className="card-body w-full md:w-2/3 p-6">
-          <h2 className="card-title text-3xl">
-            {doctor.name} {doctor.surname}
-          </h2>
-          <p className="text-lg text-gray-700 mt-2">{doctor.about || 'No bio available'}</p>
-          <div className="divider my-3"></div>
-          <h3 className="text-xl font-semibold">Specializations</h3>
-          <ul className="list-disc list-inside">
-            {doctor.specializations?.length > 0 ? (
-              doctor.specializations.map((spec: string, index: number) => <li key={index}>{spec}</li>)
-            ) : (
-              <p>No specializations listed</p>
-            )}
-          </ul>
-          <div className="divider my-3"></div>
-          <h3 className="text-xl font-semibold">Education</h3>
-          <ul className="list-disc list-inside">
-            {doctor.education?.length > 0 ? (
-              doctor.education.map((degree: string, index: number) => <li key={index}>{degree}</li>)
-            ) : (
-              <p>No education details available</p>
-            )}
-          </ul>
-          <div className="card-actions justify-end mt-6">
-            <button
-              className="btn btn-primary"
-              onClick={() => setIsModalOpen(true)}
-            >
-              Request Appointment
-            </button>
-          </div>
-        </div>
+        <DoctorImage name={doctor?.name} surname={doctor?.surname} />
+        <DoctorDetails doctor={doctor} onRequestAppointment={() => setIsModalOpen(true)} />
       </div>
 
-      {isModalOpen && (
+      {isModalOpen && doctor && (
         <AppointmentModal
-          doctor={doctor}
+          doctor={{
+            id: Number(doctor.id),
+            name: doctor.name,
+            expertise: doctor.expertise?.join(', ') || 'No expertise listed',
+          }}
           onClose={() => setIsModalOpen(false)}
         />
       )}
     </div>
+  );
+}
+
+function DoctorImage({ name, surname }: { name?: string; surname?: string }) {
+  return (
+    <figure className="w-full md:w-1/3 p-6 flex items-center justify-center">
+      <Image
+        src="/img/profile_placeholder.png"
+        alt={`${name || 'Doctor'} ${surname || ''}`}
+        width={192}
+        height={192}
+        className="object-cover rounded-full"
+      />
+    </figure>
+  );
+}
+
+function DoctorDetails({ doctor, onRequestAppointment }: { doctor: any; onRequestAppointment: () => void }) {
+  return (
+    <div className="card-body w-full md:w-2/3 p-6">
+      <h2 className="card-title text-3xl">
+        {doctor.name} {doctor.surname}
+      </h2>
+      <p className="text-lg text-gray-700 mt-2">{doctor.about || 'No bio available'}</p>
+      <div className="divider my-3"></div>
+      <DoctorList title="Specializations" items={doctor.specializations} fallback="No specializations listed" />
+      <div className="divider my-3"></div>
+      <DoctorList title="Education" items={doctor.education} fallback="No education details available" />
+      <div className="card-actions justify-end mt-6">
+        <button className="btn btn-primary" onClick={onRequestAppointment}>
+          Request Appointment
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DoctorList({ title, items, fallback }: { title: string; items?: string[]; fallback: string }) {
+  return (
+    <>
+      <h3 className="text-xl font-semibold">{title}</h3>
+      {items?.length ? (
+        <ul className="list-disc list-inside">
+          {items.map((item, index) => (
+            <li key={index}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>{fallback}</p>
+      )}
+    </>
   );
 }

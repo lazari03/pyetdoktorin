@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useAppointmentModal } from '../hooks/userAppointmentModal';
 
 interface AppointmentModalProps {
   doctor: { id: number; name: string; expertise: string };
@@ -8,108 +8,116 @@ interface AppointmentModalProps {
 }
 
 export default function AppointmentModal({ doctor, onClose }: AppointmentModalProps) {
-  const [appointmentType, setAppointmentType] = useState('Check-up');
-  const [preferredDate, setPreferredDate] = useState('');
-  const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // Send appointment details to the backend
-      const response = await fetch('/api/appointments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          doctorId: doctor.id,
-          doctorName: doctor.name,
-          appointmentType,
-          preferredDate,
-          notes,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to book the appointment');
-      }
-
-      // Redirect to the "Appointment History" or "Upcoming Appointments" page
-      window.location.href = '/appointments/upcoming'; // Adjust the URL as needed
-    } catch (error) {
-      console.error('Error booking the appointment:', error);
-      alert('Failed to book the appointment. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    appointmentType,
+    setAppointmentType,
+    preferredDate,
+    setPreferredDate,
+    preferredTime,
+    setPreferredTime,
+    notes,
+    setNotes,
+    loading,
+    handleSubmit,
+  } = useAppointmentModal({ doctor, onClose });
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-        <h2 className="text-xl font-bold mb-4">Book Appointment</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="label">
-              <span className="label-text">Doctor</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
-              value={`${doctor.name} (${doctor.expertise})`}
-              disabled
-            />
-          </div>
-          <div>
-            <label className="label">
-              <span className="label-text">Appointment Type</span>
-            </label>
-            <select
-              className="select select-bordered w-full"
-              value={appointmentType}
-              onChange={(e) => setAppointmentType(e.target.value)}
-            >
-              <option>Check-up</option>
-              <option>Follow-up</option>
-              <option>Consultation</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">
-              <span className="label-text">Preferred Date</span>
-            </label>
-            <input
-              type="date"
-              className="input input-bordered w-full"
-              value={preferredDate}
-              onChange={(e) => setPreferredDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="label">
-              <span className="label-text">Notes</span>
-            </label>
-            <textarea
-              className="textarea textarea-bordered w-full"
-              rows={4}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            ></textarea>
-          </div>
-          <div className="flex justify-between space-x-2">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className={`btn btn-primary ${loading ? 'loading' : ''}`}
-              disabled={loading}
-            >
-              Book Appointment
-            </button>
-          </div>
-        </form>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+      style={{
+        padding: '1rem', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        overflowY: 'auto', 
+        WebkitOverflowScrolling: 'touch', 
+      }}
+    >
+      <div
+        className="bg-white rounded-lg shadow-lg w-full max-w-md flex flex-col"
+        style={{
+          maxHeight: '90vh', 
+          height: 'auto',
+          boxSizing: 'border-box', 
+        }}
+      >
+        <div className="p-6 overflow-y-auto flex-grow">
+          <h2 className="text-lg font-semibold mb-4 text-center">Book Appointment</h2>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label className="label">
+                <span className="label-text">Doctor</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={`${doctor.name} (${doctor.expertise})`}
+                disabled
+              />
+            </div>
+            <div>
+              <label className="label">
+                <span className="label-text">Appointment Type</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={appointmentType}
+                onChange={(e) => setAppointmentType(e.target.value)}
+              >
+                <option>Check-up</option>
+                <option>Follow-up</option>
+                <option>Consultation</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">
+                <span className="label-text">Preferred Date</span>
+              </label>
+              <input
+                type="date"
+                className="input input-bordered w-full"
+                value={preferredDate}
+                onChange={(e) => setPreferredDate(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="label">
+                <span className="label-text">Preferred Time</span>
+              </label>
+              <input
+                type="time"
+                className="input input-bordered w-full"
+                value={preferredTime}
+                onChange={(e) => setPreferredTime(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="label">
+                <span className="label-text">Notes</span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered w-full"
+                rows={3}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              ></textarea>
+            </div>
+            <div className="flex justify-between space-x-2 mt-4">
+              <button type="button" className="btn btn-ghost" onClick={onClose}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className={`btn btn-primary ${loading ? 'loading' : ''}`}
+                disabled={loading}
+              >
+                Book Appointment
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

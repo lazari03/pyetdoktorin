@@ -1,5 +1,6 @@
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../../config/firebaseconfig";
+import { FirebaseError } from "firebase/app";
 
 export const fetchDoctors = async (searchTerm: string = "") => {
   try {
@@ -28,6 +29,11 @@ export const fetchDoctors = async (searchTerm: string = "") => {
     return doctors;
   } catch (error) {
     console.error("Error fetching doctors:", error);
-    throw new Error("Failed to fetch doctors.");
+
+    if (error instanceof FirebaseError) {
+      throw new Error(`Firebase error: ${error.message}`);
+    } else {
+      throw new Error("An unexpected error occurred while fetching doctors.");
+    }
   }
 };
