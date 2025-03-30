@@ -97,42 +97,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${
-          sidebarOpen ? 'w-64' : 'w-16'
-        } flex flex-col`}
+        className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${sidebarOpen ? 'w-64' : 'w-16'
+          } flex flex-col`}
       >
-        <div className={`p-4 ${sidebarOpen ? 'items-start' : 'items-center'} flex`}>
+        {/* Sidebar Header */}
+        <div className="p-4 flex items-center">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`text-gray-700 hover:text-orange-500 transition-colors flex items-center justify-center w-12 h-12 ${
-              sidebarOpen ? 'ml-0' : ''
-            }`}
+            className="text-gray-700 hover:text-orange-500 transition-colors flex items-center justify-center w-12 h-12"
           >
             {sidebarOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
         </div>
-        <ul className={`flex-grow flex flex-col ${sidebarOpen ? 'items-start px-4' : 'items-center'} space-y-2`}>
+
+        {/* Sidebar Items */}
+        <ul className="relative flex-grow">
           {navItems.map((item) => (
-            <li key={item.name} className="w-full">
+            <li key={item.name} className="relative">
               <Link
                 href={item.href}
-                className={`flex ${sidebarOpen ? 'flex-row gap-4' : 'flex-col'} items-center w-full py-2 transition-colors duration-200 ${
-                  pathname === item.href
+                className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href
                     ? 'bg-orange-500 text-white'
                     : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'
-                }`}
-              >
-                <span
-                  className={`flex items-center justify-center w-12 h-12 rounded-lg ${
-                    pathname === item.href ? 'bg-orange-500 text-white' : ''
                   }`}
-                >
+              >
+                {/* Icon - Always Centered */}
+                <span className="flex items-center justify-center w-10 h-10">
                   {item.icon}
                 </span>
+
+                {/* Text - Visible Only When Sidebar is Open */}
                 <span
-                  className={`${
-                    sidebarOpen ? 'block text-left' : 'hidden'
-                  } text-sm transition-all duration-300`}
+                  className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'
+                    }`}
                 >
                   {item.name}
                 </span>
@@ -140,7 +137,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </li>
           ))}
         </ul>
-        <div className={`p-4 ${sidebarOpen ? 'items-start' : 'items-center'} flex`}>
+
+        {/* Logout Button */}
+        <div className={`p-4 flex ${sidebarOpen ? 'items-start' : 'items-center'} w-full`}>
           <button
             onClick={handleLogout}
             className={`flex ${sidebarOpen ? 'flex-row gap-4' : 'flex-col'} items-center w-full text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors duration-200`}
@@ -149,9 +148,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <UserIcon className="h-6 w-6" />
             </span>
             <span
-              className={`${
-                sidebarOpen ? 'block text-left' : 'hidden'
-              } text-sm transition-all duration-300`}
+              className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 max-w-full ml-4' : 'opacity-0 max-w-0'
+                }`}
             >
               Logout
             </span>
