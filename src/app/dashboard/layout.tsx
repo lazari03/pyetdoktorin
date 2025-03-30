@@ -78,7 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ]
     : [
       { name: 'Dashboard', href: '/dashboard', icon: <HomeIcon className="h-6 w-6" /> },
-      { name: 'Search Doctors', href: '/dashboard/search', icon: <StarIcon className="h-6 w-6" /> },
+      { name: 'Search Doctors', href: '/dashboard/search', icon: <StarIcon className="h-6 w-6" /> }, // Ensure this is correct
       { name: 'New Appointment', href: '/dashboard/new-appointment', icon: <ClipboardIcon className="h-6 w-6" /> },
       { name: 'Appointment History', href: '/dashboard/appointments', icon: <ClipboardIcon className="h-6 w-6" /> },
       { name: 'My Profile', href: '/dashboard/myprofile', icon: <UserIcon className="h-6 w-6" /> },
@@ -116,10 +116,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <li key={item.name} className="relative">
               <Link
                 href={item.href}
-                className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href
+                className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${
+                  pathname === item.href // Ensure exact match
                     ? 'bg-orange-500 text-white'
                     : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'
-                  }`}
+                }`}
               >
                 {/* Icon - Always Centered */}
                 <span className="flex items-center justify-center w-10 h-10">
@@ -160,7 +161,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <div className={`flex-grow transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'}`}>
         <header className="bg-white shadow-md">
-          <div className="flex items-center justify-between p-4 relative">
+          <div className="flex items-center justify-between p-6 relative">
             <div className="absolute left-1/2 transform -translate-x-1/2 max-w-[50%]">
               <Image
                 src="/img/logo.png"

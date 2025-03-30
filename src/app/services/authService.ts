@@ -126,3 +126,24 @@ export const isAuthenticated = (callback: (authState: { userId: string | null; r
     }
   });
 };
+
+export const registerUser = async (email: string, password: string, role: string) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Store user role in Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+      email,
+      role, // Store the role (doctor or patient)
+    });
+
+    // Store user role in localStorage
+    localStorage.setItem('userRole', role);
+
+    return user;
+  } catch (error) {
+    console.error('Error registering user:', error);
+    throw error;
+  }
+};

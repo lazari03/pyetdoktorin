@@ -1,53 +1,73 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchAppointments } from "../../services/appointmentService";
 import { auth } from "../../../../config/firebaseconfig";
+import { collection, query, where, getDocs, or } from "firebase/firestore";
+import { db } from "../../../../config/firebaseconfig";
 
 export default function AppointmentsPage() {
   const router = useRouter();
-  
+
   interface Appointment {
     id: string;
     createdAt: string;
     appointmentType: string;
     notes: string;
-    status: "completed" | "pending" | "canceled";
+    status: "pending" | "completed" | "canceled";
   }
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    return auth.onAuthStateChanged(async (user) => {
-      if (!user) return router.push("/login");
+    const fetchAppointments = async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        return router.push("/login");
+      }
 
       try {
-        if (new Date((await user.getIdTokenResult()).expirationTime).getTime() - Date.now() < 3600000) {
-          await user.getIdToken(true);
-        }
+        const userId = user.uid;
 
-        const fetchedAppointments = await fetchAppointments("all");
-        setAppointments(
-          fetchedAppointments
-            .map((appointment: any) => ({
-              id: appointment.id,
-              createdAt: appointment.createdAt ?? "", // Default to empty string
-              appointmentType: appointment.appointmentType ?? "Unknown",
-              notes: appointment.notes ?? "No notes",
-              status: (appointment.status ?? "pending") as Appointment["status"], // Explicitly cast status
-            }))
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        const appointmentsQuery = query(
+          collection(db, "appointments"),
+          or(
+            where("doctorId", "==", userId), // Match appointments by doctorId
+            where("patientId", "==", userId) // Match appointments by patientId
+          )
         );
-        
+
+        const querySnapshot = await getDocs(appointmentsQuery);
+        const fetchedAppointments = querySnapshot.docs
+          .filter((doc) => {
+            const data = doc.data();
+            return (
+              data.doctorId === userId || data.patientId === userId // Ensure only relevant appointments are included
+            );
+          })
+          .map((doc) => ({
+            id: doc.id,
+            createdAt: doc.data().createdAt || "",
+            appointmentType: doc.data().appointmentType || "Unknown",
+            notes: doc.data().notes || "No notes",
+            status: (doc.data().status || "pending") as Appointment["status"],
+          }));
+
+        setAppointments(
+          fetchedAppointments.sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+        );
       } catch (error) {
         console.error("Error loading appointments:", error);
       } finally {
         setIsLoading(false);
       }
-    });
-  }, []);
+    };
+
+    fetchAppointments();
+  }, [router]);
 
   if (isLoading) {
     return (
@@ -70,19 +90,23 @@ export default function AppointmentsPage() {
       <div className="overflow-x-auto">
         <table className="table w-full">
           <thead>
-            <tr>{["Date", "Type", "Notes", "Status", "Actions"].map((header) => <th key={header} className="text-left">{header}</th>)}</tr>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Notes</th>
+              <th>Status</th>
+            </tr>
           </thead>
           <tbody>
-            {appointments.map(({ id, createdAt, appointmentType, notes, status }) => (
-              <tr key={id} className="hover:bg-gray-100">
-                <td>{new Date(createdAt).toLocaleDateString()}</td>
-                <td>{appointmentType}</td>
-                <td>{notes}</td>
-                <td><div className={statusClasses[status]}>{status[0].toUpperCase() + status.slice(1)}</div></td>
+            {appointments.map((appointment) => (
+              <tr key={appointment.id}>
+                <td>{new Date(appointment.createdAt).toLocaleString()}</td>
+                <td>{appointment.appointmentType}</td>
+                <td>{appointment.notes}</td>
                 <td>
-                  <button className="btn btn-sm btn-primary" onClick={() => router.push(`/dashboard/appointments/video-session?appointmentId=${id}`)}>
-                    View
-                  </button>
+                  <span className={statusClasses[appointment.status]}>
+                    {appointment.status}
+                  </span>
                 </td>
               </tr>
             ))}

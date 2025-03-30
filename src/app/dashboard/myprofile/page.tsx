@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { db } from "../../../../config/firebaseconfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth } from "../../../../config/firebaseconfig"; // Correct import for auth
-import { sendPasswordResetEmail } from "firebase/auth"; // Import the reset method
+import { auth } from "../../../../config/firebaseconfig";
+import { onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
 import Loader from "@/app/components/Loader";
 
 export default function MyProfile() {
@@ -19,22 +19,27 @@ export default function MyProfile() {
     specializations: [""],
     education: [""],
   });
-  const [resetEmailSent, setResetEmailSent] = useState(false); // Track reset email status
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true);
-
+    const fetchUserData = async (userId: string) => {
       try {
-        const userId = auth.currentUser?.uid; // Get the current user's ID
-        if (!userId) throw new Error("User not authenticated");
-
         const userDoc = await getDoc(doc(db, "users", userId));
         if (userDoc.exists()) {
-          setFormData((prev) => ({ ...prev, ...userDoc.data() }));
-          setUserRole(userDoc.data().role); // Set the user role (doctor or patient)
+          const userData = userDoc.data();
+          setFormData((prev) => ({
+            ...prev,
+            ...userData,
+            specializations: userData.specializations || [""],
+            education: userData.education || [""],
+          }));
+          setUserRole(userData.role || "patient");
         } else {
-          throw new Error("User data not found");
+          console.warn("User document not found. Using default registration data.");
+          setFormData((prev) => ({
+            ...prev,
+            email: auth.currentUser?.email || "",
+          }));
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -43,7 +48,16 @@ export default function MyProfile() {
       }
     };
 
-    fetchUserData();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchUserData(user.uid);
+      } else {
+        console.error("User not authenticated");
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleInputChange = (
@@ -79,7 +93,7 @@ export default function MyProfile() {
       if (!email) throw new Error("Email is required to reset password");
 
       await sendPasswordResetEmail(auth, email);
-      setResetEmailSent(true); // Indicate that the reset email was sent
+      setResetEmailSent(true);
       alert("Password reset email sent. Please check your inbox.");
     } catch (error) {
       console.error("Error sending password reset email:", error);
@@ -91,10 +105,10 @@ export default function MyProfile() {
     e.preventDefault();
 
     try {
-      const userId = auth.currentUser?.uid; // Get the current user's ID
+      const userId = auth.currentUser?.uid;
       if (!userId) throw new Error("User not authenticated");
 
-      await setDoc(doc(db, "users", userId), formData);
+      await setDoc(doc(db, "users", userId), formData, { merge: true });
       alert("Profile updated successfully!");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -103,7 +117,7 @@ export default function MyProfile() {
   };
 
   if (loading) {
-    return <Loader />; // Show loader while loading
+    return <Loader />;
   }
 
   return (
@@ -160,7 +174,6 @@ export default function MyProfile() {
                 className="textarea textarea-bordered w-full"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-1">Specializations</label>
               {formData.specializations.map((spec, index) => (
@@ -186,34 +199,6 @@ export default function MyProfile() {
                 className="btn btn-primary btn-sm"
               >
                 Add Specialization
-              </button>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Education</label>
-              {formData.education.map((edu, index) => (
-                <div key={index} className="flex items-center space-x-2 mb-2">
-                  <input
-                    type="text"
-                    value={edu}
-                    onChange={(e) => handleInputChange(e, "education", index)}
-                    className="input input-bordered w-full"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveField("education", index)}
-                    className="btn btn-error btn-sm"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => handleAddField("education")}
-                className="btn btn-primary btn-sm"
-              >
-                Add Education
               </button>
             </div>
           </>

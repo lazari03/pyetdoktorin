@@ -60,7 +60,7 @@ export default function Dashboard() {
     <div className="container mx-auto">
       {profileIncomplete && (
         <div className="alert alert-warning mb-6">
-          <span>Your profile is incomplete. Please complete your profile to access all features.</span>
+          <span>Your profile is incomplete. Please complete your profile</span>
         </div>
       )}
       <div className="content">
@@ -76,7 +76,6 @@ export default function Dashboard() {
         {/* Only show doctor search widget for patients */}
         {userRole !== 'doctor' && (
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">Find a Doctor</h2>
             <DoctorSearchWidget />
           </div>
         )}
