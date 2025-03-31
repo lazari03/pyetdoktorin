@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import DoctorSearchWidget from '../components/DoctorSearchWidget';
+import DashboardNotifications from '../components/DashboardNotifications';
 import { isAuthenticated } from '../services/authService';
 import { fetchAppointments } from '../services/appointmentService';
 import { db } from '../../../config/firebaseconfig';
@@ -11,6 +12,7 @@ export default function Dashboard() {
   const [userRole, setUserRole] = useState('');
   const [totalAppointments, setTotalAppointments] = useState(0);
   const [profileIncomplete, setProfileIncomplete] = useState(false); // State for incomplete profile
+  const doctorId = 'doctor-id-placeholder'; // Replace with actual doctor ID from auth context or props
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -124,6 +126,8 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+
+            <DashboardNotifications doctorId={doctorId} />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mt-6">

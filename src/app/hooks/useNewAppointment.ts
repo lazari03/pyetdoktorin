@@ -80,6 +80,16 @@ export default function useNewAppointment() {
         status: 'pending',
         createdAt: new Date().toISOString(),
       });
+
+      // Send notification to the doctor
+      await setDoc(doc(db, 'notifications', `${selectedDoctor.id}_${appointmentId}`), {
+        doctorId: selectedDoctor.id,
+        message: `New appointment from ${userId}`,
+        appointmentId,
+        status: 'unread',
+        createdAt: new Date().toISOString(),
+      });
+
       alert('Appointment scheduled successfully!');
       router.push('/dashboard/');
     } catch (error) {
@@ -87,6 +97,20 @@ export default function useNewAppointment() {
       alert('Failed to schedule appointment.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateAppointmentStatus = async (appointmentId: string, status: 'accepted' | 'rejected') => {
+    try {
+      await setDoc(
+        doc(db, 'appointments', appointmentId),
+        { status },
+        { merge: true } // Merge to update only the status field
+      );
+      alert(`Appointment status updated to ${status}.`);
+    } catch (error) {
+      console.error(`Error updating appointment status to ${status}:`, error);
+      alert('Failed to update appointment status.');
     }
   };
 
@@ -104,5 +128,6 @@ export default function useNewAppointment() {
     loading,
     availableTimes,
     handleSubmit,
+    updateAppointmentStatus, // Expose the new function
   };
 }
