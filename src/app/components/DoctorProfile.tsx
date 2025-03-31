@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useDoctorProfile } from '../hooks/useDoctorProfile';
 import AppointmentModal from './AppointmentModal';
@@ -13,6 +13,10 @@ export default function DoctorProfile({ id }: DoctorProfileProps) {
   const { doctor, loading, error } = useDoctorProfile(id);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const handleRequestAppointment = useCallback(() => {
+    setIsModalOpen(true);
+  }, []);
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -20,17 +24,14 @@ export default function DoctorProfile({ id }: DoctorProfileProps) {
     <div className="w-full max-w-4xl mx-auto p-3 md:p-6">
       <div className="card bg-base-100 shadow-xl overflow-hidden flex flex-col md:flex-row">
         <DoctorImage name={doctor?.name} surname={doctor?.surname} />
-        <DoctorDetails doctor={doctor} onRequestAppointment={() => setIsModalOpen(true)} />
+        <DoctorDetails doctor={doctor} onRequestAppointment={handleRequestAppointment} />
       </div>
 
       {isModalOpen && doctor && (
         <AppointmentModal
-          doctor={{
-            id: Number(doctor.id),
-            name: doctor.name,
-            expertise: doctor.expertise?.join(', ') || 'No expertise listed',
-          }}
+          isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+          doctor={{ id: doctor.id, name: doctor.name }} // Pass doctor details
         />
       )}
     </div>
