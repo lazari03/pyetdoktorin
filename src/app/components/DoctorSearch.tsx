@@ -2,53 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchDoctors } from '../services/doctorService';
+import { fetchDoctors, Doctor } from '../services/doctorService'; // Import Doctor type
 import Image from 'next/image';
-
-interface Doctor {
-  id: string;
-  name: string;
-  surname?: string;
-  specializations?: string[];
-  image?: string;
-}
 
 export default function DoctorSearch() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
+  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]); // Use Doctor type
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
+    const delayDebounceFn = setTimeout(async () => {
       if (searchTerm.length >= 3) {
-        fetchDoctorsData(searchTerm);
+        setLoading(true);
+        setError('');
+        try {
+          const doctors = await fetchDoctors(searchTerm.trim());
+          setFilteredDoctors(doctors);
+        } catch (err) {
+          console.error('Error fetching doctors:', err);
+          setError('Failed to fetch doctors. Please try again.');
+        } finally {
+          setLoading(false);
+        }
       } else {
-        setFilteredDoctors([]); // Clear results if search term is too short
+        setFilteredDoctors([]);
       }
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
-
-  const fetchDoctorsData = async (term: string) => {
-    setLoading(true);
-    setError('');
-    try {
-      const doctors = await fetchDoctors(term.trim());
-      setFilteredDoctors(doctors);
-    } catch (err) {
-      console.error('Error fetching doctors:', err);
-      setError('Failed to fetch doctors. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDoctorClick = (firebaseId: string) => {
-    router.push(`/dashboard/doctor/${firebaseId}`);
-  };
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -60,7 +44,7 @@ export default function DoctorSearch() {
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
-            setError(''); // Clear error when user starts typing
+            setError('');
           }}
         />
       </div>
@@ -74,7 +58,7 @@ export default function DoctorSearch() {
             <div
               key={doctor.id}
               className="card card-side bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer"
-              onClick={() => handleDoctorClick(doctor.id)}
+              onClick={() => router.push(`/dashboard/doctor/${doctor.id}`)}
             >
               <figure className="p-4">
                 <Image

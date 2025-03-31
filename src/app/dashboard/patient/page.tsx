@@ -1,15 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useAppointments } from "../../hooks/useAppointments";
+import { usePatientAppointments } from "../../hooks/usePatientAppointments";
 
-export default function AppointmentsPage() {
-  const router = useRouter();
-  const { appointments, isLoading, error } = useAppointments();
+export default function PatientDashboard() {
+  const { appointments, isLoading, error } = usePatientAppointments();
 
   if (error) {
     console.warn(error);
-    return router.push("/login");
+    return <div>Error loading appointments.</div>;
   }
 
   if (isLoading) {
@@ -21,23 +19,16 @@ export default function AppointmentsPage() {
     );
   }
 
-  const statusClasses = {
-    completed: "badge badge-success",
-    pending: "badge badge-warning",
-    canceled: "badge badge-error",
-  };
-
   return (
     <div className="card bg-base-100 shadow-xl p-6">
-      <h1 className="card-title mb-4">Appointment History</h1>
+      <h1 className="card-title mb-4">My Appointments</h1>
       <div className="overflow-x-auto">
         <table className="table w-full">
           <thead>
             <tr>
               <th>Date</th>
               <th>Type</th>
-              <th>Patient Name</th>
-              <th>Notes</th>
+              <th>Doctor Name</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -46,10 +37,9 @@ export default function AppointmentsPage() {
               <tr key={appointment.id}>
                 <td>{new Date(appointment.createdAt).toLocaleString()}</td>
                 <td>{appointment.appointmentType}</td>
-                <td>{appointment.patientName || "Unknown"}</td>
-                <td>{appointment.notes}</td>
+                <td>{appointment.doctorName}</td> {/* Display doctor's name */}
                 <td>
-                  <span className={statusClasses[appointment.status]}>
+                  <span className={`badge ${appointment.status}`}>
                     {appointment.status}
                   </span>
                 </td>

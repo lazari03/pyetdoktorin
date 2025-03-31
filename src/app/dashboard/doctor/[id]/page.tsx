@@ -1,9 +1,8 @@
-import DoctorProfile from "../../../components/DoctorProfile";
+import DoctorProfile from '../../../components/DoctorProfile';
 
-// Make the component async to properly handle params
 export default async function DoctorPage({ params }: { params: { id: string } }) {
-  // Ensure the id is properly processed before passing to the component
-  const doctorId = params.id;
-  
+  // Ensure params is awaited before accessing its properties
+  const { id: doctorId } = await Promise.resolve(params);
+
   return <DoctorProfile id={doctorId} />;
 }

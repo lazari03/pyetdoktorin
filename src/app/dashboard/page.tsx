@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DoctorSearchWidget from '@/app/components/DoctorSearchWidget';
+import DoctorSearchWidget from '../components/DoctorSearchWidget';
 import { isAuthenticated } from '../services/authService';
 import { fetchAppointments } from '../services/appointmentService';
 import { db } from '../../../config/firebaseconfig';
@@ -31,6 +31,17 @@ export default function Dashboard() {
                 const isIncomplete = requiredFields.some((field) => !userData[field]);
                 setProfileIncomplete(isIncomplete);
               }
+
+              // Fetch total appointments if the user is a doctor
+              if (storedRole === 'doctor') {
+                fetchAppointments("all")
+                  .then((appointments) => {
+                    setTotalAppointments(appointments.length); // Set the total number of appointments
+                  })
+                  .catch((error) => {
+                    console.error("Error fetching appointments:", error);
+                  });
+              }
             } catch (error) {
               console.error('Error fetching user profile:', error);
             }
@@ -42,18 +53,6 @@ export default function Dashboard() {
     };
 
     fetchUserProfile();
-
-    // Fetch total appointments if the user is a doctor
-    const storedRole = localStorage.getItem('userRole');
-    if (storedRole === 'doctor') {
-      fetchAppointments("all")
-        .then((appointments) => {
-          setTotalAppointments(appointments.length); // Set the total number of appointments
-        })
-        .catch((error) => {
-          console.error("Error fetching appointments:", error);
-        });
-    }
   }, []);
 
   return (

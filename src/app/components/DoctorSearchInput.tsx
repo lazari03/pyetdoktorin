@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../config/firebaseconfig';
-import { useRouter } from 'next/navigation';
 
 interface DoctorSearchInputProps {
-  onSelect: (doctorId: string) => void;
+  onSelect: (doctor: { id: string; name: string }) => void;
 }
 
 export default function DoctorSearchInput({ onSelect }: DoctorSearchInputProps) {
@@ -14,7 +13,6 @@ export default function DoctorSearchInput({ onSelect }: DoctorSearchInputProps) 
   const [filteredDoctors, setFilteredDoctors] = useState<{ id: string; name?: string; expertise?: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -56,6 +54,12 @@ export default function DoctorSearchInput({ onSelect }: DoctorSearchInputProps) 
     }
   };
 
+  const handleDoctorClick = (doctor: { id: string; name: string }) => {
+    onSelect(doctor); // Trigger the parent component's callback
+    setSearchTerm(doctor.name);
+    setIsSearching(false);
+  };
+
   return (
     <div className="relative">
       <input
@@ -79,11 +83,7 @@ export default function DoctorSearchInput({ onSelect }: DoctorSearchInputProps) 
                 <li
                   key={doctor.id}
                   className="p-2 hover:bg-base-200 cursor-pointer"
-                  onClick={() => {
-                    setSearchTerm(doctor.name || '');
-                    setIsSearching(false);
-                    router.push(`/dashboard/doctor/${doctor.id}`);
-                  }}
+                  onClick={() => handleDoctorClick({ id: doctor.id, name: doctor.name || 'Unknown' })}
                 >
                   <div className="font-medium">{doctor.name}</div>
                   <div className="text-sm text-gray-500">

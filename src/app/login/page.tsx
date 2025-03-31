@@ -29,28 +29,23 @@ function LoginPageContent() {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
-
+  
     try {
       if (!navigator.onLine) {
         throw new Error('You are offline. Please check your internet connection and try again.');
       }
-
+  
       const { user, role } = await login(email, password);
       console.log('Login success - User:', user.email, 'Role:', role);
-
-      // Debugging: Log all cookies to verify if 'auth-token' is set
-      console.log('Current cookies:', document.cookie);
-
-      // Check that cookies were set properly
+  
+      // Verify if the 'auth-token' cookie is set
       if (!document.cookie.includes('auth-token=')) {
-        console.warn('Auth token cookie was not set properly');
+        console.error('Auth token cookie was not set');
         setErrorMsg('Warning: Authentication token not set properly. Try again or contact support.');
         setLoading(false);
         return;
       }
-
-      // Force a hard navigation instead of client-side navigation
-      // This ensures the page fully reloads and middleware re-runs
+  
       window.location.href = fromPath;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
