@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '../../../config/firebaseconfig';
 import { doc, setDoc } from 'firebase/firestore';
-import { isAuthenticated } from '../services/authService';
+import { isAuthenticated, fetchUserDetails } from '../services/authService'; // Import fetchUserDetails
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 
 export default function useNewAppointment() {
@@ -11,9 +11,22 @@ export default function useNewAppointment() {
   const [preferredDate, setPreferredDate] = useState<string>('');
   const [preferredTime, setPreferredTime] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [patientName, setPatientName] = useState<string>(''); // State for patient name
   const [loading, setLoading] = useState(false);
   const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>([]);
   const router = useRouter();
+
+  useEffect(() => {
+    // Automatically fetch the patient name when the hook is initialized
+    isAuthenticated(async (authState) => {
+      if (authState.userId) {
+        const userDetails = await fetchUserDetails(authState.userId); // Fetch user details
+        if (userDetails?.name) {
+          setPatientName(userDetails.name); // Set the patient name from user details
+        }
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (preferredDate) {
@@ -52,16 +65,19 @@ export default function useNewAppointment() {
     });
 
     if (error) {
+      console.error('Authentication error:', error);
       alert(error);
       return;
     }
 
     if (!userId) {
+      console.error('User ID is null. Authentication failed.');
       alert('Failed to fetch patient ID. Please try again.');
       return;
     }
 
     if (!selectedDoctor) {
+      console.error('No doctor selected.');
       alert('Please select a doctor.');
       return;
     }
@@ -69,8 +85,9 @@ export default function useNewAppointment() {
     setLoading(true);
     try {
       const appointmentId = `${userId}_${selectedDoctor.id}_${Date.now()}`;
-      await setDoc(doc(db, 'appointments', appointmentId), {
-        patientId: userId, // Ensure patient ID is passed here
+      const appointmentData = {
+        patientId: userId,
+        patientName, // Ensure patient name is included
         doctorId: selectedDoctor.id,
         doctorName: selectedDoctor.name,
         appointmentType,
@@ -79,38 +96,41 @@ export default function useNewAppointment() {
         notes,
         status: 'pending',
         createdAt: new Date().toISOString(),
-      });
+      };
+
+      console.log('Attempting to create appointment with data:', appointmentData);
+
+      await setDoc(doc(db, 'appointments', appointmentId), appointmentData);
 
       // Send notification to the doctor
-      await setDoc(doc(db, 'notifications', `${selectedDoctor.id}_${appointmentId}`), {
+      const notificationData = {
         doctorId: selectedDoctor.id,
-        message: `New appointment from ${userId}`,
+        message: `New appointment from ${patientName}`, // Include patient name in the notification
         appointmentId,
         status: 'unread',
         createdAt: new Date().toISOString(),
-      });
+      };
+
+      console.log('Attempting to create notification with data:', notificationData);
+
+      await setDoc(doc(db, 'notifications', `${selectedDoctor.id}_${appointmentId}`), notificationData);
 
       alert('Appointment scheduled successfully!');
       router.push('/dashboard/');
-    } catch (error) {
-      console.error('Error scheduling appointment:', error);
-      alert('Failed to schedule appointment.');
+    } catch (error: any) {
+      if (error.code === 'permission-denied') {
+        console.error('Permission error:', error);
+        alert('You do not have permission to perform this action. Please contact support.');
+      } else if (error.code === 'unavailable') {
+        console.error('Network error:', error);
+        alert('Network issue detected. Please try again later.');
+      } else {
+        console.error('Unexpected error:', error);
+        // Avoid showing an alert for non-critical errors
+        console.log('Non-critical error occurred:', error.message || error);
+      }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const updateAppointmentStatus = async (appointmentId: string, status: 'accepted' | 'rejected') => {
-    try {
-      await setDoc(
-        doc(db, 'appointments', appointmentId),
-        { status },
-        { merge: true } // Merge to update only the status field
-      );
-      alert(`Appointment status updated to ${status}.`);
-    } catch (error) {
-      console.error(`Error updating appointment status to ${status}:`, error);
-      alert('Failed to update appointment status.');
     }
   };
 
@@ -125,9 +145,9 @@ export default function useNewAppointment() {
     setPreferredTime,
     notes,
     setNotes,
+    patientName, // Expose patient name state
     loading,
     availableTimes,
     handleSubmit,
-    updateAppointmentStatus, // Expose the new function
   };
 }

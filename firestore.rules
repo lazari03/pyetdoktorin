@@ -13,7 +13,7 @@ service cloud.firestore {
 
     // Rules for the 'appointments' collection
     match /appointments/{appointmentId} {
-      // Allow creation of appointments if the user is authenticated
+      // Allow creation of appointments if the user is authenticated and the patientId matches the authenticated user
       allow create: if request.auth != null;
 
       // Allow reading appointments if the authenticated user is either the patient or the doctor

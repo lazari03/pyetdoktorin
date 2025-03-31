@@ -70,3 +70,19 @@ export const logout = async () => {
         throw new Error('Failed to sign out');
     }
 };
+
+// Fetch user details function
+export async function fetchUserDetails(userId: string) {
+    try {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+            return userDoc.data(); // Return user details
+        } else {
+            console.error('User not found');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        return null;
+    }
+}

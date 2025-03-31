@@ -1,17 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAppointments } from "../../hooks/useAppointments";
 import { useEffect, useState } from "react";
 import { auth, db } from "../../../../config/firebaseconfig";
-import { doc, getDoc, collection } from "firebase/firestore";
+import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
+import { useAppointments } from "../../hooks/useAppointments";
 import Link from "next/link";
 
-export default function AppointmentsPage() {
+export default function NotificationsPage() {
   const router = useRouter();
   const { appointments, isLoading, error } = useAppointments();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [appointmentDetails, setAppointmentDetails] = useState<
+    { id: string; patientName: string | null; doctorName: string | null }[]
+  >([]);
+  const [pendingAppointments, setPendingAppointments] = useState<
     { id: string; patientName: string | null; doctorName: string | null }[]
   >([]);
 
@@ -88,82 +91,89 @@ export default function AppointmentsPage() {
     }
   }, [appointments]);
 
+  useEffect(() => {
+    const fetchPendingAppointments = async () => {
+      if (userRole === "doctor") {
+        const pending = appointmentDetails.filter(
+          (appointment) => appointments.find((a) => a.id === appointment.id)?.status === "pending"
+        );
+        setPendingAppointments(pending);
+      }
+    };
+
+    if (userRole && appointmentDetails.length > 0) {
+      fetchPendingAppointments();
+    }
+  }, [userRole, appointmentDetails]);
+
+  const handleAppointmentAction = async (appointmentId: string, action: "accepted" | "rejected") => {
+    try {
+      const appointmentRef = doc(collection(db, "appointments"), appointmentId);
+      await updateDoc(appointmentRef, { status: action });
+      setPendingAppointments((prev) =>
+        prev.filter((appointment) => appointment.id !== appointmentId)
+      );
+    } catch (err) {
+      console.error(`Error updating appointment ${appointmentId}:`, err);
+    }
+  };
+
   if (error) {
     console.warn(error);
     return router.push("/dashboard");
   }
 
-  if (isLoading || !userRole || appointmentDetails.length === 0) {
+  if (isLoading || !userRole) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <span className="loading loading-spinner loading-lg"></span>
-        <span className="ml-2">Loading appointments...</span>
+        <span className="ml-2">Loading notifications...</span>
       </div>
     );
   }
 
-  const statusClasses = {
-    completed: "badge badge-success",
-    pending: "badge badge-warning",
-    canceled: "badge badge-error",
-  };
+  if (pendingAppointments.length === 0) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen text-gray-500">
+        <p className="mb-4">No new notifications</p>
+        <Link href="/dashboard">
+          <button className="btn btn-primary">Back to Home</button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="card bg-base-100 shadow-xl p-6">
-      <h1 className="card-title mb-4">Dashboard</h1>
-      {userRole === "doctor" && (
-        <div className="mb-6">
-          <div className="card bg-base-200 shadow-md p-4">
-            <h2 className="text-lg font-bold mb-2">Notifications</h2>
-            <p className="mb-2">
-              You have pending appointment requests. Manage them in the notifications section.
-            </p>
-            <Link href="/dashboard/notifications">
-              <button className="btn btn-primary btn-sm">View Notifications</button>
-            </Link>
-          </div>
-        </div>
-      )}
-      <h2 className="card-title mb-4">Appointment History</h2>
+      <h1 className="card-title mb-4">Pending Appointments</h1>
       <div className="overflow-x-auto">
         <table className="table w-full">
           <thead>
             <tr>
-              <th>Date & Time</th>
-              <th>Type</th>
-              <th>Name</th>
-              <th>Notes</th>
-              <th>Status</th>
+              <th>Patient Name</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {appointments.map((appointment) => {
-              const details = appointmentDetails.find((d) => d.id === appointment.id);
-
-              return (
-                <tr key={appointment.id}>
-                  <td>
-                    {appointment.preferredDate && appointment.preferredTime
-                      ? `${appointment.preferredDate} at ${appointment.preferredTime}`
-                      : "N/A"}
-                  </td>
-                  <td>{appointment.appointmentType}</td>
-                  <td>
-                    {details
-                      ? userRole === "doctor"
-                        ? details.patientName || "Unknown"
-                        : details.doctorName || "Unknown"
-                      : "Loading..."}
-                  </td>
-                  <td>{appointment.notes}</td>
-                  <td>
-                    <span className={statusClasses[appointment.status]}>
-                      {appointment.status}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
+            {pendingAppointments.map((appointment) => (
+              <tr key={appointment.id}>
+                <td>{appointment.patientName || "Unknown"}</td>
+                <td>
+                  <button
+                    className="btn btn-success btn-sm mr-2"
+                    onClick={() => handleAppointmentAction(appointment.id, "accepted")}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    className="btn btn-error btn-sm"
+                    onClick={() => handleAppointmentAction(appointment.id, "rejected")}
+                  >
+                    Reject
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

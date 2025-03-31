@@ -10,6 +10,11 @@ interface Appointment {
   appointmentType: string;
   notes: string;
   status: "pending" | "completed" | "canceled";
+  preferredDate?: string;
+  preferredTime?: string;
+  doctorName?: string;
+  doctorId?: string;
+  patientId?: string;
 }
 
 export async function fetchDoctorId(doctorId: string) {
@@ -52,6 +57,11 @@ export function useAppointments() {
             appointmentType: data.appointmentType || "",
             notes: data.notes || "",
             status: data.status || "pending",
+            preferredDate: data.preferredDate || undefined,
+            preferredTime: data.preferredTime || undefined,
+            doctorName: data.doctorName || "N/A",
+            doctorId: data.doctorId || "",
+            patientId: data.patientId || "",
           } as Appointment;
         });
 
