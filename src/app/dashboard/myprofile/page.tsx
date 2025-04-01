@@ -1,122 +1,23 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { db } from "../../../../config/firebaseconfig";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth } from "../../../../config/firebaseconfig";
-import { onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
+import { useMyProfile } from "../../hooks/useMyProfile";
 import Loader from "@/app/components/Loader";
 
 export default function MyProfile() {
-  const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    surname: "",
-    email: "",
-    phoneNumber: "",
-    about: "",
-    specializations: [""],
-    education: [""],
-  });
-  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const {
+    formData,
+    role,
+    resetEmailSent,
+    isFetching,
+    authLoading,
+    handleInputChange,
+    handleAddField,
+    handleRemoveField,
+    handlePasswordReset,
+    handleSubmit,
+  } = useMyProfile();
 
-  useEffect(() => {
-    const fetchUserData = async (userId: string) => {
-      try {
-        const userDoc = await getDoc(doc(db, "users", userId));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setFormData((prev) => ({
-            ...prev,
-            ...userData,
-            specializations: userData.specializations || [""],
-            education: userData.education || [""],
-          }));
-          setUserRole(userData.role || "patient");
-        } else {
-          console.warn("User document not found. Using default registration data.");
-          setFormData((prev) => ({
-            ...prev,
-            email: auth.currentUser?.email || "",
-          }));
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchUserData(user.uid);
-      } else {
-        console.error("User not authenticated");
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    field: keyof typeof formData,
-    index?: number
-  ) => {
-    if (index !== undefined) {
-      const updatedArray = [...(formData[field] as string[])];
-      updatedArray[index] = e.target.value;
-      setFormData((prev) => ({ ...prev, [field]: updatedArray }));
-    } else {
-      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
-    }
-  };
-
-  const handleAddField = (field: keyof typeof formData) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: [...(prev[field] as string[]), ""],
-    }));
-  };
-
-  const handleRemoveField = (field: keyof typeof formData, index: number) => {
-    const updatedArray = [...(formData[field] as string[])];
-    updatedArray.splice(index, 1);
-    setFormData((prev) => ({ ...prev, [field]: updatedArray }));
-  };
-
-  const handlePasswordReset = async () => {
-    try {
-      const email = formData.email;
-      if (!email) throw new Error("Email is required to reset password");
-
-      await sendPasswordResetEmail(auth, email);
-      setResetEmailSent(true);
-      alert("Password reset email sent. Please check your inbox.");
-    } catch (error) {
-      console.error("Error sending password reset email:", error);
-      alert("Failed to send password reset email. Please try again.");
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const userId = auth.currentUser?.uid;
-      if (!userId) throw new Error("User not authenticated");
-
-      await setDoc(doc(db, "users", userId), formData, { merge: true });
-      alert("Profile updated successfully!");
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("Failed to update profile!");
-    }
-  };
-
-  if (loading) {
+  if (authLoading || isFetching) {
     return <Loader />;
   }
 
@@ -163,7 +64,7 @@ export default function MyProfile() {
           </div>
         </div>
 
-        {userRole === "doctor" && (
+        {role === "doctor" && (
           <>
             <div>
               <h2 className="text-xl font-semibold mb-4">Doctor Profile</h2>

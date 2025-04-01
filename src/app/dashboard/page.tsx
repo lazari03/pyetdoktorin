@@ -1,61 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext'; // Import the AuthContext
 import DoctorSearchWidget from '../components/DoctorSearchWidget';
 import DashboardNotifications from '../components/DashboardNotifications';
-import { isAuthenticated } from '../services/authService';
-import { fetchAppointments } from '../services/appointmentService';
-import { db } from '../../../config/firebaseconfig';
-import { doc, getDoc } from 'firebase/firestore';
 
 export default function Dashboard() {
-  const [userRole, setUserRole] = useState('');
-  const [totalAppointments, setTotalAppointments] = useState(0);
-  const [profileIncomplete, setProfileIncomplete] = useState(false); // State for incomplete profile
-  const doctorId = 'doctor-id-placeholder'; // Replace with actual doctor ID from auth context or props
+  const { user, role, loading } = useAuth(); // Access user, role, and loading from AuthContext
+  const doctorId = user?.id || 'doctor-id-placeholder'; // Use user ID from context or fallback
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      const storedRole = localStorage.getItem('userRole');
-      setUserRole(storedRole || 'patient');
+  if (loading) {
+    return <p>Loading...</p>; // Show a loading state while fetching authentication data
+  }
 
-      if (storedRole) {
-        isAuthenticated(async (authState) => {
-          if (authState.userId) {
-            try {
-              const userDoc = await getDoc(doc(db, 'users', authState.userId));
-              if (userDoc.exists()) {
-                const userData = userDoc.data();
-                // Check if required fields are empty
-                const requiredFields = storedRole === 'doctor'
-                  ? ['name', 'surname', 'phoneNumber', 'about', 'specializations']
-                  : ['name', 'surname', 'phoneNumber'];
-                const isIncomplete = requiredFields.some((field) => !userData[field]);
-                setProfileIncomplete(isIncomplete);
-              }
-
-              // Fetch total appointments if the user is a doctor
-              if (storedRole === 'doctor') {
-                fetchAppointments("all")
-                  .then((appointments) => {
-                    setTotalAppointments(appointments.length); // Set the total number of appointments
-                  })
-                  .catch((error) => {
-                    console.error("Error fetching appointments:", error);
-                  });
-              }
-            } catch (error) {
-              console.error('Error fetching user profile:', error);
-            }
-          } else {
-            console.error('User is not authenticated.');
-          }
-        });
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
+  const profileIncomplete = role === 'doctor'
+    ? !user?.name || !user?.surname || !user?.phoneNumber || !user?.about || !user?.specializations
+    : !user?.name || !user?.surname || !user?.phoneNumber;
 
   return (
     <div className="container mx-auto">
@@ -66,28 +25,28 @@ export default function Dashboard() {
       )}
       <div className="content">
         <h1 className="text-2xl font-bold mb-6">
-          Welcome to your {userRole} dashboard!
+          Welcome to your {role || 'user'} dashboard!
         </h1>
 
         <p className="mt-2 mb-6">
-          You are currently logged in as a {userRole}.
+          You are currently logged in as a {role || 'user'}.
           Use the sidebar menu to navigate to different sections.
         </p>
 
         {/* Only show doctor search widget for patients */}
-        {userRole !== 'doctor' && (
+        {role !== 'doctor' && (
           <div className="mb-6">
             <DoctorSearchWidget />
           </div>
         )}
 
-        {userRole === 'doctor' ? (
+        {role === 'doctor' ? (
           <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
             {/* Doctor Dashboard Content */}
             <div className="stats shadow">
               <div className="stat">
                 <div className="stat-title">Total Appointments</div>
-                <div className="stat-value">{totalAppointments}</div> {/* Display total appointments */}
+                <div className="stat-value">10</div> {/* Replace with dynamic data if needed */}
                 <div className="stat-desc">Appointments completed</div>
               </div>
 
@@ -127,7 +86,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <DashboardNotifications doctorId={doctorId} />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mt-6">

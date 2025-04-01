@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "../context/AuthContext"; // Import AuthProvider
 
 export const metadata: Metadata = {
   title: "Portokalle",
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light">
       <body className="bg-base-100 min-h-screen">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
