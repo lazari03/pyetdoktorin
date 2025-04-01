@@ -15,6 +15,7 @@ interface Appointment {
   doctorName?: string;
   doctorId?: string;
   patientId?: string;
+  isPaid?: boolean;
 }
 
 export async function fetchDoctorId(doctorId: string) {
@@ -62,6 +63,7 @@ export function useAppointments() {
             doctorName: data.doctorName || "N/A",
             doctorId: data.doctorId || "",
             patientId: data.patientId || "",
+            isPaid: data.isPaid || false, // Fetch and store isPaid status
           } as Appointment;
         });
 

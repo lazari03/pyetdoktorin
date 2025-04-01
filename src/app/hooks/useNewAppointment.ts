@@ -53,37 +53,33 @@ export default function useNewAppointment() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let userId: string | null = null;
-    let error: string | null = null;
-
-    await new Promise<void>((resolve) => {
-      isAuthenticated((authState) => {
-        userId = authState.userId; // Fetch and set the patient ID
-        error = authState.error;
-        resolve();
-      });
-    });
-
-    if (error) {
-      console.error('Authentication error:', error);
-      alert(error);
-      return;
-    }
-
-    if (!userId) {
-      console.error('User ID is null. Authentication failed.');
-      alert('Failed to fetch patient ID. Please try again.');
-      return;
-    }
-
+  
+    // Validate required fields
     if (!selectedDoctor) {
-      console.error('No doctor selected.');
       alert('Please select a doctor.');
       return;
     }
-
+  
+    if (!preferredDate || !preferredTime) {
+      alert('Please select a date and time.');
+      return;
+    }
+  
     setLoading(true);
+  
     try {
+      // Fetch authenticated user ID
+      const userId = await new Promise<string>((resolve, reject) => {
+        isAuthenticated((authState) => {
+          if (authState.userId) {
+            resolve(authState.userId);
+          } else {
+            reject(authState.error || 'User is not authenticated.');
+          }
+        });
+      });
+  
+      // Construct appointment data
       const appointmentId = `${userId}_${selectedDoctor.id}_${Date.now()}`;
       const appointmentData = {
         patientId: userId,
@@ -95,14 +91,16 @@ export default function useNewAppointment() {
         preferredTime,
         notes,
         status: 'pending',
+        isPaid: false, // Add isPaid field with default value
         createdAt: new Date().toISOString(),
       };
-
+  
       console.log('Attempting to create appointment with data:', appointmentData);
-
+  
+      // Save appointment to Firestore
       await setDoc(doc(db, 'appointments', appointmentId), appointmentData);
-
-      // Send notification to the doctor
+  
+      // Construct notification data
       const notificationData = {
         doctorId: selectedDoctor.id,
         message: `New appointment from ${patientName}`, // Include patient name in the notification
@@ -110,24 +108,23 @@ export default function useNewAppointment() {
         status: 'unread',
         createdAt: new Date().toISOString(),
       };
-
+  
       console.log('Attempting to create notification with data:', notificationData);
-
+  
+      // Save notification to Firestore
       await setDoc(doc(db, 'notifications', `${selectedDoctor.id}_${appointmentId}`), notificationData);
-
+  
       alert('Appointment scheduled successfully!');
       router.push('/dashboard/');
     } catch (error: any) {
+      console.error('Error creating appointment:', error);
+  
       if (error.code === 'permission-denied') {
-        console.error('Permission error:', error);
         alert('You do not have permission to perform this action. Please contact support.');
       } else if (error.code === 'unavailable') {
-        console.error('Network error:', error);
         alert('Network issue detected. Please try again later.');
       } else {
-        console.error('Unexpected error:', error);
-        // Avoid showing an alert for non-critical errors
-        console.log('Non-critical error occurred:', error.message || error);
+        alert('An unexpected error occurred. Please try again.');
       }
     } finally {
       setLoading(false);

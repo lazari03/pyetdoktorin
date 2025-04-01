@@ -8,7 +8,7 @@ export const useAppointmentsPage = () => {
   const { user, role, loading: authLoading } = useAuth(); // Access AuthContext
   const { appointments, isLoading, error } = useAppointments(); // Access appointments
   const [appointmentDetails, setAppointmentDetails] = useState<
-    { id: string; patientName: string | null; doctorName: string | null }[]
+    { id: string; patientName: string | null; doctorName: string | null; isPaid: boolean }[]
   >([]);
 
   // Fetch appointment details
@@ -24,7 +24,7 @@ export const useAppointmentsPage = () => {
               throw new Error("Appointment not found");
             }
 
-            const { patientId, doctorId } = appointmentSnap.data();
+            const { patientId, doctorId, isPaid } = appointmentSnap.data();
 
             let patientName: string | null = null;
             let doctorName: string | null = null;
@@ -48,11 +48,12 @@ export const useAppointmentsPage = () => {
             return { 
               id: appointment.id, 
               patientName, 
-              doctorName 
+              doctorName, 
+              isPaid: isPaid ?? false // Ensure isPaid defaults to false if not present
             };
           } catch (err) {
             console.error(`Error fetching details for appointment ${appointment.id}:`, err);
-            return { id: appointment.id, patientName: null, doctorName: null };
+            return { id: appointment.id, patientName: null, doctorName: null, isPaid: false };
           }
         })
       );
