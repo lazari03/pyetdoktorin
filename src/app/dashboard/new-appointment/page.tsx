@@ -1,6 +1,6 @@
 'use client';
 
-import DoctorSearchInput from '../../components/DoctorSearchInput';
+import DoctorSearch from '../../components/DoctorSearch';
 import useNewAppointment from '../../hooks/useNewAppointment';
 
 export default function NewAppointmentPage() {
@@ -24,16 +24,9 @@ export default function NewAppointmentPage() {
     <div className="card bg-base-100 shadow-xl">
       <div className="card-body">
         <h2 className="card-title">New Appointment</h2>
-        <div>
-          <label className="label">
-            <span className="label-text">Select Doctor</span>
-          </label>
-          <DoctorSearchInput
-            onSelect={(doctor) => {
-              setSelectedDoctor(doctor);
-            }}
-          />
-        </div>
+        {!selectedDoctor && (
+          <DoctorSearch onDoctorSelect={(doctor) => setSelectedDoctor(doctor)} />
+        )}
 
         {selectedDoctor && (
           <div className="mt-6">

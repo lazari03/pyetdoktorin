@@ -1,15 +1,15 @@
 'use client';
 
-import { useAuth } from '../../context/AuthContext'; // Import the AuthContext
-import DoctorSearchWidget from '../components/DoctorSearchWidget';
+import { useAuth } from '../../context/AuthContext';
+import DoctorSearch from '../components/DoctorSearch';
 import DashboardNotifications from '../components/DashboardNotifications';
 
 export default function Dashboard() {
-  const { user, role, loading } = useAuth(); // Access user, role, and loading from AuthContext
-  const doctorId = user?.id || 'doctor-id-placeholder'; // Use user ID from context or fallback
+  const { user, role, loading } = useAuth();
+  const doctorId = user?.id || 'doctor-id-placeholder';
 
   if (loading) {
-    return <p>Loading...</p>; // Show a loading state while fetching authentication data
+    return <p>Loading...</p>;
   }
 
   const profileIncomplete = role === 'doctor'
@@ -33,10 +33,10 @@ export default function Dashboard() {
           Use the sidebar menu to navigate to different sections.
         </p>
 
-        {/* Only show doctor search widget for patients */}
+        {/* Only show doctor search for patients */}
         {role !== 'doctor' && (
           <div className="mb-6">
-            <DoctorSearchWidget />
+            <DoctorSearch />
           </div>
         )}
 

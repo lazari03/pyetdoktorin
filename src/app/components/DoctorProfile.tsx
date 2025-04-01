@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useDoctorProfile } from '../hooks/useDoctorProfile';
 import AppointmentModal from './AppointmentModal';
+import { useAuth } from '../../context/AuthContext'; // Import AuthContext
 
 interface DoctorProfileProps {
   id: string;
@@ -11,11 +12,17 @@ interface DoctorProfileProps {
 
 export default function DoctorProfile({ id }: DoctorProfileProps) {
   const { doctor, loading, error } = useDoctorProfile(id);
+  const { user, role } = useAuth(); // Access user and role from AuthContext
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleRequestAppointment = useCallback(() => {
+    if (!user) {
+      alert('You must be logged in to request an appointment.');
+      return;
+    }
+
     setIsModalOpen(true);
-  }, []);
+  }, [user]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
