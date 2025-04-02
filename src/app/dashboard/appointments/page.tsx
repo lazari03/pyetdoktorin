@@ -56,7 +56,7 @@ export default function AppointmentsPage() {
 
   const handleJoinCall = (appointmentId: string) => {
     console.log(`Join Call clicked for appointment ID: ${appointmentId}`);
-    // Add join call logic here
+    router.push(`/dashboard/appointments/video-session?appointmentId=${appointmentId}`);
   };
 
   const updateAppointmentStatus = async (appointmentId: string) => {
@@ -66,6 +66,16 @@ export default function AppointmentsPage() {
       console.log(`Appointment ${appointmentId} marked as paid.`);
     } catch (error) {
       console.error("Error updating appointment status:", error);
+    }
+  };
+
+  const endSession = async (appointmentId: string) => {
+    try {
+      const appointmentRef = doc(db, "appointments", appointmentId);
+      await updateDoc(appointmentRef, { sessionEnded: true });
+      console.log(`Session for appointment ${appointmentId} marked as ended.`);
+    } catch (error) {
+      console.error("Error updating session state:", error);
     }
   };
 
@@ -177,12 +187,18 @@ export default function AppointmentsPage() {
                   </td>
                   <td>
                     {appointment.isPaid ? (
-                      <button
-                        className="btn btn-primary btn-sm" // Same size as Pay Now button
-                        onClick={() => handleJoinCall(appointment.id)}
-                      >
-                        Join Call
-                      </button>
+                      appointment.sessionEnded ? ( // Check if the session has ended
+                        <button className="btn btn-disabled btn-sm" disabled>
+                          Session Ended
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => handleJoinCall(appointment.id)}
+                        >
+                          Join Call
+                        </button>
+                      )
                     ) : (
                       <button
                         className="btn btn-primary btn-sm"

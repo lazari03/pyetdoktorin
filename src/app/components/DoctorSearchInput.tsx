@@ -5,7 +5,7 @@ import { fetchDoctors, Doctor } from '../services/doctorService';
 import { useRouter } from 'next/navigation';
 
 interface DoctorSearchInputProps {
-  searchType: 'name' | 'specializations'; // Update type
+  searchType: 'name' | 'expertise'; // Update type
 }
 
 export default function DoctorSearchInput({ searchType }: DoctorSearchInputProps) {
@@ -33,7 +33,7 @@ export default function DoctorSearchInput({ searchType }: DoctorSearchInputProps
     setFilteredDoctors([]);
 
     try {
-      const doctors = await fetchDoctors(term); // Remove the second argument
+      const doctors = await fetchDoctors(term, searchType); // Pass searchType as the second argument
       setFilteredDoctors(doctors);
     } catch (err) {
       setError('Failed to fetch doctors. Please try again.');
@@ -69,7 +69,7 @@ export default function DoctorSearchInput({ searchType }: DoctorSearchInputProps
             >
               <div className="font-medium">{doctor.name}</div>
               <div className="text-sm text-gray-500">
-                {doctor.specializations?.join(', ') || 'No specializations'} {/* Display specializations */}
+                {doctor.expertise?.join(', ') || 'No expertise'} {/* Display expertise */}
               </div>
             </li>
           ))}
