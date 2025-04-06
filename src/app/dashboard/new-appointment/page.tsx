@@ -1,7 +1,7 @@
 'use client';
 
-import DoctorSearch from '../../components/DoctorSearch';
-import useNewAppointment from '../../hooks/useNewAppointment';
+import { useNewAppointmentStore } from '@/store/newAppointmentStore';
+import DoctorSearch from '@/app/components/DoctorSearch';
 
 export default function NewAppointmentPage() {
   const {
@@ -15,17 +15,30 @@ export default function NewAppointmentPage() {
     setPreferredTime,
     notes,
     setNotes,
-    loading,
-    availableTimes,
-    handleSubmit,
-  } = useNewAppointment();
+    resetAppointment,
+  } = useNewAppointmentStore();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Submitting appointment:', {
+      selectedDoctor,
+      appointmentType,
+      preferredDate,
+      preferredTime,
+      notes,
+    });
+    resetAppointment();
+  };
 
   return (
     <div className="card bg-base-100 shadow-xl">
       <div className="card-body">
         <h2 className="card-title">New Appointment</h2>
         {!selectedDoctor && (
-          <DoctorSearch onDoctorSelect={(doctor) => setSelectedDoctor(doctor)} />
+          <div className="mt-6">
+            <h3 className="font-bold text-lg">Search and Select a Doctor</h3>
+            <DoctorSearch onDoctorSelect={(doctor) => setSelectedDoctor(doctor)} />
+          </div>
         )}
 
         {selectedDoctor && (
@@ -64,20 +77,12 @@ export default function NewAppointmentPage() {
                 <label className="label">
                   <span className="label-text">Preferred Time</span>
                 </label>
-                <select
-                  className="select select-bordered w-full"
+                <input
+                  type="time"
+                  className="input input-bordered w-full"
                   value={preferredTime}
                   onChange={(e) => setPreferredTime(e.target.value)}
-                >
-                  <option value="" disabled>
-                    Select a time
-                  </option>
-                  {availableTimes.map(({ time, disabled }) => (
-                    <option key={time} value={time} disabled={disabled}>
-                      {time}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
@@ -93,18 +98,10 @@ export default function NewAppointmentPage() {
               </div>
 
               <div className="flex gap-4">
-                <button
-                  type="submit"
-                  className={`btn btn-primary ${loading ? 'loading' : ''}`}
-                  disabled={loading}
-                >
+                <button type="submit" className="btn btn-primary">
                   Confirm Booking
                 </button>
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => setSelectedDoctor(null)}
-                >
+                <button type="button" className="btn" onClick={resetAppointment}>
                   Cancel
                 </button>
               </div>
