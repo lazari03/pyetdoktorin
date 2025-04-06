@@ -2,13 +2,7 @@ import { create } from 'zustand';
 import { useEffect } from 'react';
 import { getDocs, collection, query, where } from 'firebase/firestore';
 import { db } from '../config/firebaseconfig';
-
-interface Appointment {
-  id: string;
-  date: string;
-  doctor: string;
-  status: string;
-}
+import { Appointment } from '../models/Appointment'; // Import Appointment model
 
 interface AppointmentState {
   appointments: Appointment[];

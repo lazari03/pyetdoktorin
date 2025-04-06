@@ -32,6 +32,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const auth = getAuth();
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log('Auth state changed:', currentUser); // Debugging log
+
       if (currentUser) {
         setIsAuthenticated(true);
         setUid(currentUser.uid); // Set `uid`

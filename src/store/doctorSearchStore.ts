@@ -1,11 +1,6 @@
 import { create } from 'zustand';
 import { fetchDoctors } from '../app/services/doctorService';
-
-interface Doctor {
-  id: string;
-  name: string;
-  expertise?: string[];
-}
+import { Doctor } from '../models/Doctor'; // Import Doctor model
 
 interface DoctorSearchState {
   searchTerm: string;
