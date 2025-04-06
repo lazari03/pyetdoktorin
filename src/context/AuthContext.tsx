@@ -7,6 +7,7 @@ import { db } from '../config/firebaseconfig'; // Import your Firestore config
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  uid: string | null; // Add `uid` property
   user: any | null;
   role: string | null;
   loading: boolean;
@@ -14,6 +15,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
+  uid: null, 
   user: null,
   role: null,
   loading: true,
@@ -21,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [uid, setUid] = useState<string | null>(null); // Add state for `uid`
   const [user, setUser] = useState<any | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setIsAuthenticated(true);
+        setUid(currentUser.uid); // Set `uid`
         setUser(currentUser);
 
         try {
@@ -49,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } else {
         setIsAuthenticated(false);
+        setUid(null); // Reset `uid`
         setUser(null);
         setRole(null);
       }
@@ -60,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, role, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated, uid, user, role, loading }}>
       {children}
     </AuthContext.Provider>
   );

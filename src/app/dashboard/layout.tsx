@@ -5,12 +5,30 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Bars3Icon, XMarkIcon, PowerIcon, HomeIcon, ClipboardIcon, UserIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
-import { useAuth } from '../../context/AuthContext';
+import { useAppointmentStore, useInitializeAppointments } from '@/store/appointmentStore';
+import { useAuth } from '@/context/AuthContext'; // Use AuthContext for user data
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const { role, loading } = useAuth();
+
+  // Access user data from AuthContext
+  const { uid, role } = useAuth();
+
+  // Initialize appointments
+  useInitializeAppointments(uid || '');
+
+  // Access appointments from the store
+  const { appointments, loading: appointmentsLoading } = useAppointmentStore();
+
+  if (!uid || !role) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="loading loading-spinner loading-lg"></div>
+        <span className="ml-2">Loading dashboard...</span>
+      </div>
+    );
+  }
 
   const navItems = role === 'doctor'
     ? [
@@ -25,15 +43,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Appointment History', href: '/dashboard/appointments', icon: <ClipboardIcon className="h-6 w-6" /> },
         { name: 'Profile', href: '/dashboard/myprofile', icon: <UserIcon className="h-6 w-6" /> },
       ];
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg"></div>
-        <span className="ml-2">Loading dashboard...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex bg-gray-50">
