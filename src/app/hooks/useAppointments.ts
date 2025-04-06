@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, or, doc, getDoc } from "firebase/firestore";
-import { db } from "../../../config/firebaseconfig";
-import { auth } from "../../../config/firebaseconfig"; // Import Firebase auth
+import { db } from "../../config/firebaseconfig";
+import { auth } from "../../config/firebaseconfig"; // Import Firebase auth
 import { onAuthStateChanged } from "firebase/auth"; // Import auth state listener
 
 interface Appointment {

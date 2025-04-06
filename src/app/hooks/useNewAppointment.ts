@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { db } from '../../../config/firebaseconfig';
+import { db } from '../../config/firebaseconfig';
 import { doc, setDoc } from 'firebase/firestore';
 import { isAuthenticated, fetchUserDetails } from '../services/authService'; // Import fetchUserDetails
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';

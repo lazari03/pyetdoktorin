@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppointmentsPage } from "../../hooks/useAppointmentsPage";
 import Link from "next/link";
-import { db } from "../../../../config/firebaseconfig"; // Import Firestore instance
+import { db } from "../../../config/firebaseconfig"; // Import Firestore instance
 import { doc, updateDoc } from "firebase/firestore";
 import { useState, useEffect } from "react";
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { db } from '../../../config/firebaseconfig';
+import { db } from '../../config/firebaseconfig';
 import { collection, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 
 interface Notification {
