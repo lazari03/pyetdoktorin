@@ -7,13 +7,15 @@ export const fetchAppointments = async (status: string) => {
   const user = auth.currentUser;
 
   if (!user) {
+    console.error("Error: User not authenticated.");
     throw new Error("User not authenticated. Please log in.");
   }
 
   const userId = user.uid;
   const userRole = localStorage.getItem('userRole'); // "patient" or "doctor"
   if (!userRole) {
-    throw new Error("User role not found in localStorage.");
+    console.warn("Warning: User role not found in localStorage. Defaulting to 'patient'.");
+    throw new Error("User role not found in localStorage."); // Optional: Remove this line if defaulting is acceptable
   }
 
   const baseQuery = query(
@@ -25,14 +27,23 @@ export const fetchAppointments = async (status: string) => {
 
   try {
     const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      console.warn("No appointments found for the given query.");
+    }
     const appointments = querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(),
+      createdAt: doc.data().createdAt || "",
+      appointmentType: doc.data().appointmentType || "",
+      notes: doc.data().notes || "",
+      status: doc.data().status || "pending",
+      preferredDate: doc.data().preferredDate || undefined,
+      preferredTime: doc.data().preferredTime || undefined,
+      doctorName: doc.data().doctorName || "Unknown",
+      patientName: doc.data().patientName || "Unknown",
     }));
-    console.log("Fetched appointments from service:", appointments); // Debugging logs
     return appointments;
   } catch (error) {
-    console.error("Error fetching appointments:", error);
+    console.error("Error fetching appointments from Firestore:", error);
     throw new Error("Failed to fetch appointments.");
   }
 };

@@ -1,26 +1,34 @@
 import { create } from 'zustand';
+import { fetchAppointments } from '../app/services/appointmentService'; // Import the service
 import { useEffect } from 'react';
-import { getDocs, collection, query, where } from 'firebase/firestore';
-import { db } from '../config/firebaseconfig';
-import { Appointment } from '../models/Appointment'; // Import Appointment model
+
+interface Appointment {
+  id: string;
+  createdAt: string;
+  appointmentType: string;
+  notes: string;
+  status: string;
+  preferredDate?: string;
+  preferredTime?: string;
+  doctorName?: string;
+  patientName?: string;
+}
 
 interface AppointmentState {
   appointments: Appointment[];
   loading: boolean;
   error: string | null;
-  fetchAppointments: (uid: string) => void;
+  fetchAppointments: (status: string) => Promise<void>;
 }
 
 export const useAppointmentStore = create<AppointmentState>((set) => ({
   appointments: [],
   loading: false,
   error: null,
-  fetchAppointments: async (uid: string) => {
+  fetchAppointments: async (status: string) => {
     set({ loading: true, error: null });
     try {
-      const appointmentQuery = query(collection(db, 'appointments'), where('uid', '==', uid));
-      const snapshot = await getDocs(appointmentQuery);
-      const appointments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Appointment[];
+      const appointments = await fetchAppointments(status); // Use the service to fetch data
       set({ appointments, loading: false });
     } catch (error) {
       set({ error: 'Failed to fetch appointments', loading: false });
@@ -28,12 +36,12 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
   },
 }));
 
-export function useInitializeAppointments(uid: string) {
+export const useInitializeAppointments = (userId: string) => {
   const fetchAppointments = useAppointmentStore((state) => state.fetchAppointments);
 
   useEffect(() => {
-    if (uid) {
-      fetchAppointments(uid);
+    if (userId) {
+      fetchAppointments("all"); // Fetch all appointments for the user
     }
-  }, [uid, fetchAppointments]);
-}
+  }, [userId, fetchAppointments]);
+};

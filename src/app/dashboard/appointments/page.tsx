@@ -1,220 +1,166 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAppointmentsPage } from "../../hooks/useAppointmentsPage";
-import Link from "next/link";
-import { db } from "../../../config/firebaseconfig"; // Import Firestore instance
-import { doc, updateDoc } from "firebase/firestore";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { db } from "../../../config/firebaseconfig";
+import { useContext } from "react";
+import { AuthContext } from "../../../context/AuthContext";
+
+interface Appointment {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  patientId: string;
+  patientName?: string; // Added for doctor view
+  appointmentType: string;
+  preferredDate: string;
+  preferredTime: string;
+  notes: string;
+  isPaid: boolean;
+  createdAt: string;
+}
 
 export default function AppointmentsPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const sessionId = searchParams?.get("session_id") || null; // Add null-safe access
+  const { user } = useContext(AuthContext);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isDoctor, setIsDoctor] = useState<boolean | null>(null); // Use `null` to indicate loading state
 
-  const {
-    user,
-    role,
-    authLoading,
-    appointments,
-    isLoading,
-    error,
-    appointmentDetails,
-  } = useAppointmentsPage();
+  useEffect(() => {
+    if (user) {
+      // Determine if the user is a doctor
+      const checkIfDoctor = async () => {
+        const userRole = await getUserRole(user.uid);
+        setIsDoctor(userRole === "doctor");
+      };
 
-  const [loadingPayment, setLoadingPayment] = useState(false);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-
-  const handlePayNow = async (appointmentId: string, amount: number) => {
-    console.log(`Pay Now clicked for appointment ID: ${appointmentId}`);
-    setLoadingPayment(true);
-    try {
-      const response = await fetch("/api/stripe/create-payment-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appointmentId, amount }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("API response error:", errorText);
-        throw new Error(errorText || "Failed to create payment intent");
-      }
-
-      const { url } = await response.json();
-      console.log("Redirecting to Stripe Checkout page:", url);
-
-      // Redirect to Stripe's hosted checkout page
-      window.location.href = url;
-    } catch (error) {
-      console.error("Error creating checkout session:", error);
-      alert("Failed to initiate payment. Please try again.");
-    } finally {
-      setLoadingPayment(false);
+      checkIfDoctor();
     }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && isDoctor !== null) {
+      // Fetch appointments after determining the user's role
+      const fetchAppointments = async () => {
+        try {
+          const q = query(
+            collection(db, "appointments"),
+            where(isDoctor ? "doctorId" : "patientId", "==", user.uid)
+          );
+          const querySnapshot = await getDocs(q);
+          const fetchedAppointments = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as Appointment[];
+          setAppointments(fetchedAppointments);
+        } catch (error) {
+          console.error("Error fetching appointments:", error);
+        }
+      };
+
+      fetchAppointments();
+    }
+  }, [user, isDoctor]);
+
+  const handlePayNow = (appointmentId: string) => {
+    console.log(`Pay Now clicked for appointment ID: ${appointmentId}`);
+    // Add payment logic here
   };
 
   const handleJoinCall = (appointmentId: string) => {
     console.log(`Join Call clicked for appointment ID: ${appointmentId}`);
-    router.push(`/dashboard/appointments/video-session?appointmentId=${appointmentId}`);
+    // Add join call logic here
   };
 
-  const updateAppointmentStatus = async (appointmentId: string) => {
-    try {
-      const appointmentRef = doc(db, "appointments", appointmentId);
-      await updateDoc(appointmentRef, { isPaid: true });
-      console.log(`Appointment ${appointmentId} marked as paid.`);
-    } catch (error) {
-      console.error("Error updating appointment status:", error);
-    }
+  const isCompleted = (date: string, time: string) => {
+    const appointmentDateTime = new Date(`${date}T${time}`);
+    return appointmentDateTime < new Date();
   };
 
-  const endSession = async (appointmentId: string) => {
-    try {
-      const appointmentRef = doc(db, "appointments", appointmentId);
-      await updateDoc(appointmentRef, { sessionEnded: true });
-      console.log(`Session for appointment ${appointmentId} marked as ended.`);
-    } catch (error) {
-      console.error("Error updating session state:", error);
-    }
-  };
-
-  const verifyPayment = async (sessionId: string) => {
-    console.log("Verifying payment for sessionId:", sessionId);
-    try {
-      const response = await fetch(`/api/stripe/verify-payment?session_id=${sessionId}`);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error response from verify-payment API:", errorText);
-        throw new Error("Failed to verify payment");
-      }
-
-      const { appointmentId } = await response.json();
-      console.log(`Payment verified for appointment ID: ${appointmentId}`);
-
-      // Update the appointment status in Firestore
-      await updateAppointmentStatus(appointmentId);
-
-      // Show success message
-      setShowSuccessMessage(true);
-
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setShowSuccessMessage(false);
-      }, 3000);
-    } catch (error) {
-      console.error("Error verifying payment:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (sessionId) {
-      verifyPayment(sessionId);
-    }
-  }, [sessionId]);
-
-  if (authLoading || isLoading || !role || appointmentDetails.length === 0) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
-        <span className="ml-2">Loading appointments...</span>
-      </div>
-    );
+  if (isDoctor === null) {
+    // Show a loading state while determining the user's role
+    return <div>Loading...</div>;
   }
-
-  if (error) {
-    console.warn(error);
-    return router.push("/dashboard");
-  }
-
-  const statusClasses = {
-    completed: "badge badge-success",
-    pending: "badge badge-warning",
-    canceled: "badge badge-error",
-  };
 
   return (
-    <div className="card bg-base-100 shadow-xl p-6">
-      <h1 className="card-title mb-4">Dashboard</h1>
-      {showSuccessMessage && (
-        <div className="alert alert-success mb-4 flex justify-between items-center">
-          <span>Payment was successful!</span>
-          <button
-            className="btn btn-sm btn-circle btn-ghost"
-            onClick={() => setShowSuccessMessage(false)}
-          >
-            ✕
-          </button>
-        </div>
-      )}
-      <h2 className="card-title mb-4">Appointment History</h2>
-      <div className="overflow-x-auto">
-        <table className="table w-full">
-          <thead>
-            <tr>
-              <th>Date & Time</th>
-              <th>Type</th>
-              <th>Name</th>
-              <th>Notes</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {appointments.map((appointment) => {
-              const details = appointmentDetails.find((d) => d.id === appointment.id);
-
-              return (
+    <div className="card bg-base-100 shadow-xl">
+      <div className="card-body">
+        <h2 className="card-title">Your Appointments</h2>
+        <div className="overflow-x-auto mt-6">
+          <table className="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>{isDoctor ? "Patient" : "Doctor"}</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Notes</th>
+                <th>Status</th>
+                {!isDoctor && <th>Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {appointments.map((appointment) => (
                 <tr key={appointment.id}>
-                  <td>
-                    {appointment.preferredDate && appointment.preferredTime
-                      ? `${appointment.preferredDate} at ${appointment.preferredTime}`
-                      : "N/A"}
-                  </td>
+                  <td>{isDoctor ? appointment.patientName || "N/A" : appointment.doctorName}</td>
                   <td>{appointment.appointmentType}</td>
-                  <td>
-                    {details
-                      ? role === "doctor"
-                        ? details.patientName || "Unknown"
-                        : details.doctorName || "Unknown"
-                      : "Loading..."}
-                  </td>
+                  <td>{appointment.preferredDate}</td>
+                  <td>{appointment.preferredTime}</td>
                   <td>{appointment.notes}</td>
                   <td>
-                    <span className={statusClasses[appointment.status]}>
-                      {appointment.status}
-                    </span>
+                    {isCompleted(appointment.preferredDate, appointment.preferredTime) ? (
+                      <span className="text-gray-500 font-bold">Completed</span>
+                    ) : appointment.isPaid ? (
+                      <span className="text-green-500 font-bold">Paid</span>
+                    ) : (
+                      <span className="text-red-500 font-bold">Unpaid</span>
+                    )}
                   </td>
-                  <td>
-                    {appointment.isPaid ? (
-                      appointment.sessionEnded ? ( // Check if the session has ended
-                        <button className="btn btn-disabled btn-sm" disabled>
-                          Session Ended
+                  {!isDoctor && (
+                    <td>
+                      {isCompleted(appointment.preferredDate, appointment.preferredTime) ? (
+                        <span className="text-gray-500">No Actions</span>
+                      ) : appointment.isPaid ? (
+                        <button
+                          className="btn btn-accent"
+                          onClick={() => handleJoinCall(appointment.id)}
+                        >
+                          Join Now
                         </button>
                       ) : (
                         <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => handleJoinCall(appointment.id)}
+                          className="btn btn-secondary"
+                          onClick={() => handlePayNow(appointment.id)}
                         >
-                          Join Call
+                          Pay Now
                         </button>
-                      )
-                    ) : (
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => handlePayNow(appointment.id, 5000)} // Pass the appointmentId and amount (e.g., $50.00 = 5000 cents)
-                        disabled={loadingPayment}
-                      >
-                        {loadingPayment ? "Processing..." : "Pay Now"}
-                      </button>
-                    )}
-                  </td>
+                      )}
+                    </td>
+                  )}
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
+}
+
+// Production-ready function to fetch user role
+async function getUserRole(userId: string): Promise<string> {
+  try {
+    const userRef = doc(db, "users", userId); // Reference to the user's document
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      return userData.role || "patient"; // Return the role, default to "patient" if not specified
+    } else {
+      console.error("User document does not exist.");
+      return "patient"; // Default to "patient" if user document is missing
+    }
+  } catch (error) {
+    console.error("Error fetching user role:", error);
+    return "patient"; // Default to "patient" in case of an error
+  }
 }

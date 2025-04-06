@@ -13,7 +13,7 @@ interface AuthContextType {
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   uid: null, 
   user: null,
@@ -44,20 +44,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            setRole(userData.role || null); // Set the user's role
+            const role = userData.role || null;
+            setRole(role); // Set the user's role
+            localStorage.setItem('userRole', role); // Store the role in localStorage
           } else {
             console.error('User document not found in Firestore');
             setRole(null);
+            localStorage.removeItem('userRole'); // Remove role if not found
           }
         } catch (error) {
           console.error('Failed to fetch user role from Firestore:', error);
           setRole(null);
+          localStorage.removeItem('userRole'); // Remove role on error
         }
       } else {
         setIsAuthenticated(false);
         setUid(null); // Reset `uid`
         setUser(null);
         setRole(null);
+        localStorage.removeItem('userRole'); // Clear role on logout
       }
 
       setLoading(false);
