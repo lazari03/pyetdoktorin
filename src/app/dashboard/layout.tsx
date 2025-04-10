@@ -7,6 +7,7 @@ import { Bars3Icon, XMarkIcon, PowerIcon, HomeIcon, ClipboardIcon, UserIcon, Cal
 import Image from 'next/image';
 import { useAppointmentStore, useInitializeAppointments } from '@/store/appointmentStore';
 import { useAuth } from '@/context/AuthContext'; // Use AuthContext for user data
+import { getNavigationPaths } from '@/store/navigationStore';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,19 +31,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  const navItems = role === 'doctor'
-    ? [
-        { name: 'Dashboard', href: '/dashboard', icon: <HomeIcon className="h-6 w-6" /> },
-        { name: 'Appointments', href: '/dashboard/appointments', icon: <ClipboardIcon className="h-6 w-6" /> },
-        { name: 'Profile', href: '/dashboard/myprofile', icon: <UserIcon className="h-6 w-6" /> },
-        { name: 'Calendar', href: '/dashboard/doctor/calendar', icon: <CalendarIcon className="h-6 w-6" /> },
-      ]
-    : [
-        { name: 'Dashboard', href: '/dashboard', icon: <HomeIcon className="h-6 w-6" /> },
-        { name: 'New Appointment', href: '/dashboard/new-appointment', icon: <PlusIcon className="h-6 w-6" /> },
-        { name: 'Appointment History', href: '/dashboard/appointments', icon: <ClipboardIcon className="h-6 w-6" /> },
-        { name: 'Profile', href: '/dashboard/myprofile', icon: <UserIcon className="h-6 w-6" /> },
-      ];
+  const navPaths = getNavigationPaths(role);
+
+  const navItems = navPaths.map((item) => {
+    let icon;
+    switch (item.name) {
+      case 'Dashboard':
+        icon = <HomeIcon className="h-6 w-6" />;
+        break;
+      case 'Appointments':
+      case 'Appointment History':
+        icon = <ClipboardIcon className="h-6 w-6" />;
+        break;
+      case 'Profile':
+        icon = <UserIcon className="h-6 w-6" />;
+        break;
+      case 'Calendar':
+        icon = <CalendarIcon className="h-6 w-6" />;
+        break;
+      case 'New Appointment':
+        icon = <PlusIcon className="h-6 w-6" />;
+        break;
+      default:
+        icon = null;
+    }
+    return { ...item, icon };
+  });
 
   return (
     <div className="min-h-screen flex bg-gray-50">
