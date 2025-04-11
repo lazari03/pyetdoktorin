@@ -1,15 +1,16 @@
 import { HomeIcon, ClipboardIcon, UserIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { UserRole } from '../models/UserRole';
 
-export function getNavigationPaths(role: string) {
+export function getNavigationPaths(role: UserRole) {
   switch (role) {
-    case 'doctor':
+    case UserRole.Doctor:
       return [
         { name: 'Dashboard', href: '/dashboard' },
         { name: 'Appointments', href: '/dashboard/appointments' },
         { name: 'Profile', href: '/dashboard/myprofile' },
         { name: 'Calendar', href: '/dashboard/doctor/calendar' },
       ];
-    case 'patient':
+    case UserRole.Patient:
       return [
         { name: 'Dashboard', href: '/dashboard' },
         { name: 'New Appointment', href: '/dashboard/new-appointment' },

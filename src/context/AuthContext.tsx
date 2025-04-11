@@ -1,15 +1,16 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebaseconfig'; // Import your Firestore config
+import { UserRole } from '@/models/UserRole';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   uid: string | null; // Add `uid` property
   user: any | null;
-  role: string | null;
+  role: UserRole | null;
   loading: boolean;
 }
 
@@ -17,7 +18,7 @@ export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   uid: null, 
   user: null,
-  role: null,
+  role: UserRole.null, // Default role
   loading: true,
 });
 
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uid, setUid] = useState<string | null>(null); // Add state for `uid`
   const [user, setUser] = useState<any | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole.null | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

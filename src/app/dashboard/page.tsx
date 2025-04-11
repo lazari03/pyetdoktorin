@@ -1,23 +1,32 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardStore } from '../../store/dashboardStore';
 import Link from 'next/link';
+import { isProfileIncomplete } from '../../store/generalStore';
 
 export default function Dashboard() {
   const { user, role, loading } = useAuth();
   const { totalAppointments, nextAppointment, recentAppointments, fetchAppointments } = useDashboardStore();
+  const [profileIncomplete, setProfileIncomplete] = useState<boolean>(true);
+
+  const fetchProfileStatus = async () => {
+    if (user && role) {
+      const incomplete = await isProfileIncomplete(role, user.uid);
+      setProfileIncomplete(incomplete);
+    }
+  };
 
   useEffect(() => {
-    if (user) fetchAppointments(user.uid);
+    fetchProfileStatus();
+  }, [user, role]);
+
+  useEffect(() => {
+    if (user && role) fetchAppointments(user.uid, role);
   }, [user, fetchAppointments]);
 
   if (loading) return <p>Loading...</p>;
-
-  const profileIncomplete = role === 'doctor'
-    ? !user?.name || !user?.surname || !user?.phoneNumber || !user?.about || !user?.specializations
-    : !user?.name || !user?.surname || !user?.phoneNumber;
 
   return (
     <div className="container mx-auto">
