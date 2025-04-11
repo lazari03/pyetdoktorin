@@ -8,6 +8,8 @@ import Image from 'next/image';
 import { useAppointmentStore, useInitializeAppointments } from '@/store/appointmentStore';
 import { useAuth } from '@/context/AuthContext'; // Use AuthContext for user data
 import { getNavigationPaths } from '@/store/navigationStore';
+import { signOut } from 'firebase/auth'; // Import Firebase signOut
+import { getAuth } from 'firebase/auth'; // Import Firebase authentication
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -71,9 +73,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <li key={item.name} className="relative mb-2">
               <Link
                 href={item.href}
-                className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${
-                  pathname === item.href ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'
-                }`}
+                className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'
+                  }`}
               >
                 <span className="flex items-center justify-center w-10 h-10">{item.icon}</span>
                 <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'}`}>
@@ -85,21 +86,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </ul>
         <div className={`p-4 flex ${sidebarOpen ? 'items-start' : 'items-center'} w-full`}>
           <button
-            onClick={() => {
-              document.cookie = 'auth-token=; path=/; max-age=0';
-              window.location.href = '/login';
+            onClick={async () => {
+              const auth = getAuth(); // Get the Firebase authentication instance
+
+              try {
+                // Sign out from Firebase
+                await signOut(auth);
+                console.log('User signed out successfully');
+
+                // Clear the auth token cookie
+                document.cookie = 'auth-token=; path=/; max-age=0'; // Clear cookie
+                console.log('Auth token cookie cleared');
+
+                // Redirect to login page
+                window.location.href = '/login';
+              } catch (error) {
+                console.error('Error signing out:', error);
+                alert('Error signing out. Please try again.');
+              }
             }}
-            className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${
-              sidebarOpen ? 'text-red-500 hover:bg-red-100 hover:text-red-700' : 'flex-col text-red-500'
-            }`}
+            className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${sidebarOpen ? 'text-red-500 hover:bg-red-100 hover:text-red-700' : 'flex-col text-red-500'
+              }`}
           >
             <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-100 text-red-500 hover:bg-red-200 hover:text-red-700">
               <PowerIcon className="h-6 w-6" />
             </span>
             <span
-              className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
-                sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'
-              }`}
+              className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'
+                }`}
             >
               Logout
             </span>
