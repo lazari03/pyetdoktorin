@@ -1,30 +1,39 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 type HeroSectionProps = {
   title?: string;
   description?: string;
   backgroundImage?: string;
   buttonText?: string;
-  onButtonClick?: () => void;
 };
 
 export default function HeroSection({
-  title = "Hello there",
-  description = "Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi exercitationem quasi. In deleniti eaque aut repudiandae et a id nisi.",
+  title = "Your Health, One Click Away",
+  description = "Connect with licensed doctors from the comfort of your home. Schedule consultations, receive prescriptions, and access medical care—anytime, anywhere.",
   backgroundImage = "https://portokalle-storage.fra1.digitaloceanspaces.com/img/pexels-karolina-grabowska-7195123.jpg",
   buttonText = "Get Started",
-  onButtonClick = () => alert("Button clicked!"),
 }: HeroSectionProps) {
+  const router = useRouter();
+
   return (
     <div
-      className="hero min-h-screen"
+      className="relative min-h-screen pt-16 flex items-end bg-cover bg-center z-0"
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
-      <div className="hero-content text-neutral-content text-center">
-        <div className="max-w-md">
-          <h1 className="mb-5 text-5xl font-bold text-white">{title}</h1>
-          <p className="mb-5">{description}</p>
-          <button className="btn btn-primary" onClick={onButtonClick}>
+      {/* Shadow fade at the bottom */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent -z-10" />
+
+      {/* Content */}
+      <div className="relative w-full px-4 py-24 text-white text-center">
+        <div className="max-w-xl mx-auto">
+          <h1 className="mb-5 text-5xl text-white font-bold">{title}</h1>
+          <p className="mb-5 text-lg">{description}</p>
+          <button
+            className="bg-[#ea580c] hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-full transition-colors"
+            onClick={() => router.push("/register")}
+          >
             {buttonText}
           </button>
         </div>

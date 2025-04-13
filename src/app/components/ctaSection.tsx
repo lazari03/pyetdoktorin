@@ -1,6 +1,6 @@
 "use client";
 
-import Image from 'next/image'
+import Image from 'next/image';
 
 type ExampleProps = {
   title?: string;
@@ -13,18 +13,18 @@ type ExampleProps = {
 };
 
 export default function CtaSection({
-  title = "Boost your productivity. Start using our app today.",
-  description = "Ac euismod vel sit maecenas id pellentesque eu sed consectetur. Malesuada adipiscing sagittis vel nulla.",
-  primaryButtonText = "Get started",
+  title = "Telemedicine at Your Fingertips",
+  description = "Access healthcare professionals anytime, anywhere. Join us today and experience the future of medicine.",
+  primaryButtonText = "Register as a Patient",
   primaryButtonLink = "#",
-  secondaryButtonText = "Learn more",
+  secondaryButtonText = "Register as a Doctor",
   secondaryButtonLink = "#",
-  imageSrc = "https://tailwindcss.com/plus-assets/img/component-images/dark-project-app-screenshot.png",
+  imageSrc = "https://portokalle-storage.fra1.digitaloceanspaces.com/img/pexels-mastercowley-1199590.jpg",  
 }: ExampleProps) {
   return (
     <div className="bg-white">
       <div className="mx-auto max-w-7xl py-24 sm:px-6 sm:py-32 lg:px-8">
-        <div className="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
+        <div className="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0 z-10">
           <svg
             viewBox="0 0 1024 1024"
             aria-hidden="true"
@@ -45,11 +45,14 @@ export default function CtaSection({
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
               <a
                 href={primaryButtonLink}
-                className="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="rounded-md bg-orange-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-orange-500 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 {primaryButtonText}
               </a>
-              <a href={secondaryButtonLink} className="text-sm font-semibold text-white">
+              <a
+                href={secondaryButtonLink}
+                className="text-sm font-semibold text-white hover:text-white hover:bg-orange-500 px-3 py-2 rounded-md"
+              >
                 {secondaryButtonText} <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -58,7 +61,7 @@ export default function CtaSection({
           <div className="relative mt-16 h-80 lg:mt-8">
             <Image 
               src={imageSrc}
-              alt="App screenshot"
+              alt="Telemedicine Illustration"
               width={500}
               height={300}
               priority
