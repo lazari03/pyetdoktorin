@@ -2,18 +2,17 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(req: NextRequest) {
-    const authToken = req.cookies.get('auth-token');
+  const url = req.nextUrl.clone();
+  const role = req.cookies.get('userRole')?.value; // Assuming role is stored in cookies
 
-    // Redirect to login if no auth token is found
-    if (!authToken) {
-        return NextResponse.redirect(new URL('/login', req.url));
-    }
+  if (url.pathname.startsWith('/dashboard/doctor') && role !== 'doctor') {
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
+  }
 
-    // Allow the request to proceed if authenticated
-    return NextResponse.next();
+  return NextResponse.next();
 }
 
-// Apply middleware to all routes except public ones
 export const config = {
-    matcher: ['/dashboard/:path*', '/protected/:path*'], // Protect specific paths
+  matcher: ['/dashboard/doctor/:path*'], // Apply middleware to doctor-specific paths
 };

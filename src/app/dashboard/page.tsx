@@ -1,21 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardStore } from '../../store/dashboardStore';
 import Link from 'next/link';
 import { isProfileIncomplete } from '../../store/generalStore';
+import DoctorSearchModal from '../components/DoctorSearchModal';
+import { UserRole } from '../../models/UserRole'; // Import UserRole model
 
 export default function Dashboard() {
   const { user, role, loading } = useAuth();
   const { totalAppointments, nextAppointment, recentAppointments, fetchAppointments } = useDashboardStore();
   const [profileIncomplete, setProfileIncomplete] = useState<boolean>(true);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [searchBarPosition, setSearchBarPosition] = useState<DOMRect | null>(null);
+  const searchBarRef = useRef<HTMLDivElement>(null);
 
   const fetchProfileStatus = async () => {
     if (user && role) {
       const incomplete = await isProfileIncomplete(role, user.uid);
       setProfileIncomplete(incomplete);
     }
+  };
+
+  const handleSearchClick = () => {
+    if (searchBarRef.current) {
+      const position = searchBarRef.current.getBoundingClientRect();
+      setSearchBarPosition(position);
+    }
+    setIsSearchModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsSearchModalOpen(false);
   };
 
   useEffect(() => {
@@ -29,7 +46,29 @@ export default function Dashboard() {
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">
+        Welcome to Your {role || 'User'} Dashboard
+      </h1>
+      {role === UserRole.Patient && ( // Restrict search to patients
+        <div
+          ref={searchBarRef}
+          onClick={handleSearchClick}
+          className="relative flex items-center bg-white rounded-full shadow-lg p-3 w-full max-w-lg mx-auto cursor-pointer transform transition-transform duration-500 ease-in-out mb-8"
+        >
+          <input
+            type="text"
+            placeholder="Search for doctors..."
+            className="flex-grow rounded-full px-4 py-3 text-base focus:outline-none cursor-pointer"
+            readOnly
+          />
+        </div>
+      )}
+      <DoctorSearchModal
+        isOpen={isSearchModalOpen}
+        onClose={handleModalClose}
+        position={searchBarPosition}
+      />
       {profileIncomplete && (
         <div className="alert alert-warning mb-6">
           <span>Your profile is incomplete. Please complete your profile</span>

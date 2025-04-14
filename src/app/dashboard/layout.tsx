@@ -3,25 +3,29 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bars3Icon, XMarkIcon, PowerIcon, HomeIcon, ClipboardIcon, UserIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/outline';
+import {
+  Bars3Icon,
+  XMarkIcon,
+  PowerIcon,
+  HomeIcon,
+  ClipboardIcon,
+  UserIcon,
+  CalendarIcon,
+  PlusIcon,
+} from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { useAppointmentStore, useInitializeAppointments } from '@/store/appointmentStore';
-import { useAuth } from '@/context/AuthContext'; // Use AuthContext for user data
+import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths } from '@/store/navigationStore';
-import { signOut } from 'firebase/auth'; // Import Firebase signOut
-import { getAuth } from 'firebase/auth'; // Import Firebase authentication
+import { signOut } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
-  // Access user data from AuthContext
   const { uid, role } = useAuth();
-
-  // Initialize appointments
   useInitializeAppointments(uid || '');
-
-  // Access appointments from the store
   const { appointments, loading: appointmentsLoading } = useAppointmentStore();
 
   if (!uid || !role) {
@@ -62,7 +66,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen flex bg-gray-50">
-      <div className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${sidebarOpen ? 'w-64' : 'w-16'} flex flex-col`}>
+      <div
+        className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${
+          sidebarOpen ? 'w-64' : 'w-16'
+        } flex flex-col`}
+      >
         <div className="p-4 flex items-center">
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-700 hover:text-orange-500 transition-colors flex items-center justify-center w-12 h-12">
             {sidebarOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
@@ -124,7 +132,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="bg-white shadow-md">
           <div className="flex items-center justify-between p-6 relative">
             <div className="absolute left-1/2 transform -translate-x-1/2 max-w-[50%]">
-              <Image src="/img/logo.png" alt="logo" width={200} height={100} className="w-auto h-auto" style={{ maxHeight: '2.5rem' }} />
+              <Image
+                src="/img/logo.png"
+                alt="logo"
+                width={200}
+                height={100}
+                className="w-auto h-auto"
+                style={{ maxHeight: '2.5rem' }}
+              />
             </div>
             <div className="flex items-center gap-2" style={{ height: '2.5rem' }}>
               {/* Preserve header height */}
