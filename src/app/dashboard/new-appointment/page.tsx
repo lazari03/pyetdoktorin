@@ -1,26 +1,10 @@
 'use client';
 
-import { useNewAppointmentStore } from '@/store/newAppointmentStore';
 import DoctorSearch from '@/app/components/DoctorSearch';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../../config/firebaseconfig';
 import { useContext, useState } from 'react';
-import { AuthContext } from '../../../context/AuthContext'; // Import your AuthContext
-import { useRouter } from 'next/navigation'; // For redirection
-
-// Define the type for an appointment
-interface Appointment {
-  id: string;
-  doctorId: string;
-  doctorName: string;
-  patientId: string;
-  appointmentType: string;
-  preferredDate: string;
-  preferredTime: string;
-  notes: string;
-  isPaid: boolean;
-  createdAt: string;
-}
+import { AuthContext } from '../../../context/AuthContext';
+import { useRouter } from 'next/navigation';
+import useNewAppointment from '@/hooks/useNewAppointment'; // Custom hook for appointment logic
 
 export default function NewAppointmentPage() {
   const {
@@ -35,66 +19,14 @@ export default function NewAppointmentPage() {
     notes,
     setNotes,
     resetAppointment,
-  } = useNewAppointmentStore();
+    handleSubmit,
+    isSubmitting,
+  } = useNewAppointment(); // Use the custom hook
 
   const { user } = useContext(AuthContext); // Use context to get the authenticated user
   const router = useRouter(); // For navigation
   const [showModal, setShowModal] = useState(false); // Modal visibility state
   const [progress, setProgress] = useState(100); // Progress bar state
-  const [isSubmitting, setIsSubmitting] = useState(false); // Prevent multiple submissions
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!user || isSubmitting) {
-      console.error('User is not authenticated or submission is already in progress');
-      return;
-    }
-
-    setIsSubmitting(true); // Disable further submissions
-
-    const appointmentData: Omit<Appointment, 'id'> = {
-      doctorId: selectedDoctor.id,
-      doctorName: selectedDoctor.name,
-      patientId: user.uid, // Include the authenticated user's UID
-      appointmentType,
-      preferredDate,
-      preferredTime,
-      notes,
-      isPaid: false, // Default to unpaid
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      await addDoc(collection(db, 'appointments'), appointmentData);
-      console.log('Appointment successfully saved:', appointmentData);
-      resetAppointment();
-      setShowModal(true); // Show the confirmation modal
-
-      // Start progress bar countdown
-      let progressValue = 100;
-      const interval = setInterval(() => {
-        progressValue -= 10;
-        setProgress(progressValue);
-        if (progressValue <= 0) {
-          clearInterval(interval);
-        }
-      }, 300); // Update every 300ms (3 seconds total)
-    } catch (error) {
-      console.error('Error saving appointment:', error);
-      setIsSubmitting(false); // Re-enable submission in case of error
-    }
-  };
-
-  const handlePayNow = (appointmentId: string) => {
-    console.log(`Pay Now clicked for appointment ID: ${appointmentId}`);
-    // Add payment logic here
-  };
-
-  const handleJoinCall = (appointmentId: string) => {
-    console.log(`Join Call clicked for appointment ID: ${appointmentId}`);
-    // Add join call logic here
-  };
 
   return (
     <div className="card bg-base-100 shadow-xl">
@@ -110,7 +42,7 @@ export default function NewAppointmentPage() {
         {selectedDoctor && (
           <div className="mt-6">
             <h3 className="font-bold text-lg">Book Appointment with {selectedDoctor.name}</h3>
-            <form className="form-control gap-4 mt-4" onSubmit={handleSubmit}>
+            <form className="form-control gap-4 mt-4" onSubmit={(e) => handleSubmit(e, setShowModal, setProgress)}>
               <div>
                 <label className="label">
                   <span className="label-text">Appointment Type</span>

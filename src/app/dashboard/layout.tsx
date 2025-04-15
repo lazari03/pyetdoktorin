@@ -14,7 +14,7 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
-import { useAppointmentStore, useInitializeAppointments } from '@/store/appointmentStore';
+import { useAppointmentStore, useInitializeAppointments } from '../../store/appointmentStore';
 import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths } from '@/store/navigationStore';
 import { signOut } from 'firebase/auth';
@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
 
   const { uid, role } = useAuth();
-  useInitializeAppointments(uid || '');
+  useInitializeAppointments();
   const { appointments, loading: appointmentsLoading } = useAppointmentStore();
 
   if (!uid || !role) {

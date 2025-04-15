@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { db } from '../../config/firebaseconfig'; // Import Firestore instance
+import { db } from '../config/firebaseconfig'; // Import Firestore instance
 import { collection, addDoc } from 'firebase/firestore';
-import { auth } from '../../config/firebaseconfig'; // Import Firebase auth
+import { auth } from '../config/firebaseconfig'; // Import Firebase auth
 
 interface UseAppointmentModalProps {
   doctor: { id: number; name: string; expertise: string };

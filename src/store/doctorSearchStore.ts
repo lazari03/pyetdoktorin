@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { fetchDoctors } from '../app/services/doctorService';
+import { fetchDoctors } from '../services/doctorService';
 import { Doctor } from '../models/Doctor'; // Import Doctor model
 
 interface DoctorSearchState {

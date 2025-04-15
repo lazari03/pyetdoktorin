@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import useNewAppointment from '../hooks/useNewAppointment';
+import useNewAppointment from '../../hooks/useNewAppointment';
 
 export default function AppointmentModal({
   isOpen,

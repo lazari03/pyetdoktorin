@@ -74,7 +74,6 @@ export default function Dashboard() {
           <span>Your profile is incomplete. Please complete your profile</span>
         </div>
       )}
-      <h1 className="text-2xl font-bold mb-6">Welcome to your {role || 'user'} dashboard!</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="stats shadow">
           <div className="stat">

@@ -1,10 +1,13 @@
 export interface Appointment {
   id: string;
-  date: string;
-  preferredDate?: string; // Optional field for preferred date
-  preferredTime?: string; // Optional field for preferred time
+  doctorId: string;
   doctorName: string;
-  status: string;
-  notes?: string; // Optional field for additional notes
-  patientName?: string; // Optional field for patient name
+  patientId: string;
+  patientName?: string;
+  appointmentType: string;
+  preferredDate: string;
+  preferredTime: string;
+  notes: string;
+  isPaid: boolean;
+  createdAt: string;
 }

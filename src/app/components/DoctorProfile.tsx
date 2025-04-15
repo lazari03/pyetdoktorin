@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
-import { useDoctorProfile } from '../hooks/useDoctorProfile';
+import { useDoctorProfile } from '../../hooks/useDoctorProfile';
 import AppointmentModal from './AppointmentModal';
 import { useAuth } from '../../context/AuthContext'; // Import AuthContext
 

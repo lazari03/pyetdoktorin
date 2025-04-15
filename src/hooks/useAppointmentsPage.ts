@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { db } from "../../config/firebaseconfig";
+import { db } from "../config/firebaseconfig";
 import { doc, getDoc, collection } from "firebase/firestore";
 import { useAppointments } from "./useAppointments";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 export const useAppointmentsPage = () => {
   const { user, role, loading: authLoading } = useAuth(); // Access AuthContext

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchAppointments } from '../../services/appointmentService';
+import { fetchAppointments } from '../../../services/appointmentService';
 
 interface Appointment {
   id: string;

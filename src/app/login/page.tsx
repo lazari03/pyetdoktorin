@@ -4,8 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { login } from '../services/authService';
-import { testFirebaseConnection } from '../services/firebaseTest';
+import { login } from '../../services/authService';
+import { testFirebaseConnection } from '../../services/firebaseTest';
 
 function LoginPageContent() {
   const [email, setEmail] = useState('');

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db } from '../../config/firebaseconfig';
+import { db } from '../config/firebaseconfig';
 import { doc, getDoc } from 'firebase/firestore';
 
 export function useUserProfiles(userIds: string[]) {

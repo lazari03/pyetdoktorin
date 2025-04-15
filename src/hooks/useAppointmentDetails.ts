@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { db } from "../../config/firebaseconfig";
+import { db } from "../config/firebaseconfig";
 import { collection, doc, getDoc } from "firebase/firestore";
 
 export function useAppointmentDetails(appointmentId: string | null) {

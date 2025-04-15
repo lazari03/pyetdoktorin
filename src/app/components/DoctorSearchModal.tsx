@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchDoctors, Doctor } from '../services/doctorService';
+import { fetchDoctors, Doctor } from '../../services/doctorService';
 import { useRouter } from 'next/navigation';
 
 interface DoctorSearchModalProps {

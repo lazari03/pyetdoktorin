@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { auth, db } from "../../../config/firebaseconfig";
 import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
-import { useAppointments } from "../../hooks/useAppointments";
+import { useAppointments } from "../../../hooks/useAppointments";
 import Link from "next/link";
 
 export default function NotificationsPage() {
