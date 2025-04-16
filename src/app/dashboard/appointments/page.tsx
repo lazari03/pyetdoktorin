@@ -81,17 +81,17 @@ export default function AppointmentsPage() {
                   {!isDoctor && (
                     <td>
                       {isCompleted(appointment.preferredDate, appointment.preferredTime) ? (
-                        <span className="text-gray-500">No Actions</span>
+                        <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full">Finished</button>
                       ) : appointment.isPaid ? (
                         <button
-                          className="btn btn-accent btn-sm md:btn-md font-sans font-light"
+                          className=" bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
                           onClick={() => handleJoinCall(appointment.id)}
                         >
                           Join Now
                         </button>
                       ) : (
-                        <button
-                          className="btn btn-secondary btn-sm md:btn-md font-sans font-light"
+                        <button className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
+
                           onClick={() => handlePayNow(appointment.id)}
                         >
                           Pay Now

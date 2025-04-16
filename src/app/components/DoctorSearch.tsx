@@ -67,12 +67,12 @@ export default function DoctorSearch({ onDoctorSelect }: DoctorSearchProps) {
     <>
       {isOverlayVisible && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-90 z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black bg-opacity-90 transition-opacity duration-300"
           onClick={closeSearch}
         ></div>
       )}
 
-      <div className="relative z-50">
+      <div className="relative">
         <div className="mb-4">
           <input
             type="text"
