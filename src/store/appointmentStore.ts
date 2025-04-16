@@ -10,6 +10,7 @@ interface AppointmentState {
   setAppointments: (appointments: Appointment[]) => void;
   setIsDoctor: (isDoctor: boolean) => void;
   fetchAppointments: (userId: string, isDoctor: boolean) => Promise<void>;
+  setAppointmentPaid: (appointmentId: string) => void; // Add this function
 }
 
 export const useAppointmentStore = create<AppointmentState>((set) => ({
@@ -28,6 +29,14 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
       set({ error: "Failed to fetch appointments", loading: false });
     }
   },
+  setAppointmentPaid: (appointmentId) =>
+    set((state) => ({
+      appointments: state.appointments.map((appointment) =>
+        appointment.id === appointmentId
+          ? { ...appointment, isPaid: true }
+          : appointment
+      ),
+    })),
 }));
 
 export const useInitializeAppointments = () => {

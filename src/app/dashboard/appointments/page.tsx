@@ -5,17 +5,56 @@ import { useAppointmentStore } from "../../../store/appointmentStore";
 import { useFetchAppointments } from "../../../hooks/useFetchAppointments";
 import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
+import { useRouter } from "next/navigation"; // Update import to use next/navigation
 
 export default function AppointmentsPage() {
   const { user } = useContext(AuthContext);
-  const { appointments, isDoctor } = useAppointmentStore();
+  const { appointments, isDoctor, setAppointmentPaid } = useAppointmentStore();
+  const router = useRouter(); // Ensure this is from next/navigation
 
   // Custom hook to handle fetching appointments and user role
   useFetchAppointments(user);
 
-  const handlePayNow = (appointmentId: string) => {
-    console.log(`Pay Now clicked for appointment ID: ${appointmentId}`);
-    // Add payment logic here
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      const sessionId = new URLSearchParams(window.location.search).get("session_id"); // Use window.location for client-side
+      if (sessionId) {
+        try {
+          const response = await fetch(`/api/stripe/verify-payment?session_id=${sessionId}`);
+          if (!response.ok) {
+            throw new Error("Failed to verify payment");
+          }
+
+          const { appointmentId } = await response.json();
+          setAppointmentPaid(appointmentId);
+        } catch (error) {
+          console.error("Error verifying payment:", error);
+        }
+      }
+    };
+
+    checkPaymentStatus();
+  }, [setAppointmentPaid]);
+
+  const handlePayNow = async (appointmentId: string) => {
+    try {
+      const response = await fetch("/api/stripe/create-payment-intent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ appointmentId, amount: 2100 }), // Replace 2100 with the actual amount in cents
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create payment intent");
+      }
+
+      const { url } = await response.json();
+      window.location.href = url; // Redirect to Stripe payment page
+    } catch (error) {
+      console.error("Error redirecting to Stripe payment page:", error);
+    }
   };
 
   const handleJoinCall = (appointmentId: string) => {
