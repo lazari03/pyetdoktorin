@@ -1,51 +1,63 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import { useFetchAppointments } from "../../../hooks/useFetchAppointments";
 import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation"; // Update import to use next/navigation
 import DashboardNotifications from '../../components/DashboardNotifications';
+import Loader from '../../components/Loader';
 
 export default function AppointmentsPage() {
   const { user } = useContext(AuthContext);
   const { appointments, isDoctor, setAppointmentPaid } = useAppointmentStore();
   const router = useRouter(); // Ensure this is from next/navigation
+  const [loading, setLoading] = useState(true);
 
   // Custom hook to handle fetching appointments and user role
   useFetchAppointments(user);
 
   useEffect(() => {
-    const checkPaymentStatus = async () => {
-      const sessionId = new URLSearchParams(window.location.search).get("session_id"); // Use window.location for client-side
-      if (sessionId) {
-        try {
-          const response = await fetch(`/api/stripe/verify-payment?session_id=${sessionId}`);
-          if (!response.ok) {
-            throw new Error("Failed to verify payment");
+    const initializePage = async () => {
+      try {
+        const checkPaymentStatus = async () => {
+          const sessionId = new URLSearchParams(window.location.search).get("session_id"); // Use window.location for client-side
+          if (sessionId) {
+            try {
+              const response = await fetch(`/api/stripe/verify-payment?session_id=${sessionId}`);
+              if (!response.ok) {
+                throw new Error("Failed to verify payment");
+              }
+
+              const { appointmentId } = await response.json();
+
+              // Update local state
+              setAppointmentPaid(appointmentId);
+
+              // Update Firebase
+              await fetch(`/api/appointments/update-status`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ appointmentId, isPaid: true }),
+              });
+            } catch (error) {
+              console.error("Error verifying payment:", error);
+            }
           }
+        };
 
-          const { appointmentId } = await response.json();
-
-          // Update local state
-          setAppointmentPaid(appointmentId);
-
-          // Update Firebase
-          await fetch(`/api/appointments/update-status`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ appointmentId, isPaid: true }),
-          });
-        } catch (error) {
-          console.error("Error verifying payment:", error);
-        }
+        await checkPaymentStatus();
+      } catch (error) {
+        console.error('Error initializing appointments page:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    checkPaymentStatus();
+    initializePage();
   }, [setAppointmentPaid]);
 
   const handlePayNow = async (appointmentId: string) => {
@@ -94,6 +106,10 @@ export default function AppointmentsPage() {
     const appointmentDateTime = new Date(`${date}T${time}`);
     return appointmentDateTime < new Date();
   };
+
+  if (loading) {
+    return <Loader />;
+  }
 
   if (isDoctor === null) {
     console.log("Determining user role...");
@@ -169,6 +185,20 @@ export default function AppointmentsPage() {
                           >
                             Pay Now
                           </button>
+                        )}
+                      </td>
+                    )}
+                    {isDoctor && (
+                      <td>
+                        {appointment.status === "accepted" && appointment.isPaid ? (
+                          <button
+                            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
+                            onClick={() => handleJoinCall(appointment.id)}
+                          >
+                            Join Now
+                          </button>
+                        ) : (
+                          <span className="text-gray-500">Declined</span>
                         )}
                       </td>
                     )}

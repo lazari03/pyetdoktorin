@@ -7,13 +7,16 @@ import Link from 'next/link';
 import { isProfileIncomplete } from '../../store/generalStore';
 import DoctorSearchModal from '../components/DoctorSearchModal';
 import { UserRole } from '../../models/UserRole'; // Import UserRole model
+import DashboardNotifications from '../components/DashboardNotifications'; // Import the notification widget
+import Loader from '../components/Loader'; // Import Loader component
 
 export default function Dashboard() {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const { totalAppointments, nextAppointment, recentAppointments, fetchAppointments } = useDashboardStore();
   const [profileIncomplete, setProfileIncomplete] = useState<boolean>(true);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchBarPosition, setSearchBarPosition] = useState<DOMRect | null>(null);
+  const [loading, setLoading] = useState(true); // Add loading state for the dashboard
   const searchBarRef = useRef<HTMLDivElement>(null);
 
   const fetchProfileStatus = async () => {
@@ -36,14 +39,21 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchProfileStatus();
-  }, [user, role]);
+    const initializeDashboard = async () => {
+      try {
+        await fetchProfileStatus();
+        if (user && role) await fetchAppointments(user.uid, role);
+      } catch (error) {
+        console.error('Error initializing dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    if (user && role) fetchAppointments(user.uid, role);
-  }, [user, fetchAppointments]);
+    initializeDashboard();
+  }, [user, role, fetchAppointments]);
 
-  if (loading) return <p>Loading...</p>;
+  if (authLoading || loading) return <Loader />;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -72,6 +82,14 @@ export default function Dashboard() {
       {profileIncomplete && (
         <div className="alert alert-warning mb-6">
           <span>Your profile is incomplete. Please complete your profile</span>
+        </div>
+      )}
+      {role === UserRole.Doctor && user?.uid && (
+        <div className="mb-6">
+          <DashboardNotifications doctorId={user.uid} />
+          <Link href="/dashboard/notifications" className="text-blue-500 hover:underline mt-2 block">
+            View All Notifications
+          </Link>
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
