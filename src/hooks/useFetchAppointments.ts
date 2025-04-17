@@ -6,19 +6,28 @@ export const useFetchAppointments = (user: { uid: string } | null) => {
   const { setAppointments, setIsDoctor } = useAppointmentStore();
 
   useEffect(() => {
-    if (user) {
-      const initialize = async () => {
-        // Determine if the user is a doctor
-        const userRole = await getUserRole(user.uid);
-        const isDoctor = userRole === "doctor";
+    const fetchAndSetAppointments = async () => {
+      if (!user || !user.uid) {
+        console.error('User is not authenticated or user ID is missing');
+        setAppointments([]);
+        setIsDoctor(null);
+        return;
+      }
+
+      try {
+        const userRole = await getUserRole(user.uid); // Centralized role check
+        console.log("Fetched user role:", userRole);
+        const isDoctor = userRole === 'doctor';
         setIsDoctor(isDoctor);
 
-        // Fetch appointments
-        const fetchedAppointments = await fetchAppointments(user.uid, isDoctor);
-        setAppointments(fetchedAppointments);
-      };
+        const appointments = await fetchAppointments(user.uid, isDoctor);
+        console.log("Fetched appointments:", appointments);
+        setAppointments(appointments);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
 
-      initialize();
-    }
+    fetchAndSetAppointments();
   }, [user, setAppointments, setIsDoctor]);
 };

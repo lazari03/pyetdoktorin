@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '../config/firebaseconfig';
-import { doc, setDoc, getDocs, query, where, collection, addDoc } from 'firebase/firestore'; // Add getDocs, query, where
+import { doc, setDoc, getDocs, query, where, collection, addDoc } from 'firebase/firestore';
 import { isAuthenticated, fetchUserDetails } from '../services/authService';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { useNewAppointmentStore } from '@/store/newAppointmentStore';
 import { Appointment } from '@/models/Appointment';
+import { AuthContext } from '../context/AuthContext'; // Import AuthContext
 
 export default function useNewAppointment() {
   const {
@@ -23,18 +24,18 @@ export default function useNewAppointment() {
   } = useNewAppointmentStore();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [patientName, setPatientName] = useState<string>(''); // State for patient name
+  const [patientName, setPatientName] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>([]);
   const router = useRouter();
+  const { user } = useContext(AuthContext); // Get the authenticated user
 
   useEffect(() => {
-    // Automatically fetch the patient name when the hook is initialized
     isAuthenticated(async (authState) => {
       if (authState.userId) {
-        const userDetails = await fetchUserDetails(authState.userId); // Fetch user details
+        const userDetails = await fetchUserDetails(authState.userId);
         if (userDetails?.name) {
-          setPatientName(userDetails.name); // Set the patient name from user details
+          setPatientName(userDetails.name);
         }
       }
     });
@@ -98,12 +99,18 @@ export default function useNewAppointment() {
       return;
     }
 
+    if (!user || !user.uid || !user.name) {
+      console.error('No authenticated user found or user name is missing');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const appointmentData: Omit<Appointment, 'id'> = {
       doctorId: selectedDoctor.id,
       doctorName: selectedDoctor.name,
-      patientId: '', // Replace with actual user ID from context
+      patientId: user.uid, // Use the authenticated user's UID
+      patientName: user.name, // Use the logged-in user's name
       appointmentType,
       preferredDate,
       preferredTime,
@@ -111,6 +118,8 @@ export default function useNewAppointment() {
       isPaid: false,
       createdAt: new Date().toISOString(),
     };
+
+    console.log('Attempting to save appointment data:', appointmentData); // Log the data
 
     try {
       const exists = await checkAppointmentExists(
@@ -159,7 +168,7 @@ export default function useNewAppointment() {
     resetAppointment,
     handleSubmit,
     isSubmitting,
-    patientName, // Expose patient name state
+    patientName,
     loading,
     availableTimes,
   };

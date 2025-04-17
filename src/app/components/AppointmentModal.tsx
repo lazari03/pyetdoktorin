@@ -27,36 +27,35 @@ export default function AppointmentModal({
     handleSubmit,
   } = useNewAppointment();
 
-  // Pre-select the doctor when the modal opens
   useEffect(() => {
-    if (isOpen) {
-      setSelectedDoctor(doctor);
-    }
+    if (isOpen) setSelectedDoctor(doctor);
   }, [isOpen, doctor, setSelectedDoctor]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box">
-        <h2 className="font-bold text-lg">New Appointment</h2>
-        <form className="form-control gap-4 mt-4" onSubmit={handleSubmit}>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <h2 className="text-xl font-bold mb-4">New Appointment</h2>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit(e, onClose, () => {}); // Pass the required arguments
+          }}
+        >
           <div>
-            <label className="label">
-              <span className="label-text">Doctor Name</span>
-            </label>
+            <label className="block text-sm font-medium mb-1">Doctor Name</label>
             <input
               type="text"
               className="input input-bordered w-full"
               value={doctor.name}
-              disabled // Disable the field as the doctor is pre-selected
+              disabled
             />
           </div>
 
           <div>
-            <label className="label">
-              <span className="label-text">Appointment Type</span>
-            </label>
+            <label className="block text-sm font-medium mb-1">Appointment Type</label>
             <select
               className="select select-bordered w-full"
               value={appointmentType}
@@ -69,9 +68,7 @@ export default function AppointmentModal({
           </div>
 
           <div>
-            <label className="label">
-              <span className="label-text">Preferred Date</span>
-            </label>
+            <label className="block text-sm font-medium mb-1">Preferred Date</label>
             <input
               type="date"
               className="input input-bordered w-full"
@@ -82,9 +79,7 @@ export default function AppointmentModal({
           </div>
 
           <div>
-            <label className="label">
-              <span className="label-text">Preferred Time</span>
-            </label>
+            <label className="block text-sm font-medium mb-1">Preferred Time</label>
             <select
               className="select select-bordered w-full"
               value={preferredTime}
@@ -102,27 +97,29 @@ export default function AppointmentModal({
           </div>
 
           <div>
-            <label className="label">
-              <span className="label-text">Notes</span>
-            </label>
+            <label className="block text-sm font-medium mb-1">Notes</label>
             <textarea
               className="textarea textarea-bordered w-full"
-              rows={4}
+              rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             ></textarea>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex justify-end space-x-4">
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               className={`btn btn-primary ${loading ? 'loading' : ''}`}
               disabled={loading}
             >
-              Confirm Booking
-            </button>
-            <button type="button" className="btn" onClick={onClose}>
-              Cancel
+              Confirm
             </button>
           </div>
         </form>

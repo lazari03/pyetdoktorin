@@ -9,7 +9,7 @@ import { UserRole } from '@/models/UserRole';
 interface AuthContextType {
   isAuthenticated: boolean;
   uid: string | null; // Add `uid` property
-  user: any | null;
+  user: { uid: string; name: string } | null;
   role: UserRole | null;
   loading: boolean;
 }
@@ -25,7 +25,7 @@ export const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uid, setUid] = useState<string | null>(null); // Add state for `uid`
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<{ uid: string; name: string } | null>(null);
   const [role, setRole] = useState<UserRole.null | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,8 +38,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (currentUser) {
         setIsAuthenticated(true);
         setUid(currentUser.uid); // Set `uid`
-        setUser(currentUser);
-
         try {
           // Fetch the user's role from Firestore
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
@@ -48,15 +46,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const role = userData.role || null;
             setRole(role); // Set the user's role
             localStorage.setItem('userRole', role); // Store the role in localStorage
+            setUser({ uid: currentUser.uid, name: userData.name || 'Unknown' }); // Ensure name is set
           } else {
             console.error('User document not found in Firestore');
             setRole(null);
             localStorage.removeItem('userRole'); // Remove role if not found
+            setUser(null);
           }
         } catch (error) {
           console.error('Failed to fetch user role from Firestore:', error);
           setRole(null);
           localStorage.removeItem('userRole'); // Remove role on error
+          setUser(null);
         }
       } else {
         setIsAuthenticated(false);

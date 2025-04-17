@@ -1,6 +1,5 @@
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebaseconfig";
-import { Appointment } from "../store/appointmentsStore"; // Import the Appointment interface
 
 export async function getUserRole(userId: string): Promise<string> {
   try {
@@ -20,7 +19,7 @@ export async function getUserRole(userId: string): Promise<string> {
   }
 }
 
-export async function fetchAppointments(userId: string, isDoctor: boolean): Promise<Appointment[]> {
+export async function fetchAppointments(userId: string, isDoctor: boolean) {
   try {
     const q = query(
       collection(db, "appointments"),
@@ -29,7 +28,7 @@ export async function fetchAppointments(userId: string, isDoctor: boolean): Prom
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...(doc.data() as Omit<Appointment, "id">), // Ensure the data matches the Appointment interface
+      ...doc.data(),
     }));
   } catch (error) {
     console.error("Error fetching appointments:", error);

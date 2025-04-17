@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { fetchAppointments } from "../services/appointmentsService"; // Import the service
+import { fetchAppointments } from "../services/appointmentService"; // Import the service
 import { Appointment } from "../models/Appointment"; // Import the model
 
 interface AppointmentState {
@@ -8,7 +8,7 @@ interface AppointmentState {
   loading: boolean;
   error: string | null;
   setAppointments: (appointments: Appointment[]) => void;
-  setIsDoctor: (isDoctor: boolean) => void;
+  setIsDoctor: (isDoctor: boolean | null) => void;
   fetchAppointments: (userId: string, isDoctor: boolean) => Promise<void>;
   setAppointmentPaid: (appointmentId: string) => void; // Add this function
 }

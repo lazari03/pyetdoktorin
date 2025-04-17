@@ -2,57 +2,62 @@
 
 import { useEffect, useState } from 'react';
 import { db } from '../../config/firebaseconfig';
-import { collection, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 interface Notification {
   id: string;
-  message: string;
-  appointmentId: string;
-  status: string;
+  patientName: string;
+  appointmentType: string;
+  preferredDate: string;
+  preferredTime: string;
 }
 
 export default function DashboardNotifications({ doctorId }: { doctorId: string }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    const q = query(collection(db, 'notifications'), where('doctorId', '==', doctorId));
+    if (!doctorId) {
+      console.warn("doctorId is undefined. Skipping notifications query.");
+      return;
+    }
+
+    console.log("Fetching notifications for doctorId:", doctorId);
+
+    const q = query(
+      collection(db, 'appointments'),
+      where('doctorId', '==', doctorId),
+      where('status', '==', 'pending') // Fetch only pending appointments
+    );
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedNotifications = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Notification[];
+      console.log("Fetched notifications:", fetchedNotifications);
       setNotifications(fetchedNotifications);
     });
 
     return () => unsubscribe();
   }, [doctorId]);
 
-  const handleAccept = async (notificationId: string) => {
-    await updateDoc(doc(db, 'notifications', notificationId), { status: 'accepted' });
-    alert('Appointment accepted!');
-  };
-
-  const handleReject = async (notificationId: string) => {
-    await updateDoc(doc(db, 'notifications', notificationId), { status: 'rejected' });
-    alert('Appointment rejected!');
-  };
-
   return (
     <div className="notifications">
-      <h2 className="text-xl font-bold mb-4">Notifications</h2>
-      {notifications.map((notification) => (
-        <div key={notification.id} className="notification-item flex justify-between items-center p-3 border-b">
-          <p>{notification.message}</p>
-          <div className="actions flex gap-2">
-            <button className="btn btn-success" onClick={() => handleAccept(notification.id)}>
-              ✓
-            </button>
-            <button className="btn btn-error" onClick={() => handleReject(notification.id)}>
-              ✕
-            </button>
+      <h2 className="text-xl font-bold mb-4">New Appointment Requests</h2>
+      {notifications.length === 0 ? (
+        <p>No new appointment requests.</p>
+      ) : (
+        notifications.map((notification) => (
+          <div key={notification.id} className="notification-item p-3 border-b">
+            <p>
+              <strong>{notification.patientName}</strong> requested a{' '}
+              <strong>{notification.appointmentType}</strong> on{' '}
+              <strong>{notification.preferredDate}</strong> at{' '}
+              <strong>{notification.preferredTime}</strong>.
+            </p>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 }
