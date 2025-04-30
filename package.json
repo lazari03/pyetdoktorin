@@ -6,7 +6,6 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "build:prod": "env-cmd -f .env.production next build",
-    "start": "node src/server.js",
     "start:prod": "env-cmd -f .env.production next start",
     "lint": "next lint"
   },
