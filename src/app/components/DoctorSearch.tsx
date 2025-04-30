@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchDoctors, Doctor } from '../services/doctorService';
+import { fetchDoctors, Doctor } from '../../services/doctorService';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext'; // Import AuthContext
 
@@ -67,12 +67,12 @@ export default function DoctorSearch({ onDoctorSelect }: DoctorSearchProps) {
     <>
       {isOverlayVisible && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-90 z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black bg-opacity-90 transition-opacity duration-300"
           onClick={closeSearch}
         ></div>
       )}
 
-      <div className="relative z-50">
+      <div className="relative">
         <div className="mb-4">
           <input
             type="text"
@@ -104,7 +104,7 @@ export default function DoctorSearch({ onDoctorSelect }: DoctorSearchProps) {
               >
                 <div className="font-bold">{doctor.name}</div>
                 <div className="text-sm text-gray-500">
-                  {doctor.specializations?.join(', ') || 'No specializations'}
+                  {doctor.specialization?.join(', ') || 'No specializations'}
                 </div>
               </li>
             ))}

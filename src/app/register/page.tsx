@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { register } from '../services/authService'; // Ensure this function is updated as explained below
+import { register } from '../../services/authService'; // Ensure this function is updated as explained below
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({

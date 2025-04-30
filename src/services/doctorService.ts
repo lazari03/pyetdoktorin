@@ -1,12 +1,12 @@
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../../config/firebaseconfig";
+import { db } from "../config/firebaseconfig";
 
 export interface Doctor {
   id: string;
   name: string;
-  specializations: string[];
+  specialization: string[];
   expertise?: string[];
-  [key: string]: any; // Allow additional fields
+  additionalFields?: Record<string, unknown>; // Replace `[key: string]: any` with a more specific type
 }
 
 export async function fetchDoctors(searchTerm: string, searchType: 'name' | 'expertise'): Promise<Doctor[]> {
@@ -53,7 +53,7 @@ export async function fetchDoctors(searchTerm: string, searchType: 'name' | 'exp
       return {
         id: doc.id,
         name: data.name || "",
-        specializations: data.specializations || [],
+        specialization: data.specialization || [],
         expertise: data.expertise || [],
         ...data,
       } as Doctor;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../config/firebaseconfig';
+import { db } from '../config/firebaseconfig';
 
 interface Doctor {
   id: string;

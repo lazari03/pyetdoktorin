@@ -9,30 +9,19 @@ interface RoleGuardProps {
   fallbackPath?: string;
 }
 
-export default function RoleGuard({ 
-  children, 
-  allowedRoles,
-  fallbackPath = '/dashboard'
-}: RoleGuardProps) {
+export default function RoleGuard({ children, allowedRoles, fallbackPath = '/dashboard' }: RoleGuardProps) {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Function to check user role from localStorage
     function checkUserRole() {
       try {
-        if (typeof window === 'undefined') {
-          console.log('Server-side rendering, skipping role check');
-          return false;
-        }
-
-        const userRole = localStorage.getItem('userRole');
+        const userRole = localStorage.getItem('userRole'); // Assuming role is stored in localStorage
         if (!userRole || !allowedRoles.includes(userRole)) {
           router.push(fallbackPath);
           return false;
         }
-
         return true;
       } catch (error) {
         console.error('RoleGuard: Error checking user role:', error);
@@ -51,10 +40,12 @@ export default function RoleGuard({
   }, [allowedRoles, fallbackPath, router]);
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">
-      <div className="loading loading-spinner loading-lg"></div>
-      <span className="ml-2">Checking authorization...</span>
-    </div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="loading loading-spinner loading-lg"></div>
+        <span className="ml-2">Checking authorization...</span>
+      </div>
+    );
   }
 
   return isAuthorized ? <>{children}</> : null;

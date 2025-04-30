@@ -1,41 +1,42 @@
-import { db } from '../../../config/firebaseconfig';
+import { db } from '../config/firebaseconfig';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { Appointment } from '../models/Appointment'; // Import the Appointment type
 
-export const fetchAppointments = async (status: string) => {
-  const auth = getAuth();
-  const user = auth.currentUser;
-
-  if (!user) {
-    throw new Error("User not authenticated. Please log in.");
+export async function fetchAppointments(userId: string, isDoctor: boolean): Promise<Appointment[]> {
+  if (!userId) {
+    throw new Error('User ID is missing');
   }
-
-  const userId = user.uid;
-  const userRole = localStorage.getItem('userRole'); // "patient" or "doctor"
-  if (!userRole) {
-    throw new Error("User role not found in localStorage.");
-  }
-
-  const baseQuery = query(
-    collection(db, 'appointments'),
-    where(userRole === 'patient' ? 'patientId' : 'doctorId', '==', userId)
-  );
-
-  const q = status === "all" ? baseQuery : query(baseQuery, where('status', '==', status));
 
   try {
+    const appointmentsRef = collection(db, 'appointments');
+    const q = query(
+      appointmentsRef,
+      where(isDoctor ? 'doctorId' : 'patientId', '==', userId)
+    );
+
     const querySnapshot = await getDocs(q);
-    const appointments = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    console.log("Fetched appointments from service:", appointments); // Debugging logs
-    return appointments;
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        doctorId: data.doctorId || '',
+        doctorName: data.doctorName || '',
+        patientId: data.patientId || '',
+        patientName: data.patientName || '',
+        appointmentType: data.appointmentType || '',
+        preferredDate: data.preferredDate || '',
+        preferredTime: data.preferredTime || '',
+        notes: data.notes || '',
+        isPaid: data.isPaid || false,
+        createdAt: data.createdAt || '',
+      } as Appointment;
+    });
   } catch (error) {
-    console.error("Error fetching appointments:", error);
-    throw new Error("Failed to fetch appointments.");
+    console.error('Error fetching appointments:', error);
+    throw error;
   }
-};
+}
 
 export const bookAppointment = async (appointmentData: {
   doctorId: number;

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
-import { useDoctorProfile } from '../hooks/useDoctorProfile';
+import { useDoctorProfile } from '../../hooks/useDoctorProfile';
 import AppointmentModal from './AppointmentModal';
 import { useAuth } from '../../context/AuthContext'; // Import AuthContext
 
@@ -10,9 +10,18 @@ interface DoctorProfileProps {
   id: string;
 }
 
+interface Doctor {
+  id: string;
+  name: string;
+  surname: string;
+  about?: string;
+  specializations?: string[];
+  education?: string[];
+}
+
 export default function DoctorProfile({ id }: DoctorProfileProps) {
   const { doctor, loading, error } = useDoctorProfile(id);
-  const { user, role } = useAuth(); // Access user and role from AuthContext
+  const { user } = useAuth(); // Removed unused `role`
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleRequestAppointment = useCallback(() => {
@@ -59,7 +68,11 @@ function DoctorImage({ name, surname }: { name?: string; surname?: string }) {
   );
 }
 
-function DoctorDetails({ doctor, onRequestAppointment }: { doctor: any; onRequestAppointment: () => void }) {
+function DoctorDetails({ doctor, onRequestAppointment }: { doctor: Doctor | null; onRequestAppointment: () => void }) {
+  if (!doctor) {
+    return <p className="text-red-500">Doctor details are not available.</p>;
+  }
+
   return (
     <div className="card-body w-full md:w-2/3 p-6">
       <h2 className="card-title text-3xl">

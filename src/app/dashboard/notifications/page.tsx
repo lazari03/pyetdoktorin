@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { auth, db } from "../../../../config/firebaseconfig";
+import { auth, db } from "../../../config/firebaseconfig";
 import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
-import { useAppointments } from "../../hooks/useAppointments";
+import { useAppointments } from "../../../hooks/useAppointments";
 import Link from "next/link";
 
 export default function NotificationsPage() {
@@ -104,7 +104,7 @@ export default function NotificationsPage() {
     if (userRole && appointmentDetails.length > 0) {
       fetchPendingAppointments();
     }
-  }, [userRole, appointmentDetails]);
+  }, [userRole, appointmentDetails, appointments]); // Added 'appointments' to the dependency array
 
   const handleAppointmentAction = async (appointmentId: string, action: "accepted" | "rejected") => {
     try {

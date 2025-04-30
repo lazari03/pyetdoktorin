@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { db, auth } from "../../../config/firebaseconfig";
+import { db, auth } from "../config/firebaseconfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 export const useMyProfile = () => {
   const { user, role, loading: authLoading } = useAuth(); // Access user, role, and loading from AuthContext
@@ -37,7 +37,7 @@ export const useMyProfile = () => {
           console.warn("User document not found in Firestore.");
           setFormData((prev) => ({
             ...prev,
-            email: user?.email || "",
+            email: userDoc.data()?.email || "", // Fetch email from Firestore if available
           }));
         }
       } catch (error) {
