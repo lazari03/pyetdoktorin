@@ -29,7 +29,7 @@ export const useDoctorSearchStore = create<DoctorSearchState>((set, get) => ({
     try {
       const doctors = await fetchDoctors(searchTerm.trim(), searchType);
       set({ filteredDoctors: doctors });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to fetch doctors. Please try again.' });
     } finally {
       set({ loading: false });

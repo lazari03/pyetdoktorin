@@ -1,8 +1,7 @@
 'use client';
 
 import DoctorSearch from '@/app/components/DoctorSearch';
-import { useContext, useState } from 'react';
-import { AuthContext } from '../../../context/AuthContext';
+import { useState } from 'react'; 
 import { useRouter } from 'next/navigation';
 import useNewAppointment from '@/hooks/useNewAppointment'; // Custom hook for appointment logic
 
@@ -23,7 +22,6 @@ export default function NewAppointmentPage() {
     isSubmitting,
   } = useNewAppointment(); // Use the custom hook
 
-  const { user } = useContext(AuthContext); // Use context to get the authenticated user
   const router = useRouter(); // For navigation
   const [showModal, setShowModal] = useState(false); // Modal visibility state
   const [progress, setProgress] = useState(100); // Progress bar state
@@ -35,7 +33,16 @@ export default function NewAppointmentPage() {
         {!selectedDoctor && (
           <div className="mt-6">
             <h3 className="font-bold text-lg">Search and Select a Doctor</h3>
-            <DoctorSearch onDoctorSelect={(doctor) => setSelectedDoctor(doctor)} />
+            <DoctorSearch
+              onDoctorSelect={(doctor) =>
+                setSelectedDoctor({
+                  ...doctor,
+                  specialization: Array.isArray(doctor.specialization) 
+                    ? doctor.specialization.join(', ') 
+                    : doctor.specialization || "General", // Provide a default specialization if missing
+                })
+              }
+            />
           </div>
         )}
 

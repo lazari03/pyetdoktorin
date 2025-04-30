@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchDoctors, Doctor } from '../../services/doctorService';
 import { useRouter } from 'next/navigation';
 
@@ -17,6 +17,21 @@ export default function DoctorSearchInput({ searchType }: DoctorSearchInputProps
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const fetchDoctorsList = useCallback(async (term: string) => {
+    setLoading(true);
+    setError('');
+    setFilteredDoctors([]);
+
+    try {
+      const doctors = await fetchDoctors(term, searchType);
+      setFilteredDoctors(doctors);
+    } catch {
+      setError('Failed to fetch doctors. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchType]);
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchTerm.length >= 4) {
@@ -27,22 +42,7 @@ export default function DoctorSearchInput({ searchType }: DoctorSearchInputProps
     }, 1000);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
-
-  const fetchDoctorsList = async (term: string) => {
-    setLoading(true);
-    setError('');
-    setFilteredDoctors([]);
-
-    try {
-      const doctors = await fetchDoctors(term, searchType);
-      setFilteredDoctors(doctors);
-    } catch (err) {
-      setError('Failed to fetch doctors. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [searchTerm, fetchDoctorsList]);
 
   const handleDoctorClick = (doctor: Doctor) => {
     router.push(`/dashboard/doctor/${doctor.id}`);

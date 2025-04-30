@@ -10,4 +10,5 @@ export interface Appointment {
   notes: string;
   isPaid: boolean;
   createdAt: string;
+  status: string; // "pending", "accepted", "declined"
 }

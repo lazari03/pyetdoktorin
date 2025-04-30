@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardStore } from '../../store/dashboardStore';
 import Link from 'next/link';
@@ -19,12 +19,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true); // Add loading state for the dashboard
   const searchBarRef = useRef<HTMLDivElement>(null);
 
-  const fetchProfileStatus = async () => {
+  const fetchProfileStatus = useCallback(async () => {
     if (user && role) {
       const incomplete = await isProfileIncomplete(role, user.uid);
       setProfileIncomplete(incomplete);
     }
-  };
+  }, [user, role]); // Wrapped in useCallback to stabilize the function reference
 
   const handleSearchClick = () => {
     if (searchBarRef.current) {
@@ -51,7 +51,7 @@ export default function Dashboard() {
     };
 
     initializeDashboard();
-  }, [user, role, fetchAppointments]);
+  }, [user, role, fetchAppointments, fetchProfileStatus]); // Added 'fetchProfileStatus' to the dependency array
 
   if (authLoading || loading) return <Loader />;
 
@@ -123,7 +123,7 @@ export default function Dashboard() {
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody> 
                 {recentAppointments.length > 0 ? (
                   recentAppointments.map((appointment, index) => (
                     <tr key={index}>

@@ -32,7 +32,7 @@ export default function DoctorCalendarPage() {
   return (
     <RoleGuard allowedRoles={[UserRole.Doctor]} fallbackPath="/dashboard">
       <div>
-        <h1 className="text-2xl font-bold">Doctor's Calendar</h1>
+        <h1 className="text-2xl font-bold">Doctor&apos;s Calendar</h1>
         <Calendar />
       </div>
     </RoleGuard>

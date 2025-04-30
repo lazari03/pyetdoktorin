@@ -1,5 +1,6 @@
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebaseconfig";
+import { Appointment } from "@/models/Appointment";
 
 export async function getUserRole(userId: string): Promise<string> {
   try {
@@ -19,19 +20,29 @@ export async function getUserRole(userId: string): Promise<string> {
   }
 }
 
-export async function fetchAppointments(userId: string, isDoctor: boolean) {
-  try {
-    const q = query(
-      collection(db, "appointments"),
-      where(isDoctor ? "doctorId" : "patientId", "==", userId)
-    );
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => ({
+export async function fetchAppointments(userId: string, isDoctor: boolean): Promise<Appointment[]> {
+  const appointmentsRef = collection(db, "appointments");
+  const q = query(
+    appointmentsRef,
+    where(isDoctor ? "doctorId" : "patientId", "==", userId)
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
       id: doc.id,
-      ...doc.data(),
-    }));
-  } catch (error) {
-    console.error("Error fetching appointments:", error);
-    return [];
-  }
+      doctorId: data.doctorId || "",
+      doctorName: data.doctorName || "Unknown",
+      patientId: data.patientId || "",
+      patientName: data.patientName || "Unknown",
+      appointmentType: data.appointmentType || "General",
+      preferredDate: data.preferredDate || "",
+      preferredTime: data.preferredTime || "",
+      notes: data.notes || "",
+      isPaid: data.isPaid || false,
+      createdAt: data.createdAt || new Date().toISOString(),
+      status: data.status || "pending",
+    } as Appointment; // Ensure the return type matches Appointment
+  });
 }

@@ -5,14 +5,12 @@ import { useAppointmentStore } from "../../../store/appointmentStore";
 import { useFetchAppointments } from "../../../hooks/useFetchAppointments";
 import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
-import { useRouter } from "next/navigation"; // Update import to use next/navigation
 import DashboardNotifications from '../../components/DashboardNotifications';
 import Loader from '../../components/Loader';
 
 export default function AppointmentsPage() {
   const { user } = useContext(AuthContext);
   const { appointments, isDoctor, setAppointmentPaid } = useAppointmentStore();
-  const router = useRouter(); // Ensure this is from next/navigation
   const [loading, setLoading] = useState(true);
 
   // Custom hook to handle fetching appointments and user role
@@ -116,12 +114,12 @@ export default function AppointmentsPage() {
     return <div>Loading...</div>;
   }
 
-  console.log("isDoctor:", isDoctor, "user.id:", user?.id);
+  console.log("isDoctor:", isDoctor, "user.id:", user?.uid);
 
   return (
     <div>
-      {isDoctor && user?.id && (
-        <DashboardNotifications doctorId={user.id} />
+      {isDoctor && user?.uid && (
+        <DashboardNotifications doctorId={user.uid} />
       )}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">

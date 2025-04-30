@@ -21,8 +21,22 @@ export const useFetchAppointments = (user: { uid: string } | null) => {
         setIsDoctor(isDoctor);
 
         const appointments = await fetchAppointments(user.uid, isDoctor);
-        console.log("Fetched appointments:", appointments);
-        setAppointments(appointments);
+        const mappedAppointments = appointments.map((appointment) => ({
+          id: appointment.id,
+          doctorId: "doctorId" in appointment ? appointment.doctorId : "",
+          doctorName: "doctorName" in appointment ? appointment.doctorName : "Unknown",
+          patientId: "patientId" in appointment ? appointment.patientId : "",
+          patientName: "patientName" in appointment ? appointment.patientName : "Unknown",
+          appointmentType: "appointmentType" in appointment ? appointment.appointmentType : "General",
+          preferredDate: "preferredDate" in appointment ? appointment.preferredDate : "",
+          preferredTime: "preferredTime" in appointment ? appointment.preferredTime : "",
+          notes: "notes" in appointment ? appointment.notes : "",
+          isPaid: "isPaid" in appointment ? appointment.isPaid : false,
+          createdAt: "createdAt" in appointment ? appointment.createdAt : new Date().toISOString(),
+          status: "status" in appointment ? appointment.status : "pending",
+        })); // Ensure all required fields are present
+        console.log("Mapped appointments:", mappedAppointments);
+        setAppointments(mappedAppointments);
       } catch (error) {
         console.error('Error fetching appointments:', error);
       }

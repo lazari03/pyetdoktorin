@@ -20,7 +20,7 @@ export default function UpcomingRequestsPage() {
     const fetchRequests = async () => {
       setLoading(true);
       try {
-        const fetchedRequests = await fetchAppointments('pending');
+        const fetchedRequests = await fetchAppointments('pending', false);
         const mappedRequests = fetchedRequests.map((request: { id: string; doctorId?: string; appointmentType?: string }) => ({
           id: request.id,
           doctorId: request.doctorId || 'Unknown Doctor',

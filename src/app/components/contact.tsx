@@ -1,13 +1,13 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, FieldValues } from 'react-hook-form'; // Import FieldValues
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
 export default function ContactForm() {
   const { handleSubmit, control } = useForm();
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: FieldValues) => { // Replace 'any' with 'FieldValues'
     console.log('Form Data:', data);
   };
 
@@ -16,7 +16,7 @@ export default function ContactForm() {
       <div className="max-w-2xl mx-auto text-center">
         <h2 className="text-4xl font-bold text-gray-900 sm:text-5xl">Get in Touch</h2>
         <p className="mt-6 text-lg text-gray-600">
-          Have questions? We'd love to hear from you. Fill out the form below and we'll get back to you shortly.
+          Have questions? We&apos;d love to hear from you. Fill out the form below and we&apos;ll get back to you shortly.
         </p>
       </div>
       <form

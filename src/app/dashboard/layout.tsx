@@ -14,7 +14,7 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
-import { useAppointmentStore, useInitializeAppointments } from '../../store/appointmentStore';
+import { useInitializeAppointments } from '../../store/appointmentStore';
 import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths } from '@/store/navigationStore';
 import { signOut } from 'firebase/auth';
@@ -26,7 +26,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const { uid, role } = useAuth();
   useInitializeAppointments();
-  const { appointments, loading: appointmentsLoading } = useAppointmentStore();
 
   if (!uid || !role) {
     return (
@@ -100,8 +99,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 await signOut(auth);
                 document.cookie = 'auth-token=; path=/; max-age=0';
                 window.location.href = '/login';
-              } catch (error) {
-                console.error('Error signing out:', error);
+              } catch {
+                console.error('Error signing out:');
                 alert('Error signing out. Please try again.');
               }
             }}
@@ -169,7 +168,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 await signOut(auth);
                 document.cookie = 'auth-token=; path=/; max-age=0';
                 window.location.href = '/login';
-              } catch (error) {
+              } catch {
                 alert('Error signing out.');
               }
             }}

@@ -1,4 +1,3 @@
-import { HomeIcon, ClipboardIcon, UserIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { UserRole } from '../models/UserRole';
 
 export function getNavigationPaths(role: UserRole) {

@@ -1,12 +1,11 @@
 import { useState, useEffect, useContext } from 'react';
-import { useRouter } from 'next/navigation';
-import { db } from '../config/firebaseconfig';
-import { doc, setDoc, getDocs, query, where, collection, addDoc } from 'firebase/firestore';
+import { getDocs, query, where, collection, addDoc } from 'firebase/firestore'; // Removed unused `doc` and `setDoc`
 import { isAuthenticated, fetchUserDetails } from '../services/authService';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { useNewAppointmentStore } from '@/store/newAppointmentStore';
 import { Appointment } from '@/models/Appointment';
 import { AuthContext } from '../context/AuthContext'; // Import AuthContext
+import { db } from '@/config/firebaseconfig';
 
 export default function useNewAppointment() {
   const {
@@ -24,10 +23,9 @@ export default function useNewAppointment() {
   } = useNewAppointmentStore();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading] = useState(false); // Remove setLoading as it is unused
   const [patientName, setPatientName] = useState<string>('');
-  const [loading, setLoading] = useState(false);
-  const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>([]);
-  const router = useRouter();
+  const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>(); // Removed `loading` state
   const { user } = useContext(AuthContext); // Get the authenticated user
 
   useEffect(() => {
@@ -117,6 +115,7 @@ export default function useNewAppointment() {
       notes,
       isPaid: false,
       createdAt: new Date().toISOString(),
+      status: "pending", // Add the missing status property
     };
 
     console.log('Attempting to save appointment data:', appointmentData); // Log the data
@@ -168,8 +167,8 @@ export default function useNewAppointment() {
     resetAppointment,
     handleSubmit,
     isSubmitting,
+    loading, // Return loading
     patientName,
-    loading,
     availableTimes,
   };
 }

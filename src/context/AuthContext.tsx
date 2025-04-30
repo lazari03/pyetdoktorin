@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth'; 
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebaseconfig'; // Import your Firestore config
 import { UserRole } from '@/models/UserRole';

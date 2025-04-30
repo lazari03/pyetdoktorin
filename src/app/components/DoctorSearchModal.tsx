@@ -37,7 +37,7 @@ export default function DoctorSearchModal({ isOpen, onClose, position }: DoctorS
     try {
       const doctors = await fetchDoctors(term, 'name');
       setFilteredDoctors(doctors);
-    } catch (err) {
+    } catch {
       setError('Failed to fetch doctors. Please try again.');
     } finally {
       setLoading(false);

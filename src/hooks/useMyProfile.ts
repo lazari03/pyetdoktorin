@@ -37,7 +37,7 @@ export const useMyProfile = () => {
           console.warn("User document not found in Firestore.");
           setFormData((prev) => ({
             ...prev,
-            email: user?.email || "",
+            email: userDoc.data()?.email || "", // Fetch email from Firestore if available
           }));
         }
       } catch (error) {

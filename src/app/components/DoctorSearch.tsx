@@ -104,7 +104,7 @@ export default function DoctorSearch({ onDoctorSelect }: DoctorSearchProps) {
               >
                 <div className="font-bold">{doctor.name}</div>
                 <div className="text-sm text-gray-500">
-                  {doctor.specializations?.join(', ') || 'No specializations'}
+                  {doctor.specialization?.join(', ') || 'No specializations'}
                 </div>
               </li>
             ))}

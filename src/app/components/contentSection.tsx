@@ -1,4 +1,5 @@
-import { VideoCameraIcon, ShieldCheckIcon, HeartIcon } from '@heroicons/react/20/solid'
+import { VideoCameraIcon, ShieldCheckIcon, HeartIcon } from '@heroicons/react/20/solid';
+import Image from 'next/image'; // Import Image from next/image
 
 export default function TelemedicineSection() {
   const imageUrl = "https://portokalle-storage.fra1.digitaloceanspaces.com/img/sick-senior-woman-talking-with-young-doctor-remote-consultation.jpg";
@@ -41,9 +42,11 @@ export default function TelemedicineSection() {
         </div>
         <div className="-mt-12 -ml-12 p-12 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:overflow-hidden">
           <div className="flex items-center justify-center h-100 bg-gray-100 rounded-lg">
-            <img
+            <Image
               src={imageUrl}
               alt="Telemedicine Consultation"
+              width={500} // Specify width
+              height={500} // Specify height
               className="h-full w-auto object-contain rounded-lg"
             />
           </div>

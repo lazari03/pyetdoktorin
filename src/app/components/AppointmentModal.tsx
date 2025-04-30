@@ -10,7 +10,7 @@ export default function AppointmentModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  doctor: { id: string; name: string };
+  doctor: { id: string; name: string; specialization?: string };
 }) {
   const {
     setSelectedDoctor,
@@ -22,13 +22,17 @@ export default function AppointmentModal({
     setPreferredTime,
     notes,
     setNotes,
-    loading,
     availableTimes,
     handleSubmit,
   } = useNewAppointment();
 
   useEffect(() => {
-    if (isOpen) setSelectedDoctor(doctor);
+    if (isOpen) {
+      setSelectedDoctor({
+        ...doctor,
+        specialization: doctor.specialization || "General", // Provide a default specialization if missing
+      });
+    }
   }, [isOpen, doctor, setSelectedDoctor]);
 
   if (!isOpen) return null;
@@ -88,7 +92,7 @@ export default function AppointmentModal({
               <option value="" disabled>
                 Select a time
               </option>
-              {availableTimes.map(({ time, disabled }) => (
+              {availableTimes?.map(({ time, disabled }) => (
                 <option key={time} value={time} disabled={disabled}>
                   {time}
                 </option>
@@ -116,8 +120,7 @@ export default function AppointmentModal({
             </button>
             <button
               type="submit"
-              className={`btn btn-primary ${loading ? 'loading' : ''}`}
-              disabled={loading}
+              className="btn btn-primary"
             >
               Confirm
             </button>

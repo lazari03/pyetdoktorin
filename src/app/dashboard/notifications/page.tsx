@@ -104,7 +104,7 @@ export default function NotificationsPage() {
     if (userRole && appointmentDetails.length > 0) {
       fetchPendingAppointments();
     }
-  }, [userRole, appointmentDetails]);
+  }, [userRole, appointmentDetails, appointments]); // Added 'appointments' to the dependency array
 
   const handleAppointmentAction = async (appointmentId: string, action: "accepted" | "rejected") => {
     try {

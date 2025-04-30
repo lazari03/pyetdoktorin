@@ -25,7 +25,7 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
     try {
       const fetchedAppointments = await fetchAppointments(userId, isDoctor);
       set({ appointments: fetchedAppointments, loading: false });
-    } catch (error) {
+    } catch {
       set({ error: "Failed to fetch appointments", loading: false });
     }
   },

@@ -41,8 +41,13 @@ export const login = async (email: string, password: string) => {
     }
 };
 
+// Define a type for formData
+interface FormData {
+    [key: string]: unknown; // Allow additional fields with unknown types
+}
+
 // Register function
-export const register = async (email: string, password: string, role: string, formData: any) => {
+export const register = async (email: string, password: string, role: string, formData: FormData) => { // Replace `any` with `FormData`
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;

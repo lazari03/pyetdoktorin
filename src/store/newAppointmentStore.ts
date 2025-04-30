@@ -1,12 +1,18 @@
 import { create } from 'zustand';
 
+interface Doctor {
+  id: string;
+  name: string;
+  specialization: string;
+}
+
 interface NewAppointmentState {
-  selectedDoctor: any | null;
+  selectedDoctor: Doctor | null;
   appointmentType: string;
   preferredDate: string;
   preferredTime: string;
   notes: string;
-  setSelectedDoctor: (doctor: any) => void;
+  setSelectedDoctor: (doctor: Doctor) => void;
   setAppointmentType: (type: string) => void;
   setPreferredDate: (date: string) => void;
   setPreferredTime: (time: string) => void;
