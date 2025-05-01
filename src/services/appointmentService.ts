@@ -30,6 +30,7 @@ export async function fetchAppointments(userId: string, isDoctor: boolean): Prom
         notes: data.notes || '',
         isPaid: data.isPaid || false,
         createdAt: data.createdAt || '',
+        status: data.status || 'pending', // Ensure status is fetched correctly
       } as Appointment;
     });
   } catch (error) {

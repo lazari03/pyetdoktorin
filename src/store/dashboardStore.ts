@@ -6,6 +6,8 @@ import { formatDate } from '../utils/dateUtils';
 import { UserRole } from '../models/UserRole';
 import { getNavigationPaths } from './navigationStore';
 import { JSX } from 'react';
+import { AppointmentFields } from '../models/AppointmentFields';
+import { FirestoreCollections } from '../config/FirestoreCollections';
 
 interface DashboardState {
   totalAppointments: number;
@@ -24,9 +26,9 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   recentAppointments: [],
   fetchAppointments: async (userId, role) => {
     try {
-      const field = role === UserRole.Doctor ? 'doctorId' : 'patientId'; // Dynamically determine the field
+      const field = role === UserRole.Doctor ? AppointmentFields.DoctorId : AppointmentFields.PatientId; // Use constants
       const appointmentsQuery = query(
-        collection(db, 'appointments'),
+        collection(db, FirestoreCollections.Appointments), // Use constant for collection name
         where(field, '==', userId) // Use the dynamic field based on role
       );
       const querySnapshot = await getDocs(appointmentsQuery);
@@ -36,15 +38,20 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         ...doc.data(),
       })) as Appointment[];
 
-      // Sort appointments by preferredDate in descending order and limit to 5
+      // Filter and sort upcoming appointments
+      const upcomingAppointments = appointments
+        .filter((appointment) => {
+          const isUpcoming = appointment.preferredDate && new Date(appointment.preferredDate) > new Date();
+          const isAccepted = role === UserRole.Doctor ? appointment.status === 'accepted' : true;
+          return isUpcoming && isAccepted;
+        })
+        .sort((a, b) => new Date(a.preferredDate!).getTime() - new Date(b.preferredDate!).getTime());
+
+      // Sort appointments by preferredDate in descending order for recent appointments
       const sortedAppointments = appointments
         .filter((appointment) => appointment.preferredDate)
         .sort((a, b) => new Date(b.preferredDate!).getTime() - new Date(a.preferredDate!).getTime())
         .slice(0, 5);
-
-      const upcomingAppointments = appointments
-        .filter((appointment) => appointment.preferredDate && new Date(appointment.preferredDate) > new Date())
-        .sort((a, b) => new Date(a.preferredDate!).getTime() - new Date(b.preferredDate!).getTime());
 
       set((state) => ({
         ...state,

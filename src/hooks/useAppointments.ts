@@ -17,6 +17,8 @@ interface Appointment {
   patientId?: string;
   isPaid?: boolean;
   sessionEnded?: string;
+  start?: Date | null;
+  end?: Date | null;
 }
 
 export async function fetchDoctorId(doctorId: string) {
@@ -53,6 +55,14 @@ export function useAppointments() {
         const querySnapshot = await getDocs(appointmentsQuery);
         const fetchedAppointments = querySnapshot.docs.map((doc) => {
           const data = doc.data();
+          const startDateTime = data.preferredDate && data.preferredTime
+            ? new Date(`${data.preferredDate}T${data.preferredTime}`)
+            : null;
+
+          const endDateTime = startDateTime
+            ? new Date(startDateTime.getTime() + 30 * 60 * 1000) // Add 30 minutes to start time
+            : null;
+
           return {
             id: doc.id,
             createdAt: data.createdAt || "",
@@ -65,7 +75,9 @@ export function useAppointments() {
             doctorId: data.doctorId || "",
             patientId: data.patientId || "",
             isPaid: data.isPaid || false,
-            sessionEnded: data.sessionEnded // Fetch and store isPaid status
+            sessionEnded: data.sessionEnded,
+            start: startDateTime, // Ensure this is a valid Date object
+            end: endDateTime,     // Ensure this is a valid Date object
           } as Appointment;
         });
 

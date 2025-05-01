@@ -134,7 +134,7 @@ export default function AppointmentsPage() {
                   <th>Time</th>
                   <th>Notes</th>
                   <th>Status</th>
-                  {!isDoctor && <th>Actions</th>}
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -157,49 +157,44 @@ export default function AppointmentsPage() {
                     <td>{appointment.preferredTime}</td>
                     <td>{appointment.notes}</td>
                     <td>
-                      {isCompleted(appointment.preferredDate, appointment.preferredTime) ? (
-                        <span className="text-gray-500 font-bold">Completed</span>
-                      ) : appointment.isPaid ? (
-                        <span className="text-green-500 font-bold">Paid</span>
+                      {appointment.status === "accepted" ? (
+                        <span className="text-green-500 font-bold">Accepted</span>
+                      ) : appointment.status === "rejected" ? (
+                        <span className="text-red-500 font-bold">Declined</span>
                       ) : (
-                        <span className="text-red-500 font-bold">Unpaid</span>
+                        <span className="text-gray-500 font-bold">Pending</span>
                       )}
                     </td>
-                    {!isDoctor && (
-                      <td>
-                        {isCompleted(appointment.preferredDate, appointment.preferredTime) ? (
-                          <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full">Finished</button>
-                        ) : appointment.isPaid ? (
-                          <button
-                            className=" bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                            onClick={() => handleJoinCall(appointment.id)}
-                          >
-                            Join Now
-                          </button>
-                        ) : (
-                          <button className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
-
-                            onClick={() => handlePayNow(appointment.id)}
-                          >
-                            Pay Now
-                          </button>
-                        )}
-                      </td>
-                    )}
-                    {isDoctor && (
-                      <td>
-                        {appointment.status === "accepted" && appointment.isPaid ? (
+                    <td>
+                      {isDoctor ? (
+                        appointment.isPaid && (
                           <button
                             className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
                             onClick={() => handleJoinCall(appointment.id)}
                           >
                             Join Now
                           </button>
-                        ) : (
-                          <span className="text-gray-500">Declined</span>
-                        )}
-                      </td>
-                    )}
+                        )
+                      ) : isCompleted(appointment.preferredDate, appointment.preferredTime) ? (
+                        <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full">
+                          Finished
+                        </button>
+                      ) : appointment.isPaid ? (
+                        <button
+                          className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
+                          onClick={() => handleJoinCall(appointment.id)}
+                        >
+                          Join Now
+                        </button>
+                      ) : (
+                        <button
+                          className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
+                          onClick={() => handlePayNow(appointment.id)}
+                        >
+                          Pay Now
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

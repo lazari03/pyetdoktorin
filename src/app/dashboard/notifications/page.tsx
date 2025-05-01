@@ -109,7 +109,7 @@ export default function NotificationsPage() {
   const handleAppointmentAction = async (appointmentId: string, action: "accepted" | "rejected") => {
     try {
       const appointmentRef = doc(collection(db, "appointments"), appointmentId);
-      await updateDoc(appointmentRef, { status: action });
+      await updateDoc(appointmentRef, { status: action }); // Ensure status is updated correctly
       setPendingAppointments((prev) =>
         prev.filter((appointment) => appointment.id !== appointmentId)
       );

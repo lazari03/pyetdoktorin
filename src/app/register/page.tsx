@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { register } from '../../services/authService'; // Ensure this function is updated as explained below
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -36,29 +35,27 @@ export default function RegisterPage() {
 
         setLoading(true);
         try {
-            // Call the register function and pass sanitized formData
-            const { user, role: registeredRole } = await register(
-                formData.email,
-                formData.password,
-                formData.role,
-                {
-                    ...formData,
-                    about: null, // Default to null for optional fields
-                    specializations: null,
-                    education: null,
-                }
-            );
-            console.log('Registered:', user.email, 'Role:', registeredRole);
+            // Call the backend API to register the user and send the welcome email
+            const response = await fetch("http://localhost:5000/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: formData.email, name: formData.name }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to send welcome email");
+            }
+
+            console.log("User registered and welcome email sent");
             setShowModal(true);
 
             setTimeout(() => {
                 setShowModal(false);
-                router.push('/login'); // Redirect to login
+                router.push("/login"); // Redirect to login
             }, 3000);
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            console.error('Registration failed:', errorMessage);
-            setError(errorMessage);
+        } catch (error) {
+            console.error("Registration failed:", error);
+            setError("Failed to register user");
         } finally {
             setLoading(false);
         }

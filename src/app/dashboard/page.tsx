@@ -38,11 +38,36 @@ export default function Dashboard() {
     setIsSearchModalOpen(false);
   };
 
+  const handlePayNow = async (appointmentId: string) => {
+    try {
+      const response = await fetch("/api/appointments/update-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ appointmentId, status: "paid" }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update appointment status");
+      }
+
+      alert("Payment successful and appointment status updated!");
+      // Optionally, refresh appointments or update state here
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+      alert("Failed to update appointment status. Please try again.");
+    }
+  };
+
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
         await fetchProfileStatus();
-        if (user && role) await fetchAppointments(user.uid, role);
+        if (user && role) {
+          await fetchAppointments(user.uid, role);
+          // Removed direct usage of nextAppointment to avoid dependency issues
+        }
       } catch (error) {
         console.error('Error initializing dashboard:', error);
       } finally {
@@ -51,7 +76,7 @@ export default function Dashboard() {
     };
 
     initializeDashboard();
-  }, [user, role, fetchAppointments, fetchProfileStatus]); // Added 'fetchProfileStatus' to the dependency array
+  }, [user, role, fetchAppointments, fetchProfileStatus]); // Do not include nextAppointment in the dependency array
 
   if (authLoading || loading) return <Loader />;
 
@@ -102,7 +127,9 @@ export default function Dashboard() {
         <div className="stats shadow">
           <div className="stat">
             <div className="stat-title">Upcoming Appointment</div>
-            <div className="stat-value text-base text-orange-500">{nextAppointment || 'N/A'}</div>
+            <div className="stat-value text-base text-orange-500">
+              {nextAppointment ? nextAppointment : 'No upcoming appointments'}
+            </div>
           </div>
         </div>
       </div>
@@ -146,6 +173,16 @@ export default function Dashboard() {
                           {appointment.status}
                         </div>
                       </td>
+                      {role !== 'doctor' && appointment.status === 'pending' && (
+                        <td>
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => handlePayNow(appointment.id)}
+                          >
+                            Pay Now
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 ) : (
