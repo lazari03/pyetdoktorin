@@ -14,6 +14,7 @@ interface DoctorSearchState {
   toggleOverlay: (visible: boolean) => void;
   fetchDoctors: () => Promise<void>;
   reset: () => void;
+  clearResults: () => void;
 }
 
 export const useDoctorSearchStore = create<DoctorSearchState>((set, get) => {
@@ -50,11 +51,11 @@ export const useDoctorSearchStore = create<DoctorSearchState>((set, get) => {
     filteredDoctors: [],
     loading: false,
     error: null,
-    isOverlayVisible: false,
+    isOverlayVisible: false, // We're still keeping this state but not using it for the overlay
 
     setSearchTerm: (term) => set({ searchTerm: term }),
 
-    toggleOverlay: (visible) => set({ isOverlayVisible: visible }),
+    toggleOverlay: (visible) => set({ isOverlayVisible: visible }), // Keep this for compatibility
 
     fetchDoctors: () => new Promise<void>((resolve) => {
       debouncedFetchDoctors();
@@ -62,5 +63,7 @@ export const useDoctorSearchStore = create<DoctorSearchState>((set, get) => {
     }),
 
     reset: () => set({ searchTerm: '', filteredDoctors: [], error: null, isOverlayVisible: false }),
+    
+    clearResults: () => set({ filteredDoctors: [], error: null }),
   };
 });

@@ -32,7 +32,10 @@ export default function NewAppointmentPage() {
         <h2 className="card-title">New Appointment</h2>
         {!selectedDoctor && (
           <div className="mt-6">
-            <h3 className="font-bold text-lg">Search and Select a Doctor</h3>
+            <h3 className="font-bold text-lg mb-3">Find a Doctor</h3>
+            <p className="text-gray-600 mb-4">
+              Search for a doctor by name or specialization to schedule your appointment.
+            </p>
             <DoctorSearch
               onDoctorSelect={(doctor) =>
                 setSelectedDoctor({
@@ -48,7 +51,21 @@ export default function NewAppointmentPage() {
 
         {selectedDoctor && (
           <div className="mt-6">
-            <h3 className="font-bold text-lg">Book Appointment with {selectedDoctor.name}</h3>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="font-bold text-xl">Book Appointment with Dr. {selectedDoctor.name}</h3>
+                <p className="text-gray-600">
+                  Specialization: {selectedDoctor.specialization || "General Practice"}
+                </p>
+              </div>
+              <button 
+                onClick={resetAppointment}
+                className="text-sm text-gray-500 hover:text-gray-700 underline"
+              >
+                Change doctor
+              </button>
+            </div>
+            
             <form className="form-control gap-4 mt-4" onSubmit={(e) => handleSubmit(e, setShowModal, setProgress)}>
               <div>
                 <label className="label">
@@ -58,10 +75,12 @@ export default function NewAppointmentPage() {
                   className="select select-bordered w-full"
                   value={appointmentType}
                   onChange={(e) => setAppointmentType(e.target.value)}
+                  required
                 >
-                  <option>Check-up</option>
-                  <option>Follow-up</option>
-                  <option>Consultation</option>
+                  <option value="">Select appointment type</option>
+                  <option value="Check-up">Check-up</option>
+                  <option value="Follow-up">Follow-up</option>
+                  <option value="Consultation">Consultation</option>
                 </select>
               </div>
 
@@ -75,6 +94,7 @@ export default function NewAppointmentPage() {
                   value={preferredDate}
                   onChange={(e) => setPreferredDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]} // Only allow current or future dates
+                  required
                 />
               </div>
 
@@ -87,28 +107,30 @@ export default function NewAppointmentPage() {
                   className="input input-bordered w-full"
                   value={preferredTime}
                   onChange={(e) => setPreferredTime(e.target.value)}
+                  required
                 />
               </div>
 
               <div>
                 <label className="label">
-                  <span className="label-text">Notes</span>
+                  <span className="label-text">Notes (symptoms, concerns, etc.)</span>
                 </label>
                 <textarea
                   className="textarea textarea-bordered w-full"
                   rows={4}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Please describe your symptoms or reason for the appointment..."
                 ></textarea>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 mt-2">
                 <button
                   type="submit"
                   className="btn btn-primary"
                   disabled={isSubmitting} // Disable button during submission
                 >
-                  Confirm Booking
+                  {isSubmitting ? 'Processing...' : 'Confirm Booking'}
                 </button>
                 <button type="button" className="btn" onClick={resetAppointment}>
                   Cancel
