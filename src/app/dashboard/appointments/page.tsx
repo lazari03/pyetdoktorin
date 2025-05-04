@@ -7,11 +7,15 @@ import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
 import DashboardNotifications from '../../components/DashboardNotifications';
 import Loader from '../../components/Loader';
+import { getFirestore, doc, updateDoc } from "firebase/firestore";
+
+const db = getFirestore();
 
 export default function AppointmentsPage() {
   const { user } = useContext(AuthContext);
-  const { appointments, isDoctor, setAppointmentPaid } = useAppointmentStore();
+  const { appointments, isDoctor, setAppointmentPaid, handlePayNow, isPastAppointment, checkIfPastAppointment, isAppointmentPast } = useAppointmentStore();
   const [loading, setLoading] = useState(true);
+  const [pastAppointments, setPastAppointments] = useState<Record<string, boolean>>({});
 
   // Custom hook to handle fetching appointments and user role
   useFetchAppointments(user);
@@ -58,29 +62,28 @@ export default function AppointmentsPage() {
     initializePage();
   }, [setAppointmentPaid]);
 
-  const handlePayNow = async (appointmentId: string) => {
-    try {
-      const response = await fetch("/api/stripe/create-payment-intent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ appointmentId, amount: 2100 }), // Replace 2100 with the actual amount in cents
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create payment intent");
+  useEffect(() => {
+    const fetchPastAppointments = async () => {
+      const results: Record<string, boolean> = {};
+      for (const appointment of appointments) {
+        try {
+          const isPast = await checkIfPastAppointment(appointment.id);
+          console.log(`Appointment ID: ${appointment.id}, Is Past: ${isPast}`); // Debugging log
+          results[appointment.id] = isPast;
+        } catch (error) {
+          console.error(`Error checking if appointment ${appointment.id} is in the past:`, error);
+        }
       }
+      setPastAppointments(results);
+    };
 
-      const { url } = await response.json();
-      window.location.href = url; // Redirect to Stripe payment page
-    } catch (error) {
-      console.error("Error redirecting to Stripe payment page:", error);
-    }
-  };
+    fetchPastAppointments();
+  }, [appointments, checkIfPastAppointment]);
 
   const handleJoinCall = async (appointmentId: string) => {
     try {
+      console.log("Creating video call session for appointmentId:", appointmentId);
+  
       const response = await fetch(`/api/video-call/create-session`, {
         method: "POST",
         headers: {
@@ -88,21 +91,24 @@ export default function AppointmentsPage() {
         },
         body: JSON.stringify({ appointmentId }),
       });
-
+  
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Server response error:", errorText);
+  
+        if (response.status === 404) {
+          alert("Video session not found. Please contact support.");
+        }
+  
         throw new Error("Failed to create video call session");
       }
-
+  
       const { sessionUrl } = await response.json();
       window.location.href = sessionUrl; // Redirect to the video call session
     } catch (error) {
       console.error("Error creating video call session:", error);
+      alert("An error occurred while creating the video session. Please try again later.");
     }
-  };
-
-  const isCompleted = (date: string, time: string) => {
-    const appointmentDateTime = new Date(`${date}T${time}`);
-    return appointmentDateTime < new Date();
   };
 
   if (loading) {
@@ -166,16 +172,7 @@ export default function AppointmentsPage() {
                       )}
                     </td>
                     <td>
-                      {isDoctor ? (
-                        appointment.isPaid && (
-                          <button
-                            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                            onClick={() => handleJoinCall(appointment.id)}
-                          >
-                            Join Now
-                          </button>
-                        )
-                      ) : isCompleted(appointment.preferredDate, appointment.preferredTime) ? (
+                      {isAppointmentPast(appointment) ? (
                         <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full">
                           Finished
                         </button>
@@ -189,7 +186,7 @@ export default function AppointmentsPage() {
                       ) : (
                         <button
                           className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
-                          onClick={() => handlePayNow(appointment.id)}
+                          onClick={() => handlePayNow(appointment.id, 2100)}
                         >
                           Pay Now
                         </button>
