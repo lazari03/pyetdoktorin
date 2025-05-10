@@ -14,7 +14,16 @@ export default function VideoSessionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, loading: authLoading, user } = useAuth();
-  const { token: storeToken, channelName: storeChannel, endCall } = useVideoStore();
+  const { token: storeToken, channelName: storeChannel, endCall, setAuthStatus } = useVideoStore();
+
+  // Sync auth state with video store whenever auth context changes
+  useEffect(() => {
+    setAuthStatus(
+      isAuthenticated, 
+      user?.uid || null, 
+      user?.name || null
+    );
+  }, [isAuthenticated, user, setAuthStatus]);
 
   // Get parameters from URL if not in store
   const channel = searchParams?.get("channel") || storeChannel;

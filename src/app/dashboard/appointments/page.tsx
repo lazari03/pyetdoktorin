@@ -7,20 +7,30 @@ import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
 import DashboardNotifications from '../../components/DashboardNotifications';
 import Loader from '../../components/Loader';
-import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 import { useVideoStore } from "../../../store/videoStore";
 
 const db = getFirestore();
 
 export default function AppointmentsPage() {
-  const { user } = useContext(AuthContext);
-  const { appointments, isDoctor, setAppointmentPaid, handlePayNow, isPastAppointment, checkIfPastAppointment, isAppointmentPast } = useAppointmentStore();
-  const { joinCall } = useVideoStore();
+  const { user, isAuthenticated } = useContext(AuthContext);
+  const { appointments, isDoctor, setAppointmentPaid, handlePayNow, checkIfPastAppointment, isAppointmentPast } = useAppointmentStore();
+  // Use the video store directly
+  const { joinCall, setAuthStatus } = useVideoStore();
   const [loading, setLoading] = useState(true);
   const [pastAppointments, setPastAppointments] = useState<Record<string, boolean>>({});
 
   // Custom hook to handle fetching appointments and user role
   useFetchAppointments(user);
+
+  // Sync auth state with video store whenever auth context changes
+  useEffect(() => {
+    setAuthStatus(
+      isAuthenticated, 
+      user?.uid || null, 
+      user?.name || null
+    );
+  }, [isAuthenticated, user, setAuthStatus]);
 
   useEffect(() => {
     const initializePage = async () => {
@@ -81,18 +91,6 @@ export default function AppointmentsPage() {
 
     fetchPastAppointments();
   }, [appointments, checkIfPastAppointment]);
-
-  useEffect(() => {
-    // Initialize video store authentication state with proper type handling
-    const unsubscribe = useVideoStore.getState().checkAuthStatus();
-    
-    // Cleanup on unmount
-    return () => {
-      if (unsubscribe && typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
-    };
-  }, []);
 
   const handleJoinCall = async (appointmentId: string) => {
     try {

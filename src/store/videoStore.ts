@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { auth } from '../config/firebaseconfig';
-import { onAuthStateChanged } from 'firebase/auth';
+import { AuthContext } from '../context/AuthContext';
 
 interface VideoState {
   token: string | null;
@@ -13,7 +12,7 @@ interface VideoState {
   userName: string | null;
   
   // Actions
-  checkAuthStatus: () => (() => void) | undefined;
+  setAuthStatus: (isAuthenticated: boolean, userId: string | null, userName: string | null) => void;
   joinCall: (appointmentId: string, uid: number) => Promise<string>;
   endCall: () => void;
   resetVideoState: () => void;
@@ -29,40 +28,14 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
   userId: null,
   userName: null,
   
-  checkAuthStatus: () => {
-    set({ loading: true });
-    
-    try {
-      const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-        if (currentUser) {
-          // User is signed in
-          set({ 
-            isAuthenticated: true,
-            userId: currentUser.uid,
-            userName: currentUser.displayName || currentUser.email || 'User',
-            loading: false
-          });
-        } else {
-          // User is signed out
-          set({ 
-            isAuthenticated: false,
-            userId: null,
-            userName: null,
-            loading: false
-          });
-        }
-      });
-      
-      // Return unsubscribe function for cleanup
-      return unsubscribe;
-    } catch (error) {
-      console.error("Error setting up auth state listener:", error);
-      set({ 
-        loading: false,
-        error: error instanceof Error ? error.message : 'Unknown auth error'
-      });
-      return undefined; // Return undefined in case of error
-    }
+  // Replace checkAuthStatus with setAuthStatus that can be called from components
+  setAuthStatus: (isAuthenticated: boolean, userId: string | null, userName: string | null) => {
+    set({
+      isAuthenticated,
+      userId,
+      userName,
+      loading: false
+    });
   },
   
   joinCall: async (appointmentId: string, uid: number) => {
