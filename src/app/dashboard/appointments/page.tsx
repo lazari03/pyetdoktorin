@@ -8,12 +8,14 @@ import { AuthContext } from "../../../context/AuthContext";
 import DashboardNotifications from '../../components/DashboardNotifications';
 import Loader from '../../components/Loader';
 import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { useVideoStore } from "../../../store/videoStore";
 
 const db = getFirestore();
 
 export default function AppointmentsPage() {
   const { user } = useContext(AuthContext);
   const { appointments, isDoctor, setAppointmentPaid, handlePayNow, isPastAppointment, checkIfPastAppointment, isAppointmentPast } = useAppointmentStore();
+  const { joinCall } = useVideoStore();
   const [loading, setLoading] = useState(true);
   const [pastAppointments, setPastAppointments] = useState<Record<string, boolean>>({});
 
@@ -80,34 +82,29 @@ export default function AppointmentsPage() {
     fetchPastAppointments();
   }, [appointments, checkIfPastAppointment]);
 
+  useEffect(() => {
+    // Initialize video store authentication state with proper type handling
+    const unsubscribe = useVideoStore.getState().checkAuthStatus();
+    
+    // Cleanup on unmount
+    return () => {
+      if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, []);
+
   const handleJoinCall = async (appointmentId: string) => {
     try {
       console.log("Creating video call session for appointmentId:", appointmentId);
-  
-      const response = await fetch(`/api/video-call/create-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ appointmentId }),
-      });
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Server response error:", errorText);
-  
-        if (response.status === 404) {
-          alert("Video session not found. Please contact support.");
-        }
-  
-        throw new Error("Failed to create video call session");
-      }
-  
-      const { sessionUrl } = await response.json();
-      window.location.href = sessionUrl; // Redirect to the video call session
+      
+      // Use the video store to join the call
+      const videoSessionUrl = await joinCall(appointmentId, 0);
+      console.log("Redirecting to video session URL:", videoSessionUrl);
+      window.location.href = videoSessionUrl;
     } catch (error) {
       console.error("Error creating video call session:", error);
-      alert("An error occurred while creating the video session. Please try again later.");
+      alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
