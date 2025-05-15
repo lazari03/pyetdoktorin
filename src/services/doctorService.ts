@@ -12,11 +12,7 @@ export async function fetchDoctors(searchTerm: string, searchType: SearchType): 
     }
 
     const normalizedSearchTerm = searchTerm.toLowerCase();
-    let doctorQuery;
-
-    // For name and specialization searches, we'll fetch all doctors and filter client-side
-    // This ensures we can do proper case-insensitive comparisons
-    doctorQuery = query(
+    const doctorQuery = query(
       doctorsCollection,
       where(DoctorFields.Role, "==", DoctorFields.RoleDoctor)
     );

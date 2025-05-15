@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDoctorSearchStore } from '../../store/doctorSearchStore';
 import { Doctor } from '@/models/Doctor';
@@ -38,11 +38,11 @@ export default function DoctorSearchInput() {
     toggleOverlay(false);
   };
 
-  const handleClickOutside = (event: MouseEvent) => {
+  const handleClickOutside = useCallback((event: MouseEvent) => {
     if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
       toggleOverlay(false);
     }
-  };
+  }, [toggleOverlay]);
 
   useEffect(() => {
     if (isOverlayVisible) {
@@ -54,7 +54,7 @@ export default function DoctorSearchInput() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOverlayVisible]);
+  }, [isOverlayVisible, handleClickOutside]);
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { RtcTokenBuilder, RtcRole, RtmTokenBuilder } from "agora-access-token";
+import { RtcTokenBuilder, RtcRole } from "agora-access-token";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,15 +9,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Extract all parameters from the request
   const { channelName, uid } = req.body;
-  
-  // For RTM we need a string-based user ID
-  // Make sure to sanitize the user ID to avoid rejection
-  let rtmUserId = req.body.userId || `user-${uid}`;
-  
-  // RTM doesn't accept user IDs with certain characters - sanitize it
-  rtmUserId = rtmUserId.toString()
-    .replace(/[^a-zA-Z0-9_=+-]/g, '_') // Replace invalid chars with underscores
-    .substring(0, 64); // Maximum 64 characters allowed
 
   // Validate required parameters
   if (!channelName || uid === undefined) {
@@ -34,7 +25,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log("Agora credentials check:");
   console.log(`- App ID available: ${!!appId}, length: ${appId?.length || 0}`);
   console.log(`- App Certificate available: ${!!appCertificate}, length: ${appCertificate?.length || 0}`);
-  console.log(`- RTM User ID: ${rtmUserId}`);
   
   // Stricter validation of environment variables
   if (!appId || appId.length < 10) {
@@ -66,25 +56,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       privilegeExpiredTs
     );
     
-    // Generate an RTM token for messaging
-    const rtmToken = RtmTokenBuilder.buildToken(
-      appId,
-      appCertificate,
-      rtmUserId, // Use sanitized RTM user ID
-      1, // RTM role (1 for publisher)
-      privilegeExpiredTs
-    );
-    
-    console.log(`Generated tokens successfully: RTC for uid ${numericUid}, RTM for userId ${rtmUserId}`);
+    console.log(`Generated RTC token successfully for uid ${numericUid}`);
     
     // Return all tokens and necessary information
     res.status(200).json({ 
       token: rtcToken, // For backwards compatibility
       rtcToken,
-      rtmToken,
       channelName,
       uid: numericUid,
-      userId: rtmUserId, // Include sanitized RTM user ID
       appId: appId,
       expiresAt: new Date(privilegeExpiredTs * 1000).toISOString()
     });

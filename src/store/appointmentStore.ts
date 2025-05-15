@@ -1,13 +1,9 @@
 import { create } from "zustand";
 import { fetchAppointments } from "../services/appointmentService";
 import { Appointment } from "../models/Appointment";
-import { getFirestore, doc, updateDoc, getDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 import app from "../config/firebaseconfig";
-import {
-  AppointmentActionVariant,
-  AppointmentActionLabels,
-  getAppointmentAction
-  } from "./appointmentActionButton";
+import { getAppointmentAction } from "./appointmentActionButton";
 
 const db = getFirestore(app);
 

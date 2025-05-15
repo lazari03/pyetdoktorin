@@ -13,8 +13,8 @@ import { useAppointmentStore } from '../../store/appointmentStore';
 
 export default function Dashboard() {
   const { user, role, loading: authLoading } = useAuth();
-  const { totalAppointments, nextAppointment, recentAppointments, fetchAppointments } = useDashboardStore();
-  const { appointments, handlePayNow, getAppointmentAction, isAppointmentPast } = useAppointmentStore();
+  const { totalAppointments, nextAppointment, fetchAppointments } = useDashboardStore();
+  const { appointments, handlePayNow, /* getAppointmentAction, */ isAppointmentPast } = useAppointmentStore();
   const [profileIncomplete, setProfileIncomplete] = useState<boolean>(true);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchBarPosition, setSearchBarPosition] = useState<DOMRect | null>(null);
@@ -137,7 +137,6 @@ export default function Dashboard() {
               <tbody>
                 {appointments && appointments.length > 0 ? (
                   appointments.slice(0, 3).map((appointment) => {
-                    const action = getAppointmentAction(appointment);
                     return (
                       <tr key={appointment.id}>
                         <td>{appointment.preferredDate}</td>

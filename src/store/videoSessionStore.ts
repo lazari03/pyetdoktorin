@@ -2,7 +2,6 @@ import { create } from "zustand";
 
 interface VideoSessionState {
   rtcToken: string | null;
-  rtmToken: string | null;
   channelName: string | null;
   uid: number | null;
   userId: string | null;
@@ -14,7 +13,6 @@ interface VideoSessionState {
 
 export const useVideoSessionStore = create<VideoSessionState>((set) => ({
   rtcToken: null,
-  rtmToken: null,
   channelName: null,
   uid: null,
   userId: null,
@@ -36,20 +34,18 @@ export const useVideoSessionStore = create<VideoSessionState>((set) => ({
       const data = await res.json();
       set({
         rtcToken: data.rtcToken,
-        rtmToken: data.rtmToken,
         channelName,
         uid,
         userId: safeUserId,
         loading: false,
         error: null,
       });
-    } catch (error: any) {
-      set({ error: error.message || "Unknown error", loading: false });
+    } catch (error: unknown) {
+      set({ error: (error as Error).message || "Unknown error", loading: false });
     }
   },
   reset: () => set({
     rtcToken: null,
-    rtmToken: null,
     channelName: null,
     uid: null,
     userId: null,

@@ -17,8 +17,6 @@ export default function DoctorSearch({ onDoctorSelect }: DoctorSearchProps) {
     filteredDoctors,
     loading,
     error,
-    isOverlayVisible,
-    toggleOverlay,
     fetchDoctors,
     reset,
     clearResults,

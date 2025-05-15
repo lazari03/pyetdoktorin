@@ -7,18 +7,14 @@ import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
 import DashboardNotifications from '../../components/DashboardNotifications';
 import Loader from '../../components/Loader';
-import { getFirestore } from "firebase/firestore";
 import { useVideoStore } from "../../../store/videoStore";
-
-const db = getFirestore();
 
 export default function AppointmentsPage() {
   const { user, isAuthenticated } = useContext(AuthContext);
-  const { appointments, isDoctor, setAppointmentPaid, handlePayNow, checkIfPastAppointment, isAppointmentPast, getAppointmentAction } = useAppointmentStore();
+  const { appointments, isDoctor, setAppointmentPaid, handlePayNow, checkIfPastAppointment, isAppointmentPast } = useAppointmentStore();
   // Use the video store directly
   const { joinCall, setAuthStatus } = useVideoStore();
   const [loading, setLoading] = useState(true);
-  const [pastAppointments, setPastAppointments] = useState<Record<string, boolean>>({});
 
   // Custom hook to handle fetching appointments and user role
   useFetchAppointments(user);
@@ -86,7 +82,6 @@ export default function AppointmentsPage() {
           console.error(`Error checking if appointment ${appointment.id} is in the past:`, error);
         }
       }
-      setPastAppointments(results);
     };
 
     fetchPastAppointments();
