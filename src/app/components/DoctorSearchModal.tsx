@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchDoctors, Doctor } from '../../services/doctorService';
+import { fetchDoctors } from '../../services/doctorService';
+import { Doctor } from '../../models/Doctor';
 import { useRouter } from 'next/navigation';
+import { SearchType } from '../../models/FirestoreConstants';
 
 interface DoctorSearchModalProps {
   isOpen: boolean;
@@ -19,8 +21,8 @@ export default function DoctorSearchModal({ isOpen, onClose, position }: DoctorS
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (searchTerm.length >= 4) {
-        fetchDoctorsList(searchTerm);
+      if (searchTerm.trim().length >= 4) {
+        fetchDoctorsList(searchTerm.trim());
       } else {
         setFilteredDoctors([]);
       }
@@ -35,9 +37,14 @@ export default function DoctorSearchModal({ isOpen, onClose, position }: DoctorS
     setFilteredDoctors([]);
 
     try {
-      const doctors = await fetchDoctors(term, 'name');
-      setFilteredDoctors(doctors);
-    } catch {
+      const doctorsByName = await fetchDoctors(term, SearchType.Name);
+      const doctorsBySpecializations = await fetchDoctors(term, SearchType.Specializations); // Corrected to use specializations
+      const uniqueDoctors = Array.from(
+        new Map([...doctorsByName, ...doctorsBySpecializations].map((doc) => [doc.id, doc])).values()
+      );
+      setFilteredDoctors(uniqueDoctors);
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
       setError('Failed to fetch doctors. Please try again.');
     } finally {
       setLoading(false);
@@ -74,7 +81,7 @@ export default function DoctorSearchModal({ isOpen, onClose, position }: DoctorS
         <div className="relative flex items-center bg-gray-100 rounded-full p-2">
           <input
             type="text"
-            placeholder="Search by name..."
+            placeholder="Search by name or specializations..."
             className="flex-grow bg-transparent px-4 py-2 text-sm focus:outline-none"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -93,13 +100,15 @@ export default function DoctorSearchModal({ isOpen, onClose, position }: DoctorS
                 >
                   <div className="font-medium text-sm">{doctor.name}</div>
                   <div className="text-xs text-gray-500">
-                    {doctor.expertise?.join(', ') || 'No expertise'}
+                    {doctor.specialization?.length
+                      ? doctor.specialization.join(', ')
+                      : 'No specializations available'}
                   </div>
                 </li>
               ))}
             </ul>
           )}
-          {!loading && searchTerm.length >= 4 && filteredDoctors.length === 0 && (
+          {!loading && searchTerm.trim().length >= 4 && filteredDoctors.length === 0 && (
             <p className="text-center text-gray-500 text-sm">No doctors found.</p>
           )}
         </div>

@@ -3,75 +3,148 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import AgoraUIKit from "agora-react-uikit";
-import { useAuth } from "../../../../context/AuthContext"; // Import AuthContext
+import dynamic from "next/dynamic";
+// Dynamically import AgoraUIKit to avoid SSR issues
+const AgoraUIKit = dynamic(() => import("agora-react-uikit"), { ssr: false });
+
+import { useAuth } from "../../../../context/AuthContext";
+import { useVideoStore } from "../../../../store/videoStore";
+import Loader from "../../../components/Loader";
 
 export default function VideoSessionPage() {
   const [videoCall, setVideoCall] = useState(true);
-  const [sessionEnded, setSessionEnded] = useState(false); // Track if the session has ended
   const router = useRouter();
   const searchParams = useSearchParams();
-  const appointmentId = searchParams ? searchParams.get("appointmentId") : null;
+  const { isAuthenticated, loading: authLoading, user, uid } = useAuth();
+  const { 
+    token: storeToken,
+    rtcToken: storeRtcToken,
+    channelName: storeChannel, 
+    endCall, 
+    setAuthStatus,
+    appId: storeAppId,
+  } = useVideoStore();
 
-  const { isAuthenticated, loading } = useAuth(); // Access authentication state
-
-  // Sanitize and truncate the appointmentId to ensure it meets Agora's channel name requirements
-  const sanitizedChannelName = appointmentId
-    ? appointmentId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64) // Replace invalid characters and truncate
-    : "defaultChannel"; // Fallback channel name if appointmentId is missing
-
-  // Redirect if user is not authenticated or appointmentId is missing
+  // Sync auth state with video store whenever auth context changes
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        console.warn("User is not authenticated. Redirecting to login.");
-        router.push("/login"); // Redirect to login if not authenticated
-      } else if (!appointmentId) {
-        console.warn("Missing appointmentId. Redirecting to appointments dashboard.");
-        router.push("/dashboard/appointments"); // Redirect if appointmentId is missing
+    setAuthStatus(
+      isAuthenticated, 
+      uid || null, 
+      user?.name || null
+    );
+  }, [isAuthenticated, uid, user, setAuthStatus]);
+
+  // Get parameters from URL if not in store
+  const channel = searchParams?.get("channel") || storeChannel;
+  const rtcToken = searchParams?.get("rtcToken") || storeRtcToken || storeToken; // backward compatibility
+  const appId = searchParams?.get("appId") || storeAppId || process.env.NEXT_PUBLIC_AGORA_APP_ID?.trim() || "082a61eb4220431085400ae5e9d9a8f7";
+  
+  // Debug logging for App ID and tokens
+  useEffect(() => {
+    if (!appId) {
+      console.error("CRITICAL: Agora App ID is not available in client environment");
+    } else {
+      console.log(`Agora App ID detected with length: ${appId.length}, first/last chars: ${appId.substring(0, 3)}...${appId.substring(appId.length - 3)}`);
+    }
+  }, [appId]);
+
+  const [rtcProps, setRtcProps] = useState<{
+    appId: string;
+    channel: string;
+    token: string;
+  } | null>(null);
+
+  // Redirect if user is not authenticated or missing parameters
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      console.warn("User is not authenticated. Redirecting to login.");
+      router.push("/login");
+      return;
+    }
+
+    if (!channel || !rtcToken) {
+      console.warn("Missing channel or RTC token. Redirecting to appointments.");
+      router.push("/dashboard/appointments");
+      return;
+    }
+
+    if (!appId) {
+      console.error("Missing Agora App ID. Cannot initialize video session.");
+      alert("Video session configuration error. Please contact support.");
+      router.push("/dashboard/appointments");
+      return;
+    }
+  }, [isAuthenticated, authLoading, channel, rtcToken, router, appId]);
+
+  // Initialize Agora UI kit with more explicit validation
+  useEffect(() => {
+    if (channel && rtcToken && appId && !rtcProps) {
+      try {
+        // Validate App ID format
+        if (appId.length < 10) {
+          throw new Error(`Invalid Agora App ID format: length is ${appId.length}, expected 32 characters`);
+        }
+        
+        // Set props for AgoraUIKit - ensuring appId is a proper string without whitespace
+        const safeAppId = appId.trim();
+        console.log(`Initializing AgoraUIKit with AppID length: ${safeAppId.length}`);
+        
+        setRtcProps({
+          appId: safeAppId,
+          channel,
+          token: rtcToken,
+        });
+        
+        console.log("Agora RTC Props successfully initialized");
+      } catch (error) {
+        console.error("Error initializing Agora session:", error);
+        alert("An error occurred while initializing the video session. Please try again later.");
       }
     }
-  }, [isAuthenticated, loading, appointmentId, router]);
-
-  const rtcProps = {
-    appId: "6beb2136e5bc4a62b836bcded2dbb875", // Replace with your Agora App ID
-    channel: sanitizedChannelName, // Use the sanitized and truncated channel name
-    token: "", // Replace with your Agora token or use null for testing
-  };
+  }, [channel, rtcToken, rtcProps, appId]);
 
   const callbacks = {
     EndCall: () => {
       setVideoCall(false);
-      setSessionEnded(true); // Mark the session as ended
+      endCall();
     },
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
-        <span className="ml-2">Loading...</span>
-      </div>
-    );
+  if (authLoading || !rtcProps) {
+    return <Loader />;
   }
 
   return videoCall ? (
-    <div style={{ display: "flex", width: "100vw", height: "100vh" }}>
-      <AgoraUIKit rtcProps={rtcProps} callbacks={callbacks} />
+    <div className="flex flex-col h-screen">
+      <div className="p-4 bg-gray-100 flex justify-between items-center">
+        <h1 className="text-xl font-bold">Video Consultation</h1>
+        <div className="text-sm">
+          {user?.name && <span className="mr-2">Connected as {user.name}</span>}
+          <span className="bg-green-500 text-white px-2 py-1 rounded">Live</span>
+        </div>
+      </div>
+      <div className="flex-grow" style={{ height: "calc(100vh - 70px)" }}>
+        <AgoraUIKit rtcProps={rtcProps} callbacks={callbacks} />
+      </div>
     </div>
   ) : (
-    <div style={{ textAlign: "center", marginTop: "20px" }}>
-      <h3>Call Ended</h3>
-      {sessionEnded ? (
-        <p>The session has ended. You cannot rejoin the call.</p>
-      ) : (
-        <button className="btn btn-primary" onClick={() => setVideoCall(true)}>
-          Restart Call
+    <div className="text-center p-10">
+      <h3 className="text-2xl font-bold text-gray-800 mb-4">Call Ended</h3>
+      <p className="mb-6 text-gray-600">Your video consultation has ended.</p>
+      <div className="flex flex-col space-y-4 items-center">
+        <button
+          className="btn btn-primary px-6"
+          onClick={() => setVideoCall(true)}
+        >
+          Rejoin Call
         </button>
-      )}
-      <button className="btn btn-secondary" onClick={() => router.push("/dashboard/appointments")}>
-        Back to Appointments
-      </button>
+        <button
+          className="btn btn-secondary"
+          onClick={() => router.push("/dashboard/appointments")}
+        >
+          Back to Appointments
+        </button>
+      </div>
     </div>
   );
 }

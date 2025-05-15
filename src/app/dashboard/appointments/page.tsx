@@ -7,14 +7,26 @@ import { useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
 import DashboardNotifications from '../../components/DashboardNotifications';
 import Loader from '../../components/Loader';
+import { useVideoStore } from "../../../store/videoStore";
 
 export default function AppointmentsPage() {
-  const { user } = useContext(AuthContext);
-  const { appointments, isDoctor, setAppointmentPaid } = useAppointmentStore();
+  const { user, isAuthenticated } = useContext(AuthContext);
+  const { appointments, isDoctor, setAppointmentPaid, handlePayNow, checkIfPastAppointment, isAppointmentPast } = useAppointmentStore();
+  // Use the video store directly
+  const { joinCall, setAuthStatus } = useVideoStore();
   const [loading, setLoading] = useState(true);
 
   // Custom hook to handle fetching appointments and user role
   useFetchAppointments(user);
+
+  // Sync auth state with video store whenever auth context changes
+  useEffect(() => {
+    setAuthStatus(
+      isAuthenticated, 
+      user?.uid || null, 
+      user?.name || null
+    );
+  }, [isAuthenticated, user, setAuthStatus]);
 
   useEffect(() => {
     const initializePage = async () => {
@@ -58,51 +70,35 @@ export default function AppointmentsPage() {
     initializePage();
   }, [setAppointmentPaid]);
 
-  const handlePayNow = async (appointmentId: string) => {
-    try {
-      const response = await fetch("/api/stripe/create-payment-intent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ appointmentId, amount: 2100 }), // Replace 2100 with the actual amount in cents
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create payment intent");
+  useEffect(() => {
+    const fetchPastAppointments = async () => {
+      const results: Record<string, boolean> = {};
+      for (const appointment of appointments) {
+        try {
+          const isPast = await checkIfPastAppointment(appointment.id);
+          console.log(`Appointment ID: ${appointment.id}, Is Past: ${isPast}`); // Debugging log
+          results[appointment.id] = isPast;
+        } catch (error) {
+          console.error(`Error checking if appointment ${appointment.id} is in the past:`, error);
+        }
       }
+    };
 
-      const { url } = await response.json();
-      window.location.href = url; // Redirect to Stripe payment page
-    } catch (error) {
-      console.error("Error redirecting to Stripe payment page:", error);
-    }
-  };
+    fetchPastAppointments();
+  }, [appointments, checkIfPastAppointment]);
 
   const handleJoinCall = async (appointmentId: string) => {
     try {
-      const response = await fetch(`/api/video-call/create-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ appointmentId }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create video call session");
-      }
-
-      const { sessionUrl } = await response.json();
-      window.location.href = sessionUrl; // Redirect to the video call session
+      console.log("Creating video call session for appointmentId:", appointmentId);
+      
+      // Use the video store to join the call
+      const videoSessionUrl = await joinCall(appointmentId, 0);
+      console.log("Redirecting to video session URL:", videoSessionUrl);
+      window.location.href = videoSessionUrl;
     } catch (error) {
       console.error("Error creating video call session:", error);
+      alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
-
-  const isCompleted = (date: string, time: string) => {
-    const appointmentDateTime = new Date(`${date}T${time}`);
-    return appointmentDateTime < new Date();
   };
 
   if (loading) {
@@ -167,32 +163,83 @@ export default function AppointmentsPage() {
                     </td>
                     <td>
                       {isDoctor ? (
-                        appointment.isPaid && (
-                          <button
-                            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                            onClick={() => handleJoinCall(appointment.id)}
-                          >
-                            Join Now
-                          </button>
-                        )
-                      ) : isCompleted(appointment.preferredDate, appointment.preferredTime) ? (
-                        <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full">
-                          Finished
-                        </button>
-                      ) : appointment.isPaid ? (
-                        <button
-                          className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                          onClick={() => handleJoinCall(appointment.id)}
-                        >
-                          Join Now
-                        </button>
+                        // Doctor: Only "Finished" or "Join Now"
+                        (() => {
+                          if (isAppointmentPast && isAppointmentPast(appointment)) {
+                            return (
+                              <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                Finished
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "accepted") {
+                            return (
+                              <button
+                                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
+                                onClick={() => handleJoinCall(appointment.id)}
+                              >
+                                Join Now
+                              </button>
+                            );
+                          }
+                          // If not accepted or in the past, show disabled button
+                          return (
+                            <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                              Action
+                            </button>
+                          );
+                        })()
                       ) : (
-                        <button
-                          className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
-                          onClick={() => handlePayNow(appointment.id)}
-                        >
-                          Pay Now
-                        </button>
+                        // Patient: Existing logic
+                        (() => {
+                          if (isAppointmentPast && isAppointmentPast(appointment)) {
+                            return (
+                              <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                Finished
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "rejected") {
+                            return (
+                              <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                Declined
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "pending") {
+                            return (
+                              <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                Pending
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "accepted" && !appointment.isPaid) {
+                            return (
+                              <button
+                                className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
+                                onClick={() => handlePayNow(appointment.id, 2100)}
+                              >
+                                Pay Now
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "accepted" && appointment.isPaid) {
+                            return (
+                              <button
+                                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
+                                onClick={() => handleJoinCall(appointment.id)}
+                              >
+                                Join Now
+                              </button>
+                            );
+                          }
+                          // Default: disabled
+                          return (
+                            <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                              Action
+                            </button>
+                          );
+                        })()
                       )}
                     </td>
                   </tr>
