@@ -3,13 +3,16 @@ import { AuthContext } from '../context/AuthContext';
 
 interface VideoState {
   token: string | null;
+  rtcToken: string | null; // Add specific RTC token
+  rtmToken: string | null; // Add RTM token
   channelName: string | null;
   isInCall: boolean;
   error: string | null;
   loading: boolean;
   isAuthenticated: boolean;
-  userId: string | null;
+  userId: string | null; // User ID for RTM
   userName: string | null;
+  appId: string | null; // Add appId to the store
   
   // Actions
   setAuthStatus: (isAuthenticated: boolean, userId: string | null, userName: string | null) => void;
@@ -20,6 +23,8 @@ interface VideoState {
 
 export const useVideoStore = create<VideoState>()((set, get) => ({
   token: null,
+  rtcToken: null,
+  rtmToken: null,
   channelName: null,
   isInCall: false,
   error: null,
@@ -27,6 +32,7 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
   isAuthenticated: false,
   userId: null,
   userName: null,
+  appId: null, // Store the appId
   
   // Replace checkAuthStatus with setAuthStatus that can be called from components
   setAuthStatus: (isAuthenticated: boolean, userId: string | null, userName: string | null) => {
@@ -47,10 +53,23 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
         throw new Error('User is not authenticated. Please log in first.');
       }
       
+      const userId = get().userId;
+      
       // Sanitize and truncate the channel name
       const sanitizedChannelName = appointmentId
         .replace(/[^a-zA-Z0-9_-]/g, "_") 
         .slice(0, 64);
+      
+      // Create a sanitized user ID for RTM that meets Agora's requirements
+      const sanitizedUserId = userId && userId.toString().length > 0 
+        ? userId.toString().replace(/[^a-zA-Z0-9_=+-]/g, '_').substring(0, 64) 
+        : `user_${uid}_${Date.now()}`.substring(0, 64);
+      
+      console.log("Requesting Agora tokens with:", {
+        channelName: sanitizedChannelName,
+        uid: uid,
+        userId: sanitizedUserId
+      });
       
       const response = await fetch('/api/agora/generate-token', {
         method: 'POST',
@@ -59,7 +78,8 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
         },
         body: JSON.stringify({ 
           channelName: sanitizedChannelName, 
-          uid
+          uid,
+          userId: sanitizedUserId
         }),
       });
       
@@ -69,21 +89,33 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
       }
       
       const data = await response.json();
-      
-      if (!data.token) {
-        throw new Error('No token received from server');
-      }
-      
-      // Store token and channel info
-      set({
-        token: data.token,
-        channelName: sanitizedChannelName,
-        isInCall: true,
-        loading: false,
+      console.log("Received API response:", {
+        hasToken: !!data.token,
+        hasRtcToken: !!data.rtcToken,
+        hasRtmToken: !!data.rtmToken,
+        hasAppId: !!data.appId,
+        userId: data.userId,
+        channelName: data.channelName
       });
       
-      // Return URL for redirection
-      return `/dashboard/appointments/video-session?channel=${sanitizedChannelName}&token=${data.token}`;
+      if (!data.rtcToken || !data.rtmToken) {
+        throw new Error('One or more required tokens not received from server');
+      }
+      
+      // Store all tokens and info
+      set({
+        token: data.token || data.rtcToken,
+        rtcToken: data.rtcToken,
+        rtmToken: data.rtmToken,
+        channelName: sanitizedChannelName,
+        userId: data.userId, // Always use the sanitized userId from API
+        isInCall: true,
+        loading: false,
+        appId: data.appId, // Store the appId from the API
+      });
+      
+      // Return URL for redirection including all tokens
+      return `/dashboard/appointments/video-session?channel=${sanitizedChannelName}&rtcToken=${encodeURIComponent(data.rtcToken)}&rtmToken=${encodeURIComponent(data.rtmToken)}&appId=${encodeURIComponent(data.appId)}&userId=${encodeURIComponent(data.userId)}`;
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Unknown error', 
@@ -102,6 +134,8 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
   resetVideoState: () => {
     set({
       token: null,
+      rtcToken: null,
+      rtmToken: null,
       channelName: null,
       isInCall: false,
       error: null,

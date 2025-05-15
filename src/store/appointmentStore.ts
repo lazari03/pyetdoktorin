@@ -1,8 +1,13 @@
 import { create } from "zustand";
-import { fetchAppointments } from "../services/appointmentService"; // Import the service
-import { Appointment } from "../models/Appointment"; // Import the model
+import { fetchAppointments } from "../services/appointmentService";
+import { Appointment } from "../models/Appointment";
 import { getFirestore, doc, updateDoc, getDoc } from "firebase/firestore";
-import  app  from "../config/firebaseconfig";
+import app from "../config/firebaseconfig";
+import {
+  AppointmentActionVariant,
+  AppointmentActionLabels,
+  getAppointmentAction
+  } from "./appointmentActionButton";
 
 const db = getFirestore(app);
 
@@ -14,14 +19,15 @@ interface AppointmentState {
   setAppointments: (appointments: Appointment[]) => void;
   setIsDoctor: (isDoctor: boolean | null) => void;
   fetchAppointments: (userId: string, isDoctor: boolean) => Promise<void>;
-  setAppointmentPaid: (appointmentId: string) => void; // Add this function
+  setAppointmentPaid: (appointmentId: string) => void;
   handlePayNow: (appointmentId: string, amount: number) => Promise<void>;
   isPastAppointment: (date: string, time: string) => boolean;
   checkIfPastAppointment: (appointmentId: string) => Promise<boolean>;
   isAppointmentPast: (appointment: Appointment) => boolean;
+  getAppointmentAction: (appointment: Appointment) => { label: string; disabled: boolean; variant: string };
 }
 
-export const useAppointmentStore = create<AppointmentState>((set) => ({
+export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   appointments: [],
   isDoctor: null,
   loading: false,
@@ -32,14 +38,11 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
     set({ loading: true, error: null });
     try {
       const fetchedAppointments: Appointment[] = await fetchAppointments(userId, isDoctor);
-
-      // Check if appointments are in the past and add the `isPast` property
       const updatedAppointments = fetchedAppointments.map((appointment) => {
         const appointmentDateTime = new Date(`${appointment.preferredDate}T${appointment.preferredTime}`);
         const isPast = appointmentDateTime < new Date();
         return { ...appointment, isPast };
       });
-
       set({ appointments: updatedAppointments, loading: false });
     } catch {
       set({ error: "Failed to fetch appointments", loading: false });
@@ -68,19 +71,6 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
       }
 
       const { url } = await response.json();
-
-      // Update Firestore to set isPaid to true
-      const appointmentRef = doc(db, "appointments", appointmentId);
-      await updateDoc(appointmentRef, { isPaid: true });
-
-      // Update local state
-      set((state) => ({
-        appointments: state.appointments.map((appointment) =>
-          appointment.id === appointmentId
-            ? { ...appointment, isPaid: true }
-            : appointment
-        ),
-      }));
 
       window.location.href = url; // Redirect to Stripe payment page
     } catch (error) {
@@ -114,6 +104,7 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
     const appointmentDateTime = new Date(`${appointment.preferredDate}T${appointment.preferredTime}`);
     return appointmentDateTime < new Date();
   },
+  getAppointmentAction: (appointment) => getAppointmentAction(appointment, get().isAppointmentPast),
 }));
 
 export const useInitializeAppointments = () => {

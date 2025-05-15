@@ -14,7 +14,7 @@ const db = getFirestore();
 
 export default function AppointmentsPage() {
   const { user, isAuthenticated } = useContext(AuthContext);
-  const { appointments, isDoctor, setAppointmentPaid, handlePayNow, checkIfPastAppointment, isAppointmentPast } = useAppointmentStore();
+  const { appointments, isDoctor, setAppointmentPaid, handlePayNow, checkIfPastAppointment, isAppointmentPast, getAppointmentAction } = useAppointmentStore();
   // Use the video store directly
   const { joinCall, setAuthStatus } = useVideoStore();
   const [loading, setLoading] = useState(true);
@@ -167,24 +167,84 @@ export default function AppointmentsPage() {
                       )}
                     </td>
                     <td>
-                      {isAppointmentPast(appointment) ? (
-                        <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full">
-                          Finished
-                        </button>
-                      ) : appointment.isPaid ? (
-                        <button
-                          className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                          onClick={() => handleJoinCall(appointment.id)}
-                        >
-                          Join Now
-                        </button>
+                      {isDoctor ? (
+                        // Doctor: Only "Finished" or "Join Now"
+                        (() => {
+                          if (isAppointmentPast && isAppointmentPast(appointment)) {
+                            return (
+                              <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                Finished
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "accepted") {
+                            return (
+                              <button
+                                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
+                                onClick={() => handleJoinCall(appointment.id)}
+                              >
+                                Join Now
+                              </button>
+                            );
+                          }
+                          // If not accepted or in the past, show disabled button
+                          return (
+                            <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                              Action
+                            </button>
+                          );
+                        })()
                       ) : (
-                        <button
-                          className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
-                          onClick={() => handlePayNow(appointment.id, 2100)}
-                        >
-                          Pay Now
-                        </button>
+                        // Patient: Existing logic
+                        (() => {
+                          if (isAppointmentPast && isAppointmentPast(appointment)) {
+                            return (
+                              <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                Finished
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "rejected") {
+                            return (
+                              <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                Declined
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "pending") {
+                            return (
+                              <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                Pending
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "accepted" && !appointment.isPaid) {
+                            return (
+                              <button
+                                className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
+                                onClick={() => handlePayNow(appointment.id, 2100)}
+                              >
+                                Pay Now
+                              </button>
+                            );
+                          }
+                          if (appointment.status === "accepted" && appointment.isPaid) {
+                            return (
+                              <button
+                                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
+                                onClick={() => handleJoinCall(appointment.id)}
+                              >
+                                Join Now
+                              </button>
+                            );
+                          }
+                          // Default: disabled
+                          return (
+                            <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                              Action
+                            </button>
+                          );
+                        })()
                       )}
                     </td>
                   </tr>
