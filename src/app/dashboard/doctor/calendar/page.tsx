@@ -1,20 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import RoleGuard from '../../../components/RoleGuard';
 import { UserRole } from '../../../../models/UserRole';
 import Calendar from '../Calendar';
 import Loader from '../../../components/Loader';
+import { AuthContext } from '../../../../context/AuthContext';
+import { fetchAppointments } from '../../../../services/appointmentsService';
 
 export default function DoctorCalendarPage() {
+  const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
+  const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Simulate actual data fetching or initialization
-        await fetch('/api/calendar'); // Replace with actual API call
+        if (user?.uid) {
+          // Fetch only appointments for this doctor
+          const appointments = await fetchAppointments(user.uid, true); // true = isDoctor
+          // Map appointments to calendar events
+          const mappedEvents = appointments
+            .filter(app => app.preferredDate && app.preferredTime)
+            .map(app => {
+              // Combine date and time into a Date object
+              const start = new Date(`${app.preferredDate}T${app.preferredTime}`);
+              // Example: 30 min duration
+              const end = new Date(start.getTime() + 30 * 60 * 1000);
+              return {
+                title: `${app.appointmentType || 'Appointment'}${app.patientName ? ` with ${app.patientName}` : ''}`,
+                start,
+                end,
+                appointments, // pass the whole appointment if you want to show more info in tooltips etc.
+              };
+            });
+          setEvents(mappedEvents);
+        }
       } catch (error) {
         console.error('Error loading calendar:', error);
       } finally {
@@ -23,7 +45,7 @@ export default function DoctorCalendarPage() {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return <Loader />;
@@ -33,7 +55,7 @@ export default function DoctorCalendarPage() {
     <RoleGuard allowedRoles={[UserRole.Doctor]} fallbackPath="/dashboard">
       <div>
         <h1 className="text-2xl font-bold">Doctor&apos;s Calendar</h1>
-        <Calendar />
+        <Calendar events={events} />
       </div>
     </RoleGuard>
   );

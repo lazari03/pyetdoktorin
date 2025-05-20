@@ -18,26 +18,12 @@ const localizer = dateFnsLocalizer({
     locales,
 });
 
-// Ensure the events array contains valid Date objects for start and end times
-const events = [
-    {
-        title: 'Meeting with Patient A',
-        start: new Date(2023, 9, 16, 10, 0), // October 16, 2023, 10:00 AM
-        end: new Date(2023, 9, 16, 11, 0),   // October 16, 2023, 11:00 AM
-    },
-    {
-        title: 'Follow-up with Patient B',
-        start: new Date(2023, 9, 16, 14, 0), // October 16, 2023, 2:00 PM
-        end: new Date(2023, 9, 16, 15, 0),   // October 16, 2023, 3:00 PM
-    },
-    {
-        title: 'Consultation with Patient C',
-        start: new Date(2023, 9, 17, 9, 0),  // October 17, 2023, 9:00 AM
-        end: new Date(2023, 9, 17, 10, 0),   // October 17, 2023, 10:00 AM
-    },
-];
+// Add the prop type for events
+interface CalendarProps {
+    events: any[];
+}
 
-export default function Calendar() {
+export default function Calendar({ events }: CalendarProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const handleNext = () => {
@@ -85,7 +71,7 @@ export default function Calendar() {
             <div className="flex-grow mt-4"> {/* Added margin-top for spacing */}
                 <BigCalendar
                     localizer={localizer}
-                    events={events} // Pass the events array here
+                    events={events} // Use the passed-in events
                     defaultView={Views.WEEK}
                     views={['week']}
                     step={60}
