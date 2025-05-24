@@ -6,19 +6,19 @@ import { useDashboardStore } from '../../store/dashboardStore';
 import Link from 'next/link';
 import { isProfileIncomplete } from '../../store/generalStore';
 import DoctorSearchModal from '../components/DoctorSearchModal';
-import { UserRole } from '../../models/UserRole'; // Import UserRole model
-import DashboardNotifications from '../components/DashboardNotifications'; // Import the notification widget
-import Loader from '../components/Loader'; // Import Loader component
+import { UserRole } from '../../models/UserRole';
+import DashboardNotifications from '../components/DashboardNotifications';
+import Loader from '../components/Loader';
 import { useAppointmentStore } from '../../store/appointmentStore';
 
 export default function Dashboard() {
   const { user, role, loading: authLoading } = useAuth();
   const { totalAppointments, nextAppointment, fetchAppointments } = useDashboardStore();
-  const { appointments, handlePayNow, /* getAppointmentAction, */ isAppointmentPast } = useAppointmentStore();
+  const { appointments, handlePayNow, isAppointmentPast, fetchAppointments: fetchAllAppointments } = useAppointmentStore();
   const [profileIncomplete, setProfileIncomplete] = useState<boolean>(true);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchBarPosition, setSearchBarPosition] = useState<DOMRect | null>(null);
-  const [loading, setLoading] = useState(true); // Add loading state for the dashboard
+  const [loading, setLoading] = useState(true);
   const searchBarRef = useRef<HTMLDivElement>(null);
 
   const fetchProfileStatus = useCallback(async () => {
@@ -26,7 +26,7 @@ export default function Dashboard() {
       const incomplete = await isProfileIncomplete(role, user.uid);
       setProfileIncomplete(incomplete);
     }
-  }, [user, role]); // Wrapped in useCallback to stabilize the function reference
+  }, [user, role]);
 
   const handleSearchClick = () => {
     if (searchBarRef.current) {
@@ -46,7 +46,7 @@ export default function Dashboard() {
         await fetchProfileStatus();
         if (user && role) {
           await fetchAppointments(user.uid, role);
-          // Removed direct usage of nextAppointment to avoid dependency issues
+          await fetchAllAppointments(user.uid, role === UserRole.Doctor); // Ensure appointments store is also loaded
         }
       } catch (error) {
         console.error('Error initializing dashboard:', error);
@@ -56,7 +56,7 @@ export default function Dashboard() {
     };
 
     initializeDashboard();
-  }, [user, role, fetchAppointments, fetchProfileStatus]); // Do not include nextAppointment in the dependency array
+  }, [user, role, fetchAppointments, fetchProfileStatus, fetchAllAppointments]);
 
   if (authLoading || loading) return <Loader />;
 
@@ -189,7 +189,7 @@ export default function Dashboard() {
                               // If not accepted or in the past, show disabled button
                               return (
                                 <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                  Action
+                                  Waiting
                                 </button>
                               );
                             })()
@@ -231,7 +231,6 @@ export default function Dashboard() {
                                 return (
                                   <button
                                     className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                                    // onClick={() => handleJoinCall(appointment.id)} // Uncomment and implement if needed
                                     disabled
                                   >
                                     Join Now
@@ -241,7 +240,7 @@ export default function Dashboard() {
                               // Default: disabled
                               return (
                                 <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                  Action
+                                  Waiting
                                 </button>
                               );
                             })()
