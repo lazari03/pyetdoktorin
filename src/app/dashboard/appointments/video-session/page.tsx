@@ -115,7 +115,7 @@ export default function VideoSessionPage() {
   }
 
   return videoCall ? (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col min-h-screen h-screen w-screen">
       <div className="p-4 bg-gray-100 flex justify-between items-center">
         <h1 className="text-xl font-bold">Video Consultation</h1>
         <div className="text-sm">
@@ -123,8 +123,15 @@ export default function VideoSessionPage() {
           <span className="bg-green-500 text-white px-2 py-1 rounded">Live</span>
         </div>
       </div>
-      <div className="flex-grow" style={{ height: "calc(100vh - 70px)" }}>
-        <AgoraUIKit rtcProps={rtcProps} callbacks={callbacks} />
+      <div className="flex-grow w-full" style={{ minHeight: "600px", height: "calc(100vh - 64px)" }}>
+        <AgoraUIKit
+          rtcProps={rtcProps}
+          callbacks={callbacks}
+          styleProps={{
+            localBtnContainer: { zIndex: 20 },
+            UIKitContainer: { height: "100%", minHeight: "600px" }
+          }}
+        />
       </div>
     </div>
   ) : (
