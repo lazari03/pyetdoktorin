@@ -7,11 +7,12 @@ import Calendar from '../Calendar';
 import Loader from '../../../components/Loader';
 import { AuthContext } from '../../../../context/AuthContext';
 import { fetchAppointments } from '../../../../services/appointmentsService';
+import { Event as RBCEvent } from 'react-big-calendar';
 
 export default function DoctorCalendarPage() {
   const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<RBCEvent[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +33,7 @@ export default function DoctorCalendarPage() {
                 title: `${app.appointmentType || 'Appointment'}${app.patientName ? ` with ${app.patientName}` : ''}`,
                 start,
                 end,
-                appointments, // pass the whole appointment if you want to show more info in tooltips etc.
+                resource: app, // pass the whole appointment as resource for extra info
               };
             });
           setEvents(mappedEvents);
