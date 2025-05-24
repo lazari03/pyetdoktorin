@@ -5,6 +5,7 @@ import { Calendar as BigCalendar, Views, dateFnsLocalizer } from 'react-big-cale
 import 'react-big-calendar/lib/css/react-big-calendar.css'; // Import default styles
 import { format, parse, startOfWeek, getDay, addWeeks, subWeeks } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
+import { Event as RBCEvent } from 'react-big-calendar';
 
 const locales = {
     'en-US': enUS,
@@ -20,7 +21,7 @@ const localizer = dateFnsLocalizer({
 
 // Add the prop type for events
 interface CalendarProps {
-    events: any[];
+    events: RBCEvent[];
 }
 
 export default function Calendar({ events }: CalendarProps) {
