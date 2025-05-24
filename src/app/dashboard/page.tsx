@@ -14,7 +14,7 @@ import { useAppointmentStore } from '../../store/appointmentStore';
 export default function Dashboard() {
   const { user, role, loading: authLoading } = useAuth();
   const { totalAppointments, nextAppointment, fetchAppointments } = useDashboardStore();
-  const { appointments, handlePayNow, /* getAppointmentAction, */ isAppointmentPast } = useAppointmentStore();
+  const { appointments, handlePayNow, isAppointmentPast } = useAppointmentStore();
   const [profileIncomplete, setProfileIncomplete] = useState<boolean>(true);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchBarPosition, setSearchBarPosition] = useState<DOMRect | null>(null);
@@ -189,7 +189,7 @@ export default function Dashboard() {
                               // If not accepted or in the past, show disabled button
                               return (
                                 <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                  Action
+                                  Waiting
                                 </button>
                               );
                             })()
@@ -231,7 +231,6 @@ export default function Dashboard() {
                                 return (
                                   <button
                                     className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                                    // onClick={() => handleJoinCall(appointment.id)} // Uncomment and implement if needed
                                     disabled
                                   >
                                     Join Now
@@ -241,7 +240,7 @@ export default function Dashboard() {
                               // Default: disabled
                               return (
                                 <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                  Action
+                                  Waiting
                                 </button>
                               );
                             })()
