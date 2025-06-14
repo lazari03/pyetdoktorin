@@ -17,7 +17,7 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true);
 
   // Custom hook to handle fetching appointments and user role
-  useFetchAppointments(user);
+  const { refetch } = useFetchAppointments(user);
 
   // Sync auth state with video store whenever auth context changes
   useEffect(() => {
@@ -53,6 +53,10 @@ export default function AppointmentsPage() {
                 },
                 body: JSON.stringify({ appointmentId, isPaid: true }),
               });
+
+              // Refetch appointments to update UI
+              setLoading(true);
+              await refetch();
             } catch (error) {
               console.error("Error verifying payment:", error);
             }
@@ -68,7 +72,7 @@ export default function AppointmentsPage() {
     };
 
     initializePage();
-  }, [setAppointmentPaid]);
+  }, [setAppointmentPaid, refetch]);
 
   useEffect(() => {
     const fetchPastAppointments = async () => {
