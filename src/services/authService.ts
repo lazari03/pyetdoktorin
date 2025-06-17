@@ -32,6 +32,8 @@ export const login = async (email: string, password: string) => {
 
         // Set the auth token as a session cookie
         document.cookie = `auth-token=${token}; path=/; SameSite=Lax; expires=Session`;
+        // Set the userRole cookie for middleware
+        document.cookie = `userRole=${role}; path=/; SameSite=Lax; expires=Session`;
         console.log('Auth token cookie set:', document.cookie);
 
         return { user, role };
@@ -73,7 +75,8 @@ export const logout = async () => {
 
         // Clear the auth token cookie
         document.cookie = 'auth-token=; path=/; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
-        console.log('Auth token cookie cleared');
+        // Clear the userRole cookie
+        document.cookie = 'userRole=; path=/; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
     } catch (error) {
         console.error('Error signing out:', error);
         throw new Error('Failed to sign out');

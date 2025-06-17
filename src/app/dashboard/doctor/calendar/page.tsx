@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import RoleGuard from '../../../components/RoleGuard';
 import { UserRole } from '../../../../models/UserRole';
 import Calendar from '../Calendar';
 import Loader from '../../../components/Loader';
-import { AuthContext } from '../../../../context/AuthContext';
+import { useAuth } from '../../../../context/AuthContext';
 import { fetchAppointments } from '../../../../services/appointmentsService';
 import { Event as RBCEvent } from 'react-big-calendar';
 
 export default function DoctorCalendarPage() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth(); // Use the hook instead of useContext
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<RBCEvent[]>([]);
 

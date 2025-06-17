@@ -3,14 +3,32 @@
 import { useEffect, useState } from "react";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import { useFetchAppointments } from "../../../hooks/useFetchAppointments";
-import { useContext } from "react";
-import { AuthContext } from "../../../context/AuthContext";
+import { useAuth } from "../../../context/AuthContext";
 import DashboardNotifications from '../../components/DashboardNotifications';
 import Loader from '../../components/Loader';
 import { useVideoStore } from "../../../store/videoStore";
+import RoleGuard from '../../components/RoleGuard';
 
-export default function AppointmentsPage() {
-  const { user, isAuthenticated } = useContext(AuthContext);
+function useCleanupMediaStreamsOnMount() {
+  useEffect(() => {
+    // Stop all tracks from any video/audio elements
+    document.querySelectorAll('video, audio').forEach((el: any) => {
+      if (el.srcObject) {
+        (el.srcObject as MediaStream).getTracks().forEach((track: MediaStreamTrack) => {
+          if (track.readyState === 'live') {
+            track.stop();
+          }
+        });
+        el.srcObject = null;
+      }
+    });
+    // Remove unnecessary getUserMedia calls
+    // Removed navigator.mediaDevices.getUserMedia cleanup logic
+  }, []);
+}
+
+function AppointmentsPage() {
+  const { user, isAuthenticated } = useAuth(); // Use the hook here
   const { appointments, isDoctor, setAppointmentPaid, handlePayNow, checkIfPastAppointment, isAppointmentPast } = useAppointmentStore();
   // Use the video store directly
   const { joinCall, setAuthStatus } = useVideoStore();
@@ -105,6 +123,26 @@ export default function AppointmentsPage() {
     }
   };
 
+  // Sort appointments from latest to oldest before rendering
+  const sortedAppointments = [...appointments].sort((a, b) => {
+    // First try to sort by date
+    const dateA = new Date(a.preferredDate).getTime();
+    const dateB = new Date(b.preferredDate).getTime();
+    
+    if (dateA !== dateB) {
+      return dateB - dateA; // Latest date first
+    }
+    
+    // If dates are the same, try to sort by creation time
+    const createdAtA = new Date(a.createdAt).getTime();
+    const createdAtB = new Date(b.createdAt).getTime();
+    
+    return createdAtB - createdAtA; // Latest creation time first
+  });
+
+  // Use the cleanup hook so it runs on mount
+  useCleanupMediaStreamsOnMount();
+
   if (loading) {
     return <Loader />;
   }
@@ -138,7 +176,7 @@ export default function AppointmentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {appointments.map((appointment) => (
+                {sortedAppointments.map((appointment) => (
                   <tr key={appointment.id}>
                     <td>
                       {isDoctor ? (
@@ -254,5 +292,14 @@ export default function AppointmentsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Wrap export with RoleGuard if needed
+export default function ProtectedAppointmentsPage() {
+  return (
+    <RoleGuard allowedRoles={['doctor', 'patient']}>
+      <AppointmentsPage />
+    </RoleGuard>
   );
 }

@@ -18,7 +18,7 @@ export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   uid: null, 
   user: null,
-  role: UserRole.null, // Default role
+  role: null, // Set default to null
   loading: true,
 });
 
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uid, setUid] = useState<string | null>(null); // Add state for `uid`
   const [user, setUser] = useState<{ uid: string; name: string } | null>(null);
-  const [role, setRole] = useState<UserRole.null | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null); // Fix type here
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { fetchAgoraTokens } from "../network/agoraApi"; // Use the Axios-based API function
 
 interface VideoSessionState {
   rtcToken: string | null;
@@ -25,13 +26,9 @@ export const useVideoSessionStore = create<VideoSessionState>((set) => ({
       const channelName = appointmentId.replace(/[^a-zA-Z0-9_=+-]/g, "_").substring(0, 64);
       const safeUserId = userId.replace(/[^a-zA-Z0-9_=+-]/g, "_").substring(0, 64);
 
-      const res = await fetch("/api/agora/generate-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channelName, uid, userId: safeUserId }),
-      });
-      if (!res.ok) throw new Error("Failed to fetch Agora tokens");
-      const data = await res.json();
+      // Fetch tokens using the Axios-based API function
+      const data = await fetchAgoraTokens(channelName, uid, safeUserId);
+
       set({
         rtcToken: data.rtcToken,
         channelName,

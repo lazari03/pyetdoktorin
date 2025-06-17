@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, or, doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebaseconfig";
-import { auth } from "../config/firebaseconfig"; // Import Firebase auth
-import { onAuthStateChanged } from "firebase/auth"; // Import auth state listener
+import { useAuth } from "../context/AuthContext";
 
 interface Appointment {
   id: string;
@@ -37,18 +36,25 @@ export async function fetchDoctorId(doctorId: string) {
 }
 
 export function useAppointments() {
+  const { user, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchAppointments = async (userId: string) => {
+    if (authLoading) return;
+    if (!user?.uid) {
+      setError("User is not authenticated");
+      setIsLoading(false);
+      return;
+    }
+    const fetchAppointments = async () => {
       try {
         const appointmentsQuery = query(
           collection(db, "appointments"),
           or(
-            where("doctorId", "==", userId),
-            where("patientId", "==", userId)
+            where("doctorId", "==", user.uid),
+            where("patientId", "==", user.uid)
           )
         );
 
@@ -92,17 +98,8 @@ export function useAppointments() {
       }
     };
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchAppointments(user.uid);
-      } else {
-        setError("User is not authenticated");
-        setIsLoading(false);
-      }
-    });
-
-    return () => unsubscribe(); // Cleanup the auth state listener
-  }, []);
+    fetchAppointments();
+  }, [user, authLoading]);
 
   return { appointments, isLoading, error, fetchDoctorId };
 }

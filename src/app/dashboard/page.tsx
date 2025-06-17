@@ -10,6 +10,8 @@ import { UserRole } from '../../models/UserRole';
 import DashboardNotifications from '../components/DashboardNotifications';
 import Loader from '../components/Loader';
 import { useAppointmentStore } from '../../store/appointmentStore';
+import { useRouter } from 'next/navigation';
+import { useVideoStore } from '../../store/videoStore';
 
 export default function Dashboard() {
   const { user, role, loading: authLoading } = useAuth();
@@ -20,6 +22,8 @@ export default function Dashboard() {
   const [searchBarPosition, setSearchBarPosition] = useState<DOMRect | null>(null);
   const [loading, setLoading] = useState(true);
   const searchBarRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { joinCall, setAuthStatus } = useVideoStore();
 
   const fetchProfileStatus = useCallback(async () => {
     if (user && role) {
@@ -38,6 +42,32 @@ export default function Dashboard() {
 
   const handleModalClose = () => {
     setIsSearchModalOpen(false);
+  };
+
+  const handleJoinCall = async (appointmentId: string) => {
+    try {
+      console.log("Creating video call session for appointmentId:", appointmentId);
+      
+      // Ensure user is authenticated before proceeding
+      if (!user || !user.uid) {
+        console.error("User is not authenticated");
+        alert("You must be logged in to join a call. Please log in and try again.");
+        return;
+      }
+      
+      // Ensure auth status is set in video store before joining
+      if (typeof setAuthStatus === 'function') {
+        setAuthStatus(!!user, user.uid, user.name || null);
+      }
+      
+      // If joinCall expects only (appointmentId, somethingElse), do:
+      const videoSessionUrl = await joinCall(appointmentId, 0); // Remove user.uid if not needed
+      console.log("Redirecting to video session URL:", videoSessionUrl);
+      window.location.href = videoSessionUrl;
+    } catch (error) {
+      console.error("Error creating video call session:", error);
+      alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   useEffect(() => {
@@ -136,119 +166,136 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {appointments && appointments.length > 0 ? (
-                  appointments.slice(0, 3).map((appointment) => {
-                    return (
-                      <tr key={appointment.id}>
-                        <td>{appointment.preferredDate}</td>
-                        <td>
-                          {role === 'doctor'
-                            ? appointment.patientName || "N/A"
-                            : (
-                              <a
-                                href={`/dashboard/doctor/${appointment.doctorId}`}
-                                className="text-orange-500 underline hover:text-orange-700"
-                              >
-                                {appointment.doctorName}
-                              </a>
+                  // Sort appointments the same way as in the appointments page
+                  [...appointments]
+                    .sort((a, b) => {
+                      // First try to sort by date
+                      const dateA = new Date(a.preferredDate).getTime();
+                      const dateB = new Date(b.preferredDate).getTime();
+                      
+                      if (dateA !== dateB) {
+                        return dateB - dateA; // Latest date first
+                      }
+                      
+                      // If dates are the same, try to sort by creation time
+                      const createdAtA = new Date(a.createdAt).getTime();
+                      const createdAtB = new Date(b.createdAt).getTime();
+                      
+                      return createdAtB - createdAtA; // Latest creation time first
+                    })
+                    .slice(0, 3)
+                    .map((appointment) => {
+                      return (
+                        <tr key={appointment.id}>
+                          <td>{appointment.preferredDate}</td>
+                          <td>
+                            {role === 'doctor'
+                              ? appointment.patientName || "N/A"
+                              : (
+                                <a
+                                  href={`/dashboard/doctor/${appointment.doctorId}`}
+                                  className="text-orange-500 underline hover:text-orange-700"
+                                >
+                                  {appointment.doctorName}
+                                </a>
+                              )}
+                          </td>
+                          <td>{appointment.appointmentType}</td>
+                          <td>{appointment.preferredTime}</td>
+                          <td>{appointment.notes}</td>
+                          <td>
+                            {appointment.status === "accepted" ? (
+                              <span className="text-green-500 font-bold">Accepted</span>
+                            ) : appointment.status === "rejected" ? (
+                              <span className="text-red-500 font-bold">Declined</span>
+                            ) : (
+                              <span className="text-gray-500 font-bold">Pending</span>
                             )}
-                        </td>
-                        <td>{appointment.appointmentType}</td>
-                        <td>{appointment.preferredTime}</td>
-                        <td>{appointment.notes}</td>
-                        <td>
-                          {appointment.status === "accepted" ? (
-                            <span className="text-green-500 font-bold">Accepted</span>
-                          ) : appointment.status === "rejected" ? (
-                            <span className="text-red-500 font-bold">Declined</span>
-                          ) : (
-                            <span className="text-gray-500 font-bold">Pending</span>
-                          )}
-                        </td>
-                        <td>
-                          {role === "doctor" ? (
-                            // Doctor: Only "Finished" or "Join Now"
-                            (() => {
-                              if (isAppointmentPast(appointment)) {
-                                return (
-                                  <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                    Finished
-                                  </button>
-                                );
-                              }
-                              if (appointment.status === "accepted") {
-                                return (
-                                  <button
-                                    className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                                    // onClick={() => handleJoinCall(appointment.id)} // Uncomment and implement if needed
-                                    disabled
-                                  >
-                                    Join Now
-                                  </button>
-                                );
-                              }
-                              // If not accepted or in the past, show disabled button
-                              return (
-                                <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                  Waiting
-                                </button>
-                              );
-                            })()
-                          ) : (
-                            // Patient: Existing logic
-                            (() => {
-                              if (isAppointmentPast(appointment)) {
-                                return (
-                                  <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                    Finished
-                                  </button>
-                                );
-                              }
-                              if (appointment.status === "rejected") {
+                          </td>
+                          <td>
+                            {role === "doctor" ? (
+                              // Doctor: Only "Finished" or "Join Now"
+                              (() => {
+                                if (isAppointmentPast(appointment)) {
+                                  return (
+                                    <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                      Finished
+                                    </button>
+                                  );
+                                }
+                                if (appointment.status === "accepted") {
+                                  return (
+                                    <button
+                                      className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
+                                      onClick={() => handleJoinCall(appointment.id)}
+                                    >
+                                      Join Now
+                                    </button>
+                                  );
+                                }
+                                // If not accepted or in the past, show disabled button
                                 return (
                                   <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                    Declined
+                                    Waiting
                                   </button>
                                 );
-                              }
-                              if (appointment.status === "pending") {
+                              })()
+                            ) : (
+                              // Patient: Existing logic with "Join Now" button enabled
+                              (() => {
+                                if (isAppointmentPast(appointment)) {
+                                  return (
+                                    <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                      Finished
+                                    </button>
+                                  );
+                                }
+                                if (appointment.status === "rejected") {
+                                  return (
+                                    <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                      Declined
+                                    </button>
+                                  );
+                                }
+                                if (appointment.status === "pending") {
+                                  return (
+                                    <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
+                                      Pending
+                                    </button>
+                                  );
+                                }
+                                if (appointment.status === "accepted" && !appointment.isPaid) {
+                                  return (
+                                    <button
+                                      className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
+                                      onClick={() => handlePayNow(appointment.id, 2100)}
+                                    >
+                                      Pay Now
+                                    </button>
+                                  );
+                                }
+                                if (appointment.status === "accepted" && appointment.isPaid) {
+                                  return (
+                                    <button
+                                      className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
+                                      onClick={() => handleJoinCall(appointment.id)}
+                                    >
+                                      Join Now
+                                    </button>
+                                  );
+                                }
+                                // Default: disabled
                                 return (
                                   <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                    Pending
+                                    Waiting
                                   </button>
                                 );
-                              }
-                              if (appointment.status === "accepted" && !appointment.isPaid) {
-                                return (
-                                  <button
-                                    className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
-                                    onClick={() => handlePayNow(appointment.id, 2100)}
-                                  >
-                                    Pay Now
-                                  </button>
-                                );
-                              }
-                              if (appointment.status === "accepted" && appointment.isPaid) {
-                                return (
-                                  <button
-                                    className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                                    disabled
-                                  >
-                                    Join Now
-                                  </button>
-                                );
-                              }
-                              // Default: disabled
-                              return (
-                                <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                  Waiting
-                                </button>
-                              );
-                            })()
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
+                              })()
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                 ) : (
                   <tr>
                     <td colSpan={7} className="text-center">

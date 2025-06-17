@@ -1,6 +1,6 @@
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../config/firebaseconfig";
-import { Doctor } from "../models/Doctor"; 
+import { Doctor } from "../models/Doctor";
 import { FirestoreCollections, DoctorFields, SearchType } from "../models/FirestoreConstants";
 
 export async function fetchDoctors(searchTerm: string, searchType: SearchType): Promise<Doctor[]> {
@@ -38,16 +38,15 @@ export async function fetchDoctors(searchTerm: string, searchType: SearchType): 
 
     // Filter results based on search type and ensure case-insensitive comparison
     if (searchType === SearchType.Name) {
-      return doctors.filter(doctor => {
-        // Case-insensitive comparison for name
-        return doctor.name && doctor.name.toLowerCase().includes(normalizedSearchTerm);
-      });
+      return doctors.filter((doctor) =>
+        doctor.name && doctor.name.toLowerCase().includes(normalizedSearchTerm)
+      );
     } else if (searchType === SearchType.Specializations) {
-      return doctors.filter(doctor => {
+      return doctors.filter((doctor) => {
         if (!doctor.specialization || doctor.specialization.length === 0) return false;
-        
+
         // Case-insensitive comparison for each specialization
-        return doctor.specialization.some(spec => 
+        return doctor.specialization.some((spec) =>
           spec && spec.toLowerCase().includes(normalizedSearchTerm)
         );
       });
@@ -57,5 +56,20 @@ export async function fetchDoctors(searchTerm: string, searchType: SearchType): 
   } catch (error) {
     console.error("Error fetching doctors:", error);
     throw new Error("Failed to fetch doctors");
+  }
+}
+
+export async function fetchDoctorsBySearchTerm(term: string) {
+  try {
+    const doctorsByName = await fetchDoctors(term, SearchType.Name);
+    const doctorsBySpecializations = await fetchDoctors(term, SearchType.Specializations);
+
+    // Combine and deduplicate doctors
+    return Array.from(
+      new Map([...doctorsByName, ...doctorsBySpecializations].map((doc) => [doc.id, doc])).values()
+    );
+  } catch (error) {
+    console.error("Error fetching doctors by search term:", error);
+    throw new Error("Failed to fetch doctors by search term");
   }
 }

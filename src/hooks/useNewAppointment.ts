@@ -1,10 +1,10 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { getDocs, query, where, collection, addDoc } from 'firebase/firestore'; // Removed unused `doc` and `setDoc`
 import { isAuthenticated, fetchUserDetails } from '../services/authService';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { useNewAppointmentStore } from '@/store/newAppointmentStore';
 import { Appointment } from '@/models/Appointment';
-import { AuthContext } from '../context/AuthContext'; // Import AuthContext
+import { useAuth } from '../context/AuthContext'; // Use the hook instead of direct context
 import { db } from '@/config/firebaseconfig';
 
 export default function useNewAppointment() {
@@ -26,7 +26,7 @@ export default function useNewAppointment() {
   const [loading] = useState(false); // Remove setLoading as it is unused
   const [patientName, setPatientName] = useState<string>('');
   const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>(); // Removed `loading` state
-  const { user } = useContext(AuthContext); // Get the authenticated user
+  const { user } = useAuth(); // Use the hook here
 
   useEffect(() => {
     isAuthenticated(async (authState) => {

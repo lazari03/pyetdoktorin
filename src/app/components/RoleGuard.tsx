@@ -17,7 +17,7 @@ export default function RoleGuard({ children, allowedRoles, fallbackPath = '/das
   useEffect(() => {
     function checkUserRole() {
       try {
-        const userRole = localStorage.getItem('userRole'); // Assuming role is stored in localStorage
+        const userRole = localStorage.getItem('userRole');
         if (!userRole || !allowedRoles.includes(userRole)) {
           router.push(fallbackPath);
           return false;

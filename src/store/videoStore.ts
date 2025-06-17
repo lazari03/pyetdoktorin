@@ -123,6 +123,8 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
     set({
       isInCall: false,
     });
+    // Ensure cleanup of media streams when ending call
+    get().resetVideoState();
   },
   
   resetVideoState: () => {
@@ -133,5 +135,38 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
       isInCall: false,
       error: null,
     });
+    // Cleanup media streams if needed
+    // Stop all tracks from any video/audio elements
+    document.querySelectorAll('video, audio').forEach((el: any) => {
+      if (el.srcObject) {
+        (el.srcObject as MediaStream).getTracks().forEach((track: MediaStreamTrack) => {
+          if (track.readyState === 'live') {
+            track.stop();
+          }
+        });
+        el.srcObject = null;
+      }
+    });
+    // @ts-ignore
+    if (window.localStreams) {
+      // @ts-ignore
+      window.localStreams.forEach((stream: MediaStream) => {
+        stream.getTracks().forEach((track: MediaStreamTrack) => {
+          if (track.readyState === 'live') {
+            track.stop();
+          }
+        });
+      });
+      // @ts-ignore
+      window.localStreams = [];
+    }
+    // Also stop any open getUserMedia streams from navigator.mediaDevices
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+          stream.getTracks().forEach(track => track.stop());
+        })
+        .catch(() => {});
+    }
   },
 }));

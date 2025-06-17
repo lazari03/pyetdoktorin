@@ -10,6 +10,8 @@ const AgoraUIKit = dynamic(() => import("agora-react-uikit"), { ssr: false });
 import { useAuth } from "../../../../context/AuthContext";
 import { useVideoStore } from "../../../../store/videoStore";
 import Loader from "../../../components/Loader";
+import AgoraChat from "../../../components/agoraChat";
+import useAgoraRtm from "../../../../hooks/useAgoraRtm";
 
 export default function VideoSessionPage() {
   const [videoCall, setVideoCall] = useState(true);
@@ -106,32 +108,101 @@ export default function VideoSessionPage() {
   const callbacks = {
     EndCall: () => {
       setVideoCall(false);
-      endCall();
+      endCall(); // This triggers cleanup in the store
     },
   };
+
+  // RTM Chat integration
+  const rtmAppId = appId;
+  const rtmChannel = channel || ""; // Ensure string, not null
+  const rtmUserId = uid || user?.uid || ""; // Ensure string
+
+  const { messages, sendMessage } = useAgoraRtm(rtmAppId, rtmChannel, rtmUserId);
+
+  // Cleanup media streams when leaving the video session page
+  useEffect(() => {
+    return () => {
+      endCall(); // <--- Ensure store cleanup logic is always called on unmount
+    };
+  }, [endCall]);
 
   if (authLoading || !rtcProps) {
     return <Loader />;
   }
 
   return videoCall ? (
-    <div className="flex flex-col min-h-screen h-screen w-screen">
-      <div className="p-4 bg-gray-100 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Video Consultation</h1>
-        <div className="text-sm">
-          {user?.name && <span className="mr-2">Connected as {user.name}</span>}
-          <span className="bg-green-500 text-white px-2 py-1 rounded">Live</span>
+    <div className="w-full h-full min-h-screen bg-base-100 flex flex-col items-center justify-start overflow-x-hidden">
+      <div
+        className="w-full h-full flex flex-col"
+        style={{
+          maxWidth: "100vw",
+          minHeight: "100vh",
+          height: "100dvh",
+        }}
+      >
+        <div className="p-4 bg-gray-100 flex justify-between items-center">
+          <h1 className="text-xl font-bold">Video Consultation</h1>
+          <div className="text-sm">
+            {user?.name && <span className="mr-2">Connected as {user.name}</span>}
+            <span className="bg-green-500 text-white px-2 py-1 rounded">Live</span>
+          </div>
         </div>
-      </div>
-      <div className="flex-grow w-full" style={{ minHeight: "600px", height: "calc(100vh - 64px)" }}>
-        <AgoraUIKit
-          rtcProps={rtcProps}
-          callbacks={callbacks}
-          styleProps={{
-            localBtnContainer: { zIndex: 20 },
-            UIKitContainer: { height: "100%", minHeight: "600px" }
-          }}
-        />
+        <div className="flex flex-1 flex-col md:flex-row w-full h-full overflow-hidden">
+          {/* Video Section */}
+          <div
+            className="relative flex-1 min-h-[300px] min-w-0 flex items-center justify-center bg-black"
+            style={{
+              height: "100%",
+            }}
+          >
+            <div className="absolute inset-0 block md:hidden z-10">
+              <AgoraUIKit
+                rtcProps={rtcProps}
+                callbacks={callbacks}
+                styleProps={{
+                  localBtnContainer: { zIndex: 20 },
+                  UIKitContainer: {
+                    height: "100dvh",
+                    minHeight: "100dvh",
+                    width: "100vw",
+                    background: "black",
+                  }
+                }}
+              />
+            </div>
+            <div className="hidden md:block w-full h-full">
+              <AgoraUIKit
+                rtcProps={rtcProps}
+                callbacks={callbacks}
+                styleProps={{
+                  localBtnContainer: { zIndex: 20 },
+                  UIKitContainer: { height: "100%", minHeight: "300px", background: "black" }
+                }}
+              />
+            </div>
+            {/* Mobile Chat Overlay */}
+            <div className="block md:hidden absolute bottom-0 left-0 w-full z-30">
+              <div className="bg-white bg-opacity-90 rounded-t-xl shadow-lg p-2 flex flex-col">
+                <div className="flex-1 overflow-y-auto max-h-40">
+                  {/* Integrated Agora RTM Chat */}
+                  <AgoraChat
+                    messages={messages}
+                    sendMessage={sendMessage}
+                    currentUserId={rtmUserId}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Desktop Chat Section */}
+          <div className="hidden md:flex flex-[1_1 0%] max-w-full md:max-w-xs min-h-[120px] min-w-0 bg-white border-t md:border-t-0 md:border-l border-gray-200 flex-col">
+            <AgoraChat
+              messages={messages}
+              sendMessage={sendMessage}
+              currentUserId={rtmUserId}
+            />
+          </div>
+        </div>
       </div>
     </div>
   ) : (
