@@ -10,7 +10,6 @@ import { UserRole } from '../../models/UserRole';
 import DashboardNotifications from '../components/DashboardNotifications';
 import Loader from '../components/Loader';
 import { useAppointmentStore } from '../../store/appointmentStore';
-import { useRouter } from 'next/navigation';
 import { useVideoStore } from '../../store/videoStore';
 
 export default function Dashboard() {
@@ -22,7 +21,6 @@ export default function Dashboard() {
   const [searchBarPosition, setSearchBarPosition] = useState<DOMRect | null>(null);
   const [loading, setLoading] = useState(true);
   const searchBarRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const { joinCall, setAuthStatus } = useVideoStore();
 
   const fetchProfileStatus = useCallback(async () => {

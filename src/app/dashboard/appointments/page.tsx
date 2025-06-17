@@ -8,36 +8,16 @@ import DashboardNotifications from '../../components/DashboardNotifications';
 import Loader from '../../components/Loader';
 import { useVideoStore } from "../../../store/videoStore";
 import RoleGuard from '../../components/RoleGuard';
-
-function useCleanupMediaStreamsOnMount() {
-  useEffect(() => {
-    // Stop all tracks from any video/audio elements
-    document.querySelectorAll('video, audio').forEach((el: any) => {
-      if (el.srcObject) {
-        (el.srcObject as MediaStream).getTracks().forEach((track: MediaStreamTrack) => {
-          if (track.readyState === 'live') {
-            track.stop();
-          }
-        });
-        el.srcObject = null;
-      }
-    });
-    // Remove unnecessary getUserMedia calls
-    // Removed navigator.mediaDevices.getUserMedia cleanup logic
-  }, []);
-}
+import { cleanupMediaStreams } from "../../../utils/mediaUtils"; // Use the utility function
 
 function AppointmentsPage() {
-  const { user, isAuthenticated } = useAuth(); // Use the hook here
+  const { user, isAuthenticated } = useAuth();
   const { appointments, isDoctor, setAppointmentPaid, handlePayNow, checkIfPastAppointment, isAppointmentPast } = useAppointmentStore();
-  // Use the video store directly
   const { joinCall, setAuthStatus } = useVideoStore();
   const [loading, setLoading] = useState(true);
 
-  // Custom hook to handle fetching appointments and user role
   const { refetch } = useFetchAppointments(user);
 
-  // Sync auth state with video store whenever auth context changes
   useEffect(() => {
     setAuthStatus(
       isAuthenticated, 
@@ -50,7 +30,7 @@ function AppointmentsPage() {
     const initializePage = async () => {
       try {
         const checkPaymentStatus = async () => {
-          const sessionId = new URLSearchParams(window.location.search).get("session_id"); // Use window.location for client-side
+          const sessionId = new URLSearchParams(window.location.search).get("session_id");
           if (sessionId) {
             try {
               const response = await fetch(`/api/stripe/verify-payment?session_id=${sessionId}`);
@@ -59,11 +39,8 @@ function AppointmentsPage() {
               }
 
               const { appointmentId } = await response.json();
-
-              // Update local state
               setAppointmentPaid(appointmentId);
 
-              // Update Firebase
               await fetch(`/api/appointments/update-status`, {
                 method: "POST",
                 headers: {
@@ -72,7 +49,6 @@ function AppointmentsPage() {
                 body: JSON.stringify({ appointmentId, isPaid: true }),
               });
 
-              // Refetch appointments to update UI
               setLoading(true);
               await refetch();
             } catch (error) {
@@ -98,7 +74,7 @@ function AppointmentsPage() {
       for (const appointment of appointments) {
         try {
           const isPast = await checkIfPastAppointment(appointment.id);
-          console.log(`Appointment ID: ${appointment.id}, Is Past: ${isPast}`); // Debugging log
+          console.log(`Appointment ID: ${appointment.id}, Is Past: ${isPast}`);
           results[appointment.id] = isPast;
         } catch (error) {
           console.error(`Error checking if appointment ${appointment.id} is in the past:`, error);
@@ -109,11 +85,13 @@ function AppointmentsPage() {
     fetchPastAppointments();
   }, [appointments, checkIfPastAppointment]);
 
+  useEffect(() => {
+    cleanupMediaStreams(); // Use the utility function for cleanup
+  }, []);
+
   const handleJoinCall = async (appointmentId: string) => {
     try {
       console.log("Creating video call session for appointmentId:", appointmentId);
-      
-      // Use the video store to join the call
       const videoSessionUrl = await joinCall(appointmentId, 0);
       console.log("Redirecting to video session URL:", videoSessionUrl);
       window.location.href = videoSessionUrl;
@@ -123,25 +101,16 @@ function AppointmentsPage() {
     }
   };
 
-  // Sort appointments from latest to oldest before rendering
   const sortedAppointments = [...appointments].sort((a, b) => {
-    // First try to sort by date
     const dateA = new Date(a.preferredDate).getTime();
     const dateB = new Date(b.preferredDate).getTime();
-    
     if (dateA !== dateB) {
-      return dateB - dateA; // Latest date first
+      return dateB - dateA;
     }
-    
-    // If dates are the same, try to sort by creation time
     const createdAtA = new Date(a.createdAt).getTime();
     const createdAtB = new Date(b.createdAt).getTime();
-    
-    return createdAtB - createdAtA; // Latest creation time first
+    return createdAtB - createdAtA;
   });
-
-  // Use the cleanup hook so it runs on mount
-  useCleanupMediaStreamsOnMount();
 
   if (loading) {
     return <Loader />;
@@ -295,7 +264,6 @@ function AppointmentsPage() {
   );
 }
 
-// Wrap export with RoleGuard if needed
 export default function ProtectedAppointmentsPage() {
   return (
     <RoleGuard allowedRoles={['doctor', 'patient']}>

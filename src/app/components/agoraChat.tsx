@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, KeyboardEvent } from "react";
 import useAgoraRtm from "../../hooks/useAgoraRtm";
 
-// Define the ChatMessage interface here since it's not exported from useAgoraRtm
 interface ChatMessage {
   text: string;
   sender: string;
@@ -24,6 +23,7 @@ export default function AgoraChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log("Messages updated in UI:", messages);
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 

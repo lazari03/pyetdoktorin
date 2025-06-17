@@ -135,36 +135,38 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
       isInCall: false,
       error: null,
     });
-    // Cleanup media streams if needed
-    // Stop all tracks from any video/audio elements
-    document.querySelectorAll('video, audio').forEach((el: any) => {
-      if (el.srcObject) {
-        (el.srcObject as MediaStream).getTracks().forEach((track: MediaStreamTrack) => {
+
+    // Cleanup media streams
+    document.querySelectorAll('video, audio').forEach((el) => {
+      const mediaElement = el as HTMLMediaElement;
+      if (mediaElement.srcObject) {
+        (mediaElement.srcObject as MediaStream).getTracks().forEach((track) => {
           if (track.readyState === 'live') {
             track.stop();
           }
         });
-        el.srcObject = null;
+        mediaElement.srcObject = null;
       }
     });
-    // @ts-ignore
+ 
+    // @ts-expect-error: localStreams is not a standard property
     if (window.localStreams) {
-      // @ts-ignore
+      // @ts-expect-error: localStreams is not a standard property
       window.localStreams.forEach((stream: MediaStream) => {
-        stream.getTracks().forEach((track: MediaStreamTrack) => {
+        stream.getTracks().forEach((track) => {
           if (track.readyState === 'live') {
             track.stop();
           }
         });
       });
-      // @ts-ignore
+      // @ts-expect-error: localStreams is not a standard property
       window.localStreams = [];
     }
-    // Also stop any open getUserMedia streams from navigator.mediaDevices
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+
+    if (navigator.mediaDevices?.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-          stream.getTracks().forEach(track => track.stop());
+        .then((stream) => {
+          stream.getTracks().forEach((track) => track.stop());
         })
         .catch(() => {});
     }

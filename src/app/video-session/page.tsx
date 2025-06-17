@@ -9,6 +9,7 @@ import { Suspense } from "react";
 // Dynamically import AgoraUIKit to avoid SSR issues
 const AgoraUIKit = dynamic(() => import("agora-react-uikit"), { ssr: false });
 
+
 export default function VideoSessionPageWrapper() {
   return (
     <Suspense fallback={<div>Loading video session...</div>}>

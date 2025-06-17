@@ -1,5 +1,3 @@
-// /types/agora-rtm.d.ts
-
 declare module "agora-rtm-sdk" {
   export interface RtmMessage {
     text: string;
@@ -12,10 +10,16 @@ declare module "agora-rtm-sdk" {
     on(event: "ChannelMessage", callback: (message: RtmMessage, senderId: string) => void): void;
   }
 
-  export class RTMClient {
-    static createInstance(appId: string): RTMClient;
+  export interface RTMClient {
     login(options: { uid: string }): Promise<void>;
     logout(): Promise<void>;
     createChannel(channelName: string): RtmChannel;
   }
+
+  interface AgoraRTMStatic {
+    createInstance(appId: string): RTMClient;
+  }
+
+  const AgoraRTM: AgoraRTMStatic;
+  export default AgoraRTM;
 }

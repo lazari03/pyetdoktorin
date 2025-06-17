@@ -184,7 +184,6 @@ export default function VideoSessionPage() {
             <div className="block md:hidden absolute bottom-0 left-0 w-full z-30">
               <div className="bg-white bg-opacity-90 rounded-t-xl shadow-lg p-2 flex flex-col">
                 <div className="flex-1 overflow-y-auto max-h-40">
-                  {/* Integrated Agora RTM Chat */}
                   <AgoraChat
                     messages={messages}
                     sendMessage={sendMessage}
