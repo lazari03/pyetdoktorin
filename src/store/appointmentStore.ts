@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { fetchAppointments } from "../services/appointmentService";
+import { fetchAppointments } from "../services/appointmentsService";
 import { Appointment } from "../models/Appointment";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import app from "../config/firebaseconfig";

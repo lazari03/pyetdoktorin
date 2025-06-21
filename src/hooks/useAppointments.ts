@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs, or, doc, getDoc } from "firebase/firestore";
+import { fetchAppointments } from "../services/appointmentsService";
 import { db } from "../config/firebaseconfig";
 import { useAuth } from "../context/AuthContext";
 
@@ -20,21 +20,6 @@ interface Appointment {
   end?: Date | null;
 }
 
-async function fetchDoctorId(doctorId: string) {
-  try {
-    const doctorDoc = await getDoc(doc(db, 'doctors', doctorId));
-    if (doctorDoc.exists()) {
-      return doctorDoc.id; // Return the valid doctor ID
-    } else {
-      console.error('Doctor not found in the database.');
-      return null;
-    }
-  } catch (error) {
-    console.error('Error fetching doctor ID:', error);
-    return null;
-  }
-}
-
 export function useAppointments() {
   const { user, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -48,58 +33,30 @@ export function useAppointments() {
       setIsLoading(false);
       return;
     }
-    const fetchAppointments = async () => {
+    const fetchData = async () => {
       try {
-        const appointmentsQuery = query(
-          collection(db, "appointments"),
-          or(
-            where("doctorId", "==", user.uid),
-            where("patientId", "==", user.uid)
-          )
-        );
-
-        const querySnapshot = await getDocs(appointmentsQuery);
-        const fetchedAppointments = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          const startDateTime = data.preferredDate && data.preferredTime
-            ? new Date(`${data.preferredDate}T${data.preferredTime}`)
-            : null;
-
-          const endDateTime = startDateTime
-            ? new Date(startDateTime.getTime() + 30 * 60 * 1000) // Add 30 minutes to start time
-            : null;
-
-          return {
-            id: doc.id,
-            createdAt: data.createdAt || "",
-            appointmentType: data.appointmentType || "",
-            notes: data.notes || "",
-            status: data.status || "pending",
-            preferredDate: data.preferredDate || undefined,
-            preferredTime: data.preferredTime || undefined,
-            doctorName: data.doctorName || "N/A",
-            doctorId: data.doctorId || "",
-            patientId: data.patientId || "",
-            isPaid: data.isPaid || false,
-            sessionEnded: data.sessionEnded,
-            start: startDateTime, // Ensure this is a valid Date object
-            end: endDateTime,     // Ensure this is a valid Date object
-          } as Appointment;
-        });
-
-        setAppointments(fetchedAppointments);
-      } catch (fetchError) {
-        setError(
-          "Error loading appointments: " +
-          (fetchError instanceof Error ? fetchError.message : "Unknown error")
-        );
-      } finally {
+        // Use centralized fetchAppointments
+        const doctorAppointments = await fetchAppointments(user.uid, true);
+        const patientAppointments = await fetchAppointments(user.uid, false);
+        // Merge and deduplicate appointments by id
+        // Map status to the correct union type
+        const allAppointments = [...doctorAppointments, ...patientAppointments]
+          .filter((a, i, arr) => arr.findIndex(b => b.id === a.id) === i)
+          .map((appointment) => ({
+            ...appointment,
+            status: ["pending", "completed", "canceled"].includes(appointment.status)
+              ? (appointment.status as "pending" | "completed" | "canceled")
+              : "pending",
+          }));
+        setAppointments(allAppointments);
+        setIsLoading(false);
+      } catch (err) {
+        setError("Failed to fetch appointments");
         setIsLoading(false);
       }
     };
+    fetchData();
+  }, [authLoading, user]);
 
-    fetchAppointments();
-  }, [user, authLoading]);
-
-  return { appointments, isLoading, error, fetchDoctorId };
+  return { appointments, isLoading, error };
 }

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../config/firebaseconfig';
+import { fetchAppointments } from '../services/appointmentsService';
 import { Appointment } from '../models/Appointment';
 import { formatDate } from '../utils/dateUtils';
 import { UserRole } from '../models/UserRole';
@@ -26,18 +25,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   recentAppointments: [],
   fetchAppointments: async (userId, role) => {
     try {
-      const field = role === UserRole.Doctor ? AppointmentFields.DoctorId : AppointmentFields.PatientId; // Use constants
-      const appointmentsQuery = query(
-        collection(db, FirestoreCollections.Appointments), // Use constant for collection name
-        where(field, '==', userId) // Use the dynamic field based on role
-      );
-      const querySnapshot = await getDocs(appointmentsQuery);
-
-      const appointments = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Appointment[];
-
+      const isDoctor = role === UserRole.Doctor;
+      const appointments = await fetchAppointments(userId, isDoctor);
       // Filter and sort upcoming appointments
       const upcomingAppointments = appointments
         .filter((appointment) => {
@@ -62,15 +51,11 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         recentAppointments: sortedAppointments,
       }));
     } catch (error) {
-      console.error('Error fetching appointments:', error);
+      console.error('Failed to fetch dashboard appointments:', error);
     }
   },
   sidebarOpen: false,
   navPaths: [],
-  toggleSidebar: () =>
-    set((state) => ({ ...state, sidebarOpen: !state.sidebarOpen })),
-  fetchNavigationPaths: (role) => {
-    const paths = getNavigationPaths(role);
-    set((state) => ({ ...state, navPaths: paths }));
-  },
+  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  fetchNavigationPaths: (role) => set({ navPaths: getNavigationPaths(role) }),
 }));

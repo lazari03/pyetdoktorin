@@ -5,7 +5,7 @@ interface PasswordResetSectionProps {
   resetEmailSent: boolean;
 }
 
-const PasswordResetSection: React.FC<PasswordResetSectionProps> = ({ handlePasswordReset, resetEmailSent }) => (
+const PasswordResetSection = ({ handlePasswordReset, resetEmailSent }: PasswordResetSectionProps) => (
   <div className="mt-8 text-center">
     <button
       type="button"
