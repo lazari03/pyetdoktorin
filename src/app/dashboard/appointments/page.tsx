@@ -9,6 +9,7 @@ import Loader from '../../components/Loader';
 import { useVideoStore } from "../../../store/videoStore";
 import RoleGuard from '../../components/RoleGuard';
 import { cleanupMediaStreams } from "../../../utils/mediaUtils"; // Use the utility function
+import { AppointmentsTable } from '../../components/SharedAppointmentsTable';
 
 function AppointmentsPage() {
   const { user, isAuthenticated } = useAuth();
@@ -131,133 +132,15 @@ function AppointmentsPage() {
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <h2 className="card-title text-lg md:text-2xl">Your Appointments</h2>
-          <div className="overflow-x-auto mt-6">
-            <table className="table table-zebra w-full text-sm md:text-base">
-              <thead>
-                <tr>
-                  <th>{isDoctor ? "Patient" : "Doctor"}</th>
-                  <th>Type</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Notes</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedAppointments.map((appointment) => (
-                  <tr key={appointment.id}>
-                    <td>
-                      {isDoctor ? (
-                        appointment.patientName || "N/A"
-                      ) : (
-                        <a
-                          href={`/dashboard/doctor/${appointment.doctorId}`}
-                          className="text-orange-500 underline hover:text-orange-700"
-                        >
-                          {appointment.doctorName}
-                        </a>
-                      )}
-                    </td>
-                    <td>{appointment.appointmentType}</td>
-                    <td>{appointment.preferredDate}</td>
-                    <td>{appointment.preferredTime}</td>
-                    <td>{appointment.notes}</td>
-                    <td>
-                      {appointment.status === "accepted" ? (
-                        <span className="text-green-500 font-bold">Accepted</span>
-                      ) : appointment.status === "rejected" ? (
-                        <span className="text-red-500 font-bold">Declined</span>
-                      ) : (
-                        <span className="text-gray-500 font-bold">Pending</span>
-                      )}
-                    </td>
-                    <td>
-                      {isDoctor ? (
-                        // Doctor: Only "Finished" or "Join Now"
-                        (() => {
-                          if (isAppointmentPast && isAppointmentPast(appointment)) {
-                            return (
-                              <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                Finished
-                              </button>
-                            );
-                          }
-                          if (appointment.status === "accepted") {
-                            return (
-                              <button
-                                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                                onClick={() => handleJoinCall(appointment.id)}
-                              >
-                                Join Now
-                              </button>
-                            );
-                          }
-                          // If not accepted or in the past, show disabled button
-                          return (
-                            <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                              Action
-                            </button>
-                          );
-                        })()
-                      ) : (
-                        // Patient: Existing logic
-                        (() => {
-                          if (isAppointmentPast && isAppointmentPast(appointment)) {
-                            return (
-                              <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                Finished
-                              </button>
-                            );
-                          }
-                          if (appointment.status === "rejected") {
-                            return (
-                              <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                Declined
-                              </button>
-                            );
-                          }
-                          if (appointment.status === "pending") {
-                            return (
-                              <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                Pending
-                              </button>
-                            );
-                          }
-                          if (appointment.status === "accepted" && !appointment.isPaid) {
-                            return (
-                              <button
-                                className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
-                                onClick={() => handlePayNow(appointment.id, 2100)}
-                              >
-                                Pay Now
-                              </button>
-                            );
-                          }
-                          if (appointment.status === "accepted" && appointment.isPaid) {
-                            return (
-                              <button
-                                className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                                onClick={() => handleJoinCall(appointment.id)}
-                              >
-                                Join Now
-                              </button>
-                            );
-                          }
-                          // Default: disabled
-                          return (
-                            <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                              Action
-                            </button>
-                          );
-                        })()
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AppointmentsTable
+            appointments={appointments}
+            role={isDoctor ? 'doctor' : 'patient'}
+            isAppointmentPast={isAppointmentPast}
+            handleJoinCall={handleJoinCall}
+            handlePayNow={handlePayNow}
+            showActions={true}
+            maxRows={100}
+          />
         </div>
       </div>
     </div>
