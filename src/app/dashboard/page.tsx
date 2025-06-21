@@ -11,6 +11,7 @@ import DashboardNotifications from '../components/DashboardNotifications';
 import Loader from '../components/Loader';
 import { useAppointmentStore } from '../../store/appointmentStore';
 import { useVideoStore } from '../../store/videoStore';
+import { Appointment } from '../../models/Appointment';
 
 export default function Dashboard() {
   const { user, role, loading: authLoading } = useAuth();
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchBarPosition, setSearchBarPosition] = useState<DOMRect | null>(null);
   const [loading, setLoading] = useState(true);
+  const [nextUpcomingAppointment, setNextUpcomingAppointment] = useState<Appointment | null>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
   const { joinCall, setAuthStatus } = useVideoStore();
 
@@ -76,6 +78,26 @@ export default function Dashboard() {
           await fetchAppointments(user.uid, role);
           await fetchAllAppointments(user.uid, role === UserRole.Doctor); // Ensure appointments store is also loaded
         }
+        // Find next upcoming appointment (soonest, future, accepted)
+        if (appointments && appointments.length > 0) {
+          const now = new Date();
+          const upcoming = appointments
+            .filter((a) => {
+              const dateTime = new Date(`${a.preferredDate}T${a.preferredTime}`);
+              return (
+                dateTime > now &&
+                a.status === 'accepted'
+              );
+            })
+            .sort((a, b) => {
+              const dateA = new Date(`${a.preferredDate}T${a.preferredTime}`).getTime();
+              const dateB = new Date(`${b.preferredDate}T${b.preferredTime}`).getTime();
+              return dateA - dateB;
+            });
+          setNextUpcomingAppointment(upcoming.length > 0 ? upcoming[0] : null);
+        } else {
+          setNextUpcomingAppointment(null);
+        }
       } catch (error) {
         console.error('Error initializing dashboard:', error);
       } finally {
@@ -84,7 +106,8 @@ export default function Dashboard() {
     };
 
     initializeDashboard();
-  }, [user, role, fetchAppointments, fetchProfileStatus, fetchAllAppointments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, role, fetchAppointments, fetchProfileStatus, fetchAllAppointments, appointments]);
 
   if (authLoading || loading) return <Loader />;
 
@@ -136,7 +159,16 @@ export default function Dashboard() {
           <div className="stat">
             <div className="stat-title">Upcoming Appointment</div>
             <div className="stat-value text-base text-orange-500">
-              {nextAppointment ? nextAppointment : 'No upcoming appointments'}
+              {nextUpcomingAppointment ? (
+                <span>
+                  {nextUpcomingAppointment.preferredDate} at {nextUpcomingAppointment.preferredTime} <br />
+                  {role === 'doctor'
+                    ? `Patient: ${nextUpcomingAppointment.patientName || 'N/A'}`
+                    : `Doctor: ${nextUpcomingAppointment.doctorName}`}
+                </span>
+              ) : (
+                'No upcoming appointments'
+              )}
             </div>
           </div>
         </div>
