@@ -32,6 +32,6 @@ if (typeof window !== "undefined") {
       console.error("Analytics initialization failed:", error);
     });
 }
-export const analytics = analyticsInstance;
+const analytics = analyticsInstance;
 
 export default app;

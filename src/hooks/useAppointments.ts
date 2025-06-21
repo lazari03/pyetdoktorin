@@ -20,7 +20,7 @@ interface Appointment {
   end?: Date | null;
 }
 
-export async function fetchDoctorId(doctorId: string) {
+async function fetchDoctorId(doctorId: string) {
   try {
     const doctorDoc = await getDoc(doc(db, 'doctors', doctorId));
     if (doctorDoc.exists()) {

@@ -42,7 +42,7 @@
     "env-cmd": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.2.3",
-    "knip": "^5.55.1",
+    "knip": "^5.61.2",
     "postcss": "^8.4.24",
     "typescript": "^5"
   },

@@ -14,7 +14,7 @@ interface AuthContextType {
   loading: boolean;
 }
 
-export const AuthContext = createContext<AuthContextType>({
+const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   uid: null, 
   user: null,

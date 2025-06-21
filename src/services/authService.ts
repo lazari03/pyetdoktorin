@@ -49,7 +49,7 @@ interface FormData {
 }
 
 // Register function
-export const register = async (email: string, password: string, role: string, formData: FormData) => { // Replace `any` with `FormData`
+const register = async (email: string, password: string, role: string, formData: FormData) => { // Replace `any` with `FormData`
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
@@ -68,7 +68,7 @@ export const register = async (email: string, password: string, role: string, fo
 };
 
 // Logout function
-export const logout = async () => {
+const logout = async () => {
     try {
         await signOut(auth);
         console.log('User signed out successfully');

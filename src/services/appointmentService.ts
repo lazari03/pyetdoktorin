@@ -39,7 +39,7 @@ export async function fetchAppointments(userId: string, isDoctor: boolean): Prom
   }
 }
 
-export const bookAppointment = async (appointmentData: {
+const bookAppointment = async (appointmentData: {
   doctorId: number;
   appointmentType: string;
   preferredDate: string;
@@ -69,7 +69,7 @@ export const bookAppointment = async (appointmentData: {
   }
 };
 
-export const markSlotAsPending = async (doctorId: string, date: string, time: string) => {
+const markSlotAsPending = async (doctorId: string, date: string, time: string) => {
   const slotKey = `${date}_${time}`;
   const docRef = doc(db, 'calendars', doctorId);
 
@@ -78,7 +78,7 @@ export const markSlotAsPending = async (doctorId: string, date: string, time: st
   });
 };
 
-export const markSlotAsBooked = async (doctorId: string, date: string, time: string) => {
+const markSlotAsBooked = async (doctorId: string, date: string, time: string) => {
   const slotKey = `${date}_${time}`;
   const docRef = doc(db, 'calendars', doctorId);
 
@@ -87,7 +87,7 @@ export const markSlotAsBooked = async (doctorId: string, date: string, time: str
   });
 };
 
-export const markSlotAsAvailable = async (doctorId: string, date: string, time: string) => {
+const markSlotAsAvailable = async (doctorId: string, date: string, time: string) => {
   const slotKey = `${date}_${time}`;
   const docRef = doc(db, 'calendars', doctorId);
 

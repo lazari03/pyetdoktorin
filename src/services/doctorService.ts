@@ -59,7 +59,7 @@ export async function fetchDoctors(searchTerm: string, searchType: SearchType): 
   }
 }
 
-export async function fetchDoctorsBySearchTerm(term: string) {
+async function fetchDoctorsBySearchTerm(term: string) {
   try {
     const doctorsByName = await fetchDoctors(term, SearchType.Name);
     const doctorsBySpecializations = await fetchDoctors(term, SearchType.Specializations);

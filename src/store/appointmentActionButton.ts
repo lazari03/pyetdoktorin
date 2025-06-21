@@ -1,13 +1,13 @@
 import { Appointment } from "../models/Appointment";
 
-export enum AppointmentActionVariant {
+enum AppointmentActionVariant {
   Finished = "finished",
   Join = "join",
   Pay = "pay",
   None = "none"
 }
 
-export const AppointmentActionLabels: Record<AppointmentActionVariant, string> = {
+const AppointmentActionLabels: Record<AppointmentActionVariant, string> = {
   [AppointmentActionVariant.Finished]: "Finished",
   [AppointmentActionVariant.Join]: "Join Now",
   [AppointmentActionVariant.Pay]: "Pay Now",
