@@ -1,29 +1,31 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardStore } from '../../store/dashboardStore';
 import Link from 'next/link';
 import { isProfileIncomplete } from '../../store/generalStore';
-import DoctorSearchModal from '../components/DoctorSearchModal';
+import DashboardDoctorSearchBar from '../components/DashboardDoctorSearchBar';
 import { UserRole } from '../../models/UserRole';
 import DashboardNotifications from '../components/DashboardNotifications';
 import Loader from '../components/Loader';
 import { useAppointmentStore } from '../../store/appointmentStore';
 import { useVideoStore } from '../../store/videoStore';
+import { AppointmentsTable } from '../components/AppointmentsTable';
 import { Appointment } from '../../models/Appointment';
+import { useUpcomingAppointment } from '../../hooks/useUpcomingAppointment';
+import { useDashboardActions } from '../../hooks/useDashboardActions';
+import ProfileWarning from '../components/ProfileWarning';
 
 export default function Dashboard() {
   const { user, role, loading: authLoading } = useAuth();
   const { totalAppointments, nextAppointment, fetchAppointments } = useDashboardStore();
-  const { appointments, handlePayNow, isAppointmentPast, fetchAppointments: fetchAllAppointments } = useAppointmentStore();
+  const { appointments, isAppointmentPast, fetchAppointments: fetchAllAppointments } = useAppointmentStore();
+  const { handleJoinCall, handlePayNow } = useDashboardActions();
   const [profileIncomplete, setProfileIncomplete] = useState<boolean>(true);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [searchBarPosition, setSearchBarPosition] = useState<DOMRect | null>(null);
   const [loading, setLoading] = useState(true);
-  const [nextUpcomingAppointment, setNextUpcomingAppointment] = useState<Appointment | null>(null);
-  const searchBarRef = useRef<HTMLDivElement>(null);
-  const { joinCall, setAuthStatus } = useVideoStore();
+  const nextUpcomingAppointment = useUpcomingAppointment(appointments);
+  const { setAuthStatus } = useVideoStore();
 
   const fetchProfileStatus = useCallback(async () => {
     if (user && role) {
@@ -32,44 +34,6 @@ export default function Dashboard() {
     }
   }, [user, role]);
 
-  const handleSearchClick = () => {
-    if (searchBarRef.current) {
-      const position = searchBarRef.current.getBoundingClientRect();
-      setSearchBarPosition(position);
-    }
-    setIsSearchModalOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setIsSearchModalOpen(false);
-  };
-
-  const handleJoinCall = async (appointmentId: string) => {
-    try {
-      console.log("Creating video call session for appointmentId:", appointmentId);
-      
-      // Ensure user is authenticated before proceeding
-      if (!user || !user.uid) {
-        console.error("User is not authenticated");
-        alert("You must be logged in to join a call. Please log in and try again.");
-        return;
-      }
-      
-      // Ensure auth status is set in video store before joining
-      if (typeof setAuthStatus === 'function') {
-        setAuthStatus(!!user, user.uid, user.name || null);
-      }
-      
-      // If joinCall expects only (appointmentId, somethingElse), do:
-      const videoSessionUrl = await joinCall(appointmentId, 0); // Remove user.uid if not needed
-      console.log("Redirecting to video session URL:", videoSessionUrl);
-      window.location.href = videoSessionUrl;
-    } catch (error) {
-      console.error("Error creating video call session:", error);
-      alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  };
-
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
@@ -77,26 +41,6 @@ export default function Dashboard() {
         if (user && role) {
           await fetchAppointments(user.uid, role);
           await fetchAllAppointments(user.uid, role === UserRole.Doctor); // Ensure appointments store is also loaded
-        }
-        // Find next upcoming appointment (soonest, future, accepted)
-        if (appointments && appointments.length > 0) {
-          const now = new Date();
-          const upcoming = appointments
-            .filter((a) => {
-              const dateTime = new Date(`${a.preferredDate}T${a.preferredTime}`);
-              return (
-                dateTime > now &&
-                a.status === 'accepted'
-              );
-            })
-            .sort((a, b) => {
-              const dateA = new Date(`${a.preferredDate}T${a.preferredTime}`).getTime();
-              const dateB = new Date(`${b.preferredDate}T${b.preferredTime}`).getTime();
-              return dateA - dateB;
-            });
-          setNextUpcomingAppointment(upcoming.length > 0 ? upcoming[0] : null);
-        } else {
-          setNextUpcomingAppointment(null);
         }
       } catch (error) {
         console.error('Error initializing dashboard:', error);
@@ -107,7 +51,7 @@ export default function Dashboard() {
 
     initializeDashboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, role, fetchAppointments, fetchProfileStatus, fetchAllAppointments, appointments]);
+  }, [user, role, fetchAppointments, fetchProfileStatus, fetchAllAppointments]);
 
   if (authLoading || loading) return <Loader />;
 
@@ -116,30 +60,10 @@ export default function Dashboard() {
       <h1 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">
         Welcome to Your {role || 'User'} Dashboard
       </h1>
-      {role === UserRole.Patient && ( // Restrict search to patients
-        <div
-          ref={searchBarRef}
-          onClick={handleSearchClick}
-          className="relative flex items-center bg-white rounded-full shadow-lg p-3 w-full max-w-lg mx-auto cursor-pointer transform transition-transform duration-500 ease-in-out mb-8"
-        >
-          <input
-            type="text"
-            placeholder="Search for doctors..."
-            className="flex-grow rounded-full px-4 py-3 text-base focus:outline-none cursor-pointer"
-            readOnly
-          />
-        </div>
+      {role === UserRole.Patient && (
+        <DashboardDoctorSearchBar />
       )}
-      <DoctorSearchModal
-        isOpen={isSearchModalOpen}
-        onClose={handleModalClose}
-        position={searchBarPosition}
-      />
-      {profileIncomplete && (
-        <div className="alert alert-warning mb-6">
-          <span>Your profile is incomplete. Please complete your profile</span>
-        </div>
-      )}
+      <ProfileWarning show={profileIncomplete} />
       {role === UserRole.Doctor && user?.uid && (
         <div className="mb-6">
           <DashboardNotifications doctorId={user.uid} />
@@ -181,161 +105,13 @@ export default function Dashboard() {
               View All
             </Link>
           </div>
-          <div className="overflow-x-auto mt-6">
-            <table className="table table-zebra w-full text-sm md:text-base">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>{role === 'doctor' ? 'Patient' : 'Doctor'}</th>
-                  <th>Type</th>
-                  <th>Time</th>
-                  <th>Notes</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments && appointments.length > 0 ? (
-                  // Sort appointments the same way as in the appointments page
-                  [...appointments]
-                    .sort((a, b) => {
-                      // First try to sort by date
-                      const dateA = new Date(a.preferredDate).getTime();
-                      const dateB = new Date(b.preferredDate).getTime();
-                      
-                      if (dateA !== dateB) {
-                        return dateB - dateA; // Latest date first
-                      }
-                      
-                      // If dates are the same, try to sort by creation time
-                      const createdAtA = new Date(a.createdAt).getTime();
-                      const createdAtB = new Date(b.createdAt).getTime();
-                      
-                      return createdAtB - createdAtA; // Latest creation time first
-                    })
-                    .slice(0, 3)
-                    .map((appointment) => {
-                      return (
-                        <tr key={appointment.id}>
-                          <td>{appointment.preferredDate}</td>
-                          <td>
-                            {role === 'doctor'
-                              ? appointment.patientName || "N/A"
-                              : (
-                                <a
-                                  href={`/dashboard/doctor/${appointment.doctorId}`}
-                                  className="text-orange-500 underline hover:text-orange-700"
-                                >
-                                  {appointment.doctorName}
-                                </a>
-                              )}
-                          </td>
-                          <td>{appointment.appointmentType}</td>
-                          <td>{appointment.preferredTime}</td>
-                          <td>{appointment.notes}</td>
-                          <td>
-                            {appointment.status === "accepted" ? (
-                              <span className="text-green-500 font-bold">Accepted</span>
-                            ) : appointment.status === "rejected" ? (
-                              <span className="text-red-500 font-bold">Declined</span>
-                            ) : (
-                              <span className="text-gray-500 font-bold">Pending</span>
-                            )}
-                          </td>
-                          <td>
-                            {role === "doctor" ? (
-                              // Doctor: Only "Finished" or "Join Now"
-                              (() => {
-                                if (isAppointmentPast(appointment)) {
-                                  return (
-                                    <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                      Finished
-                                    </button>
-                                  );
-                                }
-                                if (appointment.status === "accepted") {
-                                  return (
-                                    <button
-                                      className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                                      onClick={() => handleJoinCall(appointment.id)}
-                                    >
-                                      Join Now
-                                    </button>
-                                  );
-                                }
-                                // If not accepted or in the past, show disabled button
-                                return (
-                                  <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                    Waiting
-                                  </button>
-                                );
-                              })()
-                            ) : (
-                              // Patient: Existing logic with "Join Now" button enabled
-                              (() => {
-                                if (isAppointmentPast(appointment)) {
-                                  return (
-                                    <button className="bg-gray-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                      Finished
-                                    </button>
-                                  );
-                                }
-                                if (appointment.status === "rejected") {
-                                  return (
-                                    <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                      Declined
-                                    </button>
-                                  );
-                                }
-                                if (appointment.status === "pending") {
-                                  return (
-                                    <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                      Pending
-                                    </button>
-                                  );
-                                }
-                                if (appointment.status === "accepted" && !appointment.isPaid) {
-                                  return (
-                                    <button
-                                      className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
-                                      onClick={() => handlePayNow(appointment.id, 2100)}
-                                    >
-                                      Pay Now
-                                    </button>
-                                  );
-                                }
-                                if (appointment.status === "accepted" && appointment.isPaid) {
-                                  return (
-                                    <button
-                                      className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
-                                      onClick={() => handleJoinCall(appointment.id)}
-                                    >
-                                      Join Now
-                                    </button>
-                                  );
-                                }
-                                // Default: disabled
-                                return (
-                                  <button className="bg-gray-400 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed rounded-full" disabled>
-                                    Waiting
-                                  </button>
-                                );
-                              })()
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="text-center">
-                      No recent appointments found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <AppointmentsTable
+            appointments={appointments}
+            role={role || ''}
+            isAppointmentPast={isAppointmentPast}
+            handleJoinCall={handleJoinCall}
+            handlePayNow={handlePayNow}
+          />
         </div>
       </div>
     </div>
