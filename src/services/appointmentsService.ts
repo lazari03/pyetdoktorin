@@ -1,6 +1,8 @@
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc } from "firebase/firestore";
 import { db } from "../config/firebaseconfig";
 import { Appointment } from "@/models/Appointment";
+import { getAuth } from 'firebase/auth';
+import { mapFirestoreAppointment } from '../utils/mapFirestoreAppointment';
 
 export async function getUserRole(userId: string): Promise<string> {
   try {
@@ -32,25 +34,60 @@ export async function fetchAppointments(userId: string, isDoctor: boolean): Prom
       where(isDoctor ? "doctorId" : "patientId", "==", userId)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        doctorId: data.doctorId || "",
-        doctorName: data.doctorName || "Unknown",
-        patientId: data.patientId || "",
-        patientName: data.patientName || "Unknown",
-        appointmentType: data.appointmentType || "General",
-        preferredDate: data.preferredDate || "",
-        preferredTime: data.preferredTime || "",
-        notes: data.notes || "",
-        isPaid: data.isPaid || false,
-        createdAt: data.createdAt || new Date().toISOString(),
-        status: data.status || "pending",
-      } as Appointment;
-    });
+    return querySnapshot.docs.map(mapFirestoreAppointment);
   } catch (error) {
     console.error('Error fetching appointments:', error);
     throw error;
   }
 }
+
+export const bookAppointment = async (appointmentData: {
+  doctorId: number;
+  appointmentType: string;
+  preferredDate: string;
+  notes: string;
+  status: string;
+}) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("User not authenticated. Please log in.");
+  }
+  const appointment = {
+    ...appointmentData,
+    patientId: user.uid,
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    const docRef = await addDoc(collection(db, 'appointments'), appointment);
+    console.log('Appointment successfully added with ID:', docRef.id);
+    return { id: docRef.id, ...appointment };
+  } catch (err) {
+    console.error('Error adding appointment to Firestore:', err);
+    throw new Error('Failed to book appointment.');
+  }
+};
+
+export const markSlotAsPending = async (doctorId: string, date: string, time: string) => {
+  const slotKey = `${date}_${time}`;
+  const docRef = doc(db, 'calendars', doctorId);
+  await updateDoc(docRef, {
+    [`availability.${slotKey}`]: 'pending',
+  });
+};
+
+export const markSlotAsBooked = async (doctorId: string, date: string, time: string) => {
+  const slotKey = `${date}_${time}`;
+  const docRef = doc(db, 'calendars', doctorId);
+  await updateDoc(docRef, {
+    [`availability.${slotKey}`]: 'booked',
+  });
+};
+
+export const markSlotAsAvailable = async (doctorId: string, date: string, time: string) => {
+  const slotKey = `${date}_${time}`;
+  const docRef = doc(db, 'calendars', doctorId);
+  await updateDoc(docRef, {
+    [`availability.${slotKey}`]: 'available',
+  });
+};

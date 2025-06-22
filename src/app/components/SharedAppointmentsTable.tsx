@@ -1,6 +1,7 @@
 import React from 'react';
 import { Appointment } from '../../models/Appointment';
 import { getAppointmentAction } from '../../store/appointmentActionButton';
+import { DEFAULT_APPOINTMENT_PAYMENT_AMOUNT } from '../../config/paymentConfig';
 
 interface AppointmentsTableProps {
   appointments: Appointment[];
@@ -39,6 +40,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
           {appointments && appointments.length > 0 ? (
             [...appointments]
               .sort((a, b) => {
+                // Sort from newest to oldest by preferredDate, then createdAt
                 const dateA = new Date(a.preferredDate).getTime();
                 const dateB = new Date(b.preferredDate).getTime();
                 if (dateA !== dateB) return dateB - dateA;
@@ -48,7 +50,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
               })
               .slice(0, maxRows)
               .map((appointment) => {
-                const action = getAppointmentAction(appointment, isAppointmentPast);
+                const action = getAppointmentAction(appointment, isAppointmentPast, role);
                 return (
                   <tr key={appointment.id}>
                     <td>{appointment.preferredDate}</td>
@@ -80,10 +82,10 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                     </td>
                     {showActions && (
                       <td>
-                        {action.label === 'Pay Now' && !action.disabled && (
+                        {role !== 'doctor' && action.label === 'Pay Now' && !action.disabled && (
                           <button
                             className="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded-full"
-                            onClick={() => handlePayNow(appointment.id, 100)}
+                            onClick={() => handlePayNow(appointment.id, DEFAULT_APPOINTMENT_PAYMENT_AMOUNT)}
                           >
                             Pay Now
                           </button>

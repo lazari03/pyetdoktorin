@@ -7,6 +7,7 @@ import { getNavigationPaths } from './navigationStore';
 import { JSX } from 'react';
 import { AppointmentFields } from '../models/AppointmentFields';
 import { FirestoreCollections } from '../config/FirestoreCollections';
+import { mapFirestoreAppointment } from '../utils/mapFirestoreAppointment';
 
 interface DashboardState {
   totalAppointments: number;
@@ -27,8 +28,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     try {
       const isDoctor = role === UserRole.Doctor;
       const appointments = await fetchAppointments(userId, isDoctor);
+      const mappedAppointments = appointments.map(mapFirestoreAppointment);
+
       // Filter and sort upcoming appointments
-      const upcomingAppointments = appointments
+      const upcomingAppointments = mappedAppointments
         .filter((appointment) => {
           const isUpcoming = appointment.preferredDate && new Date(appointment.preferredDate) > new Date();
           const isAccepted = role === UserRole.Doctor ? appointment.status === 'accepted' : true;
@@ -37,14 +40,14 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         .sort((a, b) => new Date(a.preferredDate!).getTime() - new Date(b.preferredDate!).getTime());
 
       // Sort appointments by preferredDate in descending order for recent appointments
-      const sortedAppointments = appointments
+      const sortedAppointments = mappedAppointments
         .filter((appointment) => appointment.preferredDate)
         .sort((a, b) => new Date(b.preferredDate!).getTime() - new Date(a.preferredDate!).getTime())
         .slice(0, 5);
 
       set((state) => ({
         ...state,
-        totalAppointments: appointments.length,
+        totalAppointments: mappedAppointments.length,
         nextAppointment: upcomingAppointments.length
           ? `${formatDate(upcomingAppointments[0].preferredDate!)} at ${upcomingAppointments[0].preferredTime || 'N/A'}`
           : null,

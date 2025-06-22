@@ -1,10 +1,12 @@
 import { useCallback } from 'react';
+import { useAppointmentStore } from '../store/appointmentStore';
 import { useVideoStore } from '../store/videoStore';
 import { useAuth } from '../context/AuthContext';
 
 export function useDashboardActions() {
   const { user } = useAuth();
   const { joinCall, setAuthStatus } = useVideoStore();
+  const { handlePayNow: storeHandlePayNow } = useAppointmentStore();
 
   const handleJoinCall = useCallback(async (appointmentId: string) => {
     try {
@@ -23,10 +25,8 @@ export function useDashboardActions() {
   }, [user, joinCall, setAuthStatus]);
 
   const handlePayNow = useCallback((appointmentId: string, amount: number) => {
-    // You can move your payment logic here if needed
-    // For now, just a placeholder
-    alert(`Pay Now clicked for appointment ${appointmentId} with amount ${amount}`);
-  }, []);
+    storeHandlePayNow(appointmentId, amount);
+  }, [storeHandlePayNow]);
 
   return { handleJoinCall, handlePayNow };
 }

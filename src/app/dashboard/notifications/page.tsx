@@ -4,12 +4,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { auth, db } from "../../../config/firebaseconfig";
 import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
-import { useAppointments } from "../../../hooks/useAppointments";
+import { useAppointmentStore } from "../../../store/appointmentStore";
 import Link from "next/link";
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const { appointments, isLoading, error } = useAppointments();
+  const { appointments, loading: isLoading, error } = useAppointmentStore();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [appointmentDetails, setAppointmentDetails] = useState<
     { id: string; patientName: string | null; doctorName: string | null }[]

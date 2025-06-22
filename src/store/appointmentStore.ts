@@ -4,6 +4,7 @@ import { Appointment } from "../models/Appointment";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import app from "../config/firebaseconfig";
 import { getAppointmentAction } from "./appointmentActionButton";
+import { APPOINTMENT_DURATION_MINUTES } from '../config/appointmentConfig';
 
 const db = getFirestore(app);
 
@@ -37,7 +38,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       const fetchedAppointments: Appointment[] = await fetchAppointments(userId, isDoctor);
       const updatedAppointments = fetchedAppointments.map((appointment) => {
         const appointmentDateTime = new Date(`${appointment.preferredDate}T${appointment.preferredTime}`);
-        const appointmentEndTime = new Date(appointmentDateTime.getTime() + 30 * 60000); // plus 30 min
+        const appointmentEndTime = new Date(appointmentDateTime.getTime() + APPOINTMENT_DURATION_MINUTES * 60000); // use constant
         const isPast = appointmentEndTime < new Date();
         return { ...appointment, isPast };
       });
@@ -58,20 +59,18 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     try {
       const response = await fetch("/api/stripe/create-payment-intent", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ appointmentId, amount }),
       });
-
-      if (!response.ok) {
+      const { url } = await response.json();
+      if (response.ok && url) {
+        window.location.href = url;
+      } else {
         throw new Error("Failed to create payment intent");
       }
-
-      const { url } = await response.json();
-
-      window.location.href = url; // Redirect to Stripe payment page
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      alert(`Payment error: ${message}`);
       console.error("Error processing payment:", error);
     }
   },
@@ -102,7 +101,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   },
   isAppointmentPast: (appointment) => {
     const appointmentDateTime = new Date(`${appointment.preferredDate}T${appointment.preferredTime}`);
-    const appointmentEndTime = new Date(appointmentDateTime.getTime() + 30 * 60000); // plus 30 min
+    const appointmentEndTime = new Date(appointmentDateTime.getTime() + APPOINTMENT_DURATION_MINUTES * 60000);
     return appointmentEndTime < new Date();
   },
   getAppointmentAction: (appointment) => getAppointmentAction(appointment, get().isAppointmentPast),

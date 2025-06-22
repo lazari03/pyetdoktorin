@@ -16,7 +16,8 @@ const AppointmentActionLabels: Record<AppointmentActionVariant, string> = {
 
 export function getAppointmentAction(
   appointment: Appointment,
-  isAppointmentPast: (appointment: Appointment) => boolean
+  isAppointmentPast: (appointment: Appointment) => boolean,
+  role?: string // Add role as an optional argument
 ): { label: string; disabled: boolean; variant: string } {
   // If appointment is in the past, always show "Finished" (disabled)
   if (isAppointmentPast(appointment)) {
@@ -24,6 +25,23 @@ export function getAppointmentAction(
       label: AppointmentActionLabels[AppointmentActionVariant.Finished],
       disabled: true,
       variant: AppointmentActionVariant.Finished
+    };
+  }
+
+  // Doctor: Only show Join Now if upcoming and accepted
+  if (role === 'doctor') {
+    if (appointment.status === 'accepted') {
+      return {
+        label: AppointmentActionLabels[AppointmentActionVariant.Join],
+        disabled: false,
+        variant: AppointmentActionVariant.Join
+      };
+    }
+    // Otherwise, no action for doctor
+    return {
+      label: '',
+      disabled: true,
+      variant: AppointmentActionVariant.None
     };
   }
 
@@ -45,8 +63,8 @@ export function getAppointmentAction(
     };
   }
 
-  // Show "Pay Now" only if not paid and status is accepted
-  if (!appointment.isPaid && appointment.status === "accepted") {
+  // Show "Pay Now" only if not paid and status is accepted and role is not doctor
+  if (!appointment.isPaid && appointment.status === "accepted" && role !== 'doctor') {
     return {
       label: AppointmentActionLabels[AppointmentActionVariant.Pay],
       disabled: false,
@@ -63,7 +81,7 @@ export function getAppointmentAction(
     };
   }
 
-  // Default: disabled, no action
+  // Default: no action
   return {
     label: "",
     disabled: true,
