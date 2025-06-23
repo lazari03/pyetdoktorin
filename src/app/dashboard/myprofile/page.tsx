@@ -1,7 +1,7 @@
 'use client';
 
 import { useMyProfile } from "../../../hooks/useMyProfile";
-import Loader from "@/app/components/Loader";
+import Loader from "../../components/Loader";
 import MyProfileForm from '@/app/components/MyProfile/MyProfileForm';
 import PasswordResetSection from '@/app/components/MyProfile/PasswordResetSection';
 

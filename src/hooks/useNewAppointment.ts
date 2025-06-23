@@ -135,6 +135,16 @@ export default function useNewAppointment() {
       }
 
       await addDoc(collection(db, 'appointments'), appointmentData);
+      // Notify doctor via SMS
+      await fetch('/api/sms/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'appointment-request',
+          doctorId: appointmentData.doctorId,
+          patientName: appointmentData.patientName,
+        }),
+      });
       console.log('Appointment successfully saved:', appointmentData);
       resetAppointment();
       setShowModal(true);

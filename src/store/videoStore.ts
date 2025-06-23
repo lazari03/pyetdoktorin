@@ -1,22 +1,25 @@
 import { create } from 'zustand';
+import { fullMediaCleanup } from '../utils/mediaUtils';
 
 interface VideoState {
   token: string | null;
-  rtcToken: string | null; // Add specific RTC token
+  rtcToken: string | null;
   channelName: string | null;
   isInCall: boolean;
   error: string | null;
   loading: boolean;
   isAuthenticated: boolean;
-  userId: string | null; // User Id
+  userId: string | null;
   userName: string | null;
-  appId: string | null; // Add appId to the store
-  
+  appId: string | null;
+  uid: number | null;
+  messages?: any[];
   // Actions
   setAuthStatus: (isAuthenticated: boolean, userId: string | null, userName: string | null) => void;
-  joinCall: (appointmentId: string, uid: number) => Promise<string>;
+  joinCall: (appointmentId: string, uid: number, userId?: string) => Promise<string>;
   endCall: () => void;
   resetVideoState: () => void;
+  fetchTokens: (appointmentId: string, uid: number, userId: string) => Promise<void>;
 }
 
 export const useVideoStore = create<VideoState>()((set, get) => ({
@@ -29,104 +32,97 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
   isAuthenticated: false,
   userId: null,
   userName: null,
-  appId: null, // Store the appId
-  
-  // Replace checkAuthStatus with setAuthStatus that can be called from components
-  setAuthStatus: (isAuthenticated: boolean, userId: string | null, userName: string | null) => {
-    set({
-      isAuthenticated,
-      userId,
-      userName,
-      loading: false
-    });
+  appId: null,
+  uid: null,
+
+  setAuthStatus: (isAuthenticated, userId, userName) => {
+    set({ isAuthenticated, userId, userName, loading: false });
   },
-  
-  joinCall: async (appointmentId: string, uid: number) => {
+
+  joinCall: async (appointmentId, uid, userIdOverride) => {
     set({ loading: true, error: null });
-    
     try {
-      // Check authentication first
       if (!get().isAuthenticated) {
         throw new Error('User is not authenticated. Please log in first.');
       }
-      
-      const userId = get().userId;
-      
-      // Sanitize and truncate the channel name
-      const sanitizedChannelName = appointmentId
-        .replace(/[^a-zA-Z0-9_-]/g, "_") 
-        .slice(0, 64);
-      
-      const sanitizedUserId = userId && userId.toString().length > 0 
-        ? userId.toString().replace(/[^a-zA-Z0-9_=+-]/g, '_').substring(0, 64) 
+      const userId = userIdOverride || get().userId;
+      const sanitizedChannelName = appointmentId.replace(/[^a-zA-Z0-9_=+-]/g, '_').substring(0, 64);
+      const sanitizedUserId = userId && userId.toString().length > 0
+        ? userId.toString().replace(/[^a-zA-Z0-9_=+-]/g, '_').substring(0, 64)
         : `user_${uid}_${Date.now()}`.substring(0, 64);
-      
-      console.log("Requesting Agora tokens with:", {
-        channelName: sanitizedChannelName,
-        uid: uid,
-        userId: sanitizedUserId
-      });
-      
       const response = await fetch('/api/agora/generate-token', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          channelName: sanitizedChannelName, 
-          uid,
-          userId: sanitizedUserId
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channelName: sanitizedChannelName, uid, userId: sanitizedUserId }),
       });
-      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to generate token: ${errorText}`);
       }
-      
       const data = await response.json();
-      console.log("Received API response:", {
-        hasToken: !!data.token,
-        hasRtcToken: !!data.rtcToken,
-        hasAppId: !!data.appId,
-        userId: data.userId,
-        channelName: data.channelName
-      });
-      
       if (!data.rtcToken) {
         throw new Error('RTC token not received from server');
       }
-      
-      // Store all tokens and info
       set({
         token: data.token || data.rtcToken,
         rtcToken: data.rtcToken,
         channelName: sanitizedChannelName,
-        userId: data.userId, // Always use the sanitized userId from API
+        userId: data.userId,
         isInCall: true,
         loading: false,
-        appId: data.appId, // Store the appId from the API
+        appId: data.appId,
+        uid,
       });
-      
-      // Return URL for redirection including all tokens
       return `/dashboard/appointments/video-session?channel=${sanitizedChannelName}&rtcToken=${encodeURIComponent(data.rtcToken)}&appId=${encodeURIComponent(data.appId)}&userId=${encodeURIComponent(data.userId)}`;
     } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Unknown error', 
-        loading: false 
-      });
+      set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
       throw error;
     }
   },
-  
+
+  fetchTokens: async (appointmentId, uid, userId) => {
+    set({ loading: true, error: null });
+    try {
+      const channelName = appointmentId.replace(/[^a-zA-Z0-9_=+-]/g, '_').substring(0, 64);
+      const safeUserId = userId.replace(/[^a-zA-Z0-9_=+-]/g, '_').substring(0, 64);
+      const response = await fetch('/api/agora/generate-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channelName, uid, userId: safeUserId }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to generate token: ${errorText}`);
+      }
+      const data = await response.json();
+      set({
+        rtcToken: data.rtcToken,
+        channelName,
+        uid,
+        userId: safeUserId,
+        loading: false,
+        error: null,
+      });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
+    }
+  },
+
   endCall: () => {
-    set({
-      isInCall: false,
-    });
-    // Ensure cleanup of media streams when ending call
+    set({ isInCall: false });
+    if (typeof window !== 'undefined' && window._agora) {
+      fullMediaCleanup({
+        client: window._agora.client,
+        localTracks: window._agora.localTracks,
+        localCameraTrack: window._agora.localCameraTrack,
+        localMicrophoneTrack: window._agora.localMicrophoneTrack,
+      });
+    } else {
+      fullMediaCleanup();
+    }
     get().resetVideoState();
   },
-  
+
   resetVideoState: () => {
     set({
       token: null,
@@ -134,41 +130,7 @@ export const useVideoStore = create<VideoState>()((set, get) => ({
       channelName: null,
       isInCall: false,
       error: null,
+      uid: null,
     });
-
-    // Cleanup media streams
-    document.querySelectorAll('video, audio').forEach((el) => {
-      const mediaElement = el as HTMLMediaElement;
-      if (mediaElement.srcObject) {
-        (mediaElement.srcObject as MediaStream).getTracks().forEach((track) => {
-          if (track.readyState === 'live') {
-            track.stop();
-          }
-        });
-        mediaElement.srcObject = null;
-      }
-    });
- 
-    // @ts-expect-error: localStreams is not a standard property
-    if (window.localStreams) {
-      // @ts-expect-error: localStreams is not a standard property
-      window.localStreams.forEach((stream: MediaStream) => {
-        stream.getTracks().forEach((track) => {
-          if (track.readyState === 'live') {
-            track.stop();
-          }
-        });
-      });
-      // @ts-expect-error: localStreams is not a standard property
-      window.localStreams = [];
-    }
-
-    if (navigator.mediaDevices?.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-          stream.getTracks().forEach((track) => track.stop());
-        })
-        .catch(() => {});
-    }
   },
 }));

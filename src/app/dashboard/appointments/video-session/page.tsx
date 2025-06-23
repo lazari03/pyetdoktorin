@@ -13,6 +13,17 @@ import Loader from "../../../components/Loader";
 import AgoraChat from "../../../components/agoraChat";
 import useAgoraRtm from "../../../../hooks/useAgoraRtm";
 
+// Wrapper to log mount/unmount of AgoraUIKit
+function AgoraUIKitLogger(props: any) {
+  useEffect(() => {
+    console.log("AgoraUIKit mounted");
+    return () => {
+      console.log("AgoraUIKit unmounted");
+    };
+  }, []);
+  return <AgoraUIKit {...props} />;
+}
+
 export default function VideoSessionPage() {
   const [videoCall, setVideoCall] = useState(true);
   const router = useRouter();
@@ -55,6 +66,12 @@ export default function VideoSessionPage() {
     channel: string;
     token: string;
   } | null>(null);
+
+  // RTM Chat integration (restore variables)
+  const rtmAppId = appId;
+  const rtmChannel = channel || "";
+  const rtmUserId = uid || user?.uid || "";
+  const { messages, sendMessage } = useAgoraRtm(rtmAppId, rtmChannel, rtmUserId);
 
   // Redirect if user is not authenticated or missing parameters
   useEffect(() => {
@@ -105,24 +122,22 @@ export default function VideoSessionPage() {
     }
   }, [channel, rtcToken, rtcProps, appId]);
 
-  const callbacks = {
-    EndCall: () => {
-      setVideoCall(false);
-      endCall(); // This triggers cleanup in the store
-    },
-  };
-
-  // RTM Chat integration
-  const rtmAppId = appId;
-  const rtmChannel = channel || ""; // Ensure string, not null
-  const rtmUserId = uid || user?.uid || ""; // Ensure string
-
-  const { messages, sendMessage } = useAgoraRtm(rtmAppId, rtmChannel, rtmUserId);
-
-  // Cleanup media streams when leaving the video session page
+  // Only call cleanup on unmount
   useEffect(() => {
     return () => {
-      endCall(); // <--- Ensure store cleanup logic is always called on unmount
+      endCall();
+      import('../../../../utils/mediaUtils').then(({ fullMediaCleanup }) => {
+        if (typeof window !== 'undefined' && window._agora) {
+          fullMediaCleanup({
+            client: window._agora?.client,
+            localTracks: window._agora?.localTracks,
+            localCameraTrack: window._agora?.localCameraTrack,
+            localMicrophoneTrack: window._agora?.localMicrophoneTrack,
+          });
+        } else {
+          fullMediaCleanup();
+        }
+      });
     };
   }, [endCall]);
 
@@ -156,9 +171,11 @@ export default function VideoSessionPage() {
             }}
           >
             <div className="absolute inset-0 block md:hidden z-10">
-              <AgoraUIKit
+              <AgoraUIKitLogger
                 rtcProps={rtcProps}
-                callbacks={callbacks}
+                callbacks={{
+                  EndCall: () => setVideoCall(false),
+                }}
                 styleProps={{
                   localBtnContainer: { zIndex: 20 },
                   UIKitContainer: {
@@ -169,18 +186,32 @@ export default function VideoSessionPage() {
                   }
                 }}
               />
+              {/* Mobile Chat Overlay */}
+              <div className="block md:hidden absolute bottom-0 left-0 w-full z-30">
+                <div className="bg-white bg-opacity-90 rounded-t-xl shadow-lg p-2 flex flex-col">
+                  <div className="flex-1 overflow-y-auto max-h-40">
+                    <AgoraChat
+                      messages={messages}
+                      sendMessage={sendMessage}
+                      currentUserId={rtmUserId}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="hidden md:block w-full h-full">
-              <AgoraUIKit
+              <AgoraUIKitLogger
                 rtcProps={rtcProps}
-                callbacks={callbacks}
+                callbacks={{
+                  EndCall: () => setVideoCall(false),
+                }}
                 styleProps={{
                   localBtnContainer: { zIndex: 20 },
                   UIKitContainer: { height: "100%", minHeight: "300px", background: "black" }
                 }}
               />
             </div>
-            {/* Mobile Chat Overlay */}
+            {/* Mobile Chat Overlay - duplicated for visibility in mobile view */}
             <div className="block md:hidden absolute bottom-0 left-0 w-full z-30">
               <div className="bg-white bg-opacity-90 rounded-t-xl shadow-lg p-2 flex flex-col">
                 <div className="flex-1 overflow-y-auto max-h-40">
@@ -217,7 +248,9 @@ export default function VideoSessionPage() {
         </button>
         <button
           className="btn btn-secondary"
-          onClick={() => router.push("/dashboard/appointments")}
+          onClick={() => {
+            router.push("/dashboard/appointments");
+          }}
         >
           Back to Appointments
         </button>

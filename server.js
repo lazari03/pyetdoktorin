@@ -12,7 +12,9 @@ app.prepare().then(() => {
 
     // Let Next.js handle the /video-session route
     if (parsedUrl.pathname === "/video-session") {
-      handle(req, res, parsedUrl);
+      // Redirect to the main video session page for backward compatibility
+      res.writeHead(302, { Location: "/dashboard/appointments/video-session" + (parsedUrl.search || "") });
+      res.end();
       return;
     }
 

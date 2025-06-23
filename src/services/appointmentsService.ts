@@ -3,6 +3,8 @@ import { db } from "../config/firebaseconfig";
 import { Appointment } from "@/models/Appointment";
 import { getAuth } from 'firebase/auth';
 import { mapFirestoreAppointment } from '../utils/mapFirestoreAppointment';
+import { getUserPhoneNumber } from './userService';
+import { sendDoctorAppointmentRequestSMS } from './smsService';
 
 export async function getUserRole(userId: string): Promise<string> {
   try {
@@ -42,7 +44,7 @@ export async function fetchAppointments(userId: string, isDoctor: boolean): Prom
 }
 
 export const bookAppointment = async (appointmentData: {
-  doctorId: number;
+  doctorId: string;
   appointmentType: string;
   preferredDate: string;
   notes: string;
@@ -61,6 +63,11 @@ export const bookAppointment = async (appointmentData: {
   try {
     const docRef = await addDoc(collection(db, 'appointments'), appointment);
     console.log('Appointment successfully added with ID:', docRef.id);
+    // Fetch doctor's phone number and send SMS
+    const doctorPhone = await getUserPhoneNumber(appointmentData.doctorId);
+    if (doctorPhone) {
+      await sendDoctorAppointmentRequestSMS(doctorPhone, user.displayName || 'A patient');
+    }
     return { id: docRef.id, ...appointment };
   } catch (err) {
     console.error('Error adding appointment to Firestore:', err);

@@ -4,10 +4,9 @@ import { useEffect } from "react";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import { useAuth } from "../../../context/AuthContext";
 import DashboardNotifications from '../../components/DashboardNotifications';
-import Loader from '../../components/Loader';
+import Loader from "../../components/Loader";
 import { useVideoStore } from "../../../store/videoStore";
 import RoleGuard from '../../components/RoleGuard';
-import { cleanupMediaStreams } from "../../../utils/mediaUtils";
 import { AppointmentsTable } from '../../components/SharedAppointmentsTable';
 import { getUserRole } from '../../../services/appointmentsService';
 import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from '../../../config/userRoles';
@@ -68,10 +67,6 @@ function AppointmentsPage() {
     };
     checkPaymentStatus();
   }, [setAppointmentPaid, user, isDoctor, fetchAppointments]);
-
-  useEffect(() => {
-    cleanupMediaStreams();
-  }, []);
 
   const handleJoinCall = async (appointmentId: string) => {
     try {

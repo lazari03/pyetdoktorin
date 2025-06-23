@@ -6,6 +6,8 @@ import { auth, db } from "../../../config/firebaseconfig";
 import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import Link from "next/link";
+import { getUserPhoneNumber } from '../../../services/userService';
+import { sendPatientAppointmentAcceptedSMS } from '../../../services/smsService';
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -113,6 +115,25 @@ export default function NotificationsPage() {
       setPendingAppointments((prev) =>
         prev.filter((appointment) => appointment.id !== appointmentId)
       );
+      // Send SMS to patient if accepted
+      if (action === "accepted") {
+        // Notify patient via API
+        const appointmentSnap = await getDoc(appointmentRef);
+        if (appointmentSnap.exists()) {
+          const { patientId, doctorName } = appointmentSnap.data();
+          if (patientId && doctorName) {
+            await fetch('/api/sms/notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'appointment-accepted',
+                patientId,
+                doctorName,
+              }),
+            });
+          }
+        }
+      }
     } catch (err) {
       console.error(`Error updating appointment ${appointmentId}:`, err);
     }

@@ -38,8 +38,19 @@ export default function useAgoraRtm(appId: string, channelName: string, userId: 
 
     return () => {
       isMounted = false;
-      channelRef.current?.leave();
-      clientRef.current?.logout();
+      // Robust cleanup: suppress expected errors
+      (async () => {
+        try {
+          await channelRef.current?.leave();
+        } catch (e) {
+          console.warn("RTM leave error (safe to ignore if already left):", e);
+        }
+        try {
+          await clientRef.current?.logout();
+        } catch (e) {
+          console.warn("RTM logout error (safe to ignore if already logged out):", e);
+        }
+      })();
     };
   }, [appId, channelName, userId]);
 

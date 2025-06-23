@@ -12,8 +12,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "Missing or invalid appointmentId" });
   }
 
-  const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID as string; // Replace with your Agora App ID
-  const appCertificate = process.env.NEXT_PUBLIC_AGORA_CERTIFICATE as string; // Replace with your Agora App Certificate
+  // Use the same env variable names as generate-token
+  const appId = process.env.AGORA_APP_ID?.trim() || "082a61eb4220431085400ae5e9d9a8f7";
+  const appCertificate = process.env.AGORA_APP_CERTIFICATE?.trim() || "6591ede95bf048b1ac959b025565ea5d";
 
   if (!appId || !appCertificate) {
     return res.status(500).json({ error: "Agora credentials are not properly configured" });
@@ -37,7 +38,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     res.status(200).json({
-      sessionUrl: `/video-session?channel=${channelName}&token=${token}`,
+      // Redirect to the main video session page
+      sessionUrl: `/dashboard/appointments/video-session?channel=${channelName}&rtcToken=${token}`,
     });
   } catch (error) {
     console.error("Error generating Agora token:", error);
