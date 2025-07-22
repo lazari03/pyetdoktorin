@@ -17,6 +17,7 @@ interface Doctor {
   about?: string;
   specializations?: string[];
   education?: string[];
+  profilePicture?: string;
 }
 
 export default function DoctorProfile({ id }: DoctorProfileProps) {
@@ -39,7 +40,9 @@ export default function DoctorProfile({ id }: DoctorProfileProps) {
   return (
     <div className="w-full max-w-4xl mx-auto p-3 md:p-6">
       <div className="card bg-base-100 shadow-xl overflow-hidden flex flex-col md:flex-row">
-        <DoctorImage name={doctor?.name} surname={doctor?.surname} />
+        {doctor && (
+          <DoctorImage name={doctor.name} surname={doctor.surname} profilePicture={doctor.profilePicture} />
+        )}
         <DoctorDetails doctor={doctor} onRequestAppointment={handleRequestAppointment} />
       </div>
 
@@ -54,11 +57,12 @@ export default function DoctorProfile({ id }: DoctorProfileProps) {
   );
 }
 
-function DoctorImage({ name, surname }: { name?: string; surname?: string }) {
+function DoctorImage({ name, surname, profilePicture }: { name?: string; surname?: string; profilePicture?: string }) {
+  const imageUrl = profilePicture || "/img/profile_placeholder.png";
   return (
     <figure className="w-full md:w-1/3 p-6 flex items-center justify-center">
       <Image
-        src="/img/profile_placeholder.png"
+        src={imageUrl}
         alt={`${name || 'Doctor'} ${surname || ''}`}
         width={192}
         height={192}

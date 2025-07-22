@@ -14,9 +14,49 @@ export const useMyProfile = () => {
     about: "",
     specializations: [""],
     education: [""],
+    profilePicture: "",
   });
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isFetching, setIsFetching] = useState(true); // To handle data fetching state
+  const [uploading, setUploading] = useState(false);
+  // Handle profile picture upload
+  const handleProfilePictureChange = async (file: File) => {
+    if (!user?.uid) return;
+    setUploading(true);
+    try {
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileName', file.name);
+      formData.append('fileType', file.type);
+
+      // Upload via our API route (which will handle the Spaces upload server-side)
+      const uploadRes = await fetch('/api/profile/upload-profile-picture', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        const errorText = await uploadRes.text();
+        console.error('Upload API error:', errorText);
+        throw new Error('Failed to upload: ' + errorText);
+      }
+
+      const { publicUrl } = await uploadRes.json();
+      if (!publicUrl) throw new Error('No public URL returned from upload');
+
+      // Update Firestore with the new profile picture URL
+      setFormData((prev) => ({ ...prev, profilePicture: publicUrl }));
+      await setDoc(doc(db, 'users', user.uid), { profilePicture: publicUrl }, { merge: true });
+      
+      console.log('Profile picture uploaded successfully:', publicUrl);
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      alert('Failed to upload profile picture. ' + (error instanceof Error ? error.message : ''));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Fetch user data from Firestore
   useEffect(() => {
@@ -112,10 +152,12 @@ export const useMyProfile = () => {
     resetEmailSent,
     isFetching,
     authLoading,
+    uploading,
     handleInputChange,
     handleAddField,
     handleRemoveField,
     handlePasswordReset,
     handleSubmit,
+    handleProfilePictureChange,
   };
 };

@@ -9,6 +9,7 @@ interface Doctor {
   about?: string;
   expertise?: string[];
   education?: string[];
+  profilePicture?: string;
 }
 
 export const useDoctorProfile = (id: string) => {

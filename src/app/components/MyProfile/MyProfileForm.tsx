@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 // Accept the more specific union type for field names
 interface MyProfileFormProps {
@@ -8,6 +8,8 @@ interface MyProfileFormProps {
   handleAddField: (field: "name" | "surname" | "email" | "phoneNumber" | "about" | "specializations" | "education") => void;
   handleRemoveField: (field: "name" | "surname" | "email" | "phoneNumber" | "about" | "specializations" | "education", index: number) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onProfilePictureChange?: (file: File) => void;
+  uploading?: boolean;
 }
 
 const MyProfileForm: React.FC<MyProfileFormProps> = ({
@@ -17,8 +19,49 @@ const MyProfileForm: React.FC<MyProfileFormProps> = ({
   handleAddField,
   handleRemoveField,
   handleSubmit,
-}) => (
-  <form onSubmit={handleSubmit} className="space-y-6 bg-white shadow-md rounded-lg p-6">
+  onProfilePictureChange,
+  uploading = false,
+}) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string>("");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFileName(file.name);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      if (onProfilePictureChange) {
+        onProfilePictureChange(file);
+      }
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6 bg-white shadow-md rounded-lg p-6">
+      {/* Profile Picture Preview & Upload for Doctors - Centered at Top */}
+      {role === "doctor" && (
+        <div className="flex flex-col items-center mb-6">
+          <img
+            src={previewUrl || formData.profilePicture || "/img/profile_placeholder.png"}
+            alt="Profile Preview"
+            className="w-28 h-28 rounded-full object-cover border mb-2"
+          />
+          <label className={`btn btn-primary cursor-pointer mt-2 ${uploading ? 'loading' : ''}`}>
+            {uploading ? 'Uploading...' : 'Choose Profile Picture'}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+              disabled={uploading}
+            />
+          </label>
+          {selectedFileName && (
+            <span className="mt-2 text-sm text-gray-600">Selected: {selectedFileName}</span>
+          )}
+        </div>
+      )}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <label className="block text-sm font-medium text-gray-600 mb-2">Name</label>
@@ -102,7 +145,8 @@ const MyProfileForm: React.FC<MyProfileFormProps> = ({
         Save Changes
       </button>
     </div>
-  </form>
-);
+    </form>
+  );
+};
 
 export default MyProfileForm;

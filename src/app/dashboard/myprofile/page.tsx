@@ -12,11 +12,13 @@ export default function MyProfile() {
     resetEmailSent,
     isFetching,
     authLoading,
+    uploading,
     handleInputChange,
     handleAddField,
     handleRemoveField,
     handlePasswordReset,
     handleSubmit,
+    handleProfilePictureChange,
   } = useMyProfile();
 
   if (authLoading || isFetching) {
@@ -33,6 +35,8 @@ export default function MyProfile() {
         handleAddField={handleAddField}
         handleRemoveField={handleRemoveField}
         handleSubmit={handleSubmit}
+        onProfilePictureChange={handleProfilePictureChange}
+        uploading={uploading}
       />
       <PasswordResetSection
         handlePasswordReset={handlePasswordReset}
