@@ -19,5 +19,6 @@ export function mapFirestoreAppointment(doc: any): Appointment {
     isPaid: typeof data.isPaid === 'boolean' ? data.isPaid : false,
     createdAt: data.createdAt || new Date().toISOString(),
     status: data.status || 'pending',
+    roomId: data.roomId || undefined,
   };
 }

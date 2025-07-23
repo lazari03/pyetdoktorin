@@ -51,9 +51,7 @@ export async function fullMediaCleanup({
       if (typeof localMicrophoneTrack.stop === 'function') localMicrophoneTrack.stop();
     }
     // Remove global reference if used
-    if (typeof window !== 'undefined' && window._agora) {
-      window._agora = undefined;
-    }
+    // ...existing code...
   } catch (err) {
     console.warn('Error during full media cleanup:', err);
   }
@@ -62,11 +60,6 @@ export async function fullMediaCleanup({
 
 declare global {
   interface Window {
-    _agora?: {
-      client?: any;
-      localTracks?: Array<any>;
-      localCameraTrack?: any;
-      localMicrophoneTrack?: any;
-    };
+    // ...existing code...
   }
 }

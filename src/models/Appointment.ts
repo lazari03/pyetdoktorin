@@ -11,4 +11,5 @@ export interface Appointment {
   isPaid: boolean;
   createdAt: string;
   status: string; // "pending", "accepted", "declined"
+  roomId?: string; // 100ms room code
 }
