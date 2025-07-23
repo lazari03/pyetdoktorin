@@ -10,8 +10,7 @@ const AgoraUIKit = dynamic(() => import("agora-react-uikit"), { ssr: false });
 import { useAuth } from "../../../../context/AuthContext";
 import { useVideoStore } from "../../../../store/videoStore";
 import Loader from "../../../components/Loader";
-import AgoraChat from "../../../components/agoraChat";
-import useAgoraRtm from "../../../../hooks/useAgoraRtm";
+// ...existing code...
 
 // Wrapper to log mount/unmount of AgoraUIKit
 function AgoraUIKitLogger(props: any) {
@@ -67,33 +66,7 @@ export default function VideoSessionPage() {
     token: string;
   } | null>(null);
 
-  // RTM Chat integration (restore variables)
-  const rtmAppId = appId;
-  const rtmChannel = channel || "";
-  const rtmUserId = uid || user?.uid || "";
-  const { messages, sendMessage } = useAgoraRtm(rtmAppId, rtmChannel, rtmUserId);
-
-  // Redirect if user is not authenticated or missing parameters
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      console.warn("User is not authenticated. Redirecting to login.");
-      router.push("/login");
-      return;
-    }
-
-    if (!channel || !rtcToken) {
-      console.warn("Missing channel or RTC token. Redirecting to appointments.");
-      router.push("/dashboard/appointments");
-      return;
-    }
-
-    if (!appId) {
-      console.error("Missing Agora App ID. Cannot initialize video session.");
-      alert("Video session configuration error. Please contact support.");
-      router.push("/dashboard/appointments");
-      return;
-    }
-  }, [isAuthenticated, authLoading, channel, rtcToken, router, appId]);
+  // ...existing code...
 
   // Initialize Agora UI kit with more explicit validation
   useEffect(() => {
@@ -186,18 +159,7 @@ export default function VideoSessionPage() {
                   }
                 }}
               />
-              {/* Mobile Chat Overlay */}
-              <div className="block md:hidden absolute bottom-0 left-0 w-full z-30">
-                <div className="bg-white bg-opacity-90 rounded-t-xl shadow-lg p-2 flex flex-col">
-                  <div className="flex-1 overflow-y-auto max-h-40">
-                    <AgoraChat
-                      messages={messages}
-                      sendMessage={sendMessage}
-                      currentUserId={rtmUserId}
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Mobile Chat Overlay removed */}
             </div>
             <div className="hidden md:block w-full h-full">
               <AgoraUIKitLogger
@@ -211,27 +173,9 @@ export default function VideoSessionPage() {
                 }}
               />
             </div>
-            {/* Mobile Chat Overlay - duplicated for visibility in mobile view */}
-            <div className="block md:hidden absolute bottom-0 left-0 w-full z-30">
-              <div className="bg-white bg-opacity-90 rounded-t-xl shadow-lg p-2 flex flex-col">
-                <div className="flex-1 overflow-y-auto max-h-40">
-                  <AgoraChat
-                    messages={messages}
-                    sendMessage={sendMessage}
-                    currentUserId={rtmUserId}
-                  />
-                </div>
-              </div>
-            </div>
+            {/* Mobile Chat Overlay removed */}
           </div>
-          {/* Desktop Chat Section */}
-          <div className="hidden md:flex flex-[1_1 0%] max-w-full md:max-w-xs min-h-[120px] min-w-0 bg-white border-t md:border-t-0 md:border-l border-gray-200 flex-col">
-            <AgoraChat
-              messages={messages}
-              sendMessage={sendMessage}
-              currentUserId={rtmUserId}
-            />
-          </div>
+          {/* Desktop Chat Section removed */}
         </div>
       </div>
     </div>
