@@ -36,7 +36,7 @@ export default function RegisterPage() {
         setLoading(true);
         try {
             // Call the backend API to register the user and send the welcome email
-            const response = await fetch("http://localhost:5000/register", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: formData.email, name: formData.name }),
