@@ -1,5 +1,5 @@
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseconfig';
 
 // Centralized authentication service
@@ -40,46 +40,6 @@ export const login = async (email: string, password: string) => {
     } catch (error) {
         console.error('Error during login:', error);
         throw new Error('Failed to log in');
-    }
-};
-
-// Define a type for formData
-interface FormData {
-    [key: string]: unknown; // Allow additional fields with unknown types
-}
-
-// Register function
-const register = async (email: string, password: string, role: string, formData: FormData) => { // Replace `any` with `FormData`
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        // Save user role and additional data to Firestore
-        await setDoc(doc(db, 'users', user.uid), {
-            role,
-            ...formData,
-        });
-
-        return { user, role };
-    } catch (error) {
-        console.error('Error during registration:', error);
-        throw new Error('Failed to register');
-    }
-};
-
-// Logout function
-const logout = async () => {
-    try {
-        await signOut(auth);
-        console.log('User signed out successfully');
-
-        // Clear the auth token cookie
-        document.cookie = 'auth-token=; path=/; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
-        // Clear the userRole cookie
-        document.cookie = 'userRole=; path=/; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
-    } catch (error) {
-        console.error('Error signing out:', error);
-        throw new Error('Failed to sign out');
     }
 };
 

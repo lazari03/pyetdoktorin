@@ -22,10 +22,10 @@ export async function fullMediaCleanup({
   localCameraTrack,
   localMicrophoneTrack,
 }: {
-  client?: any;
-  localTracks?: Array<any>;
-  localCameraTrack?: any;
-  localMicrophoneTrack?: any;
+  client?: Record<string, unknown>;
+  localTracks?: Array<Record<string, unknown>>;
+  localCameraTrack?: Record<string, unknown>;
+  localMicrophoneTrack?: Record<string, unknown>;
 } = {}) {
   try {
     if (client && typeof client.leave === 'function') {
@@ -37,7 +37,14 @@ export async function fullMediaCleanup({
         if (track) {
           if (typeof track.close === 'function') track.close();
           if (typeof track.stop === 'function') track.stop();
-          if (track.track && typeof track.track.stop === 'function') track.track.stop();
+          if (
+            track.track &&
+            typeof track.track === 'object' &&
+            track.track !== null &&
+            typeof (track.track as { stop?: unknown }).stop === 'function'
+          ) {
+            (track.track as { stop: () => void }).stop();
+          }
         }
       });
     }
@@ -58,8 +65,3 @@ export async function fullMediaCleanup({
   cleanupMediaStreams();
 }
 
-declare global {
-  interface Window {
-    // ...existing code...
-  }
-}

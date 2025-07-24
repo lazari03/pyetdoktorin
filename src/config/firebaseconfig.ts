@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getAnalytics, isSupported } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -19,19 +18,5 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app); // Export the auth object
 export const db = getFirestore(app); // Export Firestore instance
 
-// Conditionally initialize analytics
-let analyticsInstance: ReturnType<typeof getAnalytics> | null = null;
-if (typeof window !== "undefined") {
-  isSupported()
-    .then((supported) => {
-      if (supported) {
-        analyticsInstance = getAnalytics(app);
-      }
-    })
-    .catch((error) => {
-      console.error("Analytics initialization failed:", error);
-    });
-}
-const analytics = analyticsInstance;
 
 export default app;

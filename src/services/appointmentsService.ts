@@ -36,7 +36,12 @@ export async function fetchAppointments(userId: string, isDoctor: boolean): Prom
       where(isDoctor ? "doctorId" : "patientId", "==", userId)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(mapFirestoreAppointment);
+    return querySnapshot.docs.map((doc) =>
+      mapFirestoreAppointment({
+        id: doc.id,
+        ...doc.data(),
+      })
+    );
   } catch (error) {
     console.error('Error fetching appointments:', error);
     throw error;

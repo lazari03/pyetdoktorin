@@ -1,3 +1,16 @@
+// Type for 100ms room codes API response
+type RoomCodeObj = {
+  code: string;
+  room_id: string;
+  role: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+type RoomCodesResponse = {
+  data?: RoomCodeObj[];
+  [key: string]: unknown;
+};
 import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
@@ -45,10 +58,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       });
       const createRoomRaw = await createRoomRes.text();
-      let createRoomData: any = {};
+      let createRoomData: Record<string, unknown> = {};
       try {
         createRoomData = createRoomRaw ? JSON.parse(createRoomRaw) : {};
-      } catch (e) {
+      } catch {
         console.error('Failed to parse 100ms create room response as JSON:', createRoomRaw);
         return res.status(500).json({ error: 'Invalid response from 100ms (create room)', raw: createRoomRaw });
       }
@@ -65,10 +78,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       });
       const getRoomRaw = await getRoomRes.text();
-      let getRoomData: any = {};
+      let getRoomData: Record<string, unknown> = {};
       try {
         getRoomData = getRoomRaw ? JSON.parse(getRoomRaw) : {};
-      } catch (e) {
+      } catch {
         console.error('Failed to parse 100ms get room response as JSON:', getRoomRaw);
       }
       if (!getRoomRes.ok || !getRoomData.id) {
@@ -86,14 +99,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
     const getRoomCodesRaw = await getRoomCodesRes.text();
-    let getRoomCodesData: any = {};
+    let getRoomCodesData: RoomCodesResponse = {};
     try {
       getRoomCodesData = getRoomCodesRaw ? JSON.parse(getRoomCodesRaw) : {};
-    } catch (e) {
+    } catch {
       console.error('Failed to parse 100ms get room codes response as JSON:', getRoomCodesRaw);
       return res.status(500).json({ error: 'Invalid response from 100ms (get room codes)', raw: getRoomCodesRaw });
     }
-    roomCode = getRoomCodesData.data?.[0]?.code || null;
+    const roomCodesArr = getRoomCodesData.data;
+    roomCode = Array.isArray(roomCodesArr) && roomCodesArr.length > 0 ? roomCodesArr[0].code : null;
     if (!roomCode) {
       console.error('No roomCode returned from 100ms API (room-codes):', getRoomCodesData);
       return res.status(500).json({ error: 'No roomCode returned from 100ms API (room-codes)', raw: getRoomCodesData });

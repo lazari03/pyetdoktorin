@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchAppointments } from '../../../services/appointmentsService';
-import { mapFirestoreAppointment } from '../../../utils/mapFirestoreAppointment';
 
 interface Appointment {
   id: string;
@@ -22,9 +21,7 @@ export default function UpcomingRequestsPage() {
       setLoading(true);
       try {
         const fetchedRequests = await fetchAppointments('pending', false);
-        // Remove local mapping logic and use the shared utility
-        const mappedRequests = fetchedRequests.map(mapFirestoreAppointment);
-        setRequests(mappedRequests);
+        setRequests(fetchedRequests);
       } catch (error) {
         if (error instanceof Error) {
           alert(error.message);

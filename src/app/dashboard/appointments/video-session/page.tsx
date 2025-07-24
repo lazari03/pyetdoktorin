@@ -5,7 +5,7 @@ import Loader from "../../../components/Loader";
 
 export default function VideoSessionPage() {
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState<string | null>(null);
+  const [, setUserName] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
 
   useEffect(() => {

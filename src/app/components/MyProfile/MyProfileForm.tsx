@@ -1,8 +1,21 @@
+import Image from 'next/image';
 import React, { useState } from 'react';
 
 // Accept the more specific union type for field names
+interface MyProfileFormData {
+  name: string;
+  surname: string;
+  email: string;
+  phoneNumber: string;
+  about?: string;
+  specializations: string[];
+  education?: string[];
+  profilePicture?: string;
+  [key: string]: unknown;
+}
+
 interface MyProfileFormProps {
-  formData: any;
+  formData: MyProfileFormData;
   role: string;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: "name" | "surname" | "email" | "phoneNumber" | "about" | "specializations" | "education", index?: number) => void;
   handleAddField: (field: "name" | "surname" | "email" | "phoneNumber" | "about" | "specializations" | "education") => void;
@@ -42,10 +55,14 @@ const MyProfileForm: React.FC<MyProfileFormProps> = ({
       {/* Profile Picture Preview & Upload for Doctors - Centered at Top */}
       {role === "doctor" && (
         <div className="flex flex-col items-center mb-6">
-          <img
+          <Image
             src={previewUrl || formData.profilePicture || "/img/profile_placeholder.png"}
             alt="Profile Preview"
+            width={112}
+            height={112}
             className="w-28 h-28 rounded-full object-cover border mb-2"
+            style={{ objectFit: 'cover' }}
+            priority
           />
           <label className={`btn btn-primary cursor-pointer mt-2 ${uploading ? 'loading' : ''}`}>
             {uploading ? 'Uploading...' : 'Choose Profile Picture'}

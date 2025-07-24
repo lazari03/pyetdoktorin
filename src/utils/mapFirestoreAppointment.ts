@@ -1,24 +1,50 @@
 import { Appointment } from "@/models/Appointment";
 
 /**
+ * FirestoreDoc type for Firestore document snapshots or plain objects.
+ */
+export type FirestoreDoc = {
+  id?: string;
+  data?: () => Record<string, unknown>;
+  [key: string]: unknown;
+};
+
+/**
  * Normalize Firestore appointment data to the Appointment type.
  * Ensures all required fields are present and defaulted.
  */
-export function mapFirestoreAppointment(doc: any): Appointment {
-  const data = doc.data ? doc.data() : doc;
+export function mapFirestoreAppointment(doc: FirestoreDoc): Appointment {
+  const data = typeof doc.data === 'function' ? doc.data() : doc;
+  type FirestoreAppointmentData = {
+    id?: string;
+    doctorId?: string;
+    doctorName?: string;
+    patientId?: string;
+    patientName?: string;
+    appointmentType?: string;
+    preferredDate?: string;
+    preferredTime?: string;
+    notes?: string;
+    isPaid?: boolean;
+    createdAt?: string;
+    status?: string;
+    roomId?: string;
+    [key: string]: unknown;
+  };
+  const d: FirestoreAppointmentData = data as FirestoreAppointmentData;
   return {
-    id: doc.id || data.id || '',
-    doctorId: data.doctorId || '',
-    doctorName: data.doctorName || 'Unknown',
-    patientId: data.patientId || '',
-    patientName: data.patientName || 'Unknown',
-    appointmentType: data.appointmentType || 'General',
-    preferredDate: data.preferredDate || '',
-    preferredTime: data.preferredTime || '',
-    notes: data.notes || '',
-    isPaid: typeof data.isPaid === 'boolean' ? data.isPaid : false,
-    createdAt: data.createdAt || new Date().toISOString(),
-    status: data.status || 'pending',
-    roomId: data.roomId || undefined,
+    id: doc.id || d.id || '',
+    doctorId: d.doctorId || '',
+    doctorName: d.doctorName || 'Unknown',
+    patientId: d.patientId || '',
+    patientName: d.patientName || 'Unknown',
+    appointmentType: d.appointmentType || 'General',
+    preferredDate: d.preferredDate || '',
+    preferredTime: d.preferredTime || '',
+    notes: d.notes || '',
+    isPaid: typeof d.isPaid === 'boolean' ? d.isPaid : false,
+    createdAt: d.createdAt || new Date().toISOString(),
+    status: d.status || 'pending',
+    roomId: d.roomId || undefined,
   };
 }

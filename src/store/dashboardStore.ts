@@ -5,9 +5,6 @@ import { formatDate } from '../utils/dateUtils';
 import { UserRole } from '../models/UserRole';
 import { getNavigationPaths } from './navigationStore';
 import { JSX } from 'react';
-import { AppointmentFields } from '../models/AppointmentFields';
-import { FirestoreCollections } from '../config/FirestoreCollections';
-import { mapFirestoreAppointment } from '../utils/mapFirestoreAppointment';
 
 interface DashboardState {
   totalAppointments: number;
@@ -27,8 +24,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   fetchAppointments: async (userId, role) => {
     try {
       const isDoctor = role === UserRole.Doctor;
-      const appointments = await fetchAppointments(userId, isDoctor);
-      const mappedAppointments = appointments.map(mapFirestoreAppointment);
+
+      const mappedAppointments = await fetchAppointments(userId, isDoctor);
 
       // Filter and sort upcoming appointments
       const upcomingAppointments = mappedAppointments

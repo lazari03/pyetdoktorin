@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       keepExtensions: true,
     });
 
-    const [fields, files] = await form.parse(req);
+    const [, files] = await form.parse(req);
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
     
     if (!file) {
@@ -69,7 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fileContent = fs.readFileSync(file.filepath);
 
     // Upload directly to Spaces from the server
-    const uploadResult = await s3.upload({
+
+    await s3.upload({
       Bucket: bucket,
       Key: key,
       Body: fileContent,

@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Bars3Icon,
   XMarkIcon,
-  PowerIcon,
   HomeIcon,
   ClipboardIcon,
   UserIcon,
@@ -17,8 +15,8 @@ import Image from 'next/image';
 import { useInitializeAppointments } from '../../store/appointmentStore';
 import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths } from '@/store/navigationStore';
-import { signOut } from 'firebase/auth';
-import { getAuth } from 'firebase/auth';
+// import { signOut } from 'firebase/auth';
+// import { getAuth } from 'firebase/auth';
 import DashboardSidebar from '../components/DashboardSidebar';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

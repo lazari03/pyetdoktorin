@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { getAuth, signOut } from 'firebase/auth';
 import { Bars3Icon, XMarkIcon, PowerIcon } from '@heroicons/react/24/outline';
 

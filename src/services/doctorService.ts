@@ -58,18 +58,3 @@ export async function fetchDoctors(searchTerm: string, searchType: SearchType): 
     throw new Error("Failed to fetch doctors");
   }
 }
-
-async function fetchDoctorsBySearchTerm(term: string) {
-  try {
-    const doctorsByName = await fetchDoctors(term, SearchType.Name);
-    const doctorsBySpecializations = await fetchDoctors(term, SearchType.Specializations);
-
-    // Combine and deduplicate doctors
-    return Array.from(
-      new Map([...doctorsByName, ...doctorsBySpecializations].map((doc) => [doc.id, doc])).values()
-    );
-  } catch (error) {
-    console.error("Error fetching doctors by search term:", error);
-    throw new Error("Failed to fetch doctors by search term");
-  }
-}

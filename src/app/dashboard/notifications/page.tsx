@@ -6,8 +6,6 @@ import { auth, db } from "../../../config/firebaseconfig";
 import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import Link from "next/link";
-import { getUserPhoneNumber } from '../../../services/userService';
-import { sendPatientAppointmentAcceptedSMS } from '../../../services/smsService';
 
 export default function NotificationsPage() {
   const router = useRouter();

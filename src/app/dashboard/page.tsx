@@ -10,22 +10,19 @@ import { UserRole } from '../../models/UserRole';
 import DashboardNotifications from '../components/DashboardNotifications';
 import Loader from '../components/Loader';
 import { useAppointmentStore } from '../../store/appointmentStore';
-import { useVideoStore } from '../../store/videoStore';
 import { AppointmentsTable } from '../components/AppointmentsTable';
-import { Appointment } from '../../models/Appointment';
 import { useUpcomingAppointment } from '../../hooks/useUpcomingAppointment';
 import { useDashboardActions } from '../../hooks/useDashboardActions';
 import ProfileWarning from '../components/ProfileWarning';
 
 export default function Dashboard() {
   const { user, role, loading: authLoading } = useAuth();
-  const { totalAppointments, nextAppointment, fetchAppointments } = useDashboardStore();
+  const { totalAppointments, fetchAppointments } = useDashboardStore();
   const { appointments, isAppointmentPast, fetchAppointments: fetchAllAppointments } = useAppointmentStore();
   const { handleJoinCall, handlePayNow } = useDashboardActions();
   const [profileIncomplete, setProfileIncomplete] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
   const nextUpcomingAppointment = useUpcomingAppointment(appointments);
-  const { setAuthStatus } = useVideoStore();
 
   const fetchProfileStatus = useCallback(async () => {
     if (user && role) {
@@ -50,7 +47,6 @@ export default function Dashboard() {
     };
 
     initializeDashboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, role, fetchAppointments, fetchProfileStatus, fetchAllAppointments]);
 
   if (authLoading || loading) return <Loader />;

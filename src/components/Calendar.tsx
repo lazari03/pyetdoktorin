@@ -2,13 +2,23 @@ import React from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { useAppointments } from "../hooks/useAppointments";
 
 const localizer = momentLocalizer(moment);
 
-export default function AppointmentsCalendar() {
-  const { appointments, isLoading, error } = useAppointments();
+interface AppointmentEvent {
+  appointmentType?: string;
+  start: Date;
+  end: Date;
+  [key: string]: unknown;
+}
 
+interface AppointmentsCalendarProps {
+  appointments: AppointmentEvent[];
+  isLoading?: boolean;
+  error?: string | null;
+}
+
+export default function AppointmentsCalendar({ appointments, isLoading, error }: AppointmentsCalendarProps) {
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -23,8 +33,8 @@ export default function AppointmentsCalendar() {
         localizer={localizer}
         events={appointments.map((appointment) => ({
           title: appointment.appointmentType || "Appointment",
-          start: appointment.start, // Ensure this is a valid Date object
-          end: appointment.end,     // Ensure this is a valid Date object
+          start: appointment.start,
+          end: appointment.end,
         }))}
         startAccessor="start"
         endAccessor="end"
