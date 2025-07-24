@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../../config/firebaseconfig';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -35,27 +38,36 @@ export default function RegisterPage() {
 
         setLoading(true);
         try {
-            // Call the backend API to register the user and send the welcome email
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: formData.email, name: formData.name }),
+            // Register user with Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                formData.email,
+                formData.password
+            );
+            const user = userCredential.user;
+
+            // Save extra user info in Firestore
+            await setDoc(doc(db, 'users', user.uid), {
+                name: formData.name,
+                surname: formData.surname,
+                phoneNumber: formData.phone,
+                email: formData.email,
+                role: formData.role,
+                createdAt: new Date().toISOString(),
             });
 
-            if (!response.ok) {
-                throw new Error("Failed to send welcome email");
-            }
-
-            console.log("User registered and welcome email sent");
             setShowModal(true);
-
             setTimeout(() => {
                 setShowModal(false);
-                router.push("/login"); // Redirect to login
+                router.push("/login");
             }, 3000);
         } catch (error) {
             console.error("Registration failed:", error);
-            setError("Failed to register user");
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to register user'
+            );
         } finally {
             setLoading(false);
         }
