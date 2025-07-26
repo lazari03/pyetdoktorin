@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { getAuth, signOut } from 'firebase/auth';
-import { Bars3Icon, XMarkIcon, PowerIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, PowerIcon, BellIcon } from '@heroicons/react/24/outline';
+import { useEffect, useState } from 'react';
+import { db } from '../../config/firebaseconfig';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useAuth } from '../../context/AuthContext';
 
 interface DashboardSidebarProps {
   sidebarOpen: boolean;
@@ -10,6 +14,40 @@ interface DashboardSidebarProps {
 }
 
 export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems, pathname }: DashboardSidebarProps) {
+  // Notification state
+  const { user, role } = useAuth();
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
+
+  useEffect(() => {
+    if (!user?.uid || role !== 'doctor') return;
+    const q = query(
+      collection(db, 'appointments'),
+      where('doctorId', '==', user.uid),
+      where('status', '==', 'pending')
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setHasNewNotifications(!snapshot.empty);
+    });
+    return () => unsubscribe();
+  }, [user, role]);
+
+  // Add Notifications menu item
+  const enhancedNavItems = [
+    ...navItems,
+    {
+      name: 'Notifications',
+      href: '/dashboard/notifications',
+      icon: (
+        <span className="relative">
+          <BellIcon className="h-6 w-6" />
+          {hasNewNotifications && (
+            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 border-2 border-white" />
+          )}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <>
       {/* Desktop Sidebar */}
@@ -22,14 +60,14 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
           </button>
         </div>
         <ul className="relative flex-grow">
-          {navItems.map((item) => (
+          {enhancedNavItems.map((item) => (
             <li key={item.name} className="relative mb-2">
               <Link
                 href={item.href}
                 className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'}`}
               >
                 <span className="flex items-center justify-center w-10 h-10">{item.icon}</span>
-                <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'}`}>
+                <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'}`}> 
                   {item.name}
                 </span>
               </Link>
@@ -54,7 +92,7 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
             <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-100 text-red-500 hover:bg-red-200 hover:text-red-700">
               <PowerIcon className="h-6 w-6" />
             </span>
-            <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'}`}>
+            <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'}`}> 
               Logout
             </span>
           </button>
@@ -70,7 +108,7 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
           </button>
         </div>
         <ul>
-          {navItems.map((item) => (
+          {enhancedNavItems.map((item) => (
             <li key={item.name} className="mb-2 mt-4">
               <Link
                 href={item.href}

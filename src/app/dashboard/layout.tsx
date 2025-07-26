@@ -12,6 +12,8 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import { useEffect } from 'react';
+import AddToHomeScreenPrompt from '../AddToHomeScreenPrompt';
 import { useInitializeAppointments } from '../../store/appointmentStore';
 import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths } from '@/store/navigationStore';
@@ -19,12 +21,20 @@ import { getNavigationPaths } from '@/store/navigationStore';
 // import { getAuth } from 'firebase/auth';
 import DashboardSidebar from '../components/DashboardSidebar';
 
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
   const { uid, role } = useAuth();
   useInitializeAppointments();
+
+  // Service Worker Registration
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js');
+    }
+  }, []);
 
   if (!uid || !role) {
     return (
@@ -87,6 +97,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           style={{ maxHeight: '2rem' }}
         />
       </div>
+
+      {/* Add to Home Screen Prompt for mobile */}
+      <AddToHomeScreenPrompt />
 
       {/* Main Content Area */}
       <div className={`flex-grow transition-all duration-300 pt-16 md:pt-0 ${sidebarOpen && 'md:ml-64'} md:ml-16`}>
