@@ -69,6 +69,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(createRoomRes.status).json({ error: createRoomData.error || 'Failed to create 100ms room', raw: createRoomRaw });
       }
       actualRoomId = createRoomData.id;
+      // --- Automate room code creation for both doctor and patient roles ---
+      const rolesToEnsure = ['doctor', 'patient'];
+      for (const r of rolesToEnsure) {
+        // Check if code exists for this role
+        const getCodeRes = await fetch(`${HMS_BASE_URL}/room-codes/room/${actualRoomId}?role=${r}&enabled=true`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${managementToken}`
+          }
+        });
+        const getCodeRaw = await getCodeRes.text();
+        let getCodeData: RoomCodesResponse = {};
+        try {
+          getCodeData = getCodeRaw ? JSON.parse(getCodeRaw) : {};
+        } catch {
+          console.error('Failed to parse 100ms get room code response as JSON:', getCodeRaw);
+        }
+        const codeExists = Array.isArray(getCodeData.data)
+          ? getCodeData.data.some((rc: RoomCodeObj) => rc.enabled && rc.role === r)
+          : false;
+        if (!codeExists) {
+          // Create room code for this role
+          await fetch(`${HMS_BASE_URL}/room-codes`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${managementToken}`
+            },
+            body: JSON.stringify({
+              room_id: actualRoomId,
+              role: r,
+              enabled: true
+            })
+          });
+        }
+      }
+      // Wait a moment for codes to be available
+      await new Promise((r) => setTimeout(r, 2000));
     } else {
       // Fetch the room details to ensure it exists
       const getRoomRes = await fetch(`${HMS_BASE_URL}/rooms/${room_id}`, {
@@ -88,6 +126,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(getRoomRes.status).json({ error: getRoomData.error || 'Failed to fetch 100ms room', raw: getRoomRaw });
       }
       actualRoomId = getRoomData.id;
+      // --- Automate room code creation for both doctor and patient roles for existing rooms ---
+      const rolesToEnsure = ['doctor', 'patient'];
+      for (const r of rolesToEnsure) {
+        const getCodeRes = await fetch(`${HMS_BASE_URL}/room-codes/room/${actualRoomId}?role=${r}&enabled=true`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${managementToken}`
+          }
+        });
+        const getCodeRaw = await getCodeRes.text();
+        let getCodeData: RoomCodesResponse = {};
+        try {
+          getCodeData = getCodeRaw ? JSON.parse(getCodeRaw) : {};
+        } catch {
+          console.error('Failed to parse 100ms get room code response as JSON:', getCodeRaw);
+        }
+        const codeExists = Array.isArray(getCodeData.data)
+          ? getCodeData.data.some((rc: RoomCodeObj) => rc.enabled && rc.role === r)
+          : false;
+        if (!codeExists) {
+          await fetch(`${HMS_BASE_URL}/room-codes`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${managementToken}`
+            },
+            body: JSON.stringify({
+              room_id: actualRoomId,
+              role: r,
+              enabled: true
+            })
+          });
+        }
+      }
+      await new Promise((r) => setTimeout(r, 2000));
     }
 
     // Always fetch the room code for the given room and role
