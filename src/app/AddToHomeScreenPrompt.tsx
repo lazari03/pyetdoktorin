@@ -5,10 +5,15 @@ export default function AddToHomeScreenPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
+    // Only show once per user
+    const alreadyShown = localStorage.getItem('addToHomeScreenPromptShown');
+    if (alreadyShown) return;
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowPrompt(true);
+      localStorage.setItem('addToHomeScreenPromptShown', 'true');
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
