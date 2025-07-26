@@ -109,8 +109,64 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const roomCodesArr = getRoomCodesData.data;
     roomCode = Array.isArray(roomCodesArr) && roomCodesArr.length > 0 ? roomCodesArr[0].code : null;
     if (!roomCode) {
-      console.error('No roomCode returned from 100ms API (room-codes):', getRoomCodesData);
-      return res.status(500).json({ error: 'No roomCode returned from 100ms API (room-codes)', raw: getRoomCodesData });
+      // Try to fetch all room codes for this room and pick the first enabled one with a code format like 'efg-mqpc-zbb'
+      const getAllRoomCodesRes = await fetch(`${HMS_BASE_URL}/room-codes/room/${actualRoomId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${managementToken}`
+        }
+      });
+      const getAllRoomCodesRaw = await getAllRoomCodesRes.text();
+      let getAllRoomCodesData: RoomCodesResponse = {};
+      try {
+        getAllRoomCodesData = getAllRoomCodesRaw ? JSON.parse(getAllRoomCodesRaw) : {};
+      } catch {
+        console.error('Failed to parse 100ms get all room codes response as JSON:', getAllRoomCodesRaw);
+        return res.status(500).json({ error: 'Invalid response from 100ms (get all room codes)', raw: getAllRoomCodesRaw });
+      }
+      const allRoomCodesArr = getAllRoomCodesData.data;
+      // Find the first enabled room code that matches the prebuilt format (3 groups of 3 lowercase letters)
+      const prebuiltCodeRegex = /^[a-z]{3}-[a-z]{4}-[a-z]{3}$/;
+      roomCode = Array.isArray(allRoomCodesArr) && allRoomCodesArr.length > 0 ?
+        (allRoomCodesArr.find((rc: RoomCodeObj) => rc.enabled && typeof rc.code === 'string' && prebuiltCodeRegex.test(rc.code))?.code || null)
+        : null;
+      if (!roomCode) {
+        // Try to create a room code for this role
+        console.error('No enabled prebuilt roomCode found for this room. Attempting to create one.');
+        const createRoomCodeRes = await fetch(`${HMS_BASE_URL}/room-codes`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${managementToken}`
+          },
+          body: JSON.stringify({
+            room_id: actualRoomId,
+            role,
+            enabled: true
+          })
+        });
+        const createRoomCodeRaw = await createRoomCodeRes.text();
+        console.error('Create room code response:', createRoomCodeRaw);
+        let createRoomCodeData: Record<string, unknown> = {};
+        try {
+          createRoomCodeData = createRoomCodeRaw ? JSON.parse(createRoomCodeRaw) : {};
+        } catch {
+          console.error('Failed to parse 100ms create room code response as JSON:', createRoomCodeRaw);
+          return res.status(500).json({ error: 'Invalid response from 100ms (create room code)', raw: createRoomCodeRaw });
+        }
+        if (!createRoomCodeRes.ok || !createRoomCodeData.code) {
+          return res.status(createRoomCodeRes.status).json({
+            error: createRoomCodeData.error || 'Failed to create 100ms room code',
+            raw: createRoomCodeRaw,
+            request: {
+              room_id: actualRoomId,
+              role,
+              enabled: true
+            }
+          });
+        }
+        roomCode = createRoomCodeData.code as string;
+      }
     }
 
     // Step 2: Generate the token for the (possibly newly created) room using JWT
