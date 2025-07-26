@@ -14,7 +14,7 @@ import {
 import Image from 'next/image';
 import { useEffect } from 'react';
 import AddToHomeScreenPrompt from '../AddToHomeScreenPrompt';
-import IosInstallPrompt from '../../utils/IosInstallPrompt';
+// import IosInstallPrompt from '../../utils/IosInstallPrompt';
 import { useInitializeAppointments } from '../../store/appointmentStore';
 import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths } from '@/store/navigationStore';
@@ -101,7 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Add to Home Screen Prompt for mobile */}
       <AddToHomeScreenPrompt />
-      <IosInstallPrompt />
+      {/* <IosInstallPrompt /> */}
 
       {/* Main Content Area */}
       <div className={`flex-grow transition-all duration-300 pt-16 md:pt-0 ${sidebarOpen && 'md:ml-64'} md:ml-16`}>
