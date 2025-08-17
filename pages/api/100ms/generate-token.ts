@@ -30,15 +30,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing user_id, room_id, or role' });
   }
 
-  const managementToken = process.env.HMS_MANAGEMENT_TOKEN;
+
   const accessKey = process.env.HMS_ACCESS_KEY;
   const accessSecret = process.env.HMS_SECRET;
-  if (!managementToken) {
-    return res.status(500).json({ error: '100ms management token not set in environment' });
-  }
   if (!accessKey || !accessSecret) {
     return res.status(500).json({ error: '100ms access key/secret not set in environment' });
   }
+  // Always generate management token on the fly
+  const now = Math.floor(Date.now() / 1000);
+  const managementToken = jwt.sign(
+    {
+      access_key: accessKey,
+      type: 'management',
+      version: 2,
+      iat: now,
+      nbf: now
+    },
+    accessSecret,
+    {
+      algorithm: 'HS256',
+      expiresIn: '30m',
+      jwtid: uuidv4()
+    }
+  );
 
   try {
     // Step 1: Create a room if room_id is not a valid 100ms room ID (assume not a UUID)
