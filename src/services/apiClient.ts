@@ -1,31 +1,36 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
-// Generic API client for HTTP requests
-export async function apiClient<T = any>(url: string, options: {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  headers?: Record<string, string>;
-  body?: any;
-} = {}): Promise<{ data: T; status: number; raw: any }> {
+export async function apiClient<T = unknown>(
+  url: string,
+  options: {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    headers?: Record<string, string>;
+    body?: unknown;
+  } = {}
+): Promise<{ data: T; status: number; raw: AxiosResponse<T> }> {
   try {
     const { method = 'GET', headers = {}, body } = options;
-    const config: any = {
+    const config: AxiosRequestConfig = {
       method,
       url,
       headers,
       data: body,
       validateStatus: () => true,
     };
-    const response = await axios(config);
+    const response = await axios<T>(config);
     return {
       data: response.data,
       status: response.status,
       raw: response,
     };
-  } catch (error: any) {
-    return {
-      data: error.response?.data,
-      status: error.response?.status || 500,
-      raw: error,
-    };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        data: error.response.data as T,
+        status: error.response.status,
+        raw: error.response,
+      };
+    }
+    throw error;
   }
 }
