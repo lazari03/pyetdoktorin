@@ -83,41 +83,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(createRoomRes.status).json({ error: createRoomData.error || 'Failed to create 100ms room', raw: createRoomRaw });
       }
       actualRoomId = createRoomData.id;
-      // --- Automate room code creation for both doctor and patient roles ---
-      const rolesToEnsure = ['doctor', 'patient'];
-      for (const r of rolesToEnsure) {
-        // Check if code exists for this role
-        const getCodeRes = await fetch(`${HMS_BASE_URL}/room-codes/room/${actualRoomId}?role=${r}&enabled=true`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${managementToken}`
-          }
-        });
-        const getCodeRaw = await getCodeRes.text();
-        let getCodeData: RoomCodesResponse = {};
-        try {
-          getCodeData = getCodeRaw ? JSON.parse(getCodeRaw) : {};
-        } catch {
-          console.error('Failed to parse 100ms get room code response as JSON:', getCodeRaw);
+      // --- Create room codes for all roles in the room at once ---
+      const createCodesRes = await fetch(`${HMS_BASE_URL}/room-codes/room/${actualRoomId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${managementToken}`
         }
-        const codeExists = Array.isArray(getCodeData.data)
-          ? getCodeData.data.some((rc: RoomCodeObj) => rc.enabled && rc.role === r)
-          : false;
-        if (!codeExists) {
-          // Create room code for this role
-          await fetch(`${HMS_BASE_URL}/room-codes`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${managementToken}`
-            },
-            body: JSON.stringify({
-              room_id: actualRoomId,
-              role: r,
-              enabled: true
-            })
-          });
-        }
+      });
+      const createCodesRaw = await createCodesRes.text();
+      let createCodesData: { data?: RoomCodeObj[] } = {};
+      try {
+        createCodesData = createCodesRaw ? JSON.parse(createCodesRaw) : {};
+      } catch {
+        console.error('Failed to parse 100ms create room codes response as JSON:', createCodesRaw);
+        return res.status(500).json({ error: 'Invalid response from 100ms (create room codes)', raw: createCodesRaw });
+      }
+      if (!createCodesRes.ok || !Array.isArray(createCodesData.data)) {
+        return res.status(createCodesRes.status).json({ error: 'Failed to create 100ms room codes', raw: createCodesRaw });
       }
       // Wait a moment for codes to be available
       await new Promise((r) => setTimeout(r, 2000));
@@ -242,6 +225,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(500).json({ error: 'Invalid response from 100ms (create room code)', raw: createRoomCodeRaw });
         }
         if (!createRoomCodeRes.ok || !createRoomCodeData.code) {
+          // Log a clear message if Prebuilt is blocking room code creation
+          if (createRoomCodeRes.status === 404) {
+            console.error('[100ms Prebuilt BLOCKED] Room code creation failed with 404. This means Prebuilt is not initialized for this room/role. Someone must join the room via Prebuilt at least once in the dashboard.');
+          }
           return res.status(createRoomCodeRes.status).json({
             error: createRoomCodeData.error || 'Failed to create 100ms room code',
             raw: createRoomCodeRaw,
