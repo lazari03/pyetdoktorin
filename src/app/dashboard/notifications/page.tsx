@@ -7,9 +7,9 @@ import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import Link from "next/link";
 
-export default function NotificationsPage() {
+function NotificationsPage() {
   const router = useRouter();
-  const { appointments, loading: isLoading, error } = useAppointmentStore();
+  const { appointments, loading: isLoading, error, fetchAppointments } = useAppointmentStore();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [appointmentDetails, setAppointmentDetails] = useState<
     { id: string; patientName: string | null; doctorName: string | null }[]
@@ -19,7 +19,7 @@ export default function NotificationsPage() {
   >([]);
 
   useEffect(() => {
-    const fetchUserRole = async () => {
+    const fetchUserRoleAndAppointments = async () => {
       if (!auth.currentUser) {
         router.push("/login");
         return;
@@ -29,15 +29,18 @@ export default function NotificationsPage() {
       const userSnap = await getDoc(userRef);
 
       if (userSnap.exists()) {
-        setUserRole(userSnap.data().role);
+        const role = userSnap.data().role;
+        setUserRole(role);
+        // Always fetch latest notifications when visiting the page
+        await fetchAppointments(auth.currentUser.uid, role === "doctor");
       } else {
         console.warn("User not found");
         router.push("/login");
       }
     };
 
-    fetchUserRole();
-  }, [router]);
+    fetchUserRoleAndAppointments();
+  }, [router, fetchAppointments]);
 
   useEffect(() => {
     const fetchAppointmentDetails = async () => {
@@ -199,3 +202,5 @@ export default function NotificationsPage() {
     </div>
   );
 }
+
+export default NotificationsPage;
