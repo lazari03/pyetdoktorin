@@ -20,8 +20,7 @@ export default function ContactForm() {
   };
 
   return (
-    <section className="relative min-h-[70vh] flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-orange-100 py-16 px-2">
-      <div className="absolute inset-0 bg-[url('/img/globe.svg')] bg-center bg-no-repeat opacity-10 pointer-events-none" />
+    <section className="relative min-h-[70vh] flex items-center justify-center py-16 px-2">
       <div className="relative w-full max-w-2xl mx-auto rounded-3xl shadow-2xl bg-white/80 backdrop-blur-md p-0 overflow-hidden flex flex-col md:flex-row">
         {/* Left: Icon/Illustration */}
         <div className="hidden md:flex flex-col items-center justify-center bg-gradient-to-br from-orange-100 to-orange-200 w-1/2 p-10">

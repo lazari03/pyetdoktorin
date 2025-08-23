@@ -10,12 +10,12 @@ export default function ContentSection() {
   const imageUrl = "https://portokalle-storage.fra1.digitaloceanspaces.com/img/sick-senior-woman-talking-with-young-doctor-remote-consultation.jpg";
 
   return (
-  <section className="relative min-h-[60vh] flex items-center justify-center bg-gradient-to-b from-orange-50 via-white to-white pt-16 pb-32 px-2 overflow-hidden">
+  <section className="relative min-h-[60vh] flex items-center justify-center bg-white pt-16 pb-32 px-2 overflow-hidden">
   {/* Decorative orange circle: bottom half, aligns with top half in previous section */}
-  <div className="absolute -top-48 -left-32 w-96 h-48 bg-orange-100 rounded-b-full opacity-30 z-0" />
+  <div className="absolute -top-48 -left-32 w-96 h-48" />
       {/* Stronger bottom fade for seamless transition */}
-  <div className="pointer-events-none absolute left-0 right-0 bottom-0 h-64 bg-gradient-to-b from-transparent to-orange-100 z-30" style={{marginBottom: '-2rem'}} />
-      <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 relative z-20">
+  <div className="pointer-events-none absolute left-0 right-0 bottom-0 h-64 " style={{marginBottom: '-2rem'}} />
+  <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 relative">
         {/* Left: Image */}
         <div className="hidden md:flex flex-1 items-center justify-center">
           <Image

@@ -39,7 +39,7 @@ export default function NavBar() {
       className="fixed top-0 left-0 right-0 z-[9999] drop-shadow-xl"
     >
       {/* Main NavBar */}
-      <div className="mx-auto max-w-7xl px-4 md:px-8 py-5 mt-4 h-24 md:h-auto rounded-2xl bg-white/80 backdrop-blur shadow-lg relative flex items-center justify-between z-[9999]">
+  <div className="mx-auto max-w-7xl px-4 md:px-8 py-5 mt-4 h-24 md:h-auto rounded-2xl bg-white shadow-lg relative flex items-center justify-between z-[9999]">
         {/* Left - Hamburger or X */}
         <div className="md:hidden z-[10000]">
           <button
@@ -122,7 +122,7 @@ export default function NavBar() {
 
       {/* Mobile Menu Dropdown - Full Screen with White Background - Matching Screenshot */}
       {isMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-white shadow-md z-[10001] flex flex-col rounded-b-2xl overflow-hidden">
+  <div className="absolute top-full left-0 w-full bg-white shadow-md z-[10001] flex flex-col rounded-b-2xl overflow-hidden">
           {/* Menu Items */}
           <nav className="flex flex-col">
             <Link
