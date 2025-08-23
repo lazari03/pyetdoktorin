@@ -1,7 +1,7 @@
 import HeroSection from "./components/heroSection";
 import NavBar from "./components/navBar";
 import ContentSection from "./components/contentSection";
-import CtaSection from "./components/ctaSection";
+import ModernCtaSection from "./components/ModernCtaSection";
 import Contact from "./components/contact";
 import "./styles.css"; // Ensure you import the CSS file for styling
 import FooterSection from "./components/footerSection";
@@ -14,7 +14,7 @@ export default function Home() {
       </div>
       <HeroSection />
       <ContentSection />
-      <CtaSection />
+      <ModernCtaSection />
       <Contact />
       <FooterSection />
     </div>

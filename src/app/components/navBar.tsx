@@ -9,8 +9,6 @@ import { useState, useEffect } from 'react';
 export default function NavBar() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   const handleLoginClick = () => {
     setIsMenuOpen(false);
@@ -27,16 +25,6 @@ export default function NavBar() {
     router.push(path);
   };
 
-  // Scroll show/hide
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      setIsVisible(currentScrollY < lastScrollY);
-      setLastScrollY(currentScrollY);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
 
   // Lock scroll on mobile menu open
   useEffect(() => {
@@ -48,8 +36,7 @@ export default function NavBar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-[9999] transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'
-        }`}
+      className="fixed top-0 left-0 right-0 z-[9999] drop-shadow-xl"
     >
       {/* Main NavBar */}
       <div className="mx-auto max-w-7xl px-4 md:px-8 py-5 mt-4 h-24 md:h-auto rounded-2xl bg-white/80 backdrop-blur shadow-lg relative flex items-center justify-between z-[9999]">
