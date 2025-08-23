@@ -119,6 +119,11 @@ function NotificationsPage() {
     }
   }, [userRole, appointmentDetails, appointments]);
 
+  const handleDismissNotification = (id: string) => {
+    setPendingAppointments((prev) => prev.filter((appt) => appt.id !== id));
+    // TODO: Optionally, call backend to mark as dismissed
+  };
+
   const handleAppointmentAction = async (appointmentId: string, action: "accepted" | "rejected") => {
     try {
       const appointmentRef = doc(collection(db, "appointments"), appointmentId);
@@ -178,7 +183,8 @@ function NotificationsPage() {
     return (
   <div className="min-h-screen bg-base-100 py-8 px-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-6 text-center tracking-tight">Notifications</h1>
-        <div className={`overflow-x-auto max-w-6xl mx-auto ${styles['animate-pop-up']} ${styles['widget-elevated']}`}> 
+        {/* Desktop Table */}
+        <div className={`overflow-x-auto max-w-6xl mx-auto ${styles['animate-pop-up']} ${styles['widget-elevated']} hidden md:block`}>
           <table className="w-full text-base font-medium bg-transparent">
             <thead className="bg-gradient-to-r from-purple-50 to-blue-50">
               <tr>
@@ -228,12 +234,80 @@ function NotificationsPage() {
                           </Link>
                         )
                       )}
+                      {/* Dismiss Button */}
+                      <button
+                        className="transition-all duration-150 ease-in-out bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                        onClick={() => handleDismissNotification(appointment.id)}
+                        aria-label="Dismiss notification"
+                      >
+                        Dismiss
+                      </button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+        {/* Mobile Card List */}
+        <div className={`block md:hidden mt-6 space-y-6 ${styles['animate-pop-up']} ${styles['widget-elevated']}`}>
+          {pendingAppointments.map((appointment) => (
+            <div key={appointment.id} className="rounded-xl shadow bg-white p-4 flex flex-col gap-3 mb-2">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-gray-700">{appointment.preferredDate}</span>
+                <span
+                  className={
+                    appointment.status === 'accepted'
+                      ? 'text-xs font-semibold bg-green-100 text-green-700 px-2 py-1 rounded-full'
+                      : appointment.status === 'rejected'
+                      ? 'text-xs font-semibold bg-red-100 text-red-700 px-2 py-1 rounded-full'
+                      : 'text-xs font-semibold bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full'
+                  }
+                >
+                  {appointment.status === 'accepted' ? 'Accepted' : appointment.status === 'rejected' ? 'Rejected' : 'Pending'}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                <span><span className="font-medium">Patient:</span> {appointment.patientName || 'Unknown'}</span>
+                <span><span className="font-medium">Doctor:</span> {appointment.doctorName || 'Unknown'}</span>
+              </div>
+              <div className="text-sm text-gray-600"><span className="font-medium">Notes:</span> {appointment.notes || '-'}</div>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                {userRole === 'doctor' ? (
+                  <>
+                    <button
+                      className="transition-all duration-150 ease-in-out bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-300 w-24"
+                      onClick={() => handleAppointmentAction(appointment.id, 'accepted')}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      className="transition-all duration-150 ease-in-out bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-300 w-24"
+                      onClick={() => handleAppointmentAction(appointment.id, 'rejected')}
+                    >
+                      Reject
+                    </button>
+                  </>
+                ) : (
+                  appointment.status === 'rejected' && (
+                    <Link href="/dashboard/new-appointment">
+                      <button className="transition-all duration-150 ease-in-out bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300 w-28">
+                        Reschedule
+                      </button>
+                    </Link>
+                  )
+                )}
+                {/* Dismiss Button */}
+                <button
+                  className="ml-auto transition-all duration-150 ease-in-out bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onClick={() => handleDismissNotification(appointment.id)}
+                  aria-label="Dismiss notification"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
