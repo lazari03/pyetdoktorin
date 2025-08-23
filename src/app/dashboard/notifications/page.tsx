@@ -6,16 +6,17 @@ import { auth, db } from "../../../config/firebaseconfig";
 import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import Link from "next/link";
+import styles from "./notifications.module.css";
 
 function NotificationsPage() {
   const router = useRouter();
   const { appointments, loading: isLoading, error, fetchAppointments } = useAppointmentStore();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [appointmentDetails, setAppointmentDetails] = useState<
-    { id: string; patientName: string | null; doctorName: string | null }[]
+    { id: string; patientName: string | null; doctorName: string | null; preferredDate: string; notes: string }[]
   >([]);
   const [pendingAppointments, setPendingAppointments] = useState<
-    { id: string; patientName: string | null; doctorName: string | null }[]
+    { id: string; patientName: string | null; doctorName: string | null; preferredDate: string; notes: string; status?: string }[]
   >([]);
 
   useEffect(() => {
@@ -54,7 +55,7 @@ function NotificationsPage() {
               throw new Error("Appointment not found");
             }
 
-            const { patientId, doctorId } = appointmentSnap.data();
+            const { patientId, doctorId, preferredDate, notes } = appointmentSnap.data();
 
             let patientName: string | null = null;
             let doctorName: string | null = null;
@@ -75,14 +76,16 @@ function NotificationsPage() {
               }
             }
 
-            return { 
-              id: appointment.id, 
-              patientName, 
-              doctorName 
+            return {
+              id: appointment.id,
+              patientName,
+              doctorName,
+              preferredDate: preferredDate || '',
+              notes: notes || ''
             };
           } catch (err) {
             console.error(`Error fetching details for appointment ${appointment.id}:`, err);
-            return { id: appointment.id, patientName: null, doctorName: null };
+            return { id: appointment.id, patientName: null, doctorName: null, preferredDate: '', notes: '' };
           }
         })
       );
@@ -95,19 +98,26 @@ function NotificationsPage() {
   }, [appointments]);
 
   useEffect(() => {
-    const fetchPendingAppointments = async () => {
+    const fetchRelevantAppointments = async () => {
       if (userRole === "doctor") {
         const pending = appointmentDetails.filter(
           (appointment) => appointments.find((a) => a.id === appointment.id)?.status === "pending"
         );
         setPendingAppointments(pending);
+      } else if (userRole === "patient") {
+        // For patients, show all their appointments with status and doctor name
+        const withStatus = appointmentDetails.map((appointment) => {
+          const found = appointments.find((a) => a.id === appointment.id);
+          return { ...appointment, status: found?.status || "pending", doctorName: found?.doctorName || appointment.doctorName };
+        });
+        setPendingAppointments(withStatus);
       }
     };
 
     if (userRole && appointmentDetails.length > 0) {
-      fetchPendingAppointments();
+      fetchRelevantAppointments();
     }
-  }, [userRole, appointmentDetails, appointments]); // Added 'appointments' to the dependency array
+  }, [userRole, appointmentDetails, appointments]);
 
   const handleAppointmentAction = async (appointmentId: string, action: "accepted" | "rejected") => {
     try {
@@ -165,42 +175,68 @@ function NotificationsPage() {
     );
   }
 
-  return (
-    <div className="card bg-base-100 shadow-xl p-6">
-      <h1 className="card-title mb-4">Pending Appointments</h1>
-      <div className="overflow-x-auto">
-        <table className="table w-full">
-          <thead>
-            <tr>
-              <th>Patient Name</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pendingAppointments.map((appointment) => (
-              <tr key={appointment.id}>
-                <td>{appointment.patientName || "Unknown"}</td>
-                <td>
-                  <button
-                    className="btn btn-success btn-sm mr-2"
-                    onClick={() => handleAppointmentAction(appointment.id, "accepted")}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    className="btn btn-error btn-sm"
-                    onClick={() => handleAppointmentAction(appointment.id, "rejected")}
-                  >
-                    Reject
-                  </button>
-                </td>
+    return (
+  <div className="min-h-screen bg-base-100 py-8 px-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-6 text-center tracking-tight">Pending Appointments</h1>
+        <div className={`overflow-x-auto max-w-6xl mx-auto ${styles['animate-pop-up']} ${styles['widget-elevated']}`}> 
+          <table className="w-full text-base font-medium bg-transparent">
+            <thead className="bg-gradient-to-r from-purple-50 to-blue-50">
+              <tr>
+                <th className="px-3 py-3 text-left text-gray-700 font-semibold">Patient Name</th>
+                <th className="px-3 py-3 text-left text-gray-700 font-semibold">Doctor</th>
+                <th className="px-3 py-3 text-left text-gray-700 font-semibold">Date</th>
+                <th className="px-3 py-3 text-left text-gray-700 font-semibold">Notes</th>
+                <th className="px-3 py-3 text-center text-gray-700 font-semibold">Status</th>
+                <th className="px-3 py-3 text-center text-gray-700 font-semibold">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {pendingAppointments.map((appointment, idx) => (
+                <tr key={appointment.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <td className="px-3 py-3 align-middle text-gray-800 whitespace-nowrap rounded-l-xl">{appointment.patientName || "Unknown"}</td>
+                  <td className="px-3 py-3 align-middle text-gray-700 whitespace-nowrap">{appointment.doctorName || "Unknown"}</td>
+                  <td className="px-3 py-3 align-middle text-gray-700 whitespace-nowrap">{appointment.preferredDate || "-"}</td>
+                  <td className="px-3 py-3 align-middle text-gray-700 whitespace-nowrap">{appointment.notes || "-"}</td>
+                  <td className="px-3 py-3 align-middle text-center">
+                    {appointment.status === 'accepted' && <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 font-semibold">Accepted</span>}
+                    {appointment.status === 'rejected' && <span className="inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 font-semibold">Rejected</span>}
+                    {appointment.status === 'pending' && <span className="inline-block px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 font-semibold">Pending</span>}
+                  </td>
+                  <td className="px-3 py-3 align-middle text-center rounded-r-xl">
+                    <div className="flex flex-row gap-2 justify-center items-center">
+                      {userRole === 'doctor' ? (
+                        <>
+                          <button
+                            className="transition-all duration-150 ease-in-out bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-300 w-24"
+                            onClick={() => handleAppointmentAction(appointment.id, "accepted")}
+                          >
+                            Accept
+                          </button>
+                          <button
+                            className="transition-all duration-150 ease-in-out bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-300 w-24"
+                            onClick={() => handleAppointmentAction(appointment.id, "rejected")}
+                          >
+                            Reject
+                          </button>
+                        </>
+                      ) : (
+                        appointment.status === 'rejected' && (
+                          <Link href="/dashboard/new-appointment">
+                            <button className="transition-all duration-150 ease-in-out bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300 w-28">
+                              Reschedule
+                            </button>
+                          </Link>
+                        )
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
+    );
 }
 
 export default NotificationsPage;
