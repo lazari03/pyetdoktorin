@@ -94,8 +94,7 @@ function AppointmentsPage() {
     }
   };
 
-  if (loading) return <Loader />;
-  if (typeof isDoctor !== 'boolean') return <div>Loading...</div>;
+  // Loader is now handled by RoleGuard, so no need to show it here
 
   return (
     <div>

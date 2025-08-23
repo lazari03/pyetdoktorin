@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Appointment } from '../models/Appointment';
+import { parseDateTime } from '../utils/dateFormatter';
 
 export function useUpcomingAppointment(appointments: Appointment[]): Appointment | null {
   return useMemo(() => {
@@ -7,12 +8,12 @@ export function useUpcomingAppointment(appointments: Appointment[]): Appointment
     const now = new Date();
     const upcoming = appointments
       .filter((a) => {
-        const dateTime = new Date(`${a.preferredDate}T${a.preferredTime}`);
+        const dateTime = parseDateTime(a.preferredDate, a.preferredTime);
         return dateTime > now && a.status === 'accepted';
       })
       .sort((a, b) => {
-        const dateA = new Date(`${a.preferredDate}T${a.preferredTime}`).getTime();
-        const dateB = new Date(`${b.preferredDate}T${b.preferredTime}`).getTime();
+        const dateA = parseDateTime(a.preferredDate, a.preferredTime).getTime();
+        const dateB = parseDateTime(b.preferredDate, b.preferredTime).getTime();
         return dateA - dateB;
       });
     return upcoming.length > 0 ? upcoming[0] : null;

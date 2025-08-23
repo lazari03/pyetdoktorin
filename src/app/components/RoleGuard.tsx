@@ -1,4 +1,6 @@
+
 'use client';
+import Loader from './Loader';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -39,13 +41,10 @@ export default function RoleGuard({ children, allowedRoles, fallbackPath = '/das
     return () => clearTimeout(timer);
   }, [allowedRoles, fallbackPath, router]);
 
+
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg"></div>
-        <span className="ml-2">Checking authorization...</span>
-      </div>
-    );
+    // Use the centralized Loader component
+    return <div className="flex justify-center items-center min-h-screen"><Loader /></div>;
   }
 
   return isAuthorized ? <>{children}</> : null;

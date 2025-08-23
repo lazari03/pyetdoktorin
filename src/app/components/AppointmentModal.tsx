@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import useNewAppointment from '../../hooks/useNewAppointment';
+import AppointmentConfirmation from './AppointmentConfirmation';
 
 export default function AppointmentModal({
   isOpen,
@@ -12,6 +13,7 @@ export default function AppointmentModal({
   onClose: () => void;
   doctor: { id: string; name: string; specialization?: string };
 }) {
+
   const {
     setSelectedDoctor,
     appointmentType,
@@ -26,6 +28,8 @@ export default function AppointmentModal({
     handleSubmit,
   } = useNewAppointment();
 
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       setSelectedDoctor({
@@ -35,7 +39,11 @@ export default function AppointmentModal({
     }
   }, [isOpen, doctor, setSelectedDoctor]);
 
+
   if (!isOpen) return null;
+  if (showConfirmation) {
+    return <AppointmentConfirmation onClose={() => { setShowConfirmation(false); onClose(); }} />;
+  }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -43,9 +51,9 @@ export default function AppointmentModal({
         <h2 className="text-xl font-bold mb-4">New Appointment</h2>
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            handleSubmit(e, onClose, () => {}); // Pass the required arguments
+            await handleSubmit(e, () => setShowConfirmation(true), () => {});
           }}
         >
           <div>

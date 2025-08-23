@@ -7,11 +7,12 @@ import Link from 'next/link';
 import { isProfileIncomplete } from '../../store/generalStore';
 import DashboardDoctorSearchBar from '../components/DashboardDoctorSearchBar';
 import { UserRole } from '../../models/UserRole';
-import DashboardNotifications from '../components/DashboardNotifications';
+import DashboardNotificationsBell from '../components/DashboardNotificationsBell';
 import Loader from '../components/Loader';
 import { useAppointmentStore } from '../../store/appointmentStore';
 import { AppointmentsTable } from '../components/AppointmentsTable';
 import { useUpcomingAppointment } from '../../hooks/useUpcomingAppointment';
+import UpcomingAppointment from '../components/UpcomingAppointment';
 import { useDashboardActions } from '../../hooks/useDashboardActions';
 import ProfileWarning from '../components/ProfileWarning';
 
@@ -61,13 +62,11 @@ export default function Dashboard() {
       )}
       <ProfileWarning show={profileIncomplete} />
       {role === UserRole.Doctor && user?.uid && (
-        <div className="mb-6">
-          <DashboardNotifications doctorId={user.uid} />
-          <Link href="/dashboard/notifications" className="text-blue-500 hover:underline mt-2 block">
-            View All Notifications
-          </Link>
+        <div className="mb-6 flex items-center justify-end">
+          <DashboardNotificationsBell doctorId={user.uid} />
         </div>
       )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="stats shadow">
           <div className="stat">
@@ -75,23 +74,7 @@ export default function Dashboard() {
             <div className="stat-value">{totalAppointments}</div>
           </div>
         </div>
-        <div className="stats shadow">
-          <div className="stat">
-            <div className="stat-title">Upcoming Appointment</div>
-            <div className="stat-value text-base text-orange-500">
-              {nextUpcomingAppointment ? (
-                <span>
-                  {nextUpcomingAppointment.preferredDate} at {nextUpcomingAppointment.preferredTime} <br />
-                  {role === 'doctor'
-                    ? `Patient: ${nextUpcomingAppointment.patientName || 'N/A'}`
-                    : `Doctor: ${nextUpcomingAppointment.doctorName}`}
-                </span>
-              ) : (
-                'No upcoming appointments'
-              )}
-            </div>
-          </div>
-        </div>
+        <UpcomingAppointment />
       </div>
       <div className="card bg-base-100 shadow-xl mt-6">
         <div className="card-body">

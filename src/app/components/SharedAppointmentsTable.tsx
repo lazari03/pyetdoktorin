@@ -1,4 +1,5 @@
 import React from 'react';
+import CenteredLoader from './CenteredLoader';
 import { Appointment } from '../../models/Appointment';
 import { getAppointmentAction } from '../../store/appointmentActionButton';
 import { DEFAULT_APPOINTMENT_PAYMENT_AMOUNT } from '../../config/paymentConfig';
@@ -11,6 +12,7 @@ interface AppointmentsTableProps {
   handlePayNow: (appointmentId: string, amount: number) => void;
   showActions?: boolean;
   maxRows?: number;
+  loading?: boolean;
 }
 
 export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
@@ -21,7 +23,11 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
   handlePayNow,
   showActions = true,
   maxRows = 3,
+  loading = false,
 }) => {
+  if (loading) {
+    return <CenteredLoader />;
+  }
   return (
     <div className="overflow-x-auto mt-6">
       <table className="table table-zebra w-full text-sm md:text-base">
