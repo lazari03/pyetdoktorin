@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import { useAuth } from "../../../context/AuthContext";
-import DashboardNotifications from '../../components/DashboardNotifications';
 import Loader from "../../components/Loader";
 import { useVideoStore } from "../../../store/videoStore";
 import RoleGuard from '../../components/RoleGuard';
@@ -98,7 +97,6 @@ function AppointmentsPage() {
 
   return (
     <div>
-      {isDoctor && user?.uid && <DashboardNotifications doctorId={user.uid} />}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <h2 className="card-title text-lg md:text-2xl">Your Appointments</h2>
