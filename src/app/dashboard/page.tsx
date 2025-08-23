@@ -11,7 +11,6 @@ import DashboardNotificationsBell from '../components/DashboardNotificationsBell
 import Loader from '../components/Loader';
 import { useAppointmentStore } from '../../store/appointmentStore';
 import { AppointmentsTable } from '../components/AppointmentsTable';
-import { useUpcomingAppointment } from '../../hooks/useUpcomingAppointment';
 import UpcomingAppointment from '../components/UpcomingAppointment';
 import { useDashboardActions } from '../../hooks/useDashboardActions';
 import ProfileWarning from '../components/ProfileWarning';
@@ -23,7 +22,6 @@ export default function Dashboard() {
   const { handleJoinCall, handlePayNow } = useDashboardActions();
   const [profileIncomplete, setProfileIncomplete] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
-  const nextUpcomingAppointment = useUpcomingAppointment(appointments);
 
   const fetchProfileStatus = useCallback(async () => {
     if (user && role) {

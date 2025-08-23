@@ -4,7 +4,10 @@
 export function parseDateTime(dateStr: string, timeStr: string): Date {
   // Expect dateStr: 'YYYY-MM-DD', timeStr: 'hh:mm AM/PM'
   const [hourMin, ampm] = timeStr.split(' ');
-  let [hour, minute] = hourMin.split(':').map(Number);
+  let hour;
+  const minuteRaw = hourMin.split(':').map(Number)[1];
+  hour = hourMin.split(':').map(Number)[0];
+  const minute = minuteRaw;
   if (ampm?.toUpperCase() === 'PM' && hour !== 12) hour += 12;
   if (ampm?.toUpperCase() === 'AM' && hour === 12) hour = 0;
   // Construct ISO string

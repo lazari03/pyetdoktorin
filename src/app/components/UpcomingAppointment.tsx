@@ -3,14 +3,12 @@
 import React from 'react';
 import { useAppointmentStore } from '../../store/appointmentStore';
 import CenteredLoader from './CenteredLoader';
-import { useDashboardActions } from '../../hooks/useDashboardActions';
 import { useAuth } from '../../context/AuthContext';
 
 
 const UpcomingAppointment = () => {
   const { appointments, loading } = useAppointmentStore();
-  const { role, user } = useAuth();
-  const { handleJoinCall } = useDashboardActions();
+  const { role } = useAuth();
 
   // Find all accepted, future appointments
   const now = new Date();

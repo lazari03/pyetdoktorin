@@ -22,7 +22,6 @@ export default function NewAppointmentStepper() {
     setPreferredTime,
     notes,
     setNotes,
-    resetAppointment,
     handleSubmit,
     isSubmitting,
     availableTimes,
@@ -30,7 +29,6 @@ export default function NewAppointmentStepper() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   // Progress calculation
   const progressPercent = ((step + 1) / steps.length) * 100;
@@ -123,7 +121,7 @@ export default function NewAppointmentStepper() {
       className="flex flex-col gap-4 w-full max-w-sm mx-auto"
       onSubmit={async (e) => {
         e.preventDefault();
-        await handleSubmit(e, setShowModal, setProgress);
+        await handleSubmit(e, setShowModal, () => {});
       }}
     >
       <h2 className="font-bold text-xl mb-2">Add Notes & Confirm</h2>

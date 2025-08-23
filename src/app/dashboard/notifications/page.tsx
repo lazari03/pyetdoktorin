@@ -177,7 +177,7 @@ function NotificationsPage() {
 
     return (
   <div className="min-h-screen bg-base-100 py-8 px-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-6 text-center tracking-tight">Pending Appointments</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-6 text-center tracking-tight">Notifications</h1>
         <div className={`overflow-x-auto max-w-6xl mx-auto ${styles['animate-pop-up']} ${styles['widget-elevated']}`}> 
           <table className="w-full text-base font-medium bg-transparent">
             <thead className="bg-gradient-to-r from-purple-50 to-blue-50">

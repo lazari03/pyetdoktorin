@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useAppointmentStore } from "../../../store/appointmentStore";
 import { useAuth } from "../../../context/AuthContext";
-import Loader from "../../components/Loader";
 import { useVideoStore } from "../../../store/videoStore";
 import RoleGuard from '../../components/RoleGuard';
 import { AppointmentsTable } from '../../components/SharedAppointmentsTable';
@@ -20,7 +19,6 @@ function AppointmentsPage() {
     handlePayNow,
     isAppointmentPast,
     fetchAppointments,
-    loading,
     setIsDoctor,
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
