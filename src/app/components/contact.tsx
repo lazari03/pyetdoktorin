@@ -1,8 +1,7 @@
 'use client';
 
 
-import { useForm, Controller, FieldValues } from 'react-hook-form';
-import PhoneInput from 'react-phone-input-2';
+import { useForm, FieldValues } from 'react-hook-form';
 import 'react-phone-input-2/lib/style.css';
 import heroSectionStrings from './heroSection.strings';
 

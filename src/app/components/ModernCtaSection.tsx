@@ -1,7 +1,7 @@
 
 
 import Image from 'next/image';
-import { COMPANY_NAME, FOOTER_TAGLINE } from '@/utils/strings';
+
 
 export default function ModernCtaSection() {
   // Example fallback strings, replace with your string file imports as needed

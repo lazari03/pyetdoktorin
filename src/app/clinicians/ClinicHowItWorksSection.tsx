@@ -1,0 +1,38 @@
+
+
+import { CalendarDaysIcon, UserGroupIcon, CreditCardIcon, ChartBarIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+
+const steps = [
+  { icon: UserGroupIcon, label: 'List your doctors' },
+  { icon: CalendarDaysIcon, label: 'Manage consultations as a clinic' },
+  { icon: UserCircleIcon, label: 'Doctor profiles & performance' },
+  { icon: CreditCardIcon, label: 'Collect payments easily' },
+  { icon: ChartBarIcon, label: 'View analytics & reports' },
+];
+
+export default function ClinicHowItWorksSection() {
+  return (
+    <section className="w-full py-16 px-2 bg-white mb-12 flex items-center justify-center">
+      <div className="max-w-5xl mx-auto flex flex-col items-center">
+        <h3 className="text-xs font-bold text-orange-600 uppercase tracking-widest mb-1 text-center">How It Works</h3>
+  <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-8 text-center">Modern clinic management, simplified</h2>
+        <div className="relative w-full flex justify-center">
+          <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-orange-100 z-0" style={{transform: 'translateY(-50%)'}} />
+          <ol className="relative w-full flex flex-row justify-between items-center gap-2 z-10">
+            {steps.map((step, idx) => (
+              <li key={idx} className="flex flex-col items-center flex-1 min-w-[110px]">
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow text-lg font-extrabold text-orange-600 mb-2 z-10">
+                  <step.icon className="h-6 w-6 text-orange-500" />
+                </div>
+                <span className="text-xs text-gray-700 leading-tight text-center font-medium">{step.label}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <p className="text-sm text-gray-600 mt-8 text-center max-w-xl">
+          Use Portokalle as your online clinic: list your doctors, manage appointments and consultations, track performance, and collect payments—all in one modern, secure platform.
+        </p>
+      </div>
+    </section>
+  );
+}

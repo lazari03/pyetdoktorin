@@ -88,11 +88,11 @@ export default function NavBar() {
             Individuals
           </Link>
           <Link
-            href="/organizations"
+            href="/doctors"
             className="text-black hover:text-[#ea580c] cursor-pointer"
             onClick={() => handleNavItemClick('/organizations')}
           >
-            Organizations
+            Doctors
           </Link>
           <Link
             href="/clinicians"
@@ -133,11 +133,11 @@ export default function NavBar() {
               Individuals
             </Link>
             <Link
-              href="/organizations"
+              href="/doctors"
               className="text-blue-600 py-4 px-6 border-b border-gray-100 cursor-pointer"
               onClick={() => handleNavItemClick('/organizations')}
             >
-              Organizations
+              Doctors
             </Link>
             <Link
               href="/clinicians"
