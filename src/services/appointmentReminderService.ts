@@ -10,7 +10,6 @@ import { Appointment } from '../models/Appointment';
 export async function sendAppointmentReminder(appointment: Appointment) {
   if (!appointment.patientId || !appointment.doctorName || !appointment.preferredDate || !appointment.preferredTime) return;
   const patientPhone = await getUserPhoneNumber(appointment.patientId);
-  console.log('Patient phone number:', patientPhone); // Print the phone number
   if (!patientPhone) return;
   // Compose the time string for the reminder
   const time = `${appointment.preferredDate} ${appointment.preferredTime}`;

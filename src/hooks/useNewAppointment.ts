@@ -79,8 +79,7 @@ export default function useNewAppointment() {
       );
       const querySnapshot = await getDocs(q);
       return !querySnapshot.empty;
-    } catch (error) {
-      console.error('Error checking appointment existence:', error);
+    } catch {
       return false;
     }
   };
@@ -93,12 +92,12 @@ export default function useNewAppointment() {
     e.preventDefault();
 
     if (isSubmitting || !selectedDoctor) {
-      console.error('Submission in progress or no doctor selected');
+
       return;
     }
 
     if (!user || !user.uid || !user.name) {
-      console.error('No authenticated user found or user name is missing');
+
       return;
     }
 
@@ -118,7 +117,6 @@ export default function useNewAppointment() {
       status: "pending", // Add the missing status property
     };
 
-    console.log('Attempting to save appointment data:', appointmentData); // Log the data
 
     try {
       const exists = await checkAppointmentExists(
@@ -129,7 +127,7 @@ export default function useNewAppointment() {
       );
 
       if (exists) {
-        console.error('Appointment already exists for the selected time and date');
+
         setIsSubmitting(false);
         return;
       }
@@ -145,7 +143,6 @@ export default function useNewAppointment() {
           patientName: appointmentData.patientName,
         }),
       });
-      console.log('Appointment successfully saved:', appointmentData);
       resetAppointment();
       setShowModal(true);
 
@@ -157,8 +154,7 @@ export default function useNewAppointment() {
           clearInterval(interval);
         }
       }, 300);
-    } catch (error) {
-      console.error('Error saving appointment:', error);
+    } catch {
       setIsSubmitting(false);
     }
   };

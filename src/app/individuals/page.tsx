@@ -12,7 +12,7 @@ export default function IndividualsPage() {
     <>
       <NavBar />
       <HeroSection 
-        backgroundImage="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80"
+        backgroundImage="https://portokalle-storage.fra1.digitaloceanspaces.com/img/pexels-shvetsa-4225920.jpg"
         locale="en"
       />
   <IndividualBenefitsSection />

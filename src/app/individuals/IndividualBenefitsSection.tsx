@@ -19,7 +19,7 @@ export default function IndividualBenefitsSection() {
         {/* Right: Image */}
         <div className="flex-1 flex justify-center items-center">
           <Image
-            src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=600&q=80"
+            src="https://portokalle-storage.fra1.digitaloceanspaces.com/img/Screenshot%202025-08-25%20at%209.29.37%E2%80%AFPM.png"
             alt="Happy patient using telemedicine"
             width={340}
             height={340}

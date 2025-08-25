@@ -50,9 +50,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
           : null,
         recentAppointments: sortedAppointments,
       }));
-    } catch (error) {
-      console.error('Failed to fetch dashboard appointments:', error);
-    }
+  } catch {
+  }
   },
   sidebarOpen: false,
   navPaths: [],

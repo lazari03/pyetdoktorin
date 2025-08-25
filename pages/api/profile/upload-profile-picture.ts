@@ -14,7 +14,6 @@ export const config = {
 // Helper to check env vars
 function checkEnvVar(name: string) {
   if (!process.env[name]) {
-    console.error(`Missing environment variable: ${name}`);
     throw new Error(`Missing environment variable: ${name}`);
   }
   return process.env[name]!;
@@ -54,17 +53,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const bucket = checkEnvVar('DO_SPACES_BUCKET');
     const key = `img/doc-img/${uuidv4()}-${file.originalFilename}`;
 
-    // Log all relevant info for debugging
-    console.log('[Spaces Upload Debug]', {
-      bucket,
-      key,
-      region,
-      endpoint,
-      fileSize: file.size,
-      fileName: file.originalFilename,
-      mimeType: file.mimetype,
-    });
-
     // Read the file content
     const fileContent = fs.readFileSync(file.filepath);
 
@@ -83,10 +71,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Clean up the temporary file
     fs.unlinkSync(file.filepath);
     
-    console.log('Upload successful:', publicUrl);
     res.status(200).json({ publicUrl });
   } catch (error) {
-    console.error('Error uploading to Spaces:', error);
     res.status(500).json({ 
       error: 'Failed to upload file', 
       details: error instanceof Error ? error.message : error 

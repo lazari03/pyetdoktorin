@@ -25,8 +25,7 @@ export default function RoleGuard({ children, allowedRoles, fallbackPath = '/das
           return false;
         }
         return true;
-      } catch (error) {
-        console.error('RoleGuard: Error checking user role:', error);
+  } catch {
         router.push(fallbackPath);
         return false;
       }

@@ -15,11 +15,10 @@ export async function getUserRole(userId: string): Promise<string> {
       const userData = userSnap.data();
       return userData.role || "patient";
     } else {
-      console.error("User document does not exist.");
+
       return "patient";
     }
-  } catch (error) {
-    console.error("Error fetching user role:", error);
+  } catch {
     return "patient";
   }
 }
@@ -43,7 +42,7 @@ export async function fetchAppointments(userId: string, isDoctor: boolean): Prom
       })
     );
   } catch (error) {
-    console.error('Error fetching appointments:', error);
+
     throw error;
   }
 }
@@ -67,15 +66,13 @@ export const bookAppointment = async (appointmentData: {
   };
   try {
     const docRef = await addDoc(collection(db, 'appointments'), appointment);
-    console.log('Appointment successfully added with ID:', docRef.id);
     // Fetch doctor's phone number and send SMS
     const doctorPhone = await getUserPhoneNumber(appointmentData.doctorId);
     if (doctorPhone) {
       await sendDoctorAppointmentRequestSMS(doctorPhone, user.displayName || 'A patient');
     }
     return { id: docRef.id, ...appointment };
-  } catch (err) {
-    console.error('Error adding appointment to Firestore:', err);
+  } catch {
     throw new Error('Failed to book appointment.');
   }
 };

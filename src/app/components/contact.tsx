@@ -10,12 +10,26 @@ import heroSectionStrings from './heroSection.strings';
 import { PaperAirplaneIcon, UserIcon, EnvelopeIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
 
 export default function ContactForm() {
-  const { handleSubmit } = useForm();
+  const { handleSubmit, register, reset } = useForm();
   const locale = 'en';
   const strings = heroSectionStrings[locale]?.contactSection || heroSectionStrings.en.contactSection;
 
-  const onSubmit = (data: FieldValues) => {
-    console.log('Form Data:', data);
+  const onSubmit = async (data: FieldValues) => {
+    try {
+      const res = await fetch('/api/contact/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        alert('Message sent successfully!');
+        reset();
+      } else {
+        alert('Failed to send message. Please try again.');
+      }
+  } catch {
+      alert('An error occurred. Please try again.');
+    }
   };
 
   return (
@@ -37,7 +51,7 @@ export default function ContactForm() {
               <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-orange-300" />
               <input
                 id="name"
-                name="name"
+                {...register('name', { required: true })}
                 type="text"
                 placeholder={strings.firstName}
                 className="w-full pl-12 pr-4 py-3 rounded-full bg-white/80 border border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 focus:outline-none text-base shadow-sm"
@@ -47,7 +61,7 @@ export default function ContactForm() {
               <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-orange-300" />
               <input
                 id="email"
-                name="email"
+                {...register('email', { required: true })}
                 type="email"
                 placeholder={strings.email}
                 className="w-full pl-12 pr-4 py-3 rounded-full bg-white/80 border border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 focus:outline-none text-base shadow-sm"
@@ -57,7 +71,7 @@ export default function ContactForm() {
               <ChatBubbleLeftRightIcon className="absolute left-4 top-4 w-5 h-5 text-orange-300" />
               <textarea
                 id="message"
-                name="message"
+                {...register('message', { required: true })}
                 rows={4}
                 placeholder={strings.message}
                 className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white/80 border border-orange-100 text-gray-900 placeholder-gray-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 focus:outline-none text-base shadow-sm resize-none"

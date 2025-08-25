@@ -38,8 +38,7 @@ export default function DoctorCalendarPage() {
             });
           setEvents(mappedEvents);
         }
-      } catch (error) {
-        console.error('Error loading calendar:', error);
+  } catch {
       } finally {
         setLoading(false);
       }

@@ -11,7 +11,7 @@ export default function ClinicsPage() {
     <>
       <NavBar />
       <HeroSection 
-        backgroundImage="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd07?auto=format&fit=crop&w=1200&q=80"
+        backgroundImage="https://portokalle-storage.fra1.digitaloceanspaces.com/img/pexels-karolina-grabowska-7195310.jpg"
         locale="en"
       />
       <ClinicBenefitsSection />

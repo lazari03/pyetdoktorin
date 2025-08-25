@@ -83,7 +83,6 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
                 document.cookie = 'auth-token=; path=/; max-age=0';
                 window.location.href = '/login';
               } catch {
-                console.error('Error signing out:');
                 alert('Error signing out. Please try again.');
               }
             }}

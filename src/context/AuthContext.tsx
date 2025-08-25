@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const auth = getAuth();
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log('Auth state changed:', currentUser); // Debugging log
 
       if (currentUser) {
         setIsAuthenticated(true);
@@ -48,13 +47,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.setItem('userRole', role); // Store the role in localStorage
             setUser({ uid: currentUser.uid, name: userData.name || 'Unknown' }); // Ensure name is set
           } else {
-            console.error('User document not found in Firestore');
+
             setRole(null);
             localStorage.removeItem('userRole'); // Remove role if not found
             setUser(null);
           }
-        } catch (error) {
-          console.error('Failed to fetch user role from Firestore:', error);
+        } catch {
           setRole(null);
           localStorage.removeItem('userRole'); // Remove role on error
           setUser(null);

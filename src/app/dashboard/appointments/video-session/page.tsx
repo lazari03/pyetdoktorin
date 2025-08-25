@@ -13,7 +13,6 @@ export default function VideoSessionPage() {
     const code = window.localStorage.getItem('videoSessionRoomCode');
     const uname = window.localStorage.getItem('videoSessionUserName');
     if (code && uname) {
-      console.log('Loaded roomCode for 100ms video session:', code);
       setRoomCode(code);
       setUserName(uname);
       setLoading(false);

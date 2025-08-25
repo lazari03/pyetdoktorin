@@ -43,8 +43,7 @@ export default function DoctorSearchModal({ isOpen, onClose, position }: DoctorS
         new Map([...doctorsByName, ...doctorsBySpecializations].map((doc) => [doc.id, doc])).values()
       );
       setFilteredDoctors(uniqueDoctors);
-    } catch (error) {
-      console.error('Error fetching doctors:', error);
+    } catch {
       setError('Failed to fetch doctors. Please try again.');
     } finally {
       setLoading(false);

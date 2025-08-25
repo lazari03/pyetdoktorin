@@ -58,9 +58,8 @@ function AppointmentsPage() {
         if (user?.uid && typeof isDoctor === 'boolean') {
           await fetchAppointments(user.uid, isDoctor);
         }
-      } catch (error) {
-        console.error('Error verifying payment:', error);
-      }
+  } catch {
+  }
     })();
   }, [setAppointmentPaid, user, isDoctor, fetchAppointments]);
 
@@ -85,9 +84,8 @@ function AppointmentsPage() {
       window.localStorage.setItem('videoSessionRoomCode', roomCode);
       window.localStorage.setItem('videoSessionUserName', patientName);
       window.location.href = '/dashboard/appointments/video-session';
-    } catch (error) {
-      console.error('Error creating video call session:', error);
-      alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  } catch {
+      alert('An error occurred. Please try again.');
     }
   };
 

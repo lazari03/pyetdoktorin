@@ -28,17 +28,14 @@ export const login = async (email: string, password: string) => {
 
         // Get ID token for cookie-based auth
         const token = await user.getIdToken();
-        console.log('Token obtained successfully');
 
         // Set the auth token as a session cookie
         document.cookie = `auth-token=${token}; path=/; SameSite=Lax; expires=Session`;
         // Set the userRole cookie for middleware
         document.cookie = `userRole=${role}; path=/; SameSite=Lax; expires=Session`;
-        console.log('Auth token cookie set:', document.cookie);
 
         return { user, role };
-    } catch (error) {
-        console.error('Error during login:', error);
+    } catch {
         throw new Error('Failed to log in');
     }
 };
@@ -50,11 +47,10 @@ export async function fetchUserDetails(userId: string) {
         if (userDoc.exists()) {
             return userDoc.data(); // Return user details
         } else {
-            console.error('User not found');
+
             return null;
         }
-    } catch (error) {
-        console.error('Error fetching user details:', error);
+    } catch {
         return null;
     }
 }

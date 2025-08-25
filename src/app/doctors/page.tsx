@@ -10,7 +10,7 @@ export default function DoctorsPage() {
     <>
       <NavBar />
       <HeroSection 
-        backgroundImage="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80"
+        backgroundImage="https://portokalle-storage.fra1.digitaloceanspaces.com/img/pexels-karolina-grabowska-4021779.jpg"
         locale="en"
       />
       <main className="max-w-5xl mx-auto px-4 py-12">

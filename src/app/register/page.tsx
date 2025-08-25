@@ -62,7 +62,6 @@ export default function RegisterPage() {
                 router.push("/login");
             }, 3000);
         } catch (error) {
-            console.error("Registration failed:", error);
             setError(
                 error instanceof Error
                     ? error.message

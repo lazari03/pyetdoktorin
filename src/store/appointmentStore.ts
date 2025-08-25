@@ -51,9 +51,8 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     try {
       const appointmentRef = doc(db, "appointments", appointmentId);
       await updateDoc(appointmentRef, { isPaid: true });
-    } catch (error) {
-      console.error("Failed to update isPaid in Firestore:", error);
-    }
+  } catch {
+  }
   },
   handlePayNow: async (appointmentId, amount) => {
     try {
@@ -68,10 +67,8 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       } else {
         throw new Error("Failed to create payment intent");
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      alert(`Payment error: ${message}`);
-      console.error("Error processing payment:", error);
+    } catch {
+      alert('Payment error');
     }
   },
   isPastAppointment: (date, time) => {
@@ -85,7 +82,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       const appointmentDoc = await getDoc(appointmentRef);
 
       if (!appointmentDoc.exists()) {
-        console.error("Appointment not found in Firestore");
+
         return false;
       }
 
@@ -94,8 +91,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       const appointmentEndTime = new Date(appointmentDateTime.getTime() + 30 * 60000); // plus 30 min
 
       return appointmentEndTime < new Date();
-    } catch (error) {
-      console.error("Error checking if appointment is in the past:", error);
+    } catch {
       return false;
     }
   },
@@ -117,9 +113,8 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         // Update both store and Firestore using the store method
         await get().setAppointmentPaid(appointmentId);
       }
-    } catch (error) {
-      console.error("Error verifying payment:", error);
-    }
+  } catch {
+  }
   },
 }));
 

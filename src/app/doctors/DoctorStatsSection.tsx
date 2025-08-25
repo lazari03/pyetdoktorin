@@ -8,7 +8,7 @@ export default function DoctorStatsSection() {
         {/* Left: Image */}
         <div className="hidden md:flex flex-1 items-center justify-center">
           <Image
-            src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd07?auto=format&fit=crop&w=600&q=80"
+            src="https://portokalle-storage.fra1.digitaloceanspaces.com/img/pexels-shvetsa-4225920.jpg"
             alt="Doctor Telemedicine"
             width={380}
             height={380}

@@ -22,10 +22,8 @@ export async function sendSMSFromFirestore(userId: string, text: string): Promis
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     if (typeof window === 'undefined') {
-      console.log(`SMS sent to ${to}: ${text}`);
     }
   } catch (error) {
-    console.error('Failed to send SMS from Firestore:', error);
     throw error;
   }
 }

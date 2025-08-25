@@ -35,7 +35,6 @@ function NotificationsPage() {
         // Always fetch latest notifications when visiting the page
         await fetchAppointments(auth.currentUser.uid, role === "doctor");
       } else {
-        console.warn("User not found");
         router.push("/login");
       }
     };
@@ -83,8 +82,7 @@ function NotificationsPage() {
               preferredDate: preferredDate || '',
               notes: notes || ''
             };
-          } catch (err) {
-            console.error(`Error fetching details for appointment ${appointment.id}:`, err);
+          } catch {
             return { id: appointment.id, patientName: null, doctorName: null, preferredDate: '', notes: '' };
           }
         })
@@ -150,13 +148,12 @@ function NotificationsPage() {
           }
         }
       }
-    } catch (err) {
-      console.error(`Error updating appointment ${appointmentId}:`, err);
-    }
+  } catch {
+  }
   };
 
   if (error) {
-    console.warn(error);
+
     return router.push("/dashboard");
   }
 

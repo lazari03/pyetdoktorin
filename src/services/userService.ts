@@ -10,8 +10,7 @@ export async function getUserPhoneNumber(userId: string): Promise<string | null>
       return data.phoneNumber || null;
     }
     return null;
-  } catch (error) {
-    console.error('Error fetching user phone number:', error);
-    return null;
+  } catch {
+  return null;
   }
 }

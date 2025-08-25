@@ -26,9 +26,8 @@ export const useDoctorProfile = (id: string) => {
         } else {
           setError('Doctor not found');
         }
-      } catch (err) {
-        console.error('Error fetching doctor:', err);
-        setError('Failed to fetch doctor data');
+    } catch {
+  setError('Failed to fetch doctor data');
       } finally {
         setLoading(false);
       }

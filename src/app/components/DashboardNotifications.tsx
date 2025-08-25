@@ -17,11 +17,8 @@ export default function DashboardNotifications({ doctorId }: { doctorId: string 
 
   useEffect(() => {
     if (!doctorId) {
-      console.warn("doctorId is undefined. Skipping notifications query.");
       return;
     }
-
-    console.log("Fetching notifications for doctorId:", doctorId);
 
     const q = query(
       collection(db, 'appointments'),
@@ -34,7 +31,6 @@ export default function DashboardNotifications({ doctorId }: { doctorId: string 
         id: doc.id,
         ...doc.data(),
       })) as Notification[];
-      console.log("Fetched notifications:", fetchedNotifications);
       setNotifications(fetchedNotifications);
     });
 

@@ -10,7 +10,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { type, doctorId, patientId, doctorName, patientName, time } = req.body;
 
   try {
-    console.log('Incoming request body:', req.body);
     if (type === 'appointment-request') {
       if (!doctorId) throw new Error('Doctor ID not provided');
       await sendDoctorAppointmentRequestSMS(doctorId, patientName);
@@ -28,7 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     return res.status(400).json({ error: 'Invalid type' });
   } catch (error) {
-    console.error('Error in /api/sms/notify:', error);
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 }

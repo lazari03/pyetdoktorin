@@ -8,7 +8,7 @@ export async function isProfileIncomplete(role: UserRole, userId: string): Promi
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      console.warn('User not found in Firebase');
+
       return true;
     }
 
@@ -26,8 +26,7 @@ export async function isProfileIncomplete(role: UserRole, userId: string): Promi
       default:
         return true;
     }
-  } catch (error) {
-    console.error('Error fetching user profile from Firebase:', error);
+  } catch {
     return true; // Assume incomplete if there's an error
   }
 }

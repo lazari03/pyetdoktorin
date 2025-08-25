@@ -59,8 +59,7 @@ export async function fullMediaCleanup({
     }
     // Remove global reference if used
     // ...existing code...
-  } catch (err) {
-    console.warn('Error during full media cleanup:', err);
+  } catch {
   }
   cleanupMediaStreams();
 }

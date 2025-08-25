@@ -38,7 +38,7 @@ export const useMyProfile = () => {
 
       if (!uploadRes.ok) {
         const errorText = await uploadRes.text();
-        console.error('Upload API error:', errorText);
+
         throw new Error('Failed to upload: ' + errorText);
       }
 
@@ -49,10 +49,14 @@ export const useMyProfile = () => {
       setFormData((prev) => ({ ...prev, profilePicture: publicUrl }));
       await setDoc(doc(db, 'users', user.uid), { profilePicture: publicUrl }, { merge: true });
       
-      console.log('Profile picture uploaded successfully:', publicUrl);
-    } catch (error) {
-      console.error('Error uploading profile picture:', error);
-      alert('Failed to upload profile picture. ' + (error instanceof Error ? error.message : ''));
+    } catch {
+  alert('Failed to upload profile picture.');
+
+
+
+
+
+
     } finally {
       setUploading(false);
     }
@@ -74,15 +78,14 @@ export const useMyProfile = () => {
             education: userData.education || [""],
           }));
         } else {
-          console.warn("User document not found in Firestore.");
+
           setFormData((prev) => ({
             ...prev,
             email: userDoc.data()?.email || "", // Fetch email from Firestore if available
           }));
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
+  } catch {
+  } finally {
         setIsFetching(false);
       }
     };
@@ -125,9 +128,8 @@ export const useMyProfile = () => {
       await sendPasswordResetEmail(auth, email);
       setResetEmailSent(true);
       alert("Password reset email sent. Please check your inbox.");
-    } catch (error) {
-      console.error("Error sending password reset email:", error);
-      alert("Failed to send password reset email. Please try again.");
+    } catch {
+  alert("Failed to send password reset email. Please try again.");
     }
   };
 
@@ -140,9 +142,8 @@ export const useMyProfile = () => {
 
       await setDoc(doc(db, "users", userId), formData, { merge: true });
       alert("Profile updated successfully!");
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("Failed to update profile!");
+    } catch {
+  alert("Failed to update profile!");
     }
   };
 

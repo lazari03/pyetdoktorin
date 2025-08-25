@@ -76,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         createRoomData = createRoomRaw ? JSON.parse(createRoomRaw) : {};
       } catch {
-        console.error('Failed to parse 100ms create room response as JSON:', createRoomRaw);
+  // Error parsing 100ms create room response as JSON
         return res.status(500).json({ error: 'Invalid response from 100ms (create room)', raw: createRoomRaw });
       }
       if (!createRoomRes.ok || !createRoomData.id) {
@@ -96,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         createCodesData = createCodesRaw ? JSON.parse(createCodesRaw) : {};
       } catch {
-        console.error('Failed to parse 100ms create room codes response as JSON:', createCodesRaw);
+  // Error parsing 100ms create room codes response as JSON
         return res.status(500).json({ error: 'Invalid response from 100ms (create room codes)', raw: createCodesRaw });
       }
       if (!createCodesRes.ok || !Array.isArray(createCodesData.data)) {
@@ -117,7 +117,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         getRoomData = getRoomRaw ? JSON.parse(getRoomRaw) : {};
       } catch {
-        console.error('Failed to parse 100ms get room response as JSON:', getRoomRaw);
+  // Error parsing 100ms get room response as JSON
       }
       if (!getRoomRes.ok || !getRoomData.id) {
         return res.status(getRoomRes.status).json({ error: getRoomData.error || 'Failed to fetch 100ms room', raw: getRoomRaw });
@@ -137,7 +137,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
           getCodeData = getCodeRaw ? JSON.parse(getCodeRaw) : {};
         } catch {
-          console.error('Failed to parse 100ms get room code response as JSON:', getCodeRaw);
+          // Error parsing 100ms get room code response as JSON
         }
         const codeExists = Array.isArray(getCodeData.data)
           ? getCodeData.data.some((rc: RoomCodeObj) => rc.enabled && rc.role === r)
@@ -173,7 +173,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       getRoomCodesData = getRoomCodesRaw ? JSON.parse(getRoomCodesRaw) : {};
     } catch {
-      console.error('Failed to parse 100ms get room codes response as JSON:', getRoomCodesRaw);
+  // Error parsing 100ms get room codes response as JSON
       return res.status(500).json({ error: 'Invalid response from 100ms (get room codes)', raw: getRoomCodesRaw });
     }
     const roomCodesArr = getRoomCodesData.data;
@@ -191,7 +191,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         getAllRoomCodesData = getAllRoomCodesRaw ? JSON.parse(getAllRoomCodesRaw) : {};
       } catch {
-        console.error('Failed to parse 100ms get all room codes response as JSON:', getAllRoomCodesRaw);
+  // Error parsing 100ms get all room codes response as JSON
         return res.status(500).json({ error: 'Invalid response from 100ms (get all room codes)', raw: getAllRoomCodesRaw });
       }
       const allRoomCodesArr = getAllRoomCodesData.data;
@@ -202,7 +202,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         : null;
       if (!roomCode) {
         // Try to create a room code for this role
-        console.error('No enabled prebuilt roomCode found for this room. Attempting to create one.');
+  // No enabled prebuilt roomCode found for this room. Attempting to create one.
         const createRoomCodeRes = await fetch(`${HMS_BASE_URL}/room-codes`, {
           method: 'POST',
           headers: {
@@ -216,18 +216,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           })
         });
         const createRoomCodeRaw = await createRoomCodeRes.text();
-        console.error('Create room code response:', createRoomCodeRaw);
+  // Error creating room code response
         let createRoomCodeData: Record<string, unknown> = {};
         try {
           createRoomCodeData = createRoomCodeRaw ? JSON.parse(createRoomCodeRaw) : {};
         } catch {
-          console.error('Failed to parse 100ms create room code response as JSON:', createRoomCodeRaw);
+          // Error parsing 100ms create room code response as JSON
           return res.status(500).json({ error: 'Invalid response from 100ms (create room code)', raw: createRoomCodeRaw });
         }
         if (!createRoomCodeRes.ok || !createRoomCodeData.code) {
           // Log a clear message if Prebuilt is blocking room code creation
           if (createRoomCodeRes.status === 404) {
-            console.error('[100ms Prebuilt BLOCKED] Room code creation failed with 404. This means Prebuilt is not initialized for this room/role. Someone must join the room via Prebuilt at least once in the dashboard.');
+            // 100ms Prebuilt BLOCKED: Room code creation failed with 404. Prebuilt not initialized for this room/role.
           }
           return res.status(createRoomCodeRes.status).json({
             error: createRoomCodeData.error || 'Failed to create 100ms room code',

@@ -38,9 +38,8 @@ export default function Dashboard() {
           await fetchAppointments(user.uid, role);
           await fetchAllAppointments(user.uid, role === UserRole.Doctor); // Ensure appointments store is also loaded
         }
-      } catch (error) {
-        console.error('Error initializing dashboard:', error);
-      } finally {
+  } catch {
+  } finally {
         setLoading(false);
       }
     };

@@ -8,7 +8,7 @@ export default function DoctorFeaturesSection() {
         {/* Right: Image */}
         <div className="hidden md:flex flex-1 items-center justify-center">
           <Image
-            src="https://images.unsplash.com/photo-1503437313881-503a91226419?auto=format&fit=crop&w=600&q=80"
+            src="https://portokalle-storage.fra1.digitaloceanspaces.com/img/Screenshot%202025-08-25%20at%209.27.02%E2%80%AFPM.png"
             alt="Doctor at work"
             width={380}
             height={380}

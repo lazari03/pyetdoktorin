@@ -21,7 +21,6 @@ export async function fetchDoctors(searchTerm: string, searchType: SearchType): 
     const snapshot = await getDocs(doctorQuery);
 
     if (snapshot.empty) {
-      console.warn(`No doctors found`);
       return [];
     }
 
@@ -53,8 +52,7 @@ export async function fetchDoctors(searchTerm: string, searchType: SearchType): 
     }
 
     return doctors;
-  } catch (error) {
-    console.error("Error fetching doctors:", error);
-    throw new Error("Failed to fetch doctors");
+  } catch {
+  throw new Error("Failed to fetch doctors");
   }
 }

@@ -20,7 +20,7 @@ export default function ClinicBenefitsSection() {
         {/* Right: Image */}
         <div className="flex-1 flex justify-center items-center">
           <Image
-            src="https://images.unsplash.com/photo-1588776814546-ec7e8c1b5b6b?auto=format&fit=crop&w=600&q=80"
+            src="https://portokalle-storage.fra1.digitaloceanspaces.com/img/Screenshot%202025-08-25%20at%209.27.02%E2%80%AFPM.png"
             alt="Clinic management"
             width={340}
             height={340}

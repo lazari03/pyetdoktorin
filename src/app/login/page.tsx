@@ -19,8 +19,7 @@ function LoginPageContent() {
 
   // Test Firebase connectivity on component mount, but don't block login if it fails
   useEffect(() => {
-    testFirebaseConnection().catch((error: Error) => {
-      console.error('Firebase connection test failed:', error.message);
+    testFirebaseConnection().catch(() => {
       setErrorMsg('Warning: Firebase connection issues detected. Some features may be limited.');
     });
   }, []);
@@ -35,22 +34,18 @@ function LoginPageContent() {
         throw new Error('You are offline. Please check your internet connection and try again.');
       }
   
-      const { user, role } = await login(email, password);
-      console.log('Login success - User:', user.email, 'Role:', role);
+  await login(email, password);
   
       // Verify if the 'auth-token' cookie is set
       if (!document.cookie.includes('auth-token=')) {
-        console.error('Auth token cookie was not set');
         setErrorMsg('Warning: Authentication token not set properly. Try again or contact support.');
         setLoading(false);
         return;
       }
   
       window.location.href = fromPath;
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.error('Login failed:', errorMessage);
-      setErrorMsg(errorMessage);
+    } catch {
+      setErrorMsg('An unknown error occurred');
     } finally {
       setLoading(false);
     }
