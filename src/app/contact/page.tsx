@@ -35,9 +35,7 @@ export default function ContactPage() {
                         Whether you have a question about features, pricing, need a demo, or anything else, our team is ready to answer all your questions.
                       </p>
                       <div className="flex flex-col gap-2 mt-4">
-                        <span className="font-semibold">Email: <a href="mailto:support@portokalle.com" className="text-orange-500 hover:underline">support@portokalle.com</a></span>
-                        <span className="font-semibold">Phone: <a href="tel:+1234567890" className="text-orange-500 hover:underline">+1 234 567 890</a></span>
-                        <span className="font-semibold">Address: <span className="text-gray-700">123 Health St, Digital City, Country</span></span>
+                        <span className="font-semibold">Email: <a href="mailto:info@portokalle.com" className="text-orange-500 hover:underline">support@portokalle.com</a></span>
                       </div>
                     </div>
                     {/* Right: Form */}
