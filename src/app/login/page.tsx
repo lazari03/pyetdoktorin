@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { login } from '../../services/authService';
 import { testFirebaseConnection } from '../../services/firebaseTest';
+import { useGoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 function LoginPageContent() {
   const [email, setEmail] = useState('');
@@ -13,6 +14,8 @@ function LoginPageContent() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const searchParams = useSearchParams();
+  const { executeRecaptcha } = useGoogleReCaptcha();
+  const isRecaptchaReady = !!executeRecaptcha;
 
   // Get the 'from' parameter to redirect after login
   const fromPath = searchParams?.get('from') || '/dashboard';
@@ -28,26 +31,47 @@ function LoginPageContent() {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
-  
     try {
+      console.log('Login: start');
       if (!navigator.onLine) {
         throw new Error('You are offline. Please check your internet connection and try again.');
       }
-  
-  await login(email, password);
-  
+      if (!executeRecaptcha) {
+        console.log('reCAPTCHA not ready');
+        throw new Error('reCAPTCHA not ready');
+      }
+      // Get reCAPTCHA token
+      const token = await executeRecaptcha('login');
+      console.log('reCAPTCHA token:', token);
+      // Verify token with backend
+      const recaptchaRes = await fetch('/api/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      const recaptchaData = await recaptchaRes.json();
+      console.log('reCAPTCHA response:', recaptchaData);
+      if (!recaptchaData.success) {
+        setErrorMsg('reCAPTCHA failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+      // Only proceed with login if reCAPTCHA passes
+      console.log('Proceeding with login');
+      await login(email, password);
       // Verify if the 'auth-token' cookie is set
       if (!document.cookie.includes('auth-token=')) {
         setErrorMsg('Warning: Authentication token not set properly. Try again or contact support.');
         setLoading(false);
         return;
       }
-  
       window.location.href = fromPath;
-    } catch {
+    } catch (err) {
       setErrorMsg('An unknown error occurred');
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
+      console.log('Login: end');
     }
   };
 
@@ -118,7 +142,7 @@ function LoginPageContent() {
             <button
               type="submit"
               className={`btn btn-primary w-full mt-2 ${loading ? 'loading' : ''}`}
-              disabled={loading}
+              disabled={loading || !isRecaptchaReady}
             >
               {loading ? (
                 <span className="flex items-center justify-center">
@@ -148,6 +172,9 @@ function LoginPageContent() {
                 'Login'
               )}
             </button>
+            {!isRecaptchaReady && (
+              <div className="text-sm text-gray-500 mt-2">reCAPTCHA is loading, please wait...</div>
+            )}
           </form>
 
           <div className="divider my-6">OR</div>
@@ -166,8 +193,13 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginPageContent />
-    </Suspense>
+    <GoogleReCaptchaProvider
+      reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+      scriptProps={{ async: true, appendTo: "head" }}
+    >
+      <Suspense fallback={<div>Loading...</div>}>
+        <LoginPageContent />
+      </Suspense>
+    </GoogleReCaptchaProvider>
   );
 }

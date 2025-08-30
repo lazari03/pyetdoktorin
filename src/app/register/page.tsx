@@ -6,8 +6,9 @@ import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebaseconfig';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
-export default function RegisterPage() {
+function RegisterPageInner() {
     const [formData, setFormData] = useState({
         name: '',
         surname: '',
@@ -22,6 +23,7 @@ export default function RegisterPage() {
     const [error, setError] = useState('');
     const [showModal, setShowModal] = useState(false); // State to control modal visibility
     const router = useRouter();
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -38,7 +40,24 @@ export default function RegisterPage() {
 
         setLoading(true);
         try {
-            // Register user with Firebase Auth
+            if (!executeRecaptcha) {
+                throw new Error('reCAPTCHA not ready');
+            }
+            // Get reCAPTCHA token
+            const token = await executeRecaptcha("register");
+            // Verify token with backend
+            const recaptchaRes = await fetch("/api/verify-recaptcha", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token }),
+            });
+            const recaptchaData = await recaptchaRes.json();
+            if (!recaptchaData.success) {
+                setError('reCAPTCHA failed. Please try again.');
+                setLoading(false);
+                return;
+            }
+            // Only proceed with registration if reCAPTCHA passes
             const userCredential = await createUserWithEmailAndPassword(
                 auth,
                 formData.email,
@@ -216,5 +235,16 @@ export default function RegisterPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <GoogleReCaptchaProvider
+            reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+            scriptProps={{ async: true, appendTo: "head" }}
+        >
+            <RegisterPageInner />
+        </GoogleReCaptchaProvider>
     );
 }
