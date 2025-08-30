@@ -7,11 +7,11 @@ import { usePathname, useSearchParams } from "next/navigation";
 // Declare gtag on the window object for TypeScript
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
+    gtag?: (command: 'config' | 'event', targetId: string, params?: Record<string, unknown>) => void;
   }
 }
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
 
 export default function Analytics() {
   const pathname = usePathname();

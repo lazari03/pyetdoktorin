@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
 import Script from "next/script";
 import Analytics from "./analytics/Analytics";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Portokalle",
@@ -32,7 +33,9 @@ export default function RootLayout({
       </head>
       <body className="bg-base-100 min-h-screen">
         <AuthProvider>
-          <Analytics />
+          <Suspense fallback={null}>
+            <Analytics />
+          </Suspense>
           {children}
         </AuthProvider>
       </body>
