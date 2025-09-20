@@ -55,7 +55,7 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
         className={`hidden md:flex fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${sidebarOpen ? 'w-64' : 'w-16'} flex-col`}
       >
         <div className="p-4 flex items-center">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-orange-500 hover:text-orange-700 transition-colors flex items-center justify-center w-12 h-12">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-orange hover:text-orange transition-colors flex items-center justify-center w-12 h-12">
             {sidebarOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
         </div>
@@ -64,7 +64,7 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
             <li key={item.name} className="relative mb-2">
               <Link
                 href={item.href}
-                className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'}`}
+                className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href ? 'bg-orange text-white' : 'text-gray-700 hover:bg-orange hover:text-orange'}`}
               >
                 <span className="flex items-center justify-center w-10 h-10">{item.icon}</span>
                 <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'}`}> 
@@ -99,45 +99,39 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
       </div>
       {/* Mobile Slide-in Menu */}
       <div
-        className={`md:hidden fixed top-0 left-0 h-full bg-white z-50 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-64`}
+        className={`md:hidden fixed top-0 left-0 h-full bg-[#58becc] z-50 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-20 flex flex-col items-center py-6 space-y-8`}
       >
-        <div className="p-4">
-          <button onClick={() => setSidebarOpen(false)} className="text-gray-700 hover:text-orange-500">
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
-        <ul>
+  <button onClick={() => setSidebarOpen(false)} className="text-gray-700 hover:text-orange mb-8">
+          <XMarkIcon className="h-6 w-6" />
+        </button>
+        <ul className="flex flex-col items-center w-full">
           {enhancedNavItems.map((item) => (
-            <li key={item.name} className="mb-2 mt-4">
+            <li key={item.name} className="mb-8">
               <Link
                 href={item.href}
-                className={`flex items-center py-2 px-3 rounded-lg transition-colors duration-300 ${pathname === item.href ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'}`}
+                className={`bg-white rounded-full p-2 shadow-md hover:scale-105 transition-transform flex items-center justify-center ${pathname === item.href ? 'ring-2 ring-orange' : ''}`}
                 onClick={() => setSidebarOpen(false)}
               >
-                <span className="mr-2">{item.icon}</span>
-                {item.name}
+                <span className="flex items-center justify-center w-10 h-10">{item.icon}</span>
               </Link>
             </li>
           ))}
         </ul>
-        <div className="p-4">
-          <button
-            onClick={async () => {
-              const auth = getAuth();
-              try {
-                await signOut(auth);
-                document.cookie = 'auth-token=; path=/; max-age=0';
-                window.location.href = '/login';
-              } catch {
-                alert('Error signing out.');
-              }
-            }}
-            className="flex items-center py-2 px-3 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-lg"
-          >
-            <PowerIcon className="h-6 w-6 mr-2" />
-            Logout
-          </button>
-        </div>
+        <button
+          onClick={async () => {
+            const auth = getAuth();
+            try {
+              await signOut(auth);
+              document.cookie = 'auth-token=; path=/; max-age=0';
+              window.location.href = '/login';
+            } catch {
+              alert('Error signing out.');
+            }
+          }}
+          className="bg-white rounded-full p-2 shadow-md hover:scale-105 transition-transform flex items-center justify-center text-red-500"
+        >
+          <PowerIcon className="h-6 w-6" />
+        </button>
       </div>
     </>
   );

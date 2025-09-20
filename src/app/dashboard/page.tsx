@@ -8,6 +8,8 @@ import { isProfileIncomplete } from '../../store/generalStore';
 import DashboardDoctorSearchBar from '../components/DashboardDoctorSearchBar';
 import { UserRole } from '../../models/UserRole';
 import DashboardNotificationsBell from '../components/DashboardNotificationsBell';
+import DashboardClock from '../components/DashboardClock';
+import DoctorRevenueWidget from '../components/DoctorRevenueWidget';
 import Loader from '../components/Loader';
 import { useAppointmentStore } from '../../store/appointmentStore';
 import { AppointmentsTable } from '../components/AppointmentsTable';
@@ -51,33 +53,33 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-extrabold text-gray-800 mb-8 text-center">
-        Welcome to Your {role || 'User'} Dashboard
-      </h1>
       {role === UserRole.Patient && (
         <DashboardDoctorSearchBar />
       )}
       <ProfileWarning show={profileIncomplete} />
+
+
       {role === UserRole.Doctor && user?.uid && (
-        <div className="mb-6 flex items-center justify-end">
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-start justify-center min-w-[300px] min-h-[100px]">
+            <span className="text-lg font-semibold text-gray-700 mb-2">Total Appointments</span>
+            <span className="text-3xl font-extrabold text-primary mb-1">{totalAppointments}</span>
+            <span className="text-base text-gray-500 mb-2">All appointments</span>
+          </div>
           <DashboardNotificationsBell doctorId={user.uid} />
+          <DashboardClock />
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="stats shadow">
-          <div className="stat">
-            <div className="stat-title">Total Appointments</div>
-            <div className="stat-value">{totalAppointments}</div>
-          </div>
-        </div>
         <UpcomingAppointment />
+        <DoctorRevenueWidget />
       </div>
       <div className="card bg-base-100 shadow-xl mt-6">
         <div className="card-body">
           <div className="flex justify-between items-center">
             <h2 className="card-title text-lg md:text-2xl">Your Appointments</h2>
-            <Link href="/dashboard/appointments" className="text-orange-500 hover:underline">
+            <Link href="/dashboard/appointments" className="text-orange hover:underline">
               View All
             </Link>
           </div>

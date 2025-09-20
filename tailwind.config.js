@@ -5,11 +5,12 @@ module.exports = {
       colors: {
         primary: '#1d4ed8', // Tailwind's blue-600
         secondary: '#9333ea', // Tailwind's purple-600
+        turquoise: '#58becc', // Centralized turquoise
       },
-        fontFamily: {
-          sans: ['Mulish', 'sans-serif'], // Set Mulish as the global font
+      fontFamily: {
+        sans: ['Mulish', 'sans-serif'], // Set Mulish as the global font
       },
-        // Other extensions can be added here if needed
+      // Other extensions can be added here if needed
     },
   },
   plugins: [require('tailwindcss'), require('daisyui')],
@@ -17,7 +18,8 @@ module.exports = {
     themes: [
       {
         light: {
-          primary: '#f97316', // Orange-500
+          primary: '#58becc', // Orange-500
+          turquoise: '#58becc', // Centralized turquoise
           'primary-content': '#ffffff',
           secondary: '#9333ea',
           'secondary-content': '#ffffff',

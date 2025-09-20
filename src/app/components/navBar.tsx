@@ -43,13 +43,13 @@ export default function NavBar() {
         {/* Left - Hamburger or X */}
         <div className="md:hidden z-[10000]">
           <button
-            className="text-[#ea580c]"
+            className="text-[#58becc]"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? (
-              <XMarkIcon className="h-8 w-8 text-[#ea580c]" />
+              <XMarkIcon className="h-8 w-8 text-[#58becc]" />
             ) : (
-              <Bars3Icon className="h-8 w-8 text-[#ea580c]" />
+              <Bars3Icon className="h-8 w-8 text-[#58becc]" />
             )}
           </button>
         </div>
@@ -70,7 +70,7 @@ export default function NavBar() {
         {/* Right - Mobile Sign In */}
         <div className="md:hidden z-[10000]">
           <button
-            className="flex items-center space-x-1 text-[#ea580c] font-medium"
+            className="flex items-center space-x-1 text-[#58becc] font-medium"
             onClick={handleLoginClick}
           >
             <i className="fa-solid fa-arrow-right text-lg"></i>
@@ -82,21 +82,21 @@ export default function NavBar() {
         <nav className="hidden md:flex space-x-10 text-[15px] font-medium text-gray-800 z-[9999]">
           <Link
             href="/individuals"
-            className="text-black hover:text-[#ea580c] cursor-pointer"
+            className="text-black hover:text-[#58becc] cursor-pointer"
             onClick={() => handleNavItemClick('/individuals')}
           >
             Individuals
           </Link>
           <Link
             href="/doctors"
-            className="text-black hover:text-[#ea580c] cursor-pointer"
+            className="text-black hover:text-[#58becc] cursor-pointer"
             onClick={() => handleNavItemClick('/organizations')}
           >
             Doctors
           </Link>
           <Link
             href="/clinicians"
-            className="text-black hover:text-[#ea580c] cursor-pointer"
+            className="text-black hover:text-[#58becc] cursor-pointer"
             onClick={() => handleNavItemClick('/clinicians')}
           >
             Clinicians
@@ -106,13 +106,13 @@ export default function NavBar() {
         {/* Desktop Buttons */}
         <div className="hidden md:flex items-center space-x-4 ml-auto z-[9999]">
           <button
-            className="text-[#ea580c] hover:underline font-medium cursor-pointer"
+            className="text-[#58becc] hover:underline font-medium cursor-pointer"
             onClick={handleLoginClick}
           >
             Sign in
           </button>
           <button
-            className="bg-[#ea580c] text-white rounded-full px-6 py-2 font-semibold hover:bg-orange-700 transition-colors cursor-pointer"
+            className="bg-[#58becc] text-white rounded-full px-6 py-2 font-semibold hover:bg-orange-700 transition-colors cursor-pointer"
             onClick={handleSignUpClick}
           >
             Register now
@@ -151,7 +151,7 @@ export default function NavBar() {
           {/* Register Button */}
           <div className="p-4 border-t border-gray-100">
             <button
-              className="bg-[#ea580c] text-white rounded-full py-3 px-6 w-full font-semibold cursor-pointer"
+              className="bg-[#58becc] text-white rounded-full py-3 px-6 w-full font-semibold cursor-pointer"
               onClick={handleSignUpClick}
             >
               Register now

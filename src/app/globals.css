@@ -41,12 +41,15 @@
   --noise: 0;
 }
 
+
 :root {
   color-scheme: light;
   --background: #ffffff;
-  --foreground: black;
-  --color-neutral-content: black;
-  --color-accent-content: black;
+  --foreground: #1a1a1a;
+  --color-turquoise: #58becc;
+  --color-accent: #58becc;
+  --color-neutral-content: #1a1a1a;
+  --color-accent-content: #58becc;
 }
 
 @theme inline {
@@ -75,7 +78,7 @@ a:hover {
 }
 
 .navbar a {
-  color: #0056b3;
+  color: #58becc;
   text-decoration: none;
   font-weight: 600;
 }
@@ -99,19 +102,41 @@ h1, h2, h3, h4, h5, h6 {
   color: #1a1a1a;
 }
 
+
 .btn {
   color: #ffffff;
-  background-color: #f97316; /* Orange-500 */
+  background-color: var(--color-turquoise);
   border-radius: 8px;
   font-weight: 600;
 }
 
 .btn:hover {
-  background-color: #ea580c; /* Orange-600 */
+  background-color: var(--color-turquoise);
 }
 
-.btn-orange {
-  color: #ea580c;
+.btn-accent {
+  color: #ffffff;
+  background-color: var(--color-accent);
+}
+
+.btn-accent:hover {
+  background-color: var(--color-accent);
+}
+
+.text-turquoise {
+  color: var(--color-turquoise);
+}
+
+.bg-turquoise {
+  background-color: var(--color-turquoise);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+.bg-accent {
+  background-color: var(--color-accent);
 }
 @media (prefers-color-scheme: dark) {
   :root {

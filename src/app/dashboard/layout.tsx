@@ -105,23 +105,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content Area */}
       <div className={`flex-grow transition-all duration-300 pt-16 md:pt-0 ${sidebarOpen && 'md:ml-64'} md:ml-16`}>
-        <header className="bg-white shadow-md hidden md:block">
-          <div className="flex items-center justify-center p-6 relative">
-            <div className="absolute left-1/2 transform -translate-x-1/2 max-w-[50%]">
-              <Image
-                src="/img/logo.png"
-                alt="logo"
-                width={200}
-                height={100}
-                className="w-auto h-auto"
-                style={{ maxHeight: '2.5rem' }}
-              />
-            </div>
-            <div className="flex items-center gap-2" style={{ height: '3rem' }}>
-              {/* Maintain height */}
-            </div>
-          </div>
-        </header>
         <main className="p-4">{children}</main>
       </div>
     </div>
