@@ -2,6 +2,8 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebas
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseconfig';
 
+import { sendPasswordResetEmail } from "firebase/auth";
+
 // Centralized authentication service
 
 // Check if user is authenticated
@@ -53,4 +55,10 @@ export async function fetchUserDetails(userId: string) {
     } catch {
         return null;
     }
+}
+
+// Centralized password reset function
+export async function resetUserPassword(email: string): Promise<void> {
+    if (!email) throw new Error("Email is required to reset password");
+    await sendPasswordResetEmail(auth, email);
 }

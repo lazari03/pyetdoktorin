@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { db, auth } from "../config/firebaseconfig";
+import { db } from "../config/firebaseconfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { sendPasswordResetEmail } from "firebase/auth";
+import { resetUserPassword } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 
 export const useMyProfile = () => {
@@ -51,12 +51,6 @@ export const useMyProfile = () => {
       
     } catch {
   alert('Failed to upload profile picture.');
-
-
-
-
-
-
     } finally {
       setUploading(false);
     }
@@ -123,13 +117,11 @@ export const useMyProfile = () => {
   const handlePasswordReset = async () => {
     try {
       const email = formData.email;
-      if (!email) throw new Error("Email is required to reset password");
-
-      await sendPasswordResetEmail(auth, email);
+      await resetUserPassword(email);
       setResetEmailSent(true);
       alert("Password reset email sent. Please check your inbox.");
     } catch {
-  alert("Failed to send password reset email. Please try again.");
+      alert("Failed to send password reset email. Please try again.");
     }
   };
 
