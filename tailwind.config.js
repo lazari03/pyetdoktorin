@@ -3,7 +3,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#1d4ed8', // Tailwind's blue-600
+        primary: '#58becc', // Turquoise everywhere
         secondary: '#9333ea', // Tailwind's purple-600
         turquoise: '#58becc', // Centralized turquoise
       },
@@ -18,7 +18,7 @@ module.exports = {
     themes: [
       {
         light: {
-          primary: '#58becc', // Orange-500
+          primary: '#58becc', 
           turquoise: '#58becc', // Centralized turquoise
           'primary-content': '#ffffff',
           secondary: '#9333ea',

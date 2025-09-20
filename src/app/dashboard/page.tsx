@@ -73,7 +73,9 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <UpcomingAppointment />
-        <DoctorRevenueWidget />
+        <div className="rounded-2xl shadow-md min-w-[300px] min-h-[100px]">
+          <DoctorRevenueWidget />
+        </div>
       </div>
       <div className="card bg-base-100 shadow-xl mt-6">
         <div className="card-body">

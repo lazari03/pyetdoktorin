@@ -52,10 +52,10 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
     <>
       {/* Desktop Sidebar */}
       <div
-        className={`hidden md:flex fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${sidebarOpen ? 'w-64' : 'w-16'} flex-col`}
+  className={`hidden md:flex fixed top-0 left-0 h-full bg-primary shadow-lg transition-all duration-300 z-30 ${sidebarOpen ? 'w-64' : 'w-16'} flex-col`}
       >
         <div className="p-4 flex items-center">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-orange hover:text-orange transition-colors flex items-center justify-center w-12 h-12">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-turquoise hover:text-turquoise transition-colors flex items-center justify-center w-12 h-12">
             {sidebarOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
         </div>
@@ -64,9 +64,9 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
             <li key={item.name} className="relative mb-2">
               <Link
                 href={item.href}
-                className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href ? 'bg-orange text-white' : 'text-gray-700 hover:bg-orange hover:text-orange'}`}
+                  className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href ? 'bg-white text-primary' : 'text-gray-700 hover:bg-primary hover:text-primary'}`}
               >
-                <span className="flex items-center justify-center w-10 h-10">{item.icon}</span>
+                <span className={`flex items-center justify-center w-10 h-10 ${pathname === item.href ? 'text-primary' : 'text-white'}`}>{item.icon}</span>
                 <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'}`}> 
                   {item.name}
                 </span>
@@ -99,9 +99,9 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
       </div>
       {/* Mobile Slide-in Menu */}
       <div
-        className={`md:hidden fixed top-0 left-0 h-full bg-[#58becc] z-50 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-20 flex flex-col items-center py-6 space-y-8`}
+  className={`md:hidden fixed top-0 left-0 h-full bg-primary z-50 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-20 flex flex-col items-center py-6 space-y-8`}
       >
-  <button onClick={() => setSidebarOpen(false)} className="text-gray-700 hover:text-orange mb-8">
+  <button onClick={() => setSidebarOpen(false)} className="text-gray-700 hover:text-turquoise mb-8">
           <XMarkIcon className="h-6 w-6" />
         </button>
         <ul className="flex flex-col items-center w-full">
@@ -109,7 +109,7 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
             <li key={item.name} className="mb-8">
               <Link
                 href={item.href}
-                className={`bg-white rounded-full p-2 shadow-md hover:scale-105 transition-transform flex items-center justify-center ${pathname === item.href ? 'ring-2 ring-orange' : ''}`}
+                className={`bg-white rounded-full p-2 shadow-md hover:scale-105 transition-transform flex items-center justify-center ${pathname === item.href ? 'ring-2 ring-turquoise' : ''}`}
                 onClick={() => setSidebarOpen(false)}
               >
                 <span className="flex items-center justify-center w-10 h-10">{item.icon}</span>

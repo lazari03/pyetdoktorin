@@ -48,8 +48,8 @@ export default function DoctorRevenueWidget() {
   ];
 
   return (
-  <div className="bg-white rounded-2xl shadow-md p-6 min-w-[300px] min-h-[100px] flex flex-col items-start">
-  <span className="text-lg font-semibold text-[#ea580c] mb-2">Revenue</span>
+  <div className="bg-turquoise rounded-2xl shadow-md p-6 min-w-[300px] min-h-[100px] flex flex-col items-start">
+  <span className="text-lg font-semibold text-[#58becc  ] mb-2">Revenue</span>
       <div className="flex gap-2 mb-4">
   <button onClick={() => setPeriod("all")} className={`chip ${period === "all" ? "bg-[#ea580c] text-white" : "bg-gray-100 text-gray-700"} px-3 py-1 rounded-full font-semibold text-sm`}>All Time</button>
   <button onClick={() => setPeriod("month")} className={`chip ${period === "month" ? "bg-[#ea580c] text-white" : "bg-gray-100 text-gray-700"} px-3 py-1 rounded-full font-semibold text-sm`}>This Month</button>
