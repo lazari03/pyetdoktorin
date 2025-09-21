@@ -18,9 +18,8 @@ import { v4 as uuidv4 } from 'uuid';
 const HMS_BASE_URL = 'https://api.100ms.live/v2';
 
 // Debug log utility (only logs in development)
-function debugLog(...args: any[]) {
+function debugLog(...args: unknown[]) {
   if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line no-console
     console.log('[100ms-generate-token]', ...args);
   }
 }

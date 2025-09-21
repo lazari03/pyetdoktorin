@@ -5,8 +5,11 @@ import { Appointment } from "../../models/Appointment";
 const getStartOfWeek = () => {
   const now = new Date();
   const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday as start
-  return new Date(now.setDate(diff));
+  // Create a new date object for Monday of the current week (no mutation)
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((day + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
 };
 
 const getStartOfMonth = () => {
@@ -14,31 +17,61 @@ const getStartOfMonth = () => {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 };
 
-const getStartOfYear = () => {
-  const now = new Date();
-  return new Date(now.getFullYear(), 0, 1);
-};
+
+
 
 const filterAppointments = (appointments: Appointment[], period: string) => {
-  const now = new Date();
-  let start;
-  if (period === "week") start = getStartOfWeek();
-  else if (period === "month") start = getStartOfMonth();
-  else start = getStartOfYear();
-  return appointments.filter((a) => {
-    const date = new Date(`${a.preferredDate}T${a.preferredTime}`);
-    return date >= start && date <= now;
-  });
+  // removed unused now
+  if (period === "all") {
+    return appointments;
+  }
+  let start: Date;
+  if (period === "week") {
+    start = getStartOfWeek();
+    const endOfWeek = new Date(start);
+    endOfWeek.setDate(start.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    const filtered = appointments.filter((a) => {
+      const date = new Date(a.preferredDate + 'T' + (a.preferredTime || '00:00'));
+      return date >= start && date <= endOfWeek;
+    });
+    if (process.env.NODE_ENV !== 'production') {
+      // Debug log for troubleshooting
+      console.log('[DoctorRevenueWidget] Week:', {
+        start,
+        endOfWeek,
+        filtered: filtered as Appointment[],
+        all: appointments as Appointment[],
+      });
+    }
+    return filtered;
+  } else if (period === "month") {
+    start = getStartOfMonth();
+    const endOfMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59, 999);
+    const filtered = appointments.filter((a) => {
+      const date = new Date(a.preferredDate + 'T' + (a.preferredTime || '00:00'));
+      return date >= start && date <= endOfMonth;
+    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[DoctorRevenueWidget] Month:', {
+        start,
+        endOfMonth,
+        filtered: filtered as Appointment[],
+        all: appointments as Appointment[],
+      });
+    }
+    return filtered;
+  }
+  // fallback: all
+  return appointments;
 };
 
 export default function DoctorRevenueWidget() {
   const { appointments } = useAppointmentStore();
   const [period, setPeriod] = useState("all");
 
-  let filtered = appointments;
-  if (period === "week") filtered = filterAppointments(appointments, "week");
-  else if (period === "month") filtered = filterAppointments(appointments, "month");
-  // 'all' shows all appointments
+
+  const filtered = filterAppointments(appointments, period);
 
   const earnings = filtered.length * 5;
 

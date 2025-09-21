@@ -20,9 +20,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-let analytics;
 if (typeof window !== "undefined") {
-  analytics = getAnalytics(app);
+  getAnalytics(app);
 }
 export const auth = getAuth(app);
 export const db = getFirestore(app);
