@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAppointmentStore } from "../../store/appointmentStore";
+import { Appointment } from "../../models/Appointment";
 
 const getStartOfWeek = () => {
   const now = new Date();
@@ -18,7 +19,7 @@ const getStartOfYear = () => {
   return new Date(now.getFullYear(), 0, 1);
 };
 
-const filterAppointments = (appointments, period) => {
+const filterAppointments = (appointments: Appointment[], period: string) => {
   const now = new Date();
   let start;
   if (period === "week") start = getStartOfWeek();
@@ -48,12 +49,12 @@ export default function DoctorRevenueWidget() {
   ];
 
   return (
-  <div className="bg-turquoise rounded-2xl shadow-md p-6 min-w-[300px] min-h-[100px] flex flex-col items-start">
+  <div className="bg-white rounded-2xl shadow-md p-6 min-w-[300px] min-h-[100px] flex flex-col items-start">
   <span className="text-lg font-semibold text-[#58becc  ] mb-2">Revenue</span>
       <div className="flex gap-2 mb-4">
-  <button onClick={() => setPeriod("all")} className={`chip ${period === "all" ? "bg-[#ea580c] text-white" : "bg-gray-100 text-gray-700"} px-3 py-1 rounded-full font-semibold text-sm`}>All Time</button>
-  <button onClick={() => setPeriod("month")} className={`chip ${period === "month" ? "bg-[#ea580c] text-white" : "bg-gray-100 text-gray-700"} px-3 py-1 rounded-full font-semibold text-sm`}>This Month</button>
-  <button onClick={() => setPeriod("week")} className={`chip ${period === "week" ? "bg-[#ea580c] text-white" : "bg-gray-100 text-gray-700"} px-3 py-1 rounded-full font-semibold text-sm`}>This Week</button>
+  <button onClick={() => setPeriod("all")} className={`chip ${period === "all" ? "bg-primary text-white" : "bg-gray-100 text-gray-700"} px-3 py-1 rounded-full font-semibold text-sm`}>All Time</button>
+  <button onClick={() => setPeriod("month")} className={`chip ${period === "month" ? "bg-primary text-white" : "bg-gray-100 text-gray-700"} px-3 py-1 rounded-full font-semibold text-sm`}>This Month</button>
+  <button onClick={() => setPeriod("week")} className={`chip ${period === "week" ? "bg-primary text-white" : "bg-gray-100 text-gray-700"} px-3 py-1 rounded-full font-semibold text-sm`}>This Week</button>
       </div>
       <span className="text-3xl font-extrabold text-green-500 mb-1">€{earnings}</span>
       <span className="text-base text-gray-500 mb-4">Doctor earns €5 per appointment</span>

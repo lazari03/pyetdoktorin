@@ -23,9 +23,10 @@ export default function VideoSessionPage() {
     return <Loader />;
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_VIDEO_SESSION_URL;
   return (
     <iframe
-      src={`https://portokalle-videoconf-1921.app.100ms.live/meeting/${roomCode}`}
+      src={`${baseUrl}${roomCode}`}
       title="100ms Video Call"
       allow="camera; microphone; fullscreen; display-capture"
       style={{ width: '100%', height: '100vh', border: 'none' }}

@@ -30,11 +30,11 @@ export default function DashboardNotificationsBell({ doctorId }: { doctorId: str
   }, [doctorId]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-start justify-center min-w-[300px] min-h-[100px]">
+    <div className="flex flex-col items-start justify-center w-full">
       <span className="text-lg font-semibold text-gray-700 mb-2">Notifications</span>
-      <span className="text-3xl font-extrabold text-orange-500 mb-1">{notifications.length}</span>
+      <span className="text-3xl font-extrabold text-primary mb-1">{notifications.length}</span>
       <span className="text-base text-gray-500 mb-2">Pending notification{notifications.length !== 1 ? 's' : ''}</span>
-      <Link href="/dashboard/notifications" className="text-orange-500 text-sm font-semibold hover:underline self-end">
+      <Link href="/dashboard/notifications" className="text-primary text-sm font-semibold hover:underline self-end">
         View All
       </Link>
     </div>

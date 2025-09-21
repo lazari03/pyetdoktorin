@@ -40,10 +40,10 @@ const UpcomingAppointment = () => {
   }
 
   return (
-    <div className="stats shadow h-full">
-      <div className="stat">
-        <div className="stat-title">Upcoming Appointment</div>
-        <div className="stat-value text-base text-orange-500">
+    <div className="w-full">
+      <div>
+        <div className="text-lg font-semibold text-primary mb-2">Upcoming Appointment</div>
+        <div className="text-base text-orange-500">
           {loading ? (
             <CenteredLoader />
           ) : upcoming ? (
