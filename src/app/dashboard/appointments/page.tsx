@@ -81,10 +81,14 @@ function AppointmentsPage() {
         role,
         userName: patientName,
       });
+      if (!roomCode) {
+        alert('Failed to generate a valid room code. Please try again.');
+        return;
+      }
       window.localStorage.setItem('videoSessionRoomCode', roomCode);
       window.localStorage.setItem('videoSessionUserName', patientName);
-      window.location.href = '/dashboard/appointments/video-session';
-  } catch {
+  window.location.href = '/dashboard/appointments/video-session';
+    } catch {
       alert('An error occurred. Please try again.');
     }
   };

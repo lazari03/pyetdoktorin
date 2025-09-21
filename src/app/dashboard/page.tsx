@@ -112,14 +112,19 @@ export default function Dashboard() {
             <span className="text-3xl font-extrabold text-primary mb-1">{totalAppointments}</span>
             <span className="text-base text-gray-500 mb-2">All appointments</span>
           </div>
-          <DashboardNotificationsBell doctorId={user.uid} />
+          <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-start justify-center min-w-[200px] min-h-[100px]">
+            <span className="text-lg font-semibold text-primary mb-2">Notifications</span>
+            <DashboardNotificationsBell doctorId={user.uid} />
+          </div>
           <DashboardClock />
         </div>
       )}
 
       {role === UserRole.Doctor && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <UpcomingAppointment />
+          <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-start justify-center min-w-[200px] min-h-[100px]">
+            <UpcomingAppointment />
+          </div>
           <div className="rounded-2xl shadow-md min-w-[300px] min-h-[100px]">
             <DoctorRevenueWidget />
           </div>
@@ -127,23 +132,25 @@ export default function Dashboard() {
       )}
 
       {/* Appointments table */}
-      <div className="card bg-base-100 shadow-xl mt-6">
-        <div className="card-body">
-          <div className="flex justify-between items-center">
-            <h2 className="card-title text-lg md:text-2xl">Your Appointments</h2>
-            <Link href="/dashboard/appointments" className="text-primary hover:underline">
-              View All
-            </Link>
+      {!searchExpanded && (
+        <div className="card bg-base-100 shadow-xl mt-6">
+          <div className="card-body">
+            <div className="flex justify-between items-center">
+              <h2 className="card-title text-lg md:text-2xl">Your Appointments</h2>
+              <Link href="/dashboard/appointments" className="text-primary hover:underline">
+                View All
+              </Link>
+            </div>
+            <AppointmentsTable
+              appointments={appointments}
+              role={role || ''}
+              isAppointmentPast={isAppointmentPast}
+              handleJoinCall={handleJoinCall}
+              handlePayNow={handlePayNow}
+            />
           </div>
-          <AppointmentsTable
-            appointments={appointments}
-            role={role || ''}
-            isAppointmentPast={isAppointmentPast}
-            handleJoinCall={handleJoinCall}
-            handlePayNow={handlePayNow}
-          />
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,19 @@
-
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700&display=swap');
+
+/* Roboto utility classes */
+.roboto {
+  font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+}
+.roboto-100 { font-weight: 100; }
+.roboto-300 { font-weight: 300; }
+.roboto-400 { font-weight: 400; }
+.roboto-500 { font-weight: 500; }
+.roboto-700 { font-weight: 700; }
+.roboto-900 { font-weight: 900; }
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -59,10 +73,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
+
+
 html, body {
   background: var(--background);
   color: #1a1a1a;
-  font-family: 'Mulish', Arial, Helvetica, sans-serif;
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
   line-height: 1.6;
 }
 

@@ -99,7 +99,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                           )}
                           {action.label === 'Join Now' && !action.disabled && (
                             <button
-                              className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full"
+                              className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded-full"
                               onClick={() => handleJoinCall(appointment.id)}
                             >
                               Join Now
@@ -182,7 +182,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                         )}
                         {action.label === 'Join Now' && !action.disabled && (
                           <button
-                            className="ml-auto bg-orange-500 hover:bg-orange-700 text-white font-bold py-1 px-3 rounded-full text-xs"
+                            className="ml-auto bg-primary hover:bg-primary/90 text-white font-bold py-1 px-3 rounded-full text-xs"
                             onClick={() => handleJoinCall(appointment.id)}
                           >
                             Join Now

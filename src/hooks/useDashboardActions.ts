@@ -27,7 +27,7 @@ export function useDashboardActions() {
       });
       window.localStorage.setItem('videoSessionRoomCode', roomCode);
       window.localStorage.setItem('videoSessionUserName', patientName);
-      window.location.href = '/dashboard/appointments/video-session';
+  window.location.href = '/dashboard/appointments/video-session';
     } catch (error) {
       alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

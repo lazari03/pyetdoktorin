@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { fetchDoctors } from '../../services/doctorService';
 import { Doctor } from '../../models/Doctor';
+
 import { SearchType } from '../../models/FirestoreConstants';
 
 interface DashboardDoctorSearchBarProps {
@@ -10,6 +12,7 @@ interface DashboardDoctorSearchBarProps {
 }
 
 export default function DashboardDoctorSearchBar({ expanded = false, onExpand, onCollapse }: DashboardDoctorSearchBarProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,6 +58,14 @@ export default function DashboardDoctorSearchBar({ expanded = false, onExpand, o
     } else {
       setFilteredDoctors([]);
     }
+  };
+
+  const handleDoctorClick = (doctorId: string) => {
+    router.push(`/dashboard/doctor/${doctorId}`);
+    if (onCollapse) onCollapse();
+    setSearchTerm('');
+    setFilteredDoctors([]);
+    setError('');
   };
 
   return (
@@ -118,6 +129,7 @@ export default function DashboardDoctorSearchBar({ expanded = false, onExpand, o
                   <li
                     key={doctor.id}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => handleDoctorClick(doctor.id)}
                   >
                     <div className="font-medium text-sm">{doctor.name}</div>
                     <div className="text-xs text-gray-500">

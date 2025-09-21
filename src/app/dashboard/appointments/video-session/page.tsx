@@ -23,13 +23,17 @@ export default function VideoSessionPage() {
     return <Loader />;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_VIDEO_SESSION_URL;
+  const subdomain = process.env.NEXT_PUBLIC_HMS_SUBDOMAIN;
+  const iframeUrl = `https://${subdomain}.100ms.live/preview/${roomCode}`;
+
   return (
-    <iframe
-      src={`${baseUrl}${roomCode}`}
-      title="100ms Video Call"
-      allow="camera; microphone; fullscreen; display-capture"
-      style={{ width: '100%', height: '100vh', border: 'none' }}
-    />
+    <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', padding: 0, margin: 0, zIndex: 10 }}>
+      <iframe
+        src={iframeUrl}
+        title="100ms Video Call"
+        allow="camera; microphone; fullscreen; display-capture"
+        style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh', border: 'none', display: 'block' }}
+      />
+    </div>
   );
 }
