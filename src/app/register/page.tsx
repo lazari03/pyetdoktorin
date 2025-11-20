@@ -200,7 +200,12 @@ function RegisterPageInner() {
                             >
                                 <option value="patient">Patient</option>
                                 <option value="doctor">Doctor</option>
+                                <option value="admin">Admin</option>
                             </select>
+                            <p className="label-text-alt text-gray-600 mt-1">
+                                Choose <span className="font-semibold">Admin</span> to access the protected{' '}
+                                <span className="font-semibold">/admin</span> dashboard after you log in.
+                            </p>
                         </div>
 
                         {error && <p className="text-red-500 text-sm">{error}</p>}
