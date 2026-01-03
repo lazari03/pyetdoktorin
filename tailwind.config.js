@@ -12,21 +12,5 @@ module.exports = {
         // Other extensions can be added here if needed
     },
   },
-  plugins: [require('tailwindcss'), require('daisyui')],
-  daisyui: {
-    themes: [
-      {
-        light: {
-          primary: '#f97316', // Orange-500
-          'primary-content': '#ffffff',
-          secondary: '#9333ea',
-          'secondary-content': '#ffffff',
-          neutral: '#3d4451',
-          'neutral-content': '#ffffff',
-          'base-100': '#ffffff',
-          'base-content': '#1f2937',
-        },
-      },
-    ],
-  },
+  plugins: [require('tailwindcss')],
 };
