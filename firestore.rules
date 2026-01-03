@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (request.auth.token.admin == true || request.auth.token.role == "admin");
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Allow reads for all
+      allow read: if true;
+
+      // Allow user to write own doc OR allow admins to write any user doc
+      allow write: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+    }
+
+    // Doctors subcollection under users
+    match /users/{userId}/doctors/{doctorId} {
+      // Allow reads for all
+      allow read: if true;
+
+      // Only admins can write doctor profiles
+      allow write: if isAdmin();
+    }
+
+    // Appointments collection
+    match /appointments/{appointmentId} {
+      // Allow reads for all
+      allow read: if true;
+
+      // Allow creation if authenticated and patientId matches, or admin
+      allow create: if (isSignedIn() && request.resource.data.patientId == request.auth.uid) || isAdmin();
+
+      // Allow update if authenticated and patient/doctor matches,
+      // and patientId/doctorId are not changed, or admin
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        (request.auth.uid == resource.data.patientId || request.auth.uid == resource.data.doctorId) &&
+        request.resource.data.patientId == resource.data.patientId &&
+        request.resource.data.doctorId == resource.data.doctorId
+      );
+
+      // Allow delete for admins only
+      allow delete: if isAdmin();
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow write: if (isSignedIn() && request.auth.uid == request.resource.data.userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}
