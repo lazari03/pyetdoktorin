@@ -3,8 +3,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#1d4ed8', // Tailwind's blue-600
-        secondary: '#9333ea', // Tailwind's purple-600
+        primary: '#5a58d8', // blue
+        secondary: '#dbf544', // yellow-green accent
+        accent: '#0f0e0e', // black
+        neutral: '#eeeeee', // light gray
       },
         fontFamily: {
           sans: ['Mulish', 'sans-serif'], // Set Mulish as the global font

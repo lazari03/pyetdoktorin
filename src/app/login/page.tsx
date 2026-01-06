@@ -10,12 +10,32 @@ import { login } from '@/domain/authService';
 import { testFirebaseConnection } from '@/domain/firebaseTest';
 import { useGoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
+type RegisterFormState = {
+  name: string;
+  surname: string;
+  phone: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: 'patient' | 'doctor';
+};
+
 function LoginPageContent() {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [registerData, setRegisterData] = useState<RegisterFormState>({
+    name: '',
+    surname: '',
+    phone: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'patient',
+  });
   const searchParams = useSearchParams();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isRecaptchaReady = !!executeRecaptcha;
@@ -73,46 +93,36 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 flex items-center justify-center px-4">
-      <div className="card w-full max-w-md bg-base-100 shadow-xl">
-        <div className="card-body">
-          <div className="flex justify-center mb-6">
-            <div className="w-48">
-              <Link href="/">
-                <Image
-                  src="/img/logo.png"
-                  alt="Portokalle"
-                  width={200}
-                  height={100}
-                  className="w-full h-auto"
-                />
-              </Link>
-            </div>
-          </div>
-
-          <h2 className="card-title text-2xl font-bold text-center mx-auto mb-4 text-gray-800">{t('loginTitle')}</h2>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-5xl bg-white shadow-md rounded-xl overflow-hidden flex flex-col md:flex-row">
+        {/* LEFT: card with login/register form */}
+        <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-center">
+          <h2 className="text-2xl font-bold text-center mx-auto mb-4 text-gray-800">
+            {mode === 'login' ? t('loginTitle') : t('register')}
+          </h2>
 
           {errorMsg && (
-            <div className="alert alert-error mt-4">
-              <span>{errorMsg}</span>
+            <div className="mt-4 rounded-md bg-red-100 px-3 py-2 text-sm text-red-800 border border-red-200">
+              {errorMsg}
             </div>
           )}
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleLogin(e);
-            }}
-            className="form-control gap-4"
-          >
+          {mode === 'login' ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleLogin(e);
+              }}
+              className="flex flex-col gap-4"
+            >
             <div>
-              <label className="label">
-                <span className="label-text text-gray-700">{t('email')}</span>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                {t('email')}
               </label>
               <input
                 type="email"
                 placeholder={t('emailPlaceholder')}
-                className="input input-bordered w-full"
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -120,16 +130,16 @@ function LoginPageContent() {
             </div>
 
             <div>
-              <label className="label">
-                <span className="label-text text-gray-700">{t('password')}</span>
-                <Link href="/forgot-password" className="label-text-alt link link-hover text-primary">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-700">{t('password')}</span>
+                <Link href="/forgot-password" className="text-xs text-teal-700 hover:text-teal-800">
                   {t('forgotPassword')}
                 </Link>
-              </label>
+              </div>
               <input
                 type="password"
                 placeholder={t('passwordPlaceholder')}
-                className="input input-bordered w-full"
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -138,7 +148,7 @@ function LoginPageContent() {
 
             <button
               type="submit"
-              className={`btn btn-primary w-full mt-2 ${loading ? 'loading' : ''}`}
+              className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={loading || !isRecaptchaReady}
             >
               {loading ? (
@@ -170,18 +180,171 @@ function LoginPageContent() {
               )}
             </button>
             {!isRecaptchaReady && (
-              <div className="text-sm text-gray-500 mt-2">{t('recaptchaLoading')}</div>
+              <div className="text-xs text-gray-500 mt-2">{t('recaptchaLoading')}</div>
             )}
-          </form>
+            </form>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                // Delegate to existing full register page for now
+                window.location.href = '/register';
+              }}
+              className="flex flex-col gap-4"
+            >
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  {t('name')}
+                </label>
+                <input
+                  type="text"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  value={registerData.name}
+                  onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                  required
+                />
+              </div>
 
-          <div className="divider my-6">{t('orDivider')}</div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  {t('surname')}
+                </label>
+                <input
+                  type="text"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  value={registerData.surname}
+                  onChange={(e) => setRegisterData({ ...registerData, surname: e.target.value })}
+                  required
+                />
+              </div>
 
-          <div className="text-center">
-            <p className="mb-2 text-gray-700">{t('noAccount')}</p>
-            <Link href="/register" className="btn btn-outline btn-wide">
-              {t('registerNow')}
-            </Link>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  {t('phoneNumber')}
+                </label>
+                <input
+                  type="tel"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  value={registerData.phone}
+                  onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  {t('email')}
+                </label>
+                <input
+                  type="email"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  value={registerData.email}
+                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  {t('password')}
+                </label>
+                <input
+                  type="password"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  value={registerData.password}
+                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  {t('confirmPassword')}
+                </label>
+                <input
+                  type="password"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  value={registerData.confirmPassword}
+                  onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  {t('role')}
+                </label>
+                <select
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  value={registerData.role}
+                  onChange={(e) =>
+                    setRegisterData({ ...registerData, role: e.target.value as 'patient' | 'doctor' })
+                  }
+                >
+                  <option value="patient">{t('patient')}</option>
+                  <option value="doctor">{t('doctor')}</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-teal-700"
+              >
+                {t('register')}
+              </button>
+            </form>
+          )}
+
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs text-gray-500 uppercase tracking-wide">{t('orDivider')}</span>
+            <div className="h-px flex-1 bg-gray-200" />
           </div>
+
+          <div className="text-center text-sm text-gray-700">
+            {mode === 'login' ? (
+              <>
+                <span>{t('noAccount')}</span>{' '}
+                <button
+                  type="button"
+                  className="font-medium text-teal-700 hover:text-teal-800"
+                  onClick={() => setMode('register')}
+                >
+                  {t('registerNow')}
+                </button>
+              </>
+            ) : (
+              <>
+                <span>{t('alreadyHaveAccount')}</span>{' '}
+                <button
+                  type="button"
+                  className="font-medium text-teal-700 hover:text-teal-800"
+                  onClick={() => setMode('login')}
+                >
+                  {t('loginTitle')}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT: text + switch CTA panel */}
+        <div className="hidden md:flex w-1/2 flex-col justify-center bg-teal-700 text-teal-50 px-10 py-12 gap-4">
+          <h3 className="text-3xl font-semibold">
+            {mode === 'login' ? t('welcomeBackTitle') ?? 'Welcome back' : t('newHere')}
+          </h3>
+          <p className="text-sm text-teal-100">
+            {mode === 'login'
+              ? t('loginSideText') ?? 'Sign in to manage your appointments and stay on top of your care.'
+              : t('registerSideText') ?? 'Create an account to book appointments and manage your health in one place.'}
+          </p>
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50"
+            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+          >
+            {mode === 'login' ? t('registerNow') : t('loginTitle')}
+          </button>
         </div>
       </div>
     </div>
