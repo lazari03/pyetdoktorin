@@ -104,21 +104,30 @@ function AppointmentsPage() {
   // Loader is now handled by RoleGuard, so no need to show it here
 
   return (
-    <div>
+    <div className="min-h-screen bg-transparent">
       <RedirectingModal show={showRedirecting} />
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title text-lg md:text-2xl">Your Appointments</h2>
-          <AppointmentsTable
-            appointments={appointments}
-            role={isDoctor ? USER_ROLE_DOCTOR : USER_ROLE_PATIENT}
-            isAppointmentPast={isAppointmentPast}
-            handleJoinCall={handleJoinCall}
-            handlePayNow={handlePayNow}
-            showActions={true}
-            maxRows={100}
-          />
-        </div>
+      <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10">
+        {/* Header aligned with dashboard style */}
+        <header className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900">
+            Your Appointments
+          </h2>
+        </header>
+
+        {/* Table card matching new dashboard UI */}
+        <section className="dashboard-table-card">
+          <div className="px-4 sm:px-6 pt-4 pb-4">
+            <AppointmentsTable
+              appointments={appointments}
+              role={isDoctor ? USER_ROLE_DOCTOR : USER_ROLE_PATIENT}
+              isAppointmentPast={isAppointmentPast}
+              handleJoinCall={handleJoinCall}
+              handlePayNow={handlePayNow}
+              showActions={true}
+              maxRows={100}
+            />
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -73,7 +73,7 @@ export default function Dashboard() {
   if (authLoading || loading) return <Loader />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-purple-100">
+    <div className="min-h-screen">
       <RedirectingModal show={showRedirecting} />
       <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10 flex flex-col lg:flex-row gap-6">
         {/* LEFT: main content without white outer card */}
@@ -92,16 +92,39 @@ export default function Dashboard() {
             {/* {role === UserRole.Patient && <DashboardDoctorSearchBar />} */}
             <ProfileWarning show={profileIncomplete} />
 
-            {/* Appointments table */}
+            {/* Appointments section styled like 'Last activity' bar */}
             <section className="dashboard-table-card mt-4">
-              <div className="dashboard-table-header">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                  {t("yourAppointments")}
-                </h2>
-                <Link href="/dashboard/appointments" className="dashboard-link-muted">
+              {/* Top bar: Last activity + count + view all */}
+              <div className="flex items-center justify-between px-4 sm:px-6 pt-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900">
+                    {t('lastActivity') ?? t('yourAppointments')}
+                  </h2>
+                  <span className="inline-flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-lime-300 text-xs font-semibold text-gray-900 px-2">
+                    {totalAppointments}
+                  </span>
+                </div>
+                <Link href="/dashboard/appointments" className="text-xs sm:text-sm font-medium text-indigo-500 hover:text-indigo-600">
                   {t("viewAll")}
                 </Link>
               </div>
+
+              {/* Tabs row: Calls / Recipes / Documents (visual only) */}
+              <div className="mt-4 px-4 sm:px-6 border-b border-gray-200">
+                <div className="flex gap-6 text-xs sm:text-sm font-medium text-gray-500">
+                  <button className="pb-3 border-b-2 border-gray-900 text-gray-900">
+                    {t('calls') ?? 'Calls'}
+                  </button>
+                  <button className="pb-3">
+                    {t('recipes') ?? 'Recipes'}
+                  </button>
+                  <button className="pb-3">
+                    {t('documents') ?? 'Documents'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Table itself */}
               <div className="px-4 sm:px-6 pb-4">
                 <AppointmentsTable
                   appointments={appointments}
