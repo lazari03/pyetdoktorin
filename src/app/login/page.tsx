@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import Link from 'next/link';
 import { useSearchParams, usePathname } from 'next/navigation';
-import Image from 'next/image';
 import { login } from '@/domain/authService';
 import { testFirebaseConnection } from '@/domain/firebaseTest';
 import { useGoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
@@ -46,7 +45,7 @@ function LoginPageContent() {
   // Test Firebase connectivity on component mount, but don't block login if it fails
   useEffect(() => {
     testFirebaseConnection().catch(() => {
-  setErrorMsg(t('firebaseWarning'));
+      setErrorMsg(t('firebaseWarning'));
     });
   }, [t]);
 
@@ -56,10 +55,10 @@ function LoginPageContent() {
     setErrorMsg('');
     try {
       if (!navigator.onLine) {
-  throw new Error(t('offlineError'));
+        throw new Error(t('offlineError'));
       }
       if (!executeRecaptcha) {
-  throw new Error(t('recaptchaNotReady'));
+        throw new Error(t('recaptchaNotReady'));
       }
       // Get reCAPTCHA token
       const token = await executeRecaptcha('login');
@@ -71,7 +70,7 @@ function LoginPageContent() {
       });
       const recaptchaData = await recaptchaRes.json();
       if (!recaptchaData.success) {
-  setErrorMsg(t('recaptchaFailed'));
+        setErrorMsg(t('recaptchaFailed'));
         setLoading(false);
         return;
       }
@@ -79,13 +78,13 @@ function LoginPageContent() {
       await login(email, password);
       // Verify if the 'loggedIn' cookie is set (HttpOnly session is not visible to JS)
       if (!document.cookie.includes('loggedIn=')) {
-  setErrorMsg(t('authTokenWarning'));
+        setErrorMsg(t('authTokenWarning'));
         setLoading(false);
         return;
       }
       window.location.href = fromPath;
     } catch (err) {
-  setErrorMsg(t('unknownError'));
+      setErrorMsg(t('unknownError'));
       console.error('Login error:', err);
     } finally {
       setLoading(false);
@@ -115,73 +114,73 @@ function LoginPageContent() {
               }}
               className="flex flex-col gap-4"
             >
-            <div>
-              <label className="block mb-1 text-sm font-medium text-gray-700">
-                {t('email')}
-              </label>
-              <input
-                type="email"
-                placeholder={t('emailPlaceholder')}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-700">{t('password')}</span>
-                <Link href="/forgot-password" className="text-xs text-teal-700 hover:text-teal-800">
-                  {t('forgotPassword')}
-                </Link>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  {t('email')}
+                </label>
+                <input
+                  type="email"
+                  placeholder={t('emailPlaceholder')}
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
-              <input
-                type="password"
-                placeholder={t('passwordPlaceholder')}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
 
-            <button
-              type="submit"
-              className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed"
-              disabled={loading || !isRecaptchaReady}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin h-5 w-5 mr-2 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    ></path>
-                  </svg>
-                  {t('loggingIn')}
-                </span>
-              ) : (
-                t('loginButton')
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-700">{t('password')}</span>
+                  <Link href="/forgot-password" className="text-xs text-primary hover:text-secondary">
+                    {t('forgotPassword')}
+                  </Link>
+                </div>
+                <input
+                  type="password"
+                  placeholder={t('passwordPlaceholder')}
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-secondary disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={loading || !isRecaptchaReady}
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin h-5 w-5 mr-2 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      ></path>
+                    </svg>
+                    {t('loggingIn')}
+                  </span>
+                ) : (
+                  t('loginButton')
+                )}
+              </button>
+              {!isRecaptchaReady && (
+                <div className="text-xs text-gray-500 mt-2">{t('recaptchaLoading')}</div>
               )}
-            </button>
-            {!isRecaptchaReady && (
-              <div className="text-xs text-gray-500 mt-2">{t('recaptchaLoading')}</div>
-            )}
             </form>
           ) : (
             <form
@@ -198,7 +197,7 @@ function LoginPageContent() {
                 </label>
                 <input
                   type="text"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   value={registerData.name}
                   onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                   required
@@ -211,7 +210,7 @@ function LoginPageContent() {
                 </label>
                 <input
                   type="text"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   value={registerData.surname}
                   onChange={(e) => setRegisterData({ ...registerData, surname: e.target.value })}
                   required
@@ -224,7 +223,7 @@ function LoginPageContent() {
                 </label>
                 <input
                   type="tel"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   value={registerData.phone}
                   onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
                   required
@@ -237,7 +236,7 @@ function LoginPageContent() {
                 </label>
                 <input
                   type="email"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   value={registerData.email}
                   onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                   required
@@ -250,7 +249,7 @@ function LoginPageContent() {
                 </label>
                 <input
                   type="password"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   value={registerData.password}
                   onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                   required
@@ -263,9 +262,11 @@ function LoginPageContent() {
                 </label>
                 <input
                   type="password"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   value={registerData.confirmPassword}
-                  onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                  onChange={(e) =>
+                    setRegisterData({ ...registerData, confirmPassword: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -275,7 +276,7 @@ function LoginPageContent() {
                   {t('role')}
                 </label>
                 <select
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   value={registerData.role}
                   onChange={(e) =>
                     setRegisterData({ ...registerData, role: e.target.value as 'patient' | 'doctor' })
@@ -288,7 +289,7 @@ function LoginPageContent() {
 
               <button
                 type="submit"
-                className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-teal-700"
+                className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-secondary"
               >
                 {t('register')}
               </button>
@@ -307,7 +308,7 @@ function LoginPageContent() {
                 <span>{t('noAccount')}</span>{' '}
                 <button
                   type="button"
-                  className="font-medium text-teal-700 hover:text-teal-800"
+                  className="font-medium text-primary hover:text-secondary"
                   onClick={() => setMode('register')}
                 >
                   {t('registerNow')}
@@ -318,7 +319,7 @@ function LoginPageContent() {
                 <span>{t('alreadyHaveAccount')}</span>{' '}
                 <button
                   type="button"
-                  className="font-medium text-teal-700 hover:text-teal-800"
+                  className="font-medium text-primary hover:text-secondary"
                   onClick={() => setMode('login')}
                 >
                   {t('loginTitle')}
@@ -329,18 +330,19 @@ function LoginPageContent() {
         </div>
 
         {/* RIGHT: text + switch CTA panel */}
-        <div className="hidden md:flex w-1/2 flex-col justify-center bg-teal-700 text-teal-50 px-10 py-12 gap-4">
+        <div className="hidden md:flex w-1/2 flex-col justify-center bg-primary text-white px-10 py-12 gap-4">
           <h3 className="text-3xl font-semibold">
             {mode === 'login' ? t('welcomeBackTitle') ?? 'Welcome back' : t('newHere')}
           </h3>
-          <p className="text-sm text-teal-100">
+          <p className="text-sm text-white/80">
             {mode === 'login'
               ? t('loginSideText') ?? 'Sign in to manage your appointments and stay on top of your care.'
-              : t('registerSideText') ?? 'Create an account to book appointments and manage your health in one place.'}
+              : t('registerSideText') ??
+                'Create an account to book appointments and manage your health in one place.'}
           </p>
           <button
             type="button"
-            className="mt-4 inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50"
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-primary hover:bg-violet-50"
             onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
           >
             {mode === 'login' ? t('registerNow') : t('loginTitle')}
@@ -356,8 +358,7 @@ export default function LoginPage() {
   return (
     <GoogleReCaptchaProvider
       reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-      scriptProps={{ async: true, appendTo: "head" }}
-      // Force re-mount on route changes to avoid stuck loading cases
+      scriptProps={{ async: true, appendTo: 'head' }}
       key={pathname}
     >
       <Suspense fallback={<div>Loading...</div>}>

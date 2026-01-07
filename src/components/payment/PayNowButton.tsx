@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 interface PayNowButtonProps {
@@ -25,7 +24,7 @@ export const PayNowButton: React.FC<PayNowButtonProps> = ({ appointmentId, amoun
       } else {
         alert('Error creating PayPal order');
       }
-    } catch (err) {
+    } catch {
       setLoading(false);
       alert('Error connecting to payment service');
     }

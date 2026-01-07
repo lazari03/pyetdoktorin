@@ -8,6 +8,9 @@ import { useDI } from '@/context/DIContext';
 import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths, NavigationKey } from '@/store/navigationStore';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
+import { useSessionStore } from '@/store/sessionStore';
+import { LogoutSessionUseCase } from '@/application/logoutSessionUseCase';
+import { FirebaseSessionRepository } from '@/infrastructure/repositories/FirebaseSessionRepository';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -42,6 +45,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       nav.toLogin(pathname ?? undefined);
     }
   }, [loading, isAuthenticated, pathname, nav]);
+
+  // Centralized logout wiring
+  const logout = useSessionStore((s) => s.logout);
+  const handleLogoutClick = () => {
+    const sessionRepo = new FirebaseSessionRepository();
+    const logoutSessionUseCase = new LogoutSessionUseCase(sessionRepo);
+    logout('manual', logoutSessionUseCase);
+    setProfileMenuOpen(false);
+  };
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -206,10 +218,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   Profile settings
                 </button>
                 <button
-                  onClick={() => {
-                    setProfileMenuOpen(false);
-                    nav.pushPath('/logout');
-                  }}
+                  onClick={handleLogoutClick}
                   className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-xl"
                 >
                   Log out

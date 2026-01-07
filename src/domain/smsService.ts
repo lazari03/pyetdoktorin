@@ -5,7 +5,7 @@ import { getUserPhoneNumber } from './userService';
 const VONAGE_API_KEY = process.env.NEXT_PUBLIC_VONAGE_API_KEY;
 const VONAGE_API_SECRET = process.env.NEXT_PUBLIC_VONAGE_API_SECRET;
 const VONAGE_SMS_URL = 'https://rest.nexmo.com/sms/json';
-const FROM = 'Portokalle';
+const FROM = 'AloDoktor';
 
 export async function sendSMSFromFirestore(userId: string, text: string): Promise<void> {
   try {
