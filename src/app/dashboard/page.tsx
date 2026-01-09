@@ -134,14 +134,15 @@ export default function Dashboard() {
         {/* LEFT: main content without white outer card */}
         <main className="flex-1 flex flex-col">
           <div className="dashboard-main-inner flex flex-col flex-1">
-            <header className="flex items-center justify-between mb-6">
-              {role === UserRole.Doctor && user?.uid && (
+            {role === UserRole.Doctor && user?.uid && (
+              <div className="flex items-center justify-between mb-4">
+                {/* keep bell aligned with nav, but inline above banner */}
                 <DashboardNotificationsBell doctorId={user.uid} />
-              )}
-            </header>
+              </div>
+            )}
 
             <ProfileWarning show={profileIncomplete} />
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col mt-2">
               <DashboardBanner />
               <section className="dashboard-table-card mt-4">
                 {/* Top bar: Last activity + count + view all */}
