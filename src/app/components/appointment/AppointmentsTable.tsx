@@ -160,7 +160,7 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 											>
 												{role !== 'doctor' && action.label === 'Pay Now' && !action.disabled && (
 													<button
-														className="inline-flex items-center rounded-full border border-orange-500 px-4 py-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-500 hover:text-white transition-colors"
+														className="inline-flex items-center rounded-full border border-purple-500 px-4 py-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-500 hover:text-white transition-colors"
 														onClick={() => handlePayNow(appointment.id, DEFAULT_APPOINTMENT_PAYMENT_AMOUNT)}
 													>
 														{t('payNow')}

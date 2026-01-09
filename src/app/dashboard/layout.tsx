@@ -187,7 +187,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   onClick={() => handleNavClick(item.href)}
                   className={`pb-1.5 border-b-2 transition-colors ${
                     active
-                      ? 'border-orange-500 text-gray-900'
+                      ? 'border-purple-500 text-gray-900'
                       : 'border-transparent text-gray-500 hover:text-gray-900'
                   }`}
                 >

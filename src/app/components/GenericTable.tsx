@@ -184,7 +184,7 @@ export function GenericTable<T extends { id?: string | number }>(props: GenericT
           </div>
           <div className="flex items-center gap-2">
             <button
-              className="px-4 py-2 rounded-full border border-orange-500 text-orange-700 hover:bg-orange-50 disabled:opacity-50"
+              className="px-4 py-2 rounded-full border border-purple-500 text-orange-700 hover:bg-orange-50 disabled:opacity-50"
               disabled={page <= 0}
               onClick={() => handlePageChange(Math.max(0, (page ?? 0) - 1))}
             >

@@ -6,15 +6,33 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { getNavigationPaths, NavigationItem } from './navigationStore';
 import { JSX } from 'react';
 
+export enum AppointmentFilter {
+  All = 'all',
+  Unpaid = 'unpaid',
+  Past = 'past',
+}
+
 interface DashboardState {
   totalAppointments: number;
   nextAppointment: string | null;
   recentAppointments: Appointment[];
-  fetchAppointments: (userId: string, role: UserRole, fetchAppointmentsUseCase: (userId: string, isDoctor: boolean) => Promise<Appointment[]>) => Promise<void>;
+  fetchAppointments: (
+    userId: string,
+    role: UserRole,
+    fetchAppointmentsUseCase: (
+      userId: string,
+      isDoctor: boolean
+    ) => Promise<Appointment[]>
+  ) => Promise<void>;
   sidebarOpen: boolean;
   navPaths: (NavigationItem & { icon?: JSX.Element })[];
   toggleSidebar: () => void;
   fetchNavigationPaths: (role: UserRole) => void;
+  // UI-only state
+  activeFilter: AppointmentFilter;
+  showRedirecting: boolean;
+  setActiveFilter: (filter: AppointmentFilter) => void;
+  setShowRedirecting: (show: boolean) => void;
 }
 
 export const useDashboardStore = create<DashboardState>((set) => ({
@@ -25,35 +43,58 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     try {
       const appointments = await fetchAppointmentsUseCase(userId, isDoctor(role));
 
-      // Filter and sort upcoming appointments
       const upcomingAppointments = appointments
         .filter((appointment) => {
-          const isUpcoming = appointment.preferredDate && new Date(appointment.preferredDate) > new Date();
-          const isAccepted = isDoctor(role) ? appointment.status === 'accepted' : true;
+          const isUpcoming =
+            appointment.preferredDate &&
+            new Date(appointment.preferredDate) > new Date();
+          const isAccepted = isDoctor(role)
+            ? appointment.status === 'accepted'
+            : true;
           return isUpcoming && isAccepted;
         })
-        .sort((a, b) => new Date(a.preferredDate!).getTime() - new Date(b.preferredDate!).getTime());
+        .sort(
+          (a, b) =>
+            new Date(a.preferredDate!).getTime() -
+            new Date(b.preferredDate!).getTime()
+        );
 
-      // Sort appointments by preferredDate in descending order for recent appointments
       const sortedAppointments = appointments
         .filter((appointment) => appointment.preferredDate)
-        .sort((a, b) => new Date(b.preferredDate!).getTime() - new Date(a.preferredDate!).getTime())
+        .sort(
+          (a, b) =>
+            new Date(b.preferredDate!).getTime() -
+            new Date(a.preferredDate!).getTime()
+        )
         .slice(0, 5);
 
       set((state) => ({
         ...state,
         totalAppointments: appointments.length,
         nextAppointment: upcomingAppointments.length
-          ? `${formatDate(upcomingAppointments[0].preferredDate!)} at ${upcomingAppointments[0].preferredTime || 'N/A'}`
+          ? `${formatDate(upcomingAppointments[0].preferredDate!)} at ${
+              upcomingAppointments[0].preferredTime || 'N/A'
+            }`
           : null,
         recentAppointments: sortedAppointments,
       }));
     } catch {
-      set((state) => ({ ...state, totalAppointments: 0, nextAppointment: null, recentAppointments: [] }));
+      set((state) => ({
+        ...state,
+        totalAppointments: 0,
+        nextAppointment: null,
+        recentAppointments: [],
+      }));
     }
   },
   sidebarOpen: false,
   navPaths: [],
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  fetchNavigationPaths: (role) => set({ navPaths: getNavigationPaths(role) }),
+  toggleSidebar: () =>
+    set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  fetchNavigationPaths: (role) =>
+    set({ navPaths: getNavigationPaths(role) }),
+  activeFilter: AppointmentFilter.All,
+  showRedirecting: false,
+  setActiveFilter: (filter) => set({ activeFilter: filter }),
+  setShowRedirecting: (show) => set({ showRedirecting: show }),
 }));
