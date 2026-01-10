@@ -1,22 +1,10 @@
 "use client";
-export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/context/AuthContext";
-import {
-  useDashboardStore,
-  AppointmentFilter,
-} from "@/store/dashboardStore";
-import { useAppointmentStore } from "@/store/appointmentStore";
-import { isProfileIncomplete } from "@/store/generalStore";
-import { CheckProfileCompleteUseCase } from "@/application/checkProfileCompleteUseCase";
-import { FetchAppointmentsUseCase } from "@/application/fetchAppointmentsUseCase";
-import { userRepository } from "@/infrastructure/userRepository";
-import { appointmentRepository } from "@/infrastructure/appointmentRepository";
-import { useDashboardActions } from "@/hooks/useDashboardActions";
+import { useDashboardViewModel } from "@/application/dashboard/userDashboardViewModel";
 import { UserRole } from "@/domain/entities/UserRole";
 import Link from "next/link";
+import { AppointmentFilter } from "@/store/dashboardStore";
 import Loader from "@/app/components/Loader";
 import RedirectingModal from "@/app/components/RedirectingModal";
 import ProfileWarning from "@/app/components/ProfileWarning";
@@ -27,121 +15,35 @@ import DashboardBanner from "@/app/components/DashboardBanner";
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const { user, role, loading: authLoading } = useAuth();
-  const {
-    totalAppointments,
-    fetchAppointments,
-    activeFilter,
-    setActiveFilter,
-    showRedirecting,
-    setShowRedirecting,
-  } = useDashboardStore();
-  const {
-    appointments,
-    isAppointmentPast,
-    fetchAppointments: fetchAllAppointments,
-  } = useAppointmentStore();
-  const { handleJoinCall: baseHandleJoinCall, handlePayNow } =
-    useDashboardActions();
-  const [profileIncomplete, setProfileIncomplete] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const vm = useDashboardViewModel();
 
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
-    setShowRedirecting(true);
+    vm.setShowRedirecting(true);
     try {
-      await baseHandleJoinCall(appointmentId);
+      await vm.baseHandleJoinCall(appointmentId);
     } finally {
-      setShowRedirecting(false);
+      vm.setShowRedirecting(false);
     }
   };
 
-  const checkProfileUseCase = useMemo(
-    () => new CheckProfileCompleteUseCase(userRepository),
-    []
-  );
-  const fetchAppointmentsUseCase = useMemo(
-    () => new FetchAppointmentsUseCase(appointmentRepository),
-    []
-  );
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    const fetchAll = async () => {
-      try {
-        if (user && role) {
-          setProfileIncomplete(
-            await isProfileIncomplete(
-              role,
-              user.uid,
-              checkProfileUseCase
-            )
-          );
-          await Promise.all([
-            fetchAppointments(
-              user.uid,
-              role,
-              fetchAppointmentsUseCase.execute.bind(fetchAppointmentsUseCase)
-            ),
-            fetchAllAppointments(
-              user.uid,
-              role === UserRole.Doctor,
-              fetchAppointmentsUseCase.execute.bind(fetchAppointmentsUseCase)
-            ),
-          ]);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (!authLoading) {
-      fetchAll();
-      timeout = setTimeout(() => setLoading(false), 5000);
-    }
-    return () => timeout && clearTimeout(timeout);
-  }, [
-    user,
-    role,
-    fetchAppointments,
-    fetchAllAppointments,
-    authLoading,
-    checkProfileUseCase,
-    fetchAppointmentsUseCase,
-  ]);
-
-  const filteredAppointments = useMemo(() => {
-    if (!appointments) return [];
-
-    switch (activeFilter) {
-      case AppointmentFilter.Unpaid:
-        return appointments.filter(
-          (a) => a.isPaid === false || a.status === "pending"
-        );
-      case AppointmentFilter.Past:
-        return appointments.filter((a) => isAppointmentPast(a));
-      case AppointmentFilter.All:
-      default:
-        return appointments;
-    }
-  }, [appointments, activeFilter, isAppointmentPast]);
-
-  if (authLoading || loading) return <Loader />;
+  if (vm.authLoading || vm.loading) return <Loader />;
 
   return (
     <div className="min-h-screen">
-      <RedirectingModal show={showRedirecting} />
+      <RedirectingModal show={vm.showRedirecting} />
       <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10 flex flex-col lg:flex-row gap-6">
         {/* LEFT: main content without white outer card */}
         <main className="flex-1 flex flex-col">
           <div className="dashboard-main-inner flex flex-col flex-1">
-            {role === UserRole.Doctor && user?.uid && (
+            {vm.role === UserRole.Doctor && vm.user?.uid && (
               <div className="flex items-center justify-between mb-4">
                 {/* keep bell aligned with nav, but inline above banner */}
-                <DashboardNotificationsBell doctorId={user.uid} />
+                <DashboardNotificationsBell doctorId={vm.user.uid} />
               </div>
             )}
 
-            <ProfileWarning show={profileIncomplete} />
+            <ProfileWarning show={vm.profileIncomplete} />
             <div className="flex-1 flex flex-col mt-2">
               <DashboardBanner />
               <section className="dashboard-table-card mt-4">
@@ -152,7 +54,7 @@ export default function Dashboard() {
                       {t("lastActivity") ?? t("yourAppointments")}
                     </h2>
                     <span className="inline-flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-lime-300 text-xs font-semibold text-gray-900 px-2">
-                      {totalAppointments}
+                      {vm.totalAppointments}
                     </span>
                   </div>
                   <Link
@@ -169,33 +71,33 @@ export default function Dashboard() {
                     <button
                       className={
                         "pb-3 border-b-2 transition-colors " +
-                        (activeFilter === AppointmentFilter.All
+                        (vm.activeFilter === AppointmentFilter.All
                           ? "border-primary text-primary"
                           : "border-transparent hover:text-primary")
                       }
-                      onClick={() => setActiveFilter(AppointmentFilter.All)}
+                      onClick={() => vm.setActiveFilter(AppointmentFilter.All)}
                     >
                       All
                     </button>
                     <button
                       className={
                         "pb-3 border-b-2 transition-colors " +
-                        (activeFilter === AppointmentFilter.Unpaid
+                        (vm.activeFilter === AppointmentFilter.Unpaid
                           ? "border-primary text-primary"
                           : "border-transparent hover:text-primary")
                       }
-                      onClick={() => setActiveFilter(AppointmentFilter.Unpaid)}
+                      onClick={() => vm.setActiveFilter(AppointmentFilter.Unpaid)}
                     >
                       Unpaid
                     </button>
                     <button
                       className={
                         "pb-3 border-b-2 transition-colors " +
-                        (activeFilter === AppointmentFilter.Past
+                        (vm.activeFilter === AppointmentFilter.Past
                           ? "border-primary text-primary"
                           : "border-transparent hover:text-primary")
                       }
-                      onClick={() => setActiveFilter(AppointmentFilter.Past)}
+                      onClick={() => vm.setActiveFilter(AppointmentFilter.Past)}
                     >
                       Past
                     </button>
@@ -204,11 +106,11 @@ export default function Dashboard() {
 
                 <div className="px-4 sm:px-6 pb-4">
                   <AppointmentsTable
-                    appointments={filteredAppointments}
-                    role={role || ""}
-                    isAppointmentPast={isAppointmentPast}
+                    appointments={vm.filteredAppointments}
+                    role={vm.role || ""}
+                    isAppointmentPast={vm.isAppointmentPast}
                     handleJoinCall={handleJoinCall}
-                    handlePayNow={handlePayNow}
+                    handlePayNow={vm.handlePayNow}
                   />
                 </div>
               </section>
@@ -236,7 +138,7 @@ export default function Dashboard() {
                 {t("totalAppointments")}
               </p>
               <p className="mt-1 text-3xl font-bold text-gray-900">
-                {totalAppointments}
+                {vm.totalAppointments}
               </p>
             </div>
             <p className="text-xs text-gray-800/80">
