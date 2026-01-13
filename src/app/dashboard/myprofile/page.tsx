@@ -1,37 +1,16 @@
 'use client';
 
-import { useMyProfile } from '../../../hooks/useMyProfile';
 import Loader from '../../components/Loader';
 import MyProfileForm from '@/app/components/MyProfile/MyProfileForm';
 import PasswordResetSection from '@/app/components/MyProfile/PasswordResetSection';
+import { useMyProfileViewModel } from '@/application/profile/useMyProfileViewModel';
 
 export default function MyProfile() {
-  const {
-    formData,
-    role,
-    resetEmailSent,
-    isFetching,
-    authLoading,
-    uploading,
-    handleInputChange,
-    handleAddField,
-    handleRemoveField,
-    handlePasswordReset,
-    handleSubmit,
-    handleProfilePictureChange,
-  } = useMyProfile();
+  const vm = useMyProfileViewModel();
 
-  if (authLoading || isFetching) {
+  if (vm.isLoading) {
     return <Loader />;
   }
-
-  const nameForInitials = formData.name || formData.email || 'User';
-  const initials = nameForInitials
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
 
   return (
     <div className="min-h-screen">
@@ -49,14 +28,14 @@ export default function MyProfile() {
             <div className="flex flex-col items-center gap-3">
               {/* Avatar circle */}
               <div className="h-20 w-20 rounded-full bg-gray-900 text-white flex items-center justify-center text-xl font-semibold">
-                {initials}
+                {vm.initials}
               </div>
               <div className="text-center md:text-left">
                 <p className="text-sm font-semibold text-gray-900">
-                  {formData.name || 'Your name'}
+                  {vm.displayName}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {formData.email || 'Add your email'}
+                  {vm.displayEmail}
                 </p>
               </div>
             </div>
@@ -71,20 +50,20 @@ export default function MyProfile() {
           {/* RIGHT: profile form and password section */}
           <section className="md:w-2/3 flex flex-col gap-4">
             <MyProfileForm
-              formData={formData}
-              role={role || ''}
-              handleInputChange={handleInputChange}
-              handleAddField={handleAddField}
-              handleRemoveField={handleRemoveField}
-              handleSubmit={handleSubmit}
-              onProfilePictureChange={handleProfilePictureChange}
-              uploading={uploading}
+              formData={vm.formData}
+              role={vm.role}
+              handleInputChange={vm.handleInputChange}
+              handleAddField={vm.handleAddField}
+              handleRemoveField={vm.handleRemoveField}
+              handleSubmit={vm.handleSubmit}
+              onProfilePictureChange={vm.handleProfilePictureChange}
+              uploading={vm.isUploading}
             />
 
             <div className="mt-2">
               <PasswordResetSection
-                handlePasswordReset={handlePasswordReset}
-                resetEmailSent={resetEmailSent}
+                handlePasswordReset={vm.handlePasswordReset}
+                resetEmailSent={vm.resetEmailSent}
               />
             </div>
           </section>

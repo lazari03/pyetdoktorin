@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useDashboardViewModel } from "@/application/dashboard/userDashboardViewModel";
+import { useAuth } from "@/context/AuthContext";
+import { useDashboardViewModel, DashboardUserContext } from "@/application/dashboard/userDashboardViewModel";
 import { UserRole } from "@/domain/entities/UserRole";
 import Link from "next/link";
 import { AppointmentFilter } from "@/store/dashboardStore";
@@ -15,7 +16,13 @@ import DashboardBanner from "@/app/components/DashboardBanner";
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const vm = useDashboardViewModel();
+  const { user, role, loading: authLoading } = useAuth();
+  const authContext: DashboardUserContext = {
+  userId: user?.uid ?? null,
+  role: role ?? null,
+  authLoading,
+};
+  const vm = useDashboardViewModel(authContext);
 
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
@@ -36,10 +43,10 @@ export default function Dashboard() {
         {/* LEFT: main content without white outer card */}
         <main className="flex-1 flex flex-col">
           <div className="dashboard-main-inner flex flex-col flex-1">
-            {vm.role === UserRole.Doctor && vm.user?.uid && (
+            {vm.role === UserRole.Doctor && user?.uid && (
               <div className="flex items-center justify-between mb-4">
                 {/* keep bell aligned with nav, but inline above banner */}
-                <DashboardNotificationsBell doctorId={vm.user.uid} />
+                <DashboardNotificationsBell doctorId={user.uid} />
               </div>
             )}
 

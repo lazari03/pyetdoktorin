@@ -1,91 +1,13 @@
 'use client';
-import { useMemo, useState } from 'react';
+
 import { useTranslation } from 'react-i18next';
 import DoctorSearch from '@/app/components/doctor/DoctorSearch';
-import useNewAppointment from '@/hooks/useNewAppointment';
-import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
+import { useNewAppointmentViewModel } from '@/application/appointment/useNewAppointmentViewModel';
 import AppointmentConfirmation from './AppointmentConfirmation';
 
 export default function NewAppointmentStepper() {
 	const { t } = useTranslation();
-	const {
-		selectedDoctor,
-		setSelectedDoctor,
-		appointmentType,
-		setAppointmentType,
-		preferredDate,
-		setPreferredDate,
-		preferredTime,
-		setPreferredTime,
-		notes,
-		setNotes,
-		handleSubmit,
-		isSubmitting,
-		availableTimes,
-	} = useNewAppointment();
-	const nav = useNavigationCoordinator();
-	const [showModal, setShowModal] = useState(false);
-
-	// Helper: parse time string to minutes for comparison
-	const parseTimeToMinutes = (time: string): number | null => {
-		if (!time) return null;
-
-		// Handle formats like "09:00", "9:00"
-		const simpleMatch = time.match(/^(\d{1,2}):(\d{2})$/);
-		if (simpleMatch) {
-			const hours = parseInt(simpleMatch[1], 10);
-			const minutes = parseInt(simpleMatch[2], 10);
-			if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
-			return hours * 60 + minutes;
-		}
-
-		// Handle formats like "9:00 AM", "12:30 pm"
-		const ampmMatch = time.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
-		if (ampmMatch) {
-			let hours = parseInt(ampmMatch[1], 10);
-			const minutes = parseInt(ampmMatch[2], 10);
-			const period = ampmMatch[3].toUpperCase();
-			if (period === 'PM' && hours !== 12) hours += 12;
-			if (period === 'AM' && hours === 12) hours = 0;
-			return hours * 60 + minutes;
-		}
-
-		return null;
-	};
-
-	const isToday = useMemo(() => {
-		if (!preferredDate) return false;
-		const today = new Date();
-		const [year, month, day] = preferredDate.split('-').map(Number);
-		if (!year || !month || !day) return false;
-		return (
-			today.getFullYear() === year &&
-			today.getMonth() + 1 === month &&
-			today.getDate() === day
-		);
-	}, [preferredDate]);
-
-	const currentMinutes = useMemo(() => {
-		const now = new Date();
-		return now.getHours() * 60 + now.getMinutes();
-	}, []);
-
-	const visibleTimeSlots = useMemo(() => {
-		if (!Array.isArray(availableTimes)) return [];
-
-		return availableTimes.filter((slot: { time: string; disabled?: boolean }) => {
-			if (slot.disabled) return false;
-			if (!isToday) return true;
-			const mins = parseTimeToMinutes(slot.time);
-			if (mins === null) return true; // if we can't parse, keep it
-			return mins > currentMinutes;
-		});
-	}, [availableTimes, isToday, currentMinutes]);
-
-	const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		await handleSubmit(e, setShowModal, () => {});
-	};
+	const vm = useNewAppointmentViewModel();
 
 	return (
 		<div className="w-full max-w-6xl mx-auto mt-10">
@@ -110,21 +32,12 @@ export default function NewAppointmentStepper() {
 						{t('selectDoctorDescription') ||
 							'Search and choose the clinician you would like to meet with.'}
 					</p>
-					<DoctorSearch
-						onDoctorSelect={(doctor) => {
-							setSelectedDoctor({
-								...doctor,
-								specialization: Array.isArray(doctor.specialization)
-									? doctor.specialization.join(', ')
-									: doctor.specialization || 'General',
-							});
-						}}
-					/>
+					<DoctorSearch onDoctorSelect={vm.handleDoctorSelect} />
 				</div>
 
 				{/* Column 2: Date, time (Calendly-like), notes */}
 				<form
-					onSubmit={handleFormSubmit}
+					onSubmit={vm.handleFormSubmit}
 					className="lg:w-1/3 bg-white rounded-3xl border border-gray-100 p-6 flex flex-col gap-4"
 				>
 					<h2 className="font-semibold text-lg text-gray-900 mb-1">
@@ -142,8 +55,8 @@ export default function NewAppointmentStepper() {
 						</label>
 						<select
 							className="w-full rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-white"
-							value={appointmentType}
-							onChange={(e) => setAppointmentType(e.target.value)}
+							value={vm.appointmentType}
+							onChange={(e) => vm.setAppointmentType(e.target.value)}
 							required
 						>
 							<option value="">{t('selectAppointmentType')}</option>
@@ -161,9 +74,9 @@ export default function NewAppointmentStepper() {
 						<input
 							type="date"
 							className="w-full rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-white"
-							value={preferredDate}
-							onChange={(e) => setPreferredDate(e.target.value)}
-							min={new Date().toISOString().split('T')[0]}
+							value={vm.preferredDate}
+							onChange={(e) => vm.setPreferredDate(e.target.value)}
+							min={vm.minDate}
 							required
 						/>
 					</div>
@@ -174,18 +87,18 @@ export default function NewAppointmentStepper() {
 							{t('preferredTime')}
 						</label>
 						<div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-							{visibleTimeSlots.length === 0 && (
+							{vm.visibleTimeSlots.length === 0 && (
 								<div className="col-span-full text-xs text-gray-400">
 									{t('noAvailableTimes') || 'No available times for this day.'}
 								</div>
 							)}
-							{visibleTimeSlots.map((slot: { time: string }) => {
-								const isSelected = preferredTime === slot.time;
+							{vm.visibleTimeSlots.map((slot) => {
+								const isSelected = vm.preferredTime === slot.time;
 								return (
 									<button
 										key={slot.time}
 										type="button"
-										onClick={() => setPreferredTime(slot.time)}
+										onClick={() => vm.setPreferredTime(slot.time)}
 										className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors text-center ${
 											isSelected
 												? 'bg-primary border-primary text-white'
@@ -207,8 +120,8 @@ export default function NewAppointmentStepper() {
 						<textarea
 							className="w-full rounded-2xl border border-gray-300 px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-white min-h-[96px]"
 							rows={3}
-							value={notes}
-							onChange={(e) => setNotes(e.target.value)}
+							value={vm.notes}
+							onChange={(e) => vm.setNotes(e.target.value)}
 							placeholder={t('notesPlaceholder')}
 						></textarea>
 					</div>
@@ -218,11 +131,9 @@ export default function NewAppointmentStepper() {
 						<button
 							className="px-6 py-2 rounded-full bg-primary text-white font-semibold text-sm hover:bg-secondary transition disabled:opacity-60"
 							type="submit"
-							disabled={
-								isSubmitting || !selectedDoctor || !preferredDate || !preferredTime || !appointmentType
-							}
+							disabled={!vm.canSubmit}
 						>
-							{isSubmitting ? t('booking') : t('confirm')}
+							{vm.isSubmitting ? t('booking') : t('confirm')}
 						</button>
 					</div>
 				</form>
@@ -232,51 +143,51 @@ export default function NewAppointmentStepper() {
 					<h2 className="font-semibold text-lg text-gray-900 mb-4">
 						{t('appointmentSummary') || 'Appointment summary'}
 					</h2>
-					{!selectedDoctor && !preferredDate && !preferredTime && !appointmentType ? (
+					{!vm.hasSummaryContent ? (
 						<p className="text-sm text-gray-400">
 							{t('appointmentSummaryEmpty') || 'Start by selecting a doctor and time on the left.'}
 						</p>
 					) : (
 						<div className="space-y-2 text-sm text-gray-700">
-							{selectedDoctor && (
+							{vm.selectedDoctor && (
 								<div>
 									<div className="text-xs uppercase tracking-wide text-gray-400 mb-0.5">
 										{t('doctor')}
 									</div>
-									<div className="font-medium text-gray-900">{selectedDoctor.name}</div>
-									<div className="text-xs text-gray-500">{selectedDoctor.specialization}</div>
+									<div className="font-medium text-gray-900">{vm.selectedDoctor.name}</div>
+									<div className="text-xs text-gray-500">{vm.selectedDoctor.specialization}</div>
 								</div>
 							)}
-							{preferredDate && (
+							{vm.preferredDate && (
 								<div>
 									<div className="text-xs uppercase tracking-wide text-gray-400 mb-0.5">
 										{t('date')}
 									</div>
-									<div className="font-medium">{preferredDate}</div>
+									<div className="font-medium">{vm.preferredDate}</div>
 								</div>
 							)}
-							{preferredTime && (
+							{vm.preferredTime && (
 								<div>
 									<div className="text-xs uppercase tracking-wide text-gray-400 mb-0.5">
 										{t('time')}
 									</div>
-									<div className="font-medium">{preferredTime}</div>
+									<div className="font-medium">{vm.preferredTime}</div>
 								</div>
 							)}
-							{appointmentType && (
+							{vm.appointmentType && (
 								<div>
 									<div className="text-xs uppercase tracking-wide text-gray-400 mb-0.5">
 										{t('type')}
 									</div>
-									<div className="font-medium">{appointmentType}</div>
+									<div className="font-medium">{vm.appointmentType}</div>
 								</div>
 							)}
-							{notes && (
+							{vm.notes && (
 								<div>
 									<div className="text-xs uppercase tracking-wide text-gray-400 mb-0.5">
 										{t('notesLabel')}
 									</div>
-									<div className="text-gray-700 whitespace-pre-line">{notes}</div>
+									<div className="text-gray-700 whitespace-pre-line">{vm.notes}</div>
 								</div>
 							)}
 						</div>
@@ -285,7 +196,7 @@ export default function NewAppointmentStepper() {
 			</div>
 
 			{/* Confirmation Modal */}
-			{showModal && <AppointmentConfirmation onClose={() => nav.toAppointments()} />}
+			{vm.showModal && <AppointmentConfirmation onClose={vm.handleCloseModal} />}
 		</div>
 	);
 }

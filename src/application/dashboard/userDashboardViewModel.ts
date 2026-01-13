@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
 import {
     useDashboardStore,
     AppointmentFilter,
@@ -14,10 +13,15 @@ import { userRepository } from "@/infrastructure/userRepository";
 import { appointmentRepository } from "@/infrastructure/appointmentRepository";
 import { useDashboardActions } from "@/hooks/useDashboardActions";
 import { UserRole } from "@/domain/entities/UserRole";
-import { filter } from "lodash";
 
-export function useDashboardViewModel() {
-    const { user, role, loading: authLoading } = useAuth();
+export type DashboardUserContext = {
+  userId: string | null;
+  role: UserRole | null;
+  authLoading: boolean;
+};
+
+export function useDashboardViewModel(auth: DashboardUserContext) {
+  const { userId, role, authLoading } = auth;
     const {
         totalAppointments,
         fetchAppointments,
@@ -50,22 +54,22 @@ export function useDashboardViewModel() {
     let timeout: NodeJS.Timeout;
     const fetchAll = async () => {
       try {
-        if (user && role) {
+        if (userId && role) {
           setProfileIncomplete(
             await isProfileIncomplete(
               role,
-              user.uid,
+              userId,
               checkProfileUseCase
             )
           );
           await Promise.all([
             fetchAppointments(
-              user.uid,
+              userId,
               role,
               fetchAppointmentsUseCase.execute.bind(fetchAppointmentsUseCase)
             ),
             fetchAllAppointments(
-              user.uid,
+              userId,
               role === UserRole.Doctor,
               fetchAppointmentsUseCase.execute.bind(fetchAppointmentsUseCase)
             ),
@@ -81,7 +85,7 @@ export function useDashboardViewModel() {
     }
     return () => timeout && clearTimeout(timeout);
   }, [
-    user,
+    userId,
     role,
     fetchAppointments,
     fetchAllAppointments,
@@ -107,7 +111,7 @@ export function useDashboardViewModel() {
 }, [appointments, activeFilter, isAppointmentPast]);
     
   return {
-    user,
+    userId,
     role,
     authLoading,
     totalAppointments,

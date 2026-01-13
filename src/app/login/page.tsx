@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import Link from 'next/link';
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { login } from '@/domain/authService';
 import { testFirebaseConnection } from '@/domain/firebaseTest';
 import { useGoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
@@ -19,7 +19,13 @@ type RegisterFormState = {
   role: 'patient' | 'doctor';
 };
 
-function LoginPageContent() {
+interface LoginPageContentProps {
+  onRetryRecaptcha: () => void;
+  retryCount: number;
+  maxRetries: number;
+}
+
+function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPageContentProps) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -37,7 +43,29 @@ function LoginPageContent() {
   });
   const searchParams = useSearchParams();
   const { executeRecaptcha } = useGoogleReCaptcha();
+  const [waitingForRecaptcha, setWaitingForRecaptcha] = useState(true);
   const isRecaptchaReady = !!executeRecaptcha;
+
+  // Give reCAPTCHA 5 seconds to load, then allow retry or proceed
+  useEffect(() => {
+    if (isRecaptchaReady) {
+      setWaitingForRecaptcha(false);
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      setWaitingForRecaptcha(false);
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [isRecaptchaReady]);
+
+  // Reset waiting state when retry happens (provider remounts)
+  useEffect(() => {
+    if (retryCount > 0) {
+      setWaitingForRecaptcha(true);
+    }
+  }, [retryCount]);
 
   // Get the 'from' parameter to redirect after login
   const fromPath = searchParams?.get('from') || '/dashboard';
@@ -148,7 +176,7 @@ function LoginPageContent() {
               <button
                 type="submit"
                 className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-secondary disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={loading || !isRecaptchaReady}
+                disabled={loading || (waitingForRecaptcha && !isRecaptchaReady)}
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -179,7 +207,32 @@ function LoginPageContent() {
                 )}
               </button>
               {!isRecaptchaReady && (
-                <div className="text-xs text-gray-500 mt-2">{t('recaptchaLoading')}</div>
+                <div className="text-xs text-gray-500 mt-2">
+                  {waitingForRecaptcha ? (
+                    <div className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                      <span>{t('recaptchaLoading')}</span>
+                    </div>
+                  ) : retryCount < maxRetries ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-600">{t('recaptchaFailed') || 'reCAPTCHA failed to load.'}</span>
+                      <button
+                        type="button"
+                        onClick={onRetryRecaptcha}
+                        className="text-primary hover:text-secondary underline"
+                      >
+                        {t('retry') || 'Retry'} ({retryCount + 1}/{maxRetries})
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-red-600">
+                      {t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.'}
+                    </span>
+                  )}
+                </div>
               )}
             </form>
           ) : (
@@ -354,15 +407,38 @@ function LoginPageContent() {
 }
 
 export default function LoginPage() {
-  const pathname = usePathname();
+  // Key to force reCAPTCHA provider remount
+  const [providerKey, setProviderKey] = useState(() => Date.now());
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+  
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+  
+  // Function to retry loading reCAPTCHA
+  const handleRetry = () => {
+    if (retryCount < maxRetries) {
+      setRetryCount((r) => r + 1);
+      setProviderKey(Date.now()); // Force provider remount
+    }
+  };
+  
+  if (!siteKey) {
+    console.error('NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not configured');
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+        <div className="text-red-600">reCAPTCHA configuration error. Please contact support.</div>
+      </div>
+    );
+  }
+  
   return (
     <GoogleReCaptchaProvider
-      reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-      scriptProps={{ async: true, appendTo: 'head' }}
-      key={pathname}
+      reCaptchaKey={siteKey}
+      scriptProps={{ async: true, defer: true, appendTo: 'head' }}
+      key={providerKey}
     >
-      <Suspense fallback={<div>Loading...</div>}>
-        <LoginPageContent />
+      <Suspense fallback={<div className="min-h-screen bg-gray-100 flex items-center justify-center">Loading...</div>}>
+        <LoginPageContent onRetryRecaptcha={handleRetry} retryCount={retryCount} maxRetries={maxRetries} />
       </Suspense>
     </GoogleReCaptchaProvider>
   );
