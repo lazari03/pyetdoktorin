@@ -1,4 +1,4 @@
-const CACHE_NAME = 'myapp-cache-v1';
+const CACHE_NAME = 'myapp-cache-v2';
 const urlsToCache = [
   '/',
   '/img/logo.png',
@@ -22,9 +22,34 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Skip non-GET requests and API/auth requests
+  if (event.request.method !== 'GET') return;
+  
+  const url = new URL(event.request.url);
+  
+  // Don't cache API routes, auth requests, or Firebase requests
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/_next/') ||
+    url.hostname.includes('firebase') ||
+    url.hostname.includes('googleapis')
+  ) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(response => {
-      return response || fetch(event.request);
+      if (response) {
+        return response;
+      }
+      return fetch(event.request).catch(() => {
+        // Return a fallback for navigation requests
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
+        }
+        // For other requests, just fail silently
+        return new Response('', { status: 503, statusText: 'Service Unavailable' });
+      });
     })
   );
 });
