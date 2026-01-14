@@ -106,7 +106,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { key: NavigationKey.Dashboard, name: 'dashboard', href: '/admin' },
         { key: NavigationKey.Appointments, name: 'users', href: '/admin/users' },
         { key: NavigationKey.AppointmentHistory, name: 'notifications', href: '/admin/notifications' },
-        { key: NavigationKey.Profile, name: 'stats', href: '/admin/stats' },
+        // Profile nav removed for admin
       ]
     : getNavigationPaths(role);
 

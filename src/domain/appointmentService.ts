@@ -41,44 +41,13 @@ export async function setAppointmentPaid(appointmentId: string): Promise<void> {
   }
 }
 
-// Handle payment via PayPal
-export async function handlePayNow(appointmentId: string, rawAmount: number): Promise<void> {
-  const amount = Number(rawAmount);
-  if (!appointmentId || Number.isNaN(amount) || amount <= 0) {
-    throw new Error("Invalid PayPal payment parameters");
-  }
-
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
-
-  const response = await fetch("/api/paypal/create-order", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      appointmentId,
-      amount,
-      currency: "USD",
-      returnUrl: `${baseUrl}/dashboard/appointments?paypal=success`,
-      cancelUrl: `${baseUrl}/dashboard/appointments?paypal=cancel`,
-    }),
-  });
-
-  if (!response.ok) {
-    let errorText = "";
-    try {
-      errorText = await response.text();
-    } catch {
-      // ignore
-    }
-    console.error("PayPal create-order failed", response.status, errorText);
-    throw new Error("Failed to create PayPal order");
-  }
-
-  const data: { approvalUrl?: string } = await response.json();
-
-  if (data.approvalUrl) {
-    window.location.href = data.approvalUrl;
+// Handle Stripe payment
+export async function handlePayNow(appointmentId: string, amount: number): Promise<void> {
+  const { data, status } = await createPaymentIntent(appointmentId, amount);
+  if (status === 200 && data.url) {
+    window.location.href = data.url;
   } else {
-    throw new Error("No PayPal approval URL returned");
+    throw new Error("Failed to create payment intent");
   }
 }
 

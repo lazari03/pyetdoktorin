@@ -1,12 +1,16 @@
+
 'use client';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 import Loader from '../../components/Loader';
 import MyProfileForm from '@/app/components/MyProfile/MyProfileForm';
 import PasswordResetSection from '@/app/components/MyProfile/PasswordResetSection';
 import { useMyProfileViewModel } from '@/application/profile/useMyProfileViewModel';
 
+
 export default function MyProfile() {
   const vm = useMyProfileViewModel();
+
 
   if (vm.isLoading) {
     return <Loader />;
@@ -15,11 +19,14 @@ export default function MyProfile() {
   return (
     <div className="min-h-screen">
       <div className="mx-auto max-w-4xl px-4 py-6 lg:py-10">
-        <header className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Profile</h1>
-          <p className="mt-1 text-xs sm:text-sm text-gray-500">
-            Preview your profile on the left and update your details on the right.
-          </p>
+        <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Profile</h1>
+            <p className="mt-1 text-xs sm:text-sm text-gray-500">
+              Preview your profile on the left and update your details on the right.
+            </p>
+          </div>
+          <LanguageSwitcher />
         </header>
 
         <div className="bg-white rounded-3xl border border-gray-100 px-4 sm:px-6 py-5 sm:py-6 flex flex-col md:flex-row gap-6">

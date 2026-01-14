@@ -22,7 +22,6 @@ export function getNavigationPaths(role: UserRole): NavigationItem[] {
       return [
         { key: NavigationKey.Dashboard, name: 'Dashboard', href: '/dashboard' },
         { key: NavigationKey.Appointments, name: 'Appointments', href: '/dashboard/appointments' },
-        { key: NavigationKey.Profile, name: 'Profile', href: '/dashboard/myprofile' },
         { key: NavigationKey.Calendar, name: 'Calendar', href: '/dashboard/doctor/calendar' },
       ];
     case UserRole.Patient:
@@ -30,7 +29,6 @@ export function getNavigationPaths(role: UserRole): NavigationItem[] {
         { key: NavigationKey.Dashboard, name: 'Dashboard', href: '/dashboard' },
         { key: NavigationKey.NewAppointment, name: 'New Appointment', href: '/dashboard/new-appointment' },
         { key: NavigationKey.AppointmentHistory, name: 'Appointment History', href: '/dashboard/appointments' },
-        { key: NavigationKey.Profile, name: 'Profile', href: '/dashboard/myprofile' },
       ];
     default:
       return [];

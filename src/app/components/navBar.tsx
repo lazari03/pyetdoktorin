@@ -134,15 +134,19 @@ export default function NavBar() {
         </div>
         {/* Desktop Nav */}
           <nav className="hidden md:flex space-x-10 text-[15px] font-medium text-gray-800 z-[9999]">
-            <a href="#" className="text-black hover:text-[#ea580c] cursor-pointer" onClick={() => handleNavItemClick('/individuals')}>
-              {t('individuals')}
-            </a>
-            <a href="#" className="text-black hover:text-[#ea580c] cursor-pointer" onClick={() => handleNavItemClick('/doctors')}>
-              {t('doctors')}
-            </a>
-            <a href="#" className="text-black hover:text-[#ea580c] cursor-pointer" onClick={() => handleNavItemClick('/clinicians')}>
-              {t('clinicians')}
-            </a>
+            {/* Render nav items robustly, skip if missing */}
+            {[{ path: '/individuals', label: t('individuals') }, { path: '/doctors', label: t('doctors') }, { path: '/clinicians', label: t('clinicians') }]
+              .filter(item => item && item.label && item.path)
+              .map(item => (
+                <a
+                  key={item.path}
+                  href="#"
+                  className="text-black hover:text-[#ea580c] cursor-pointer"
+                  onClick={() => handleNavItemClick(item.path)}
+                >
+                  {item.label}
+                </a>
+              ))}
           </nav>
         {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4 ml-auto z-[9999]">
@@ -204,15 +208,19 @@ export default function NavBar() {
         <div className="absolute top-full left-0 w-full bg-white shadow-md z-[10001] flex flex-col rounded-b-2xl rounded-t-2xl overflow-hidden">
           {/* Menu Items */}
           <nav className="flex flex-col">
-            <Link href="/individuals" className="text-blue-600 py-4 px-6 border-b border-gray-100 cursor-pointer" onClick={() => handleNavItemClick('/individuals')}>
-              {t('individuals')}
-            </Link>
-            <Link href="/doctors" className="text-blue-600 py-4 px-6 border-b border-gray-100 cursor-pointer" onClick={() => handleNavItemClick('/doctors')}>
-              {t('doctors')}
-            </Link>
-            <Link href="/clinicians" className="text-blue-600 py-4 px-6 border-b border-gray-100 cursor-pointer" onClick={() => handleNavItemClick('/clinicians')}>
-              {t('clinicians')}
-            </Link>
+            {/* Render nav items robustly, skip if missing */}
+            {[{ path: '/individuals', label: t('individuals') }, { path: '/doctors', label: t('doctors') }, { path: '/clinicians', label: t('clinicians') }]
+              .filter(item => item && item.label && item.path)
+              .map(item => (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className="text-blue-600 py-4 px-6 border-b border-gray-100 cursor-pointer"
+                  onClick={() => handleNavItemClick(item.path)}
+                >
+                  {item.label}
+                </Link>
+              ))}
           </nav>
           {/* Mobile Bottom Buttons */}
           <div className="p-4 border-t border-gray-100">

@@ -8,7 +8,6 @@ import {
   XMarkIcon,
   HomeIcon as HomeOutline,
   ClipboardIcon as ClipboardOutline,
-  UserIcon as UserOutline,
   CalendarIcon as CalendarOutline,
   PlusIcon as PlusOutline,
 } from '@heroicons/react/24/outline';
@@ -65,17 +64,16 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         { key: NavigationKey.Dashboard, name: 'dashboard', href: '/admin' },
         { key: NavigationKey.Appointments, name: 'users', href: '/admin/users' },
         { key: NavigationKey.AppointmentHistory, name: 'notifications', href: '/admin/notifications' },
-        { key: NavigationKey.Profile, name: 'stats', href: '/admin/stats' },
+        // Profile nav removed for admin
       ]
     : getNavigationPaths(role);
 
-  const iconMap: Record<NavigationKey, ReactElement> = isAdminSection
+  const iconMap: Partial<Record<NavigationKey, ReactElement>> = isAdminSection
     ? {
         [NavigationKey.Dashboard]: <HomeSolid className="h-6 w-6" />,
         [NavigationKey.Appointments]: <UsersSolid className="h-6 w-6" />,
         [NavigationKey.AppointmentHistory]: <BellSolid className="h-6 w-6" />,
-        [NavigationKey.Profile]: <ChartBarSolid className="h-6 w-6" />,
-        // For admin section, we don't use Calendar/NewAppointment entries but keep defaults if present
+        // Profile nav removed for admin
         [NavigationKey.Calendar]: <ChartBarSolid className="h-6 w-6" />,
         [NavigationKey.NewAppointment]: <ChartBarSolid className="h-6 w-6" />,
       }
@@ -83,7 +81,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         [NavigationKey.Dashboard]: <HomeOutline className="h-6 w-6" />,
         [NavigationKey.Appointments]: <ClipboardOutline className="h-6 w-6" />,
         [NavigationKey.AppointmentHistory]: <ClipboardOutline className="h-6 w-6" />,
-        [NavigationKey.Profile]: <UserOutline className="h-6 w-6" />,
+        // Profile nav removed for non-admin
         [NavigationKey.Calendar]: <CalendarOutline className="h-6 w-6" />,
         [NavigationKey.NewAppointment]: <PlusOutline className="h-6 w-6" />,
       };

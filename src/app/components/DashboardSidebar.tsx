@@ -70,19 +70,23 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
           </button>
         </div>
         <ul className="relative flex-grow">
-          {enhancedNavItems.map((item) => (
-            <li key={item.name} className="relative mb-2">
-              <Link
-                href={item.href}
-                className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'}`}
-              >
-                <span className="flex items-center justify-center w-10 h-10">{item.icon}</span>
-                <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'}`}> 
-                  {item.name}
-                </span>
-              </Link>
-            </li>
-          ))}
+          {enhancedNavItems && enhancedNavItems.length > 0 ? (
+            enhancedNavItems.map((item) => (
+              <li key={item.name} className="relative mb-2">
+                <Link
+                  href={item.href}
+                  className={`flex items-center w-full py-2 px-3 transition-all duration-300 rounded-lg ${pathname === item.href ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'}`}
+                >
+                  <span className="flex items-center justify-center w-10 h-10">{item.icon}</span>
+                  <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${sidebarOpen ? 'opacity-100 ml-3 max-w-full' : 'opacity-0 max-w-0'}`}> 
+                    {item.name}
+                  </span>
+                </Link>
+              </li>
+            ))
+          ) : (
+            <li className="text-gray-400 px-4 py-2">No navigation items</li>
+          )}
         </ul>
         <div className={`p-4 flex ${sidebarOpen ? 'items-start' : 'items-center'} w-full`}>
           <button
@@ -108,18 +112,22 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
           </button>
         </div>
         <ul>
-          {enhancedNavItems.map((item) => (
-            <li key={item.name} className="mb-2 mt-4">
-              <Link
-                href={item.href}
-                className={`flex items-center py-2 px-3 rounded-lg transition-colors duration-300 ${pathname === item.href ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'}`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <span className="mr-2">{item.icon}</span>
-                {item.name}
-              </Link>
-            </li>
-          ))}
+          {enhancedNavItems && enhancedNavItems.length > 0 ? (
+            enhancedNavItems.map((item) => (
+              <li key={item.name} className="mb-2 mt-4">
+                <Link
+                  href={item.href}
+                  className={`flex items-center py-2 px-3 rounded-lg transition-colors duration-300 ${pathname === item.href ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'}`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className="mr-2">{item.icon}</span>
+                  {item.name}
+                </Link>
+              </li>
+            ))
+          ) : (
+            <li className="text-gray-400 px-4 py-2">No navigation items</li>
+          )}
         </ul>
         <div className="p-4">
           <button

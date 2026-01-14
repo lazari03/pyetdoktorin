@@ -1,4 +1,6 @@
+
 "use client";
+import "@/i18n/i18n";
 
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";

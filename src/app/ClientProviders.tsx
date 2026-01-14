@@ -1,5 +1,5 @@
 'use client';
-
+import "@/i18n/i18n";
 import { AuthProvider } from "../context/AuthContext";
 import { useSessionActivity } from "@/hooks/useSessionActivity";
 import { LogoutSessionUseCase } from '@/application/logoutSessionUseCase';
