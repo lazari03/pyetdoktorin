@@ -49,16 +49,16 @@ export default function NavBar() {
         </span>
       </button>
       {showLangMenu && (
-        <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col py-2 animate-fade-in z-50">
+        <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col py-2 animate-fade-in">
           <button
-            className={`flex items-center gap-2 px-4 py-2 text-sm w-full hover:bg-orange-50 transition-colors ${lang === 'en' ? 'font-bold text-[#ea580c]' : 'text-gray-700'}`}
+            className={`flex items-center gap-2 px-4 py-2 text-sm w-full hover:bg-purple-200 transition-colors ${lang === 'en' ? 'font-bold text-[#a78bfa]' : 'text-gray-700'}`}
             onClick={() => { setLang('en'); i18n.changeLanguage('en'); setShowLangMenu(false); document.cookie = `language=en; path=/; max-age=31536000`; }}
             aria-label="Switch to English"
           >
             <span role="img" aria-label="English">🇬🇧</span> {t('english')}
           </button>
           <button
-            className={`flex items-center gap-2 px-4 py-2 text-sm w-full hover:bg-orange-50 transition-colors ${lang === 'al' ? 'font-bold text-[#ea580c]' : 'text-gray-700'}`}
+            className={`flex items-center gap-2 px-4 py-2 text-sm w-full hover:bg-purple-200 transition-colors ${lang === 'al' ? 'font-bold text-[#a78bfa]' : 'text-gray-700'}`}
             onClick={() => { setLang('al'); i18n.changeLanguage('al'); setShowLangMenu(false); document.cookie = `language=al; path=/; max-age=31536000`; }}
             aria-label="Switch to Albanian"
           >
@@ -74,7 +74,7 @@ export default function NavBar() {
     !loading && (
       (isAuthenticated && hasAuthCookie) ? (
         <button
-          className="bg-[#ea580c] text-white rounded-full px-6 py-2 font-semibold hover:bg-orange-700 transition-colors cursor-pointer"
+          className="bg-[#ea580c] text-white rounded-full px-6 py-2 font-semibold hover:bg-purple-700 transition-colors cursor-pointer"
           onClick={() => { setIsMenuOpen(false); nav.toDashboard(); }}
         >
           {t('goToDashboard') || 'Go to Dashboard'}
@@ -88,7 +88,7 @@ export default function NavBar() {
             {t('signIn')}
           </button>
           <button 
-            className="bg-[#ea580c] text-white rounded-full px-6 py-2 font-semibold hover:bg-orange-700 transition-colors cursor-pointer" 
+            className="bg-purple-500 text-white rounded-full px-6 py-2 font-semibold hover:bg-purple-200 transition-colors cursor-pointer" 
             onClick={() => { setIsMenuOpen(false); nav.toRegister(); }}
           >
             {t('registerNow')}
@@ -117,7 +117,7 @@ export default function NavBar() {
   }, [isAuthenticated, loading]);
 
   return (
-    <header className="w-full fixed top-0 left-0 z-50">
+    <header className="w-full fixed top-0 left-0">
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
         <div
@@ -145,27 +145,15 @@ export default function NavBar() {
 
         {/* Left - Logo (Desktop) */}
         <div className="hidden md:flex items-center">
-          <Link href="/">
-            <Image
-              src="/img/logo.png"
-              alt="Portokalle Health"
-              width={140}
-              height={60}
-              priority
-            />
+          <Link href="/" className="text-3xl font-extrabold tracking-tight select-none" style={{ letterSpacing: '0.04em' }}>
+            ALO <span className={scrolled ? 'text-purple-500' : 'text-purple-200'}>DOKTOR</span>
           </Link>
         </div>
 
         {/* Center - Logo (Mobile) */}
         <div className="md:hidden absolute inset-x-0 flex justify-center pointer-events-none">
-          <Link href="/" className="pointer-events-auto">
-            <Image
-              src="/img/logo.png"
-              alt="Portokalle Health"
-              width={140}
-              height={60}
-              priority
-            />
+          <Link href="/" className="pointer-events-auto text-2xl font-extrabold tracking-tight select-none" style={{ letterSpacing: '0.04em' }}>
+            ALO <span className={scrolled ? 'text-purple-500' : 'text-purple-500'}>DOKTOR</span>
           </Link>
         </div>
 
@@ -199,7 +187,7 @@ export default function NavBar() {
 
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-[#8d6ee9] shadow-md flex flex-col overflow-hidden z-40">
+        <div className="absolute top-full left-0 w-full bg-[#8d6ee9] shadow-md flex flex-col overflow-hidden">
           {/* Menu Items */}
           <nav className="flex flex-col">
             {navItems.map(item => (
