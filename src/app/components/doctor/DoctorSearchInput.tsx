@@ -61,9 +61,9 @@ const DoctorSearchInput = () => {
 	return (
 		<>
 			{isOverlayVisible && (
-				<div className="fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+			<div className="fixed inset-0 bg-black bg-opacity-50"></div>
 			)}
-			<div ref={searchRef} className="relative z-50 flex flex-col items-center mx-auto max-w-md">
+			<div ref={searchRef} className="relative flex flex-col items-center mx-auto max-w-md">
 				<div className="relative flex items-center bg-white rounded-full shadow-md p-1 w-full">
 					<input
 						type="text"
@@ -92,7 +92,7 @@ const DoctorSearchInput = () => {
 						{loading && <p className="text-center text-gray-500 text-sm">{t('loading')}</p>}
 						{error && <p className="text-center text-red-500 text-sm">{error}</p>}
 						{filteredDoctors.length > 0 && (
-							<ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-sm max-h-48 overflow-auto">
+							  <ul className="absolute w-full bg-white border border-gray-200 rounded-md shadow-sm max-h-48 overflow-auto">
 								{filteredDoctors.map((doctor) => (
 									<li
 										key={doctor.id}

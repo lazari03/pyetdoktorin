@@ -62,7 +62,7 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
     <>
       {/* Desktop Sidebar */}
       <div
-        className={`hidden md:flex fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-30 ${sidebarOpen ? 'w-64' : 'w-16'} flex-col`}
+  className={`hidden md:flex fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-16'} flex-col`}
       >
         <div className="p-4 flex items-center">
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-orange-500 hover:text-orange-700 transition-colors flex items-center justify-center w-12 h-12">
@@ -104,7 +104,7 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
       </div>
       {/* Mobile Slide-in Menu */}
       <div
-        className={`md:hidden fixed top-0 left-0 h-full bg-white z-50 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-64`}
+  className={`md:hidden fixed top-0 left-0 h-full bg-white shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-64`}
       >
         <div className="p-4">
           <button onClick={() => setSidebarOpen(false)} className="text-gray-700 hover:text-orange-500">

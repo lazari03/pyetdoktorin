@@ -27,7 +27,7 @@ export default function DashboardBanner({ href = "/dashboard/appointments" }: Da
       </div>
 
       {/* Content overlay */}
-      <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-9 lg:px-12 lg:py-12 flex flex-col gap-4 sm:gap-5 max-w-xl">
+  <div className="relative px-5 py-7 sm:px-8 sm:py-9 lg:px-12 lg:py-12 flex flex-col gap-4 sm:gap-5 max-w-xl">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white leading-snug">
           {t("bannerTitle") ?? "Your next video visit, at your fingertips"}
         </h2>

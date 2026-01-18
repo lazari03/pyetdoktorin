@@ -55,7 +55,7 @@ export function UserSidepanel() {
     };
   }, [isPanelOpen, selectUser]);
 
-  const panelClass = `fixed right-0 top-0 h-screen w-full sm:w-[520px] md:w-[640px] bg-white shadow-2xl p-0 font-app rounded-l-2xl transition-transform duration-300 ease-out z-50 ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`;
+  const panelClass = `fixed right-0 top-0 h-screen w-full sm:w-[520px] md:w-[640px] bg-white shadow-2xl p-0 font-app rounded-l-2xl transition-transform duration-300 ease-out ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`;
 
   const save = async () => {
     try {
@@ -106,7 +106,7 @@ export function UserSidepanel() {
     <>
       <aside ref={panelRef} className={panelClass} aria-hidden={false} tabIndex={0}>
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-4 py-3 rounded-tl-2xl">
+  <div className="sticky top-0 flex items-center justify-between border-b bg-white px-4 py-3 rounded-tl-2xl">
           <div className="flex items-center gap-2">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-orange-100 text-orange-600">👤</span>
             <h3 className="text-base sm:text-lg font-semibold">Edit User</h3>

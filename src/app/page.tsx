@@ -8,7 +8,7 @@ import FooterSection from "./components/footerSection";
 
 export default function Home() {
   return (
-    <div>
+    <main>
       <div className="navbar-wrapper">
         <NavBar />
       </div>
@@ -17,6 +17,6 @@ export default function Home() {
       <ModernCtaSection />
       <Contact />
       <FooterSection />
-    </div>
+    </main>
   );
 }

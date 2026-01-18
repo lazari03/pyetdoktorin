@@ -5,52 +5,56 @@ import { useTranslation } from 'react-i18next';
 
 export default function ContentSection() {
   const { t } = useTranslation();
-  const imageUrl = "https://portokalle-storage.fra1.digitaloceanspaces.com/img/sick-senior-woman-talking-with-young-doctor-remote-consultation.jpg";
+  // Placeholder image and logo
+  const doctorImage = "/img/doctor-demo.jpg";
+  const hipaaLogo = "/img/hipaa-logo.png"; // Replace with your HIPAA logo asset
 
   return (
-  <section className="relative min-h-[60vh] flex items-center justify-center bg-white pt-16 pb-32 px-2 overflow-hidden">
-  {/* Decorative orange circle: bottom half, aligns with top half in previous section */}
-  <div className="absolute -top-48 -left-32 w-96 h-48" />
-      {/* Stronger bottom fade for seamless transition */}
-  <div className="pointer-events-none absolute left-0 right-0 bottom-0 h-64 " style={{marginBottom: '-2rem'}} />
-  <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 relative">
-        {/* Left: Image */}
-        <div className="hidden md:flex flex-1 items-center justify-center">
-          <Image
-            src={imageUrl}
-            alt={t('telemedicineConsultationAlt')}
-            width={380}
-            height={380}
-            className="object-cover w-full h-72 sm:h-80 rounded-2xl shadow"
-          />
-        </div>
-        {/* Right: Content */}
-        <div className="flex-1 flex flex-col justify-center items-center md:items-start px-2 md:px-0">
-          <p className="text-sm font-semibold text-orange-600 uppercase tracking-widest mb-2">{t('telemedicineMadeEasy')}</p>
-          <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-4">{t('yourHealthAnywhere')}</h2>
-          <p className="text-lg text-gray-700 mb-6">{t('yourHealthAnywhereSubtitle')}</p>
-          <ul className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-2xl text-gray-700 mb-8">
-            <li className="flex flex-col items-center">
-              <VideoCameraIcon className="h-8 w-8 text-orange-500 mb-2" />
-              <span className="font-semibold text-gray-900 mb-1">{t('virtualConsultations')}</span>
-              <span className="text-sm text-gray-600 text-center">{t('virtualConsultationsDesc')}</span>
-            </li>
-            <li className="flex flex-col items-center">
-              <ShieldCheckIcon className="h-8 w-8 text-orange-500 mb-2" />
-              <span className="font-semibold text-gray-900 mb-1">{t('secureAndPrivate')}</span>
-              <span className="text-sm text-gray-600 text-center">{t('secureAndPrivateDesc')}</span>
-            </li>
-            <li className="flex flex-col items-center">
-              <HeartIcon className="h-8 w-8 text-orange-500 mb-2" />
-              <span className="font-semibold text-gray-900 mb-1">{t('comprehensiveCare')}</span>
-              <span className="text-sm text-gray-600 text-center">{t('comprehensiveCareDesc')}</span>
-            </li>
-          </ul>
-          <div className="max-w-2xl mx-auto text-center md:text-left">
-            <p className="text-base text-gray-700 mb-4">{t('joinThousandsPatients')}</p>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">{t('whyChooseTelemedicine')}</h3>
-            <p className="text-base text-gray-600">{t('whyChooseTelemedicineDesc')}</p>
+    <section className="relative min-h-[70vh] flex items-center justify-center bg-[#dbe9ea] px-2 py-20 overflow-x-hidden">
+      <div className="w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-8 md:gap-16 relative">
+        {/* Left: Card with logo and image */}
+        <div className="flex-1 flex items-center justify-center relative min-w-[340px]">
+          <div className="bg-[#0a2e2e] rounded-3xl shadow-xl p-6 pt-8 w-[340px] sm:w-[400px] min-h-[420px] flex flex-col items-center relative">
+            {/* Logo */}
+            <div className="w-full flex justify-start mb-4">
+              <Image src={hipaaLogo} alt="HIPAA" width={70} height={40} className="object-contain" />
+            </div>
+            {/* Device image */}
+            <div className="w-full flex-1 flex items-center justify-center">
+              <Image
+                src={doctorImage}
+                alt={t('telemedicineConsultationAlt')}
+                width={220}
+                height={320}
+                className="object-cover rounded-2xl border-4 border-white shadow-lg"
+              />
+            </div>
+            {/* Floating checklist card */}
+            <div className="absolute -right-24 top-8 bg-white rounded-2xl shadow-2xl px-8 py-6 w-[320px] max-w-[90vw] border border-gray-100 flex flex-col gap-2">
+              <span className="font-bold text-lg text-[#0a2e2e] mb-2">{t('securityYouCanRelyOn') || 'Security you can rely on'}</span>
+              <ul className="space-y-2">
+                <li className="flex items-center justify-between text-[#0a2e2e] font-medium">Fully HIPAA compliant <span className="text-green-500">&#10003;</span></li>
+                <li className="flex items-center justify-between text-[#0a2e2e] font-medium">GDPR compliant <span className="text-green-500">&#10003;</span></li>
+                <li className="flex items-center justify-between text-[#0a2e2e] font-medium">SOC2 certified <span className="text-green-500">&#10003;</span></li>
+                <li className="flex items-center justify-between text-[#0a2e2e] font-medium">End-end encrypted <span className="text-green-500">&#10003;</span></li>
+                <li className="flex items-center justify-between text-[#0a2e2e] font-medium">Free BAA <span className="text-green-500">&#10003;</span></li>
+              </ul>
+            </div>
           </div>
+        </div>
+        {/* Right: Security content */}
+        <div className="flex-1 flex flex-col items-center md:items-start justify-center px-2 md:px-0">
+          <div className="mb-4">
+            <span className="inline-flex items-center justify-center bg-orange-100 text-orange-600 rounded-full p-2 mb-2">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#fff"/><path d="M12 17a5 5 0 0 1-5-5V9a5 5 0 0 1 10 0v3a5 5 0 0 1-5 5Zm0 0v2m-7 0h14" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </span>
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-bold text-[#0a2e2e] mb-4">Enterprise grade security</h2>
+          <p className="text-lg text-[#0a2e2e] mb-6 max-w-lg">HIPAA, GDPR, PHIPA/PIPEDA, & HITECH compliant: We meet worldwide security requirements. A free BAA is also included in every plan.</p>
+          <a href="#" className="inline-flex items-center text-[#0a2e2e] font-semibold hover:underline text-lg group">
+            Learn more about security
+            <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="#0a2e2e" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </a>
         </div>
       </div>
     </section>

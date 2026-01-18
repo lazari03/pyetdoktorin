@@ -98,7 +98,7 @@ export default function DoctorSearch({ onDoctorSelect }: DoctorSearchProps) {
 			{error && <p className="text-red-500 text-center py-2">{error}</p>}
 
 			{filteredDoctors.length > 0 && (
-				<ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-sm max-h-48 overflow-auto">
+				<ul className="absolute w-full bg-white border border-gray-200 rounded-md shadow-sm max-h-48 overflow-auto">
 					{filteredDoctors.map((doctor) => (
 						<li
 							key={doctor.id}

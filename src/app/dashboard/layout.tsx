@@ -129,7 +129,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Mobile Top Bar with hamburger */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white shadow-md flex items-center justify-between px-4 py-4">
+  <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4">
         <button
           onClick={() => setMobileMenuOpen((open) => !open)}
           className="text-gray-800 hover:text-gray-900"
@@ -152,7 +152,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile slide-down menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed top-14 left-0 right-0 z-30 bg-white shadow-lg border-t border-gray-100">
+  <div className="md:hidden fixed top-14 left-0 right-0 bg-white shadow-lg border-t border-gray-100">
           <nav className="flex flex-col py-2">
             {navItems.map((item) => {
               const active = pathname === item.href;

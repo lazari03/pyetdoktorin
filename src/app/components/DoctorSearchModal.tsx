@@ -61,9 +61,9 @@ export default function DoctorSearchModal({ isOpen, onClose, position }: DoctorS
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity duration-500 ease-in-out"></div>
+  <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-500 ease-in-out"></div>
       <div
-        className="fixed z-50 bg-white rounded-lg shadow-lg p-6"
+  className="fixed bg-white rounded-lg shadow-lg p-6"
         style={{
           top: position.top,
           left: position.left,
