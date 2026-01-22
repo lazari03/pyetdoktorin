@@ -1,10 +1,10 @@
-import HeroSection from "./components/heroSection";
-import NavBar from "./components/navBar";
-import ContentSection from "./components/contentSection";
-import ModernCtaSection from "./components/ModernCtaSection";
-import Contact from "./components/contact";
-import "./styles.css"; // Ensure you import the CSS file for styling
-import FooterSection from "./components/footerSection";
+import HeroSection from "@/presentation/components/heroSection/heroSection";
+import ModernHeroSection from "@/presentation/components/ModernHeroSection/ModernHeroSection";
+import NavBar from "@/presentation/components/navBar/navBar";
+import ContentSection from "@/presentation/components/contentSection/contentSection";
+import ModernCtaSection from "@/presentation/components/ModernCtaSection/ModernCtaSection";
+import "./styles.css";
+import FooterSection from "@/presentation/components/footerSection/footerSection";
 
 export default function Home() {
   return (
@@ -15,8 +15,9 @@ export default function Home() {
       <HeroSection />
       <ContentSection />
       <ModernCtaSection />
-      <Contact />
+      <ModernHeroSection />
       <FooterSection />
+
     </main>
   );
 }

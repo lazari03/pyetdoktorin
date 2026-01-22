@@ -332,5 +332,17 @@
   "loadingNotifications": "Loading notifications...",
   "noNewNotifications": "No new notifications",
   "backToHome": "Back to Home",
-  "patientName": "Patient Name"
+  "patientName": "Patient Name",
+  "hero": {
+    "title": {
+      "prefix": "The most loved",
+      "highlight": "telemedicine",
+      "suffix": "solution"
+    },
+    "subtitle": "Experience why more than 1 million providers trust us already.",
+    "cta": {
+      "primary": "Get started for free",
+      "secondary": "Explore Clinic solutions"
+    }
+  }
 }

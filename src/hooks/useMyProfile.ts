@@ -1,3 +1,4 @@
+export * from '../application/hooks/useMyProfile';
 import { useState, useEffect } from "react";
 import { db } from "../config/firebaseconfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";

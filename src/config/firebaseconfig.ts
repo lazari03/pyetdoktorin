@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getRemoteConfig } from "firebase/remote-config";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -25,4 +26,17 @@ if (typeof window !== "undefined") {
 }
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Remote Config: Only initialize on client
+let remoteConfig = null as ReturnType<typeof getRemoteConfig> | null;
+if (typeof window !== "undefined") {
+  remoteConfig = getRemoteConfig(app);
+  remoteConfig.settings = {
+    minimumFetchIntervalMillis: 3600000,
+    fetchTimeoutMillis: 60000, // 60 seconds
+  };
+  remoteConfig.defaultConfig = {};
+}
+
+export { remoteConfig };
 export default app;

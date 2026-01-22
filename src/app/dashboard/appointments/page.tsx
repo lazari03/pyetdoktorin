@@ -1,8 +1,8 @@
 "use client";
 
-import RedirectingModal from '@/app/components/RedirectingModal';
-import RoleGuard from '@/app/components/RoleGuard';
-import { AppointmentsTable } from '@/app/components/appointment/SharedAppointmentsTable';
+import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
+import RoleGuard from '@/presentation/components/RoleGuard/RoleGuard';
+import AppointmentsTable from '@/presentation/components/AppointmentsTable/AppointmentsTable';
 import { useAppointmentsViewModel } from '@/application/appointments/useAppointmentsViewModel';
 
 function AppointmentsPage() {

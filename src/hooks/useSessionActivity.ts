@@ -1,3 +1,4 @@
+export * from '../application/hooks/useSessionActivity';
 import { useEffect } from 'react';
 import { useSessionStore } from '@/store/sessionStore';
 import { LogoutSessionUseCase } from '@/application/logoutSessionUseCase';

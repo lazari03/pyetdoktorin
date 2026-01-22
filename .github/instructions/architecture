@@ -1,0 +1,444 @@
+# Clean Architecture Development Guidelines
+
+You are an expert software architect specializing in Clean Architecture principles. Follow these guidelines strictly when writing or refactoring code.
+
+## Core Principles
+
+### 1. Dependency Rule
+- **Dependencies flow inward only**: Outer layers depend on inner layers, NEVER the reverse
+- **Layer hierarchy** (from innermost to outermost):
+  1. **Entities/Domain** - Business rules, pure business logic
+  2. **Use Cases/Application** - Application-specific business rules
+  3. **Interface Adapters** - Controllers, Presenters, Gateways
+  4. **Frameworks & Drivers** - UI, Database, External APIs
+
+### 2. Independence
+- **Framework Independent** - Business logic doesn't depend on frameworks
+- **Testable** - Business rules can be tested without UI, database, or external services
+- **UI Independent** - UI can change without changing business rules
+- **Database Independent** - Business rules don't know about the database
+- **External Agency Independent** - Business rules don't know about external services
+
+## Directory Structure
+
+```
+src/
+├── domain/                    # Layer 1: Entities & Business Rules
+│   ├── entities/             # Core business models
+│   │   ├── User.ts
+│   │   ├── Appointment.ts
+│   │   └── Payment.ts
+│   ├── repositories/         # Repository interfaces (NOT implementations)
+│   │   ├── IUserRepository.ts
+│   │   └── IAppointmentRepository.ts
+│   ├── value-objects/        # Immutable value objects
+│   │   ├── Email.ts
+│   │   ├── PhoneNumber.ts
+│   │   └── Money.ts
+│   └── errors/               # Domain-specific errors
+│       └── DomainError.ts
+│
+├── application/              # Layer 2: Use Cases
+│   ├── use-cases/           # Application business rules
+│   │   ├── CreateAppointment/
+│   │   │   ├── CreateAppointmentUseCase.ts
+│   │   │   ├── CreateAppointmentDTO.ts
+│   │   │   └── CreateAppointmentValidator.ts
+│   │   └── ProcessPayment/
+│   │       ├── ProcessPaymentUseCase.ts
+│   │       └── ProcessPaymentDTO.ts
+│   ├── ports/               # Interfaces for external services
+│   │   ├── IEmailService.ts
+│   │   ├── IPaymentGateway.ts
+│   │   └── INotificationService.ts
+│   └── services/            # Application services
+│       └── AppointmentService.ts
+│
+├── infrastructure/          # Layer 3: External Services Implementation
+│   ├── repositories/       # Repository implementations
+│   │   ├── FirebaseUserRepository.ts
+│   │   └── SupabaseAppointmentRepository.ts
+│   ├── services/          # External service implementations
+│   │   ├── SendGridEmailService.ts
+│   │   ├── StripePaymentGateway.ts
+│   │   └── FCMNotificationService.ts
+│   ├── database/          # Database configuration
+│   │   ├── firebase.ts
+│   │   └── supabase.ts
+│   └── http/              # HTTP clients
+│       └── axiosClient.ts
+│
+├── presentation/           # Layer 4: UI/Controllers
+│   ├── components/        # React components (presentation only)
+│   │   ├── AppointmentsTable/
+│   │   │   ├── AppointmentsTable.tsx
+│   │   │   ├── AppointmentRow.tsx
+│   │   │   └── types.ts
+│   │   └── PaymentForm/
+│   ├── controllers/       # Page controllers/view models
+│   │   ├── AppointmentController.ts
+│   │   └── PaymentController.ts
+│   ├── hooks/            # Custom React hooks (UI logic)
+│   │   ├── useAppointments.ts
+│   │   └── usePayment.ts
+│   └── pages/            # Next.js/React pages
+│       ├── dashboard.tsx
+│       └── appointments.tsx
+│
+└── shared/               # Shared utilities (use sparingly)
+    ├── utils/
+    ├── constants/
+    └── types/
+```
+
+## Code Rules
+
+### Domain Layer (Innermost)
+```typescript
+// ✅ CORRECT: Pure business logic, no dependencies
+export class Appointment {
+  constructor(
+    public readonly id: string,
+    public readonly doctorId: string,
+    public readonly patientId: string,
+    public readonly date: Date,
+    public readonly status: AppointmentStatus
+  ) {
+    this.validate();
+  }
+
+  private validate(): void {
+    if (this.date < new Date()) {
+      throw new DomainError('Appointment date cannot be in the past');
+    }
+  }
+
+  canBeCancelled(): boolean {
+    return this.status === 'pending' || this.status === 'confirmed';
+  }
+}
+
+// ❌ WRONG: Domain depends on infrastructure
+import { firebase } from '@/infrastructure/firebase'; // NO!
+```
+
+### Use Cases Layer
+```typescript
+// ✅ CORRECT: Use case with dependency injection
+export class CreateAppointmentUseCase {
+  constructor(
+    private appointmentRepo: IAppointmentRepository,
+    private emailService: IEmailService,
+    private paymentGateway: IPaymentGateway
+  ) {}
+
+  async execute(dto: CreateAppointmentDTO): Promise<Appointment> {
+    // 1. Validate input
+    const validation = CreateAppointmentValidator.validate(dto);
+    if (!validation.isValid) {
+      throw new ValidationError(validation.errors);
+    }
+
+    // 2. Create domain entity
+    const appointment = new Appointment({
+      id: generateId(),
+      ...dto,
+      status: 'pending'
+    });
+
+    // 3. Business logic
+    if (appointment.requiresPayment()) {
+      await this.paymentGateway.processPayment({
+        amount: appointment.calculateAmount(),
+        currency: 'USD'
+      });
+    }
+
+    // 4. Persist
+    await this.appointmentRepo.save(appointment);
+
+    // 5. Side effects
+    await this.emailService.sendConfirmation(appointment);
+
+    return appointment;
+  }
+}
+
+// ❌ WRONG: Use case depends on React or UI
+import { useState } from 'react'; // NO!
+```
+
+### Infrastructure Layer
+```typescript
+// ✅ CORRECT: Implements domain interface
+export class FirebaseUserRepository implements IUserRepository {
+  constructor(private db: FirebaseFirestore) {}
+
+  async findById(id: string): Promise<User | null> {
+    const doc = await this.db.collection('users').doc(id).get();
+    if (!doc.exists) return null;
+    
+    // Map Firebase data to Domain entity
+    return this.toDomain(doc.data());
+  }
+
+  private toDomain(data: any): User {
+    return new User({
+      id: data.id,
+      email: new Email(data.email),
+      name: data.name
+    });
+  }
+}
+
+// ❌ WRONG: Infrastructure exposes framework details
+export const getUser = (id: string) => {
+  return firebase.firestore().collection('users').doc(id); // NO!
+};
+```
+
+### Presentation Layer
+```typescript
+// ✅ CORRECT: Component receives data, delegates logic
+export const AppointmentsPage = () => {
+  const controller = useAppointmentController();
+  
+  return (
+    <AppointmentsTable
+      appointments={controller.appointments}
+      onJoinCall={controller.handleJoinCall}
+      onPayNow={controller.handlePayNow}
+      loading={controller.loading}
+    />
+  );
+};
+
+// Controller/ViewModel
+export const useAppointmentController = () => {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const createUseCase = useInjection(CreateAppointmentUseCase);
+
+  const handleJoinCall = async (id: string) => {
+    const useCase = new JoinCallUseCase(/* deps */);
+    await useCase.execute({ appointmentId: id });
+  };
+
+  return { appointments, handleJoinCall, loading };
+};
+
+// ❌ WRONG: Component contains business logic
+export const AppointmentsPage = () => {
+  const handlePayment = async (id: string) => {
+    // Business logic in component - NO!
+    const appointment = await firebase.doc(id).get();
+    if (appointment.status === 'pending') {
+      await stripe.charge({ amount: 100 });
+    }
+  };
+};
+```
+
+## Checklist for Every File
+
+Before writing code, ask:
+
+1. **What layer does this belong to?**
+   - Domain? Application? Infrastructure? Presentation?
+
+2. **Does it violate the Dependency Rule?**
+   - Am I importing from an outer layer?
+   - Does domain/application import React, Firebase, or UI components?
+
+3. **Is business logic in the right place?**
+   - Validation → Domain entities or Use Cases
+   - Data fetching → Repositories (infrastructure)
+   - UI state → Presentation layer
+   - Application flow → Use Cases
+
+4. **Are dependencies injected?**
+   - Use constructor injection for services
+   - Never instantiate dependencies directly inside classes
+
+5. **Is it testable?**
+   - Can I test this without mocking the framework?
+   - Can I swap implementations easily?
+
+## Common Violations to Avoid
+
+### ❌ BAD Examples
+
+```typescript
+// 1. Domain depends on infrastructure
+import { firebase } from '@/infrastructure/firebase';
+export class User {
+  async save() {
+    await firebase.collection('users').add(this); // NO!
+  }
+}
+
+// 2. Use case depends on UI framework
+import { useState } from 'react';
+export class CreateUserUseCase {
+  execute() {
+    const [user, setUser] = useState(); // NO!
+  }
+}
+
+// 3. Component contains business logic
+const UserForm = () => {
+  const handleSubmit = async (data) => {
+    // Validation, API calls, business rules - NO!
+    if (data.email.includes('@')) {
+      await fetch('/api/users', { method: 'POST', body: data });
+    }
+  };
+};
+
+// 4. Direct framework coupling
+export const appointmentService = {
+  create: (data) => firebase.firestore().collection('appointments').add(data) // NO!
+};
+```
+
+### ✅ GOOD Examples
+
+```typescript
+// 1. Domain is pure
+export class User {
+  constructor(
+    public readonly id: string,
+    public readonly email: Email,
+    public readonly name: string
+  ) {
+    this.validate();
+  }
+
+  validate(): void {
+    if (!this.email.isValid()) {
+      throw new DomainError('Invalid email');
+    }
+  }
+}
+
+// 2. Use case orchestrates with injected dependencies
+export class CreateUserUseCase {
+  constructor(
+    private userRepo: IUserRepository,
+    private emailService: IEmailService
+  ) {}
+
+  async execute(dto: CreateUserDTO): Promise<User> {
+    const user = new User(dto);
+    await this.userRepo.save(user);
+    await this.emailService.sendWelcome(user);
+    return user;
+  }
+}
+
+// 3. Component delegates to controller
+const UserForm = () => {
+  const controller = useUserController();
+  
+  return (
+    <form onSubmit={controller.handleSubmit}>
+      {/* UI only */}
+    </form>
+  );
+};
+
+// 4. Repository implements interface
+export class FirebaseUserRepository implements IUserRepository {
+  async save(user: User): Promise<void> {
+    await this.db.collection('users').doc(user.id).set(this.toFirebase(user));
+  }
+}
+```
+
+## Testing Strategy
+
+```typescript
+// Domain - Pure unit tests
+describe('Appointment', () => {
+  it('should not allow past dates', () => {
+    expect(() => new Appointment({ date: pastDate }))
+      .toThrow(DomainError);
+  });
+});
+
+// Use Cases - Mock dependencies
+describe('CreateAppointmentUseCase', () => {
+  it('should create and send confirmation', async () => {
+    const mockRepo = createMockRepository();
+    const mockEmail = createMockEmailService();
+    const useCase = new CreateAppointmentUseCase(mockRepo, mockEmail);
+    
+    await useCase.execute(validDTO);
+    
+    expect(mockRepo.save).toHaveBeenCalled();
+    expect(mockEmail.sendConfirmation).toHaveBeenCalled();
+  });
+});
+
+// Components - Test UI behavior
+describe('AppointmentsTable', () => {
+  it('should display appointments', () => {
+    render(<AppointmentsTable appointments={mockData} />);
+    expect(screen.getByText('Dr. Smith')).toBeInTheDocument();
+  });
+});
+```
+
+## Dependency Injection
+
+```typescript
+// DI Container (simple example)
+export class DIContainer {
+  private services = new Map();
+
+  register<T>(key: string, factory: () => T): void {
+    this.services.set(key, factory);
+  }
+
+  resolve<T>(key: string): T {
+    const factory = this.services.get(key);
+    if (!factory) throw new Error(`Service ${key} not found`);
+    return factory();
+  }
+}
+
+// Setup
+const container = new DIContainer();
+container.register('IUserRepository', () => new FirebaseUserRepository(db));
+container.register('CreateUserUseCase', () => 
+  new CreateUserUseCase(
+    container.resolve('IUserRepository'),
+    container.resolve('IEmailService')
+  )
+);
+
+// Usage in React
+export const useInjection = <T>(key: string): T => {
+  return container.resolve<T>(key);
+};
+```
+
+## Quick Reference
+
+| Layer | Allowed Imports | Forbidden Imports |
+|-------|----------------|-------------------|
+| Domain | Nothing (pure TypeScript) | React, Firebase, API clients, UI |
+| Application | Domain entities, interfaces | React, Firebase, concrete implementations |
+| Infrastructure | Domain, Application interfaces | React, UI components |
+| Presentation | Everything | Nothing (it's the outermost layer) |
+
+## Remember
+
+- **Think in layers, not features**
+- **Business logic lives in Domain + Application**
+- **Infrastructure is swappable**
+- **UI is a detail**
+- **When in doubt, add an interface**
+
+---
+
+**Follow these rules religiously. Clean Architecture is about protecting your business logic from framework churn and making your code testable, maintainable, and scalable.**

@@ -1,3 +1,4 @@
+export * from '../application/hooks/useDoctorProfile';
 import { useState, useEffect, useMemo } from 'react';
 import { Doctor } from '@/domain/entities/Doctor';
 import { FirebaseUserRepository } from '@/infrastructure/repositories/FirebaseUserRepository';
