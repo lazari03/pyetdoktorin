@@ -1,8 +1,8 @@
 'use client';
 
-import HeroSection from '../components/heroSection';
-import NavBar from '../components/navBar';
-import FooterSection from '../components/footerSection';
+import HeroSection from '../../presentation/components/heroSection/heroSection';
+import NavBar from '../../presentation/components/navBar/navBar';
+import FooterSection from '../../presentation/components/footerSection/footerSection';
 import ClinicBenefitsSection from './ClinicBenefitsSection';
 import ClinicHowItWorksSection from './ClinicHowItWorksSection';
 import ClinicCtaSection from './ClinicCtaSection';
@@ -11,9 +11,7 @@ export default function ClinicsPage() {
   return (
     <>
       <NavBar />
-      <HeroSection 
-        backgroundImage="https://portokalle-storage.fra1.digitaloceanspaces.com/img/pexels-karolina-grabowska-7195310.jpg"
-      />
+      <HeroSection/>
       <ClinicBenefitsSection />
       <ClinicHowItWorksSection />
       <ClinicCtaSection />

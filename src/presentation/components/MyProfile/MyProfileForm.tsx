@@ -179,152 +179,131 @@ const MyProfileForm = ({
         setPreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+      if (onProfilePictureChange) {
+        onProfilePictureChange(file);
+      }
+    }
+  }, [onProfilePictureChange]);
 
-      const MyProfileForm: React.FC<MyProfileFormProps> = ({
-        formData,
-        role,
-        handleInputChange,
-        handleAddField,
-        handleRemoveField,
-        handleSubmit,
-        onProfilePictureChange,
-        uploading = false,
-      }) => {
-        const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-        const [selectedFileName, setSelectedFileName] = useState<string>('');
-
-        const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setSelectedFileName(file.name);
-            const url = URL.createObjectURL(file);
-            setPreviewUrl(url);
-            if (onProfilePictureChange) {
-              onProfilePictureChange(file);
-            }
-          }
-        };
-
-        const { t } = useTranslation();
-        return (
-          <form onSubmit={handleSubmit} className="w-full">
-            <div className="flex flex-col md:flex-row items-start gap-8">
-              {/* Avatar on the left */}
-              <div className="flex flex-col items-center w-full md:w-1/3 mb-6 md:mb-0">
-                <Image
-                  src={previewUrl || formData.profilePicture || "/img/profile_placeholder.png"}
-                  alt="Profile Preview"
-                  width={96}
-                  height={96}
-                  className="w-24 h-24 rounded-full object-cover border"
-                  style={{ objectFit: 'cover' }}
-                  priority
-                />
-                {role === 'doctor' && (
-                  <label className={`btn btn-primary cursor-pointer mt-2 ${uploading ? 'loading' : ''}`}>
-                    {uploading ? t('uploading') : t('chooseProfilePicture') || 'Choose Profile Picture'}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                  </label>
-                )}
-                {selectedFileName && (
-                  <span className="mt-2 text-xs text-gray-600">{t('selectedFile') || 'Selected File'}: {selectedFileName}</span>
-                )}
-              </div>
-              {/* Fields on the right */}
-              <div className="flex-1 w-full">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">{t('name') || 'Name'}</label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange(e, 'name')}
-                      className="input input-bordered w-full rounded"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">{t('surname') || 'Surname'}</label>
-                    <input
-                      type="text"
-                      value={formData.surname}
-                      onChange={(e) => handleInputChange(e, 'surname')}
-                      className="input input-bordered w-full rounded"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">{t('email') || 'Email'}</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange(e, 'email')}
-                      className="input input-bordered w-full rounded"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">{t('phoneNumber') || 'Phone Number'}</label>
-                    <input
-                      type="text"
-                      value={formData.phoneNumber}
-                      onChange={(e) => handleInputChange(e, 'phoneNumber')}
-                      className="input input-bordered w-full rounded"
-                    />
-                  </div>
-                  {/* Doctor-only fields */}
-                  {role === 'doctor' && (
-                    <>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">{t('about') || 'About'}</label>
-                        <textarea
-                          value={formData.about}
-                          onChange={(e) => handleInputChange(e, 'about')}
-                          className="textarea textarea-bordered w-full rounded"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">{t('specializations') || 'Specializations'}</label>
-                        {formData.specializations.map((spec: string, index: number) => (
-                          <div key={index} className="flex items-center space-x-2 mb-2">
-                            <input
-                              type="text"
-                              value={spec}
-                              onChange={(e) => handleInputChange(e, 'specializations', index)}
-                              className="input input-bordered w-full rounded"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveField('specializations', index)}
-                              className="btn btn-error btn-xs rounded"
-                            >
-                              {t('remove') || 'Remove'}
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => handleAddField('specializations')}
-                          className="btn btn-primary btn-xs rounded"
-                        >
-                          {t('addSpecialization') || 'Add Specialization'}
-                        </button>
-                      </div>
-                    </>
-                  )}
+  return (
+    <form onSubmit={handleSubmit} className="w-full">
+      <div className="flex flex-col md:flex-row items-start gap-8">
+        {/* Avatar on the left */}
+        <div className="flex flex-col items-center w-full md:w-1/3 mb-6 md:mb-0">
+          <Image
+            src={previewUrl || formData.profilePicture || "/img/profile_placeholder.png"}
+            alt="Profile Preview"
+            width={96}
+            height={96}
+            className="w-24 h-24 rounded-full object-cover border"
+            style={{ objectFit: 'cover' }}
+            priority
+          />
+          {role === 'doctor' && (
+            <label className={`btn btn-primary cursor-pointer mt-2 ${uploading ? 'loading' : ''}`}>
+              {uploading ? t('uploading') : t('chooseProfilePicture') || 'Choose Profile Picture'}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                disabled={uploading}
+              />
+            </label>
+          )}
+          {selectedFileName && (
+            <span className="mt-2 text-xs text-gray-600">{t('selectedFile') || 'Selected File'}: {selectedFileName}</span>
+          )}
+        </div>
+        {/* Fields on the right */}
+        <div className="flex-1 w-full">
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('name') || 'Name'}</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange(e, 'name')}
+                className="input input-bordered w-full rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('surname') || 'Surname'}</label>
+              <input
+                type="text"
+                value={formData.surname}
+                onChange={(e) => handleInputChange(e, 'surname')}
+                className="input input-bordered w-full rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('email') || 'Email'}</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange(e, 'email')}
+                className="input input-bordered w-full rounded"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('phoneNumber') || 'Phone Number'}</label>
+              <input
+                type="text"
+                value={formData.phoneNumber}
+                onChange={(e) => handleInputChange(e, 'phoneNumber')}
+                className="input input-bordered w-full rounded"
+              />
+            </div>
+            {/* Doctor-only fields */}
+            {role === 'doctor' && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('about') || 'About'}</label>
+                  <textarea
+                    value={formData.about}
+                    onChange={(e) => handleInputChange(e, 'about')}
+                    className="textarea textarea-bordered w-full rounded"
+                  />
                 </div>
-                <div className="mt-6 text-right">
-                  <button type="submit" className="btn btn-primary px-8 py-2 rounded shadow-md hover:shadow-lg">
-                    {t('saveChanges') || 'Save Changes'}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('specializations') || 'Specializations'}</label>
+                  {formData.specializations.map((spec: string, index: number) => (
+                    <div key={index} className="flex items-center space-x-2 mb-2">
+                      <input
+                        type="text"
+                        value={spec}
+                        onChange={(e) => handleInputChange(e, 'specializations', index)}
+                        className="input input-bordered w-full rounded"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveField('specializations', index)}
+                        className="btn btn-error btn-xs rounded"
+                      >
+                        {t('remove') || 'Remove'}
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleAddField('specializations')}
+                    className="btn btn-primary btn-xs rounded"
+                  >
+                    {t('addSpecialization') || 'Add Specialization'}
                   </button>
                 </div>
-              </div>
-            </div>
-          </form>
-        );
-      };
+              </>
+            )}
+          </div>
+          <div className="mt-6 text-right">
+            <button type="submit" className="btn btn-primary px-8 py-2 rounded shadow-md hover:shadow-lg">
+              {t('saveChanges') || 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  );
+};
 
-      export default MyProfileForm;
+export default MyProfileForm;

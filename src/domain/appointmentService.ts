@@ -21,7 +21,8 @@ import { isValidAppointment, isAppointmentPaid } from './rules/appointmentRules'
 import { getDefaultPatientName, getDefaultStatus } from "@/utils/userUtils";
 import { appointmentRepository } from '@/infrastructure/appointmentRepository';
 import { getAuth } from "firebase/auth";
-import { createPaymentIntent, verifyPayment } from "@/network/apiClient+payment";
+import { verifyPayment } from "@/network/apiClient+payment";
+import { startPayPalPayment } from "@/domain/paypalPaymentService";
 import { getUserPhoneNumber } from "@/domain/userService";
 import { sendDoctorAppointmentRequestSMS } from "@/domain/smsService";
 
@@ -41,13 +42,24 @@ export async function setAppointmentPaid(appointmentId: string): Promise<void> {
   }
 }
 
-// Handle Stripe payment
+
+// Handle PayPal payment
 export async function handlePayNow(appointmentId: string, amount: number): Promise<void> {
-  const { data, status } = await createPaymentIntent(appointmentId, amount);
-  if (status === 200 && data.url) {
-    window.location.href = data.url;
+  // You may want to set these URLs dynamically based on your app's routing
+  const returnUrl = `${window.location.origin}/payment/success`;
+  const cancelUrl = `${window.location.origin}/payment/cancel`;
+  const currency = 'USD'; // Or fetch from config
+  const { approvalUrl } = await startPayPalPayment({
+    appointmentId,
+    amount,
+    currency,
+    returnUrl,
+    cancelUrl,
+  });
+  if (approvalUrl) {
+    window.location.href = approvalUrl;
   } else {
-    throw new Error("Failed to create payment intent");
+    throw new Error('Failed to create PayPal order');
   }
 }
 

@@ -358,7 +358,3 @@ Every refactor I provide will:
 - ✅ Separate business logic from infrastructure
 - ✅ Use dependency injection
 - ✅ Follow SOLID principles
-
----
-
-**Ready to enforce Clean Architecture in your codebase. Share your code and I'll ensure it's architecturally sound.**
