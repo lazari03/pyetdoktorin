@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { login } from '@/domain/authService';
-import { testFirebaseConnection } from '@/domain/firebaseTest';
+import { login } from '@/infrastructure/services/authService';
+import { testFirebaseConnection } from '@/infrastructure/firebaseTest';
 import { useGoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 type RegisterFormState = {

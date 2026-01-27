@@ -1,5 +1,5 @@
-import { Appointment } from '../entities/Appointment';
-import { UserRole } from '../entities/UserRole';
+import { Appointment } from '@/domain/entities/Appointment';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export function getAppointmentAction(
   appointment: Appointment,

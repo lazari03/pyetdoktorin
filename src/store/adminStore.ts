@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { User } from '@/domain/entities/User';
 import { UserRole } from '@/domain/entities/UserRole';
 import type { QueryDocumentSnapshot } from 'firebase/firestore';
-import { getAllUsers, resetUserPassword, deleteUserAccount, createAdminUser, getUsersPage, getDoctorProfile, getUserById } from '@/domain/users';
+import { getAllUsers, resetUserPassword, deleteUserAccount, createAdminUser, getUsersPage, getDoctorProfile, getUserById } from '@/infrastructure/queries/users';
 import { apiClient } from '@/network/apiClient';
 
 type EditableUser = User & {

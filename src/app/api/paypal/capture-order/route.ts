@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { completePayPalPayment } from "@/domain/paypalPaymentService";
+import { completePayPalPayment } from "@/infrastructure/services/paypalPaymentService";
 
 export async function POST(req: NextRequest) {
   try {

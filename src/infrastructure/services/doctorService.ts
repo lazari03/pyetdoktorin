@@ -19,10 +19,10 @@ export async function getDoctorById(doctorId: string): Promise<Doctor | null> {
   }
 }
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../config/firebaseconfig";
+import { db } from "@/config/firebaseconfig";
 import { Doctor } from "@/domain/entities/Doctor";
-import { FirestoreCollections, DoctorFields, SearchType } from "../models/FirestoreConstants";
-import { hasSpecialization, isProfileComplete } from './rules/doctorRules';
+import { FirestoreCollections, DoctorFields, SearchType } from "@/models/FirestoreConstants";
+import { hasSpecialization, isProfileComplete } from "@/domain/rules/doctorRules";
 
 export async function fetchDoctors(searchTerm: string, searchType: SearchType): Promise<Doctor[]> {
   try {

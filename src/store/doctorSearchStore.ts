@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { fetchDoctors } from '@/domain/doctorService';
+import { fetchDoctors } from '@/infrastructure/services/doctorService';
 import { Doctor } from '@/domain/entities/Doctor';
 import { SearchType } from '../models/FirestoreConstants';
 import { debounce } from 'lodash';

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { LogoutSessionUseCase } from '../application/logoutSessionUseCase';
-import { setCookie, getCookie, deleteCookie } from '@/domain/sessionUtils';
+import { setCookie, getCookie, deleteCookie } from '@/presentation/utils/sessionUtils';
 import { logoutApi } from '@/network/logoutApi';
 
 // 30 minutes idle timeout

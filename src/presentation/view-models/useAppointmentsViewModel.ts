@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAppointmentStore } from "@/store/appointmentStore";
-import { getAppointments } from "@/domain/appointmentService";
+import { getAppointments } from "@/infrastructure/services/appointmentService";
 import { useAuth } from "@/context/AuthContext";
 import { useVideoStore } from "@/store/videoStore";
 import { appointmentRepository } from "@/infrastructure/appointmentRepository";
@@ -98,7 +98,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
         // Generate room code if missing
         if (!roomCode || !roomId) {
-          const { generateRoomCodeAndToken } = await import("@/domain/100msService");
+          const { generateRoomCodeAndToken } = await import("@/infrastructure/services/100msService");
           const data = await generateRoomCodeAndToken({
             user_id: user.uid,
             room_id: appointmentId,

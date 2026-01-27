@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchDoctors } from "@/domain/doctorService";
+import { fetchDoctors } from "@/infrastructure/services/doctorService";
 import { Doctor } from '@/domain/entities/Doctor';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { SearchType } from '@/models/FirestoreConstants';

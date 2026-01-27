@@ -1,12 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import CenteredLoader from '@/presentation/components/CenteredLoader/CenteredLoader';
-import { getAppointmentAction } from '@/domain/appointments/getAppointmentAction';
-import { getAppointmentActionPresentation } from '@/domain/appointments/getAppointmentActionPresentation';
+import { getAppointmentAction } from '@/presentation/utils/getAppointmentAction';
+import { getAppointmentActionPresentation } from '@/presentation/utils/getAppointmentActionPresentation';
 import { sortAppointments } from '@/domain/appointments/sortAppointments';
 import { toUserRole } from '@/domain/appointments/toUserRole';
 import { DEFAULT_APPOINTMENT_PAYMENT_AMOUNT } from '@/config/paymentConfig';
-import { getAppointmentStatusPresentation } from '@/domain/appointments/getAppointmentStatusPresentation';
+import { getAppointmentStatusPresentation } from '@/presentation/utils/getAppointmentStatusPresentation';
 import { AppointmentsTableProps } from './types';
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {

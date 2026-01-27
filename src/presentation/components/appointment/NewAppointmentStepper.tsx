@@ -5,7 +5,7 @@ import DoctorSearch from '@/presentation/components/doctor/DoctorSearch';
 import useNewAppointment from '@/hooks/useNewAppointment';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 
-import { useNewAppointmentViewModel } from '@/application/appointment/useNewAppointmentViewModel';
+import { useNewAppointmentViewModel } from '@/presentation/view-models/useNewAppointmentViewModel';
 
 export default function NewAppointmentStepper() {
 	const { t } = useTranslation();

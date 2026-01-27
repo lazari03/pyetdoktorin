@@ -2,7 +2,7 @@
 "use client";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
-import { useDashboardViewModel, DashboardUserContext } from "@/application/dashboard/userDashboardViewModel";
+import { useDashboardViewModel, DashboardUserContext } from "@/presentation/view-models/userDashboardViewModel";
 import { UserRole } from "@/domain/entities/UserRole";
 import Link from "next/link";
 import { AppointmentFilter } from "@/store/dashboardStore";

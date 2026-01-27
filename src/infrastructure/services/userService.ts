@@ -1,5 +1,5 @@
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../config/firebaseconfig';
+import { db } from '@/config/firebaseconfig';
 
 export async function getUserPhoneNumber(userId: string): Promise<string | null> {
   try {

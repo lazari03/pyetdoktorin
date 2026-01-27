@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { auth } from '../../../config/firebaseconfig';
 import { FetchAppointmentsUseCase } from '@/application/fetchAppointmentsUseCase';
 import { FirebaseAppointmentRepository } from '@/infrastructure/repositories/FirebaseAppointmentRepository';
-import { getUserRole, fetchAppointmentDetails, dismissNotification } from '@/domain/notificationService';
-import { updateAppointmentStatusAndNotify } from '@/domain/appointmentNotificationService';
+import { getUserRole, fetchAppointmentDetails, dismissNotification } from '@/infrastructure/services/notificationService';
+import { updateAppointmentStatusAndNotify } from '@/infrastructure/services/appointmentNotificationService';
 import { useAppointmentStore } from '../../../store/appointmentStore';
 import type { NavigationCoordinator } from '@/navigation/NavigationCoordinator';
 

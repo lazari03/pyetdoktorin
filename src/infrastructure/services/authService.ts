@@ -1,6 +1,6 @@
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebaseconfig';
+import { auth, db } from '@/config/firebaseconfig';
 
 import { sendPasswordResetEmail } from "firebase/auth";
 

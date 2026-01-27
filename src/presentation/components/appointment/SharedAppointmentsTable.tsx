@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import CenteredLoader from '../CenteredLoader';
 import { Appointment } from '@/domain/entities/Appointment';
 import { UserRole } from '@/domain/entities/UserRole';
-import { getAppointmentAction } from '@/domain/appointmentActionButton';
+import { getAppointmentAction } from '@/presentation/utils/appointmentActionButton';
 import { DEFAULT_APPOINTMENT_PAYMENT_AMOUNT } from '@/config/paymentConfig';
 
 interface AppointmentsTableProps {

@@ -3,7 +3,7 @@
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 import RoleGuard from '@/presentation/components/RoleGuard/RoleGuard';
 import AppointmentsTable from '@/presentation/components/AppointmentsTable/AppointmentsTable';
-import { useAppointmentsViewModel } from '@/application/appointments/useAppointmentsViewModel';
+import { useAppointmentsViewModel } from '@/presentation/view-models/useAppointmentsViewModel';
 
 function AppointmentsPage() {
   const vm = useAppointmentsViewModel();

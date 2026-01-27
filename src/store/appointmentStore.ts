@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { setAppointmentPaid, handlePayNow, checkIfPastAppointment, verifyStripePayment, getUserRole, verifyAndUpdatePayment } from "../domain/appointmentService";
+import { setAppointmentPaid, handlePayNow, checkIfPastAppointment, verifyStripePayment, getUserRole, verifyAndUpdatePayment } from "../infrastructure/services/appointmentService";
 import { Appointment } from "@/domain/entities/Appointment";
-import { getAppointmentAction } from "../domain/appointmentActionButton";
+import { getAppointmentAction } from "@/presentation/utils/appointmentActionButton";
 import { APPOINTMENT_DURATION_MINUTES } from '../config/appointmentConfig';
 import { isDoctor } from "@/domain/rules/userRules";
 

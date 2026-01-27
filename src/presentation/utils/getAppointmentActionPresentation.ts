@@ -2,7 +2,7 @@
 // This function is i18n-agnostic; translation should be handled in the UI layer.
 // It returns the type of button, label, and disabled state for the action.
 
-import { Appointment } from '../entities/Appointment';
+import { Appointment } from '@/domain/entities/Appointment';
 
 export interface AppointmentActionPresentation {
   type: 'join' | 'pay' | 'disabled' | 'waiting' | 'none';

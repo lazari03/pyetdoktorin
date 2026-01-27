@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { resetUserPassword } from '@/domain/authService';
+import { resetUserPassword } from '@/infrastructure/services/authService';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

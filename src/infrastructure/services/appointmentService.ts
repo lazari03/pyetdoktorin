@@ -17,19 +17,19 @@ export async function verifyAndUpdatePayment(sessionId: string, userId: string, 
 }
 // Fetch appointments for a user (doctor or patient)
 // import { Appointment } from "@/domain/entities/Appointment";
-import { isValidAppointment, isAppointmentPaid } from './rules/appointmentRules';
+import { isValidAppointment, isAppointmentPaid } from '@/domain/rules/appointmentRules';
 import { getDefaultPatientName, getDefaultStatus } from "@/utils/userUtils";
 import { appointmentRepository } from '@/infrastructure/appointmentRepository';
 import { getAuth } from "firebase/auth";
 import { verifyPayment } from "@/network/apiClient+payment";
-import { startPayPalPayment } from "@/domain/paypalPaymentService";
-import { getUserPhoneNumber } from "@/domain/userService";
-import { sendDoctorAppointmentRequestSMS } from "@/domain/smsService";
+import { startPayPalPayment } from "@/infrastructure/services/paypalPaymentService";
+import { getUserPhoneNumber } from "@/infrastructure/services/userService";
+import { sendDoctorAppointmentRequestSMS } from "@/infrastructure/services/smsService";
 
 import { userRepository } from '@/infrastructure/userRepository';
 import type { AppointmentPayload } from "@/models/AppointmentPayload";
 import type { BookAppointmentPayload } from "@/models/BookAppointmentPayload";
-import { updateSlotStatus } from "@/domain/slotService";
+import { updateSlotStatus } from "@/infrastructure/services/slotService";
 import { SlotStatus } from "@/domain/entities/SlotStatus";
 import { USER_ROLE_PATIENT } from "@/config/userRoles";
 
@@ -104,7 +104,7 @@ export async function getUserRole(userId: string) {
 async function createAndNotifyAppointment(payload: AppointmentPayload): Promise<{ id: string } & AppointmentPayload> {
   // Map status string to AppointmentStatus enum value
   const { status, ...rest } = payload;
-  const { AppointmentStatus } = await import('./entities/AppointmentStatus');
+  const { AppointmentStatus } = await import('@/domain/entities/AppointmentStatus');
   type AppointmentStatusType = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
   const statusEnum: AppointmentStatusType = Object.values(AppointmentStatus).includes(status as AppointmentStatusType)
     ? (status as AppointmentStatusType)
