@@ -1,8 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { db } from '../../../config/firebaseconfig';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useDI } from '@/context/DIContext';
 
 interface Notification {
   id: string;
@@ -14,20 +13,17 @@ interface Notification {
 
 export default function DashboardNotificationsBell({ doctorId }: { doctorId: string }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { subscribePendingNotificationsUseCase } = useDI();
 
   useEffect(() => {
     if (!doctorId) return;
-    const q = query(
-      collection(db, 'appointments'),
-      where('doctorId', '==', doctorId),
-      where('status', '==', 'pending')
+    const unsubscribe = subscribePendingNotificationsUseCase.execute(
+      doctorId,
+      (data) => data as Notification,
+      (items) => setNotifications(items)
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetched = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Notification[];
-      setNotifications(fetched);
-    });
     return () => unsubscribe();
-  }, [doctorId]);
+  }, [doctorId, subscribePendingNotificationsUseCase]);
 
   return (
     <div className="flex items-center gap-2">

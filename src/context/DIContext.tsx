@@ -20,6 +20,12 @@ import { GetTopDoctorsByAppointmentsUseCase } from '@/application/getTopDoctorsB
 import { GetTopDoctorsByRequestsUseCase } from '@/application/getTopDoctorsByRequestsUseCase';
 import { LogoutServerUseCase } from '@/application/logoutServerUseCase';
 import { LogoutSessionUseCase } from '@/application/logoutSessionUseCase';
+import { SubscribePendingAppointmentsUseCase } from '@/application/subscribePendingAppointmentsUseCase';
+import { SubscribePendingNotificationsUseCase } from '@/application/subscribePendingNotificationsUseCase';
+import { LoginUseCase } from '@/application/loginUseCase';
+import { TestAuthConnectionUseCase } from '@/application/testAuthConnectionUseCase';
+import { RegisterUserUseCase } from '@/application/registerUserUseCase';
+import { FetchDoctorsUseCase } from '@/application/fetchDoctorsUseCase';
 import { GetUserProfileUseCase } from '@/application/getUserProfileUseCase';
 import { UpdateUserProfileUseCase } from '@/application/updateUserProfileUseCase';
 import { UploadProfilePictureUseCase } from '@/application/uploadProfilePictureUseCase';
@@ -27,6 +33,17 @@ import { ResetUserPasswordUseCase } from '@/application/resetUserPasswordUseCase
 import { FetchUserDetailsUseCase } from '@/application/fetchUserDetailsUseCase';
 import { ObserveAuthStateUseCase } from '@/application/observeAuthStateUseCase';
 import { GetDoctorProfileUseCase } from '@/application/getDoctorProfileUseCase';
+import { CheckProfileCompleteUseCase } from '@/application/checkProfileCompleteUseCase';
+import { GetAllUsersUseCase } from '@/application/getAllUsersUseCase';
+import { GetUsersPageUseCase } from '@/application/getUsersPageUseCase';
+import { GetAdminUserByIdUseCase } from '@/application/getAdminUserByIdUseCase';
+import { GetAdminDoctorProfileUseCase } from '@/application/getAdminDoctorProfileUseCase';
+import { ResetAdminUserPasswordUseCase } from '@/application/resetAdminUserPasswordUseCase';
+import { DeleteUserAccountUseCase } from '@/application/deleteUserAccountUseCase';
+import { CreateAdminUserUseCase } from '@/application/createAdminUserUseCase';
+import { UpdateAdminUserUseCase } from '@/application/updateAdminUserUseCase';
+import { UpdateAdminDoctorProfileUseCase } from '@/application/updateAdminDoctorProfileUseCase';
+import { ApproveDoctorUseCase } from '@/application/approveDoctorUseCase';
 import { FirebaseAppointmentRepository } from '@/infrastructure/repositories/FirebaseAppointmentRepository';
 import { FirebaseUserRepository } from '@/infrastructure/repositories/FirebaseUserRepository';
 import { FirebaseSessionRepository } from '@/infrastructure/repositories/FirebaseSessionRepository';
@@ -39,6 +56,11 @@ import { NotificationServiceAdapter } from '@/infrastructure/services/notificati
 import { AppointmentNotificationServiceAdapter } from '@/infrastructure/services/appointmentNotificationServiceAdapter';
 import { AdminStatsServiceAdapter } from '@/infrastructure/services/adminStatsServiceAdapter';
 import { SessionService } from '@/infrastructure/services/sessionService';
+import { RealtimeAppointmentsService } from '@/infrastructure/services/realtimeAppointmentsService';
+import { AuthLoginService } from '@/infrastructure/services/authLoginService';
+import { RegistrationService } from '@/infrastructure/services/registrationService';
+import { DoctorSearchService } from '@/infrastructure/services/doctorSearchService';
+import { AdminUserService } from '@/infrastructure/services/adminUserService';
 
 interface DIContextValue {
   fetchAppointmentsUseCase: FetchAppointmentsUseCase;
@@ -59,6 +81,12 @@ interface DIContextValue {
   getTopDoctorsByRequestsUseCase: GetTopDoctorsByRequestsUseCase;
   logoutServerUseCase: LogoutServerUseCase;
   logoutSessionUseCase: LogoutSessionUseCase;
+  subscribePendingAppointmentsUseCase: SubscribePendingAppointmentsUseCase;
+  subscribePendingNotificationsUseCase: SubscribePendingNotificationsUseCase;
+  loginUseCase: LoginUseCase;
+  testAuthConnectionUseCase: TestAuthConnectionUseCase;
+  registerUserUseCase: RegisterUserUseCase;
+  fetchDoctorsUseCase: FetchDoctorsUseCase;
   createAppointmentUseCase: CreateAppointmentUseCase;
   checkAppointmentExistsUseCase: CheckAppointmentExistsUseCase;
   getUserProfileUseCase: GetUserProfileUseCase;
@@ -68,6 +96,17 @@ interface DIContextValue {
   fetchUserDetailsUseCase: FetchUserDetailsUseCase;
   observeAuthStateUseCase: ObserveAuthStateUseCase;
   getDoctorProfileUseCase: GetDoctorProfileUseCase;
+  checkProfileCompleteUseCase: CheckProfileCompleteUseCase;
+  getAllUsersUseCase: GetAllUsersUseCase;
+  getUsersPageUseCase: GetUsersPageUseCase;
+  getAdminUserByIdUseCase: GetAdminUserByIdUseCase;
+  getAdminDoctorProfileUseCase: GetAdminDoctorProfileUseCase;
+  resetAdminUserPasswordUseCase: ResetAdminUserPasswordUseCase;
+  deleteUserAccountUseCase: DeleteUserAccountUseCase;
+  createAdminUserUseCase: CreateAdminUserUseCase;
+  updateAdminUserUseCase: UpdateAdminUserUseCase;
+  updateAdminDoctorProfileUseCase: UpdateAdminDoctorProfileUseCase;
+  approveDoctorUseCase: ApproveDoctorUseCase;
 }
 
 const DIContext = createContext<DIContextValue | undefined>(undefined);
@@ -85,6 +124,11 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const appointmentNotificationService = new AppointmentNotificationServiceAdapter();
   const adminStatsService = new AdminStatsServiceAdapter();
   const sessionService = new SessionService();
+  const realtimeAppointmentsService = new RealtimeAppointmentsService();
+  const authLoginService = new AuthLoginService();
+  const registrationService = new RegistrationService();
+  const doctorSearchService = new DoctorSearchService();
+  const adminUserService = new AdminUserService();
   const fetchAppointmentsUseCase = new FetchAppointmentsUseCase(appointmentRepo);
   const getAppointmentsUseCase = new GetAppointmentsUseCase(appointmentService);
   const setAppointmentPaidUseCase = new SetAppointmentPaidUseCase(appointmentService);
@@ -112,6 +156,23 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const observeAuthStateUseCase = new ObserveAuthStateUseCase(authService);
   const getDoctorProfileUseCase = new GetDoctorProfileUseCase(doctorProfileService);
   const logoutSessionUseCase = new LogoutSessionUseCase(sessionRepo);
+  const subscribePendingAppointmentsUseCase = new SubscribePendingAppointmentsUseCase(realtimeAppointmentsService);
+  const subscribePendingNotificationsUseCase = new SubscribePendingNotificationsUseCase(realtimeAppointmentsService);
+  const loginUseCase = new LoginUseCase(authLoginService);
+  const testAuthConnectionUseCase = new TestAuthConnectionUseCase(authLoginService);
+  const registerUserUseCase = new RegisterUserUseCase(registrationService);
+  const fetchDoctorsUseCase = new FetchDoctorsUseCase(doctorSearchService);
+  const checkProfileCompleteUseCase = new CheckProfileCompleteUseCase(userRepo);
+  const getAllUsersUseCase = new GetAllUsersUseCase(adminUserService);
+  const getUsersPageUseCase = new GetUsersPageUseCase(adminUserService);
+  const getAdminUserByIdUseCase = new GetAdminUserByIdUseCase(adminUserService);
+  const getAdminDoctorProfileUseCase = new GetAdminDoctorProfileUseCase(adminUserService);
+  const resetAdminUserPasswordUseCase = new ResetAdminUserPasswordUseCase(adminUserService);
+  const deleteUserAccountUseCase = new DeleteUserAccountUseCase(adminUserService);
+  const createAdminUserUseCase = new CreateAdminUserUseCase(adminUserService);
+  const updateAdminUserUseCase = new UpdateAdminUserUseCase(adminUserService);
+  const updateAdminDoctorProfileUseCase = new UpdateAdminDoctorProfileUseCase(adminUserService);
+  const approveDoctorUseCase = new ApproveDoctorUseCase(adminUserService);
 
   return (
     <DIContext.Provider
@@ -143,6 +204,23 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         observeAuthStateUseCase,
         getDoctorProfileUseCase,
         logoutSessionUseCase,
+        subscribePendingAppointmentsUseCase,
+        subscribePendingNotificationsUseCase,
+        loginUseCase,
+        testAuthConnectionUseCase,
+        registerUserUseCase,
+        fetchDoctorsUseCase,
+        checkProfileCompleteUseCase,
+        getAllUsersUseCase,
+        getUsersPageUseCase,
+        getAdminUserByIdUseCase,
+        getAdminDoctorProfileUseCase,
+        resetAdminUserPasswordUseCase,
+        deleteUserAccountUseCase,
+        createAdminUserUseCase,
+        updateAdminUserUseCase,
+        updateAdminDoctorProfileUseCase,
+        approveDoctorUseCase,
       }}
     >
       {children}

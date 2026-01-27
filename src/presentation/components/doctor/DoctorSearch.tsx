@@ -5,6 +5,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useAuth } from '@/context/AuthContext';
 import { Doctor } from '@/domain/entities/Doctor';
 import { useEffect } from 'react';
+import { useDI } from '@/context/DIContext';
 
 interface DoctorSearchProps {
 	onDoctorSelect?: (doctor: Doctor) => void;
@@ -21,6 +22,7 @@ export default function DoctorSearch({ onDoctorSelect }: DoctorSearchProps) {
 		reset,
 		clearResults,
 	} = useDoctorSearchStore();
+	const { fetchDoctorsUseCase } = useDI();
 	const { isAuthenticated, loading: authLoading } = useAuth();
 	const nav = useNavigationCoordinator();
 
@@ -76,7 +78,7 @@ export default function DoctorSearch({ onDoctorSelect }: DoctorSearchProps) {
 							if (value.trim() === '') {
 								clearResults(); // Clear results if search is empty
 							} else if (value.trim().length >= 4) {
-								fetchDoctors();
+								fetchDoctors(fetchDoctorsUseCase.execute.bind(fetchDoctorsUseCase));
 							}
 						}}
 					/>

@@ -5,6 +5,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useDoctorSearchStore } from '@/store/doctorSearchStore';
 import { Doctor } from '@/domain/entities/Doctor';
 import { useTranslation } from 'react-i18next';
+import { useDI } from '@/context/DIContext';
 
 const DoctorSearchInput = () => {
 	const {
@@ -17,6 +18,7 @@ const DoctorSearchInput = () => {
 		toggleOverlay,
 		fetchDoctors,
 	} = useDoctorSearchStore();
+	const { fetchDoctorsUseCase } = useDI();
 	const searchRef = useRef<HTMLDivElement>(null);
 	const nav = useNavigationCoordinator();
 	const { t } = useTranslation();
@@ -28,9 +30,9 @@ const DoctorSearchInput = () => {
 			toggleOverlay(false);
 		}
 		if (searchTerm.trim().length >= 4) {
-			fetchDoctors();
+			fetchDoctors(fetchDoctorsUseCase.execute.bind(fetchDoctorsUseCase));
 		}
-	}, [searchTerm, fetchDoctors, toggleOverlay]);
+	}, [searchTerm, fetchDoctors, toggleOverlay, fetchDoctorsUseCase]);
 
 	const handleDoctorClick = (doctor: Doctor) => {
 		nav.toDoctorProfile(doctor.id);

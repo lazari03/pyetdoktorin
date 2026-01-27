@@ -7,12 +7,9 @@ import {
 } from "@/store/dashboardStore";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { isProfileIncomplete } from "@/store/generalStore";
-import { CheckProfileCompleteUseCase } from "@/application/checkProfileCompleteUseCase";
-import { FetchAppointmentsUseCase } from "@/application/fetchAppointmentsUseCase";
-import { userRepository } from "@/infrastructure/userRepository";
-import { appointmentRepository } from "@/infrastructure/appointmentRepository";
 import { useDashboardActions } from "@/presentation/hooks/useDashboardActions";
 import { UserRole } from "@/domain/entities/UserRole";
+import { useDI } from "@/context/DIContext";
 
 export type DashboardUserContext = {
   userId: string | null;
@@ -37,18 +34,10 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
     } = useAppointmentStore();
     const { handleJoinCall: baseHandleJoinCall, handlePayNow } =
         useDashboardActions();
+    const { checkProfileCompleteUseCase, fetchAppointmentsUseCase } = useDI();
 
     const [profileIncomplete, setProfileIncomplete] = useState(true);
     const [loading, setLoading] = useState(true);
-
-    const checkProfileUseCase = useMemo(
-    () => new CheckProfileCompleteUseCase(userRepository),
-    []
-  );
-  const fetchAppointmentsUseCase = useMemo(
-    () => new FetchAppointmentsUseCase(appointmentRepository),
-    []
-  );
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -59,7 +48,7 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
             await isProfileIncomplete(
               role,
               userId,
-              checkProfileUseCase
+              checkProfileCompleteUseCase
             )
           );
           await Promise.all([
@@ -90,7 +79,7 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
     fetchAppointments,
     fetchAllAppointments,
     authLoading,
-    checkProfileUseCase,
+    checkProfileCompleteUseCase,
     fetchAppointmentsUseCase,
   ]);
 

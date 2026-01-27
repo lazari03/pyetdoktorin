@@ -1,12 +1,8 @@
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import '@i18n';
-import { useSessionStore } from '@/store/sessionStore';
-import { Bars3Icon, XMarkIcon, PowerIcon, BellIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
-import { db } from '../../../config/firebaseconfig';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { useDI } from '@/context/DIContext';
 
 interface DashboardSidebarProps {
   sidebarOpen: boolean;
@@ -20,19 +16,14 @@ export default function DashboardSidebar({ sidebarOpen, setSidebarOpen, navItems
   // Notification state
   const { user, role } = useAuth();
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
+  const { subscribePendingAppointmentsUseCase } = useDI();
 
   useEffect(() => {
     if (!user?.uid || role !== 'doctor') return;
-    const q = query(
-      collection(db, 'appointments'),
-      where('doctorId', '==', user.uid),
-      where('status', '==', 'pending')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setHasNewNotifications(!snapshot.empty);
+    const unsubscribe = subscribePendingAppointmentsUseCase.execute(user.uid, (count) => {
+      setHasNewNotifications(count > 0);
     });
     return () => unsubscribe();
-  }, [user, role]);
+  }, [user, role, subscribePendingAppointmentsUseCase]);
 
-  // ...existing code (rest of the component)
 }

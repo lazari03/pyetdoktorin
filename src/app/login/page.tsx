@@ -5,8 +5,7 @@ import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { login } from '@/infrastructure/services/authService';
-import { testFirebaseConnection } from '@/infrastructure/firebaseTest';
+import { useDI } from '@/context/DIContext';
 import { useGoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 type RegisterFormState = {
@@ -45,6 +44,7 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
   const { executeRecaptcha } = useGoogleReCaptcha();
   const [waitingForRecaptcha, setWaitingForRecaptcha] = useState(true);
   const isRecaptchaReady = !!executeRecaptcha;
+  const { loginUseCase, testAuthConnectionUseCase } = useDI();
 
   // Give reCAPTCHA 5 seconds to load, then allow retry or proceed
   useEffect(() => {
@@ -72,10 +72,10 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
 
   // Test Firebase connectivity on component mount, but don't block login if it fails
   useEffect(() => {
-    testFirebaseConnection().catch(() => {
+    testAuthConnectionUseCase.execute().catch(() => {
       setErrorMsg(t('firebaseWarning'));
     });
-  }, [t]);
+  }, [t, testAuthConnectionUseCase]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +103,7 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
         return;
       }
       // Only proceed with login if reCAPTCHA passes
-      await login(email, password);
+      await loginUseCase.execute(email, password);
       // Verify if the 'loggedIn' cookie is set (HttpOnly session is not visible to JS)
       if (!document.cookie.includes('loggedIn=')) {
         setErrorMsg(t('authTokenWarning'));

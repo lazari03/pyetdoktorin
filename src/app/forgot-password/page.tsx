@@ -1,16 +1,17 @@
 "use client";
 
 import React, { useState } from 'react';
-import { resetUserPassword } from '@/infrastructure/services/authService';
+import { useDI } from '@/context/DIContext';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const { resetUserPasswordUseCase } = useDI();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await resetUserPassword(email);
+      await resetUserPasswordUseCase.execute(email);
       setSubmitted(true);
     } catch {
       alert('Failed to send password reset email. Please try again.');

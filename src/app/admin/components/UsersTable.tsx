@@ -5,6 +5,7 @@ import GenericTable, { Column, RowAction } from '@/app/components/GenericTable';
 import { useTranslation } from 'react-i18next';
 import '@i18n';
 import { UserRole } from '@/domain/entities/UserRole';
+import { useDI } from '@/context/DIContext';
 
 type TableUser = {
   id: string;
@@ -18,12 +19,13 @@ type TableUser = {
 export function UsersTable() {
   const { t } = useTranslation();
   const { users, loadUsersPage, searchUsers, selectUser, loading, error, total, pageSize, searchQuery } = useAdminStore();
+  const { getUsersPageUseCase, getAllUsersUseCase } = useDI();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
   // Initialize search input from store to preserve last search after edits
   useEffect(() => { setSearch(searchQuery || ''); setDebounced((searchQuery || '').trim().toLowerCase()); }, [searchQuery]);
-  useEffect(() => { if (!searchQuery) loadUsersPage(0); }, [loadUsersPage, searchQuery]);
+  useEffect(() => { if (!searchQuery) loadUsersPage(0, getUsersPageUseCase.execute.bind(getUsersPageUseCase), getAllUsersUseCase.execute.bind(getAllUsersUseCase)); }, [loadUsersPage, searchQuery, getUsersPageUseCase, getAllUsersUseCase]);
 
   // Debounce search input
   useEffect(() => {
@@ -62,10 +64,14 @@ export function UsersTable() {
   // Trigger global search when debounced query length >= 4; otherwise load paginated page
   useEffect(() => {
     if (debounced && debounced.length >= 4) {
-      searchUsers(debounced);
+      searchUsers(
+        debounced,
+        getAllUsersUseCase.execute.bind(getAllUsersUseCase),
+        getUsersPageUseCase.execute.bind(getUsersPageUseCase)
+      );
       setPage(0);
     } else {
-      loadUsersPage(0);
+      loadUsersPage(0, getUsersPageUseCase.execute.bind(getUsersPageUseCase), getAllUsersUseCase.execute.bind(getAllUsersUseCase));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced]);
@@ -75,7 +81,7 @@ export function UsersTable() {
   // When page changes via pagination controls, request server-side page and scroll-to-top handled by GenericTable
   const handlePageChange = (p: number) => {
     setPage(p);
-    loadUsersPage(p);
+    loadUsersPage(p, getUsersPageUseCase.execute.bind(getUsersPageUseCase), getAllUsersUseCase.execute.bind(getAllUsersUseCase));
   };
   return (
     <div>
