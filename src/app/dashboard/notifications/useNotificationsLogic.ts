@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
-import { auth } from '../../../config/firebaseconfig';
-import { FetchAppointmentsUseCase } from '@/application/fetchAppointmentsUseCase';
-import { FirebaseAppointmentRepository } from '@/infrastructure/repositories/FirebaseAppointmentRepository';
-import { getUserRole, fetchAppointmentDetails, dismissNotification } from '@/infrastructure/services/notificationService';
-import { updateAppointmentStatusAndNotify } from '@/infrastructure/services/appointmentNotificationService';
 import { useAppointmentStore } from '../../../store/appointmentStore';
 import type { NavigationCoordinator } from '@/navigation/NavigationCoordinator';
+import { useAuth } from '@/context/AuthContext';
+import { useDI } from '@/context/DIContext';
 
 export function useNotificationsLogic(nav: NavigationCoordinator) {
   const { appointments, loading: isLoading, error, fetchAppointments } = useAppointmentStore();
-  const appointmentRepo = new FirebaseAppointmentRepository();
-  const fetchAppointmentsUseCase = new FetchAppointmentsUseCase(appointmentRepo);
+  const { user } = useAuth();
+  const {
+    fetchAppointmentsUseCase,
+    getNotificationUserRoleUseCase,
+    fetchAppointmentDetailsUseCase,
+    dismissNotificationUseCase,
+    updateAppointmentStatusAndNotifyUseCase,
+  } = useDI();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [appointmentDetails, setAppointmentDetails] = useState<
     { id: string; patientName: string | null; doctorName: string | null; preferredDate: string; notes: string }[]
@@ -21,18 +24,18 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
 
   useEffect(() => {
     const fetchUserRoleAndAppointments = async () => {
-      if (!auth.currentUser) {
+      if (!user?.uid) {
         nav.toLogin();
         return;
       }
-      const userId = auth.currentUser.uid;
-      const role = await getUserRole(userId);
+      const userId = user.uid;
+      const role = await getNotificationUserRoleUseCase.execute(userId);
       if (role) {
         setUserRole(role);
         await fetchAppointments(
           userId,
           role === 'doctor',
-          (userId: string, isDoctor: boolean) => fetchAppointmentsUseCase.execute(userId, isDoctor)
+          (id: string, isDoc: boolean) => fetchAppointmentsUseCase.execute(id, isDoc)
         );
       } else {
         nav.toLogin();
@@ -40,22 +43,21 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     };
     fetchUserRoleAndAppointments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchAppointments]);
+  }, [fetchAppointments, user, fetchAppointmentsUseCase, getNotificationUserRoleUseCase]);
 
   useEffect(() => {
     const fetchDetails = async () => {
       if (appointments.length > 0) {
-        const details = await fetchAppointmentDetails(appointments);
+        const details = await fetchAppointmentDetailsUseCase.execute(appointments);
         setAppointmentDetails(details);
       }
     };
     fetchDetails();
-  }, [appointments]);
+  }, [appointments, fetchAppointmentDetailsUseCase]);
 
   useEffect(() => {
     const fetchRelevantAppointments = async () => {
-      if (!auth.currentUser) return;
-      const user = auth.currentUser;
+      if (!user?.uid) return;
       if (userRole === 'doctor') {
         const pending = appointmentDetails.filter((appointment) => {
           const found = appointments.find((a) => a.id === appointment.id);
@@ -73,22 +75,22 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     if (userRole && appointmentDetails.length > 0) {
       fetchRelevantAppointments();
     }
-  }, [userRole, appointmentDetails, appointments]);
+  }, [userRole, appointmentDetails, appointments, user]);
 
   const handleDismissNotification = useCallback(async (id: string) => {
     setPendingAppointments((prev) => prev.filter((appt) => appt.id !== id));
-    if (!auth.currentUser) return;
-    await dismissNotification(id, auth.currentUser.uid);
-  }, []);
+    if (!user?.uid) return;
+    await dismissNotificationUseCase.execute(id, user.uid);
+  }, [dismissNotificationUseCase, user]);
 
   const handleAppointmentAction = useCallback(async (appointmentId: string, action: 'accepted' | 'rejected') => {
     try {
-      await updateAppointmentStatusAndNotify(appointmentId, action);
+      await updateAppointmentStatusAndNotifyUseCase.execute(appointmentId, action);
       setPendingAppointments((prev) =>
         prev.filter((appointment) => appointment.id !== appointmentId)
       );
     } catch {}
-  }, []);
+  }, [updateAppointmentStatusAndNotifyUseCase]);
 
   return {
     isLoading,

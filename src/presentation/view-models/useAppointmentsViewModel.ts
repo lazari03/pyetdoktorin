@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAppointmentStore } from "@/store/appointmentStore";
-import { getAppointments } from "@/infrastructure/services/appointmentService";
 import { useAuth } from "@/context/AuthContext";
 import { useVideoStore } from "@/store/videoStore";
-import { appointmentRepository } from "@/infrastructure/appointmentRepository";
+import { useDI } from "@/context/DIContext";
 import { Appointment } from "@/domain/entities/Appointment";
 import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 
@@ -47,6 +46,13 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
     verifyAndUpdatePayment,
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
+  const {
+    getAppointmentsUseCase,
+    verifyAndUpdatePaymentUseCase,
+    updateAppointmentUseCase,
+    generateRoomCodeUseCase,
+    handlePayNowUseCase,
+  } = useDI();
 
   // Sync auth status with video store
   useEffect(() => {
@@ -56,8 +62,8 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   // Fetch appointments when user/role changes
   useEffect(() => {
     if (!user?.uid || typeof isDoctor !== "boolean") return;
-    fetchAppointments(user.uid, isDoctor, getAppointments);
-  }, [user, isDoctor, fetchAppointments]);
+    fetchAppointments(user.uid, isDoctor, getAppointmentsUseCase.execute.bind(getAppointmentsUseCase));
+  }, [user, isDoctor, fetchAppointments, getAppointmentsUseCase]);
 
   // Check payment status on mount (from URL params)
   useEffect(() => {
@@ -67,13 +73,19 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
     (async () => {
       try {
         if (user?.uid && typeof isDoctor === "boolean") {
-          await verifyAndUpdatePayment(sessionId, user.uid, isDoctor, getAppointments);
+          await verifyAndUpdatePayment(
+            sessionId,
+            user.uid,
+            isDoctor,
+            verifyAndUpdatePaymentUseCase.execute.bind(verifyAndUpdatePaymentUseCase),
+            getAppointmentsUseCase.execute.bind(getAppointmentsUseCase)
+          );
         }
       } catch {
         // Payment verification failed silently
       }
     })();
-  }, [verifyAndUpdatePayment, user, isDoctor]);
+  }, [verifyAndUpdatePayment, user, isDoctor, verifyAndUpdatePaymentUseCase, getAppointmentsUseCase]);
 
   // Join video call handler
   const handleJoinCall = useCallback(
@@ -98,8 +110,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
         // Generate room code if missing
         if (!roomCode || !roomId) {
-          const { generateRoomCodeAndToken } = await import("@/infrastructure/services/100msService");
-          const data = await generateRoomCodeAndToken({
+          const data = await generateRoomCodeUseCase.execute({
             user_id: user.uid,
             room_id: appointmentId,
             role,
@@ -109,7 +120,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
           // Update appointment in Firestore
           if (roomCode && roomId) {
-            await appointmentRepository.update(appointmentId, { roomCode, roomId });
+            await updateAppointmentUseCase.execute(appointmentId, { roomCode, roomId });
           }
         }
 
@@ -124,7 +135,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         alert("An error occurred. Please try again.");
       }
     },
-    [user, appointments, isDoctor, setAuthStatus]
+    [user, appointments, isDoctor, setAuthStatus, updateAppointmentUseCase, generateRoomCodeUseCase]
   );
 
   // Derive user role for table component
@@ -143,6 +154,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
     // Actions
     handleJoinCall,
-    handlePayNow: storeHandlePayNow,
+    handlePayNow: (appointmentId, amount) =>
+      storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase)),
   };
 }

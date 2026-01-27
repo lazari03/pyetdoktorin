@@ -1,4 +1,4 @@
-import { Appointment } from '../entities/Appointment';
+import { Appointment } from '@/domain/entities/Appointment';
 
 export function sortAppointments(appointments: Appointment[], maxRows: number): Appointment[] {
   return [...appointments]

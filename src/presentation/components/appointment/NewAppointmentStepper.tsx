@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DoctorSearch from '@/presentation/components/doctor/DoctorSearch';
-import useNewAppointment from '@/hooks/useNewAppointment';
+import useNewAppointment from '@/presentation/hooks/useNewAppointment';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 
 import { useNewAppointmentViewModel } from '@/presentation/view-models/useNewAppointmentViewModel';

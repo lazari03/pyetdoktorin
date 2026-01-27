@@ -1,12 +1,10 @@
 
 import { useState, useEffect } from 'react';
-import { isAuthenticated, fetchUserDetails } from '@/infrastructure/services/authService';
 import { useNewAppointmentStore } from '@/store/newAppointmentStore';
 import { Appointment } from '@/domain/entities/Appointment';
 import { AppointmentStatus } from '@/domain/entities/AppointmentStatus';
 import { useAuth } from '@/context/AuthContext';
-import { CreateAppointmentUseCase } from '@/application/createAppointmentUseCase';
-import { FirebaseAppointmentRepository } from '@/infrastructure/repositories/FirebaseAppointmentRepository';
+import { useDI } from '@/context/DIContext';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 
 export default function useNewAppointment() {
@@ -29,19 +27,23 @@ export default function useNewAppointment() {
   const [patientName, setPatientName] = useState<string>('');
   const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>();
   const { user } = useAuth();
-  const appointmentRepo = new FirebaseAppointmentRepository();
-  const createAppointment = new CreateAppointmentUseCase(appointmentRepo);
+  const {
+    observeAuthStateUseCase,
+    fetchUserDetailsUseCase,
+    createAppointmentUseCase,
+    checkAppointmentExistsUseCase,
+  } = useDI();
 
   useEffect(() => {
-    isAuthenticated(async (authState) => {
+    observeAuthStateUseCase.execute(async (authState) => {
       if (authState.userId) {
-        const userDetails = await fetchUserDetails(authState.userId);
+        const userDetails = await fetchUserDetailsUseCase.execute(authState.userId);
         if (userDetails?.name) {
           setPatientName(userDetails.name);
         }
       }
     });
-  }, []);
+  }, [observeAuthStateUseCase, fetchUserDetailsUseCase]);
 
   useEffect(() => {
     if (preferredDate) {
@@ -65,17 +67,6 @@ export default function useNewAppointment() {
       setAvailableTimes([]);
     }
   }, [preferredDate]);
-
-  const checkAppointmentExists = async (
-    patientId: string,
-    doctorId: string,
-    preferredDate: string,
-    preferredTime: string
-  ): Promise<boolean> => {
-  // Use repository method for existence check
-  const appointments = await appointmentRepo.getByUser(patientId, false);
-  return appointments.some(a => a.doctorId === doctorId && a.preferredDate === preferredDate && a.preferredTime === preferredTime);
-  };
 
   const handleSubmit = async (
     e: React.FormEvent,
@@ -109,7 +100,7 @@ export default function useNewAppointment() {
       status: AppointmentStatus.Pending,
     };
     try {
-      const exists = await checkAppointmentExists(
+      const exists = await checkAppointmentExistsUseCase.execute(
         appointmentData.patientId,
         appointmentData.doctorId,
         appointmentData.preferredDate,
@@ -119,8 +110,8 @@ export default function useNewAppointment() {
         setIsSubmitting(false);
         return;
       }
-  // Use application layer use case for creation
-  await createAppointment.execute(appointmentData as Appointment);
+      // Use application layer use case for creation
+      await createAppointmentUseCase.execute(appointmentData as Appointment);
       resetAppointment();
       setShowModal(true);
       let progressValue = 100;

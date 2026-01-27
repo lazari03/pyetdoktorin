@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import useNewAppointment from "@/hooks/useNewAppointment";
+import useNewAppointment from "@/presentation/hooks/useNewAppointment";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 
 interface TimeSlot {

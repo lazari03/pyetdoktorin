@@ -11,7 +11,7 @@ import { CheckProfileCompleteUseCase } from "@/application/checkProfileCompleteU
 import { FetchAppointmentsUseCase } from "@/application/fetchAppointmentsUseCase";
 import { userRepository } from "@/infrastructure/userRepository";
 import { appointmentRepository } from "@/infrastructure/appointmentRepository";
-import { useDashboardActions } from "@/hooks/useDashboardActions";
+import { useDashboardActions } from "@/presentation/hooks/useDashboardActions";
 import { UserRole } from "@/domain/entities/UserRole";
 
 export type DashboardUserContext = {

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMyProfile } from "../../../hooks/useMyProfile";
+import { useMyProfile } from "@/presentation/hooks/useMyProfile";
 import Loader from "../../../presentation/components/Loader/Loader";
 import MyProfileForm from '../../../presentation/components/MyProfile/MyProfileForm';
 import PasswordResetSection from '../../../presentation/components/MyProfile/PasswordResetSection';

@@ -9,8 +9,6 @@ import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths, NavigationKey } from '@/store/navigationStore';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
-import { LogoutSessionUseCase } from '@/application/logoutSessionUseCase';
-import { FirebaseSessionRepository } from '@/infrastructure/repositories/FirebaseSessionRepository';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,7 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
 
   const { role, loading, isAuthenticated, user } = useAuth();
-  const { fetchAppointmentsUseCase } = useDI();
+  const { fetchAppointmentsUseCase, logoutSessionUseCase, logoutServerUseCase } = useDI();
   const initializeAppointments = useInitializeAppointments((userId: string, isDoctor: boolean) =>
     fetchAppointmentsUseCase.execute(userId, isDoctor),
   );
@@ -49,9 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Centralized logout wiring
   const logout = useSessionStore((s) => s.logout);
   const handleLogoutClick = () => {
-    const sessionRepo = new FirebaseSessionRepository();
-    const logoutSessionUseCase = new LogoutSessionUseCase(sessionRepo);
-    logout('manual', logoutSessionUseCase);
+    logout('manual', logoutSessionUseCase, logoutServerUseCase);
     setProfileMenuOpen(false);
   };
 

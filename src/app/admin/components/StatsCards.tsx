@@ -1,7 +1,7 @@
 "use client";
 import { useTranslation } from 'react-i18next';
 import '@i18n';
-import { useAdminStats } from '@/hooks/useAdminStats';
+import { useAdminStats } from '@/presentation/hooks/useAdminStats';
 
 export function StatsCards() {
   const { t } = useTranslation();

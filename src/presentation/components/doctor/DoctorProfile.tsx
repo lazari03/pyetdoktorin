@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { Doctor } from '@/domain/entities/Doctor';
-import { useDoctorProfile } from '@/hooks/useDoctorProfile';
+import { useDoctorProfile } from '@/presentation/hooks/useDoctorProfile';
 import { useAuth } from '@/context/AuthContext';
 import AppointmentModal from '../appointment/AppointmentModal';
 

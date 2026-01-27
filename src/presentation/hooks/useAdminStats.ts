@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getTopDoctorsByAppointments, getTopDoctorsByRequests } from '@/infrastructure/queries/appointments';
+import { useDI } from '@/context/DIContext';
 import type { User } from '@/domain/entities/User';
 
 export type DoctorStat = { doctor: { name: string; id: string }, count: number };
@@ -20,6 +20,7 @@ export function useAdminStats(limit = 5) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initializedRef = useRef(false);
+  const { getTopDoctorsByAppointmentsUseCase, getTopDoctorsByRequestsUseCase } = useDI();
 
   const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
   const cache = useMemo<CacheShape>(() => {
@@ -42,8 +43,8 @@ export function useAdminStats(limit = 5) {
         const needsRequests = !(cache.requests && (now - cache.requests.ts) < CACHE_TTL_MS);
 
         const [v, r] = await Promise.all([
-          needsVisits ? getTopDoctorsByAppointments(limit) : Promise.resolve(cache.visits?.data ?? []),
-          needsRequests ? getTopDoctorsByRequests(limit) : Promise.resolve(cache.requests?.data ?? []),
+          needsVisits ? getTopDoctorsByAppointmentsUseCase.execute(limit) : Promise.resolve(cache.visits?.data ?? []),
+          needsRequests ? getTopDoctorsByRequestsUseCase.execute(limit) : Promise.resolve(cache.requests?.data ?? []),
         ]);
         if (signal.aborted) return;
 

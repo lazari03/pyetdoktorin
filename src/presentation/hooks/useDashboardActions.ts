@@ -2,11 +2,13 @@ import { useCallback } from 'react';
 import { useAppointmentStore } from '@/store/appointmentStore';
 import { useVideoStore } from '@/store/videoStore';
 import { useAuth } from '@/context/AuthContext';
+import { useDI } from '@/context/DIContext';
 
 export function useDashboardActions() {
   const { user } = useAuth();
   const { setAuthStatus, generateRoomCodeAndStore } = useVideoStore();
   const { handlePayNow: storeHandlePayNow } = useAppointmentStore();
+  const { handlePayNowUseCase } = useDI();
 
   // Join call using Zustand store and localStorage hydration
   const handleJoinCall = useCallback(async (appointmentId: string) => {
@@ -34,8 +36,8 @@ export function useDashboardActions() {
   }, [user, setAuthStatus, generateRoomCodeAndStore]);
 
   const handlePayNow = useCallback((appointmentId: string, amount: number) => {
-    storeHandlePayNow(appointmentId, amount);
-  }, [storeHandlePayNow]);
+    storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase));
+  }, [storeHandlePayNow, handlePayNowUseCase]);
 
   return { handleJoinCall, handlePayNow };
 }

@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
-import { db } from "@/config/firebaseconfig";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { resetUserPassword } from "@/infrastructure/services/authService";
 import { useAuth } from "@/context/AuthContext";
+import { useDI } from "@/context/DIContext";
 
 export const useMyProfile = () => {
   const { user, role, loading: authLoading } = useAuth(); // Access user, role, and loading from AuthContext
+  const {
+    getUserProfileUseCase,
+    updateUserProfileUseCase,
+    uploadProfilePictureUseCase,
+    resetUserPasswordUseCase,
+  } = useDI();
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
@@ -24,33 +28,10 @@ export const useMyProfile = () => {
     if (!user?.uid) return;
     setUploading(true);
     try {
-      // Create FormData for multipart upload
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('fileName', file.name);
-      formData.append('fileType', file.type);
-
-      // Upload via our API route (which will handle the Spaces upload server-side)
-      const uploadRes = await fetch('/api/profile/upload-profile-picture', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!uploadRes.ok) {
-        const errorText = await uploadRes.text();
-
-        throw new Error('Failed to upload: ' + errorText);
-      }
-
-      const { publicUrl } = await uploadRes.json();
-      if (!publicUrl) throw new Error('No public URL returned from upload');
-
-      // Update Firestore with the new profile picture URL
+      const publicUrl = await uploadProfilePictureUseCase.execute(user.uid, file);
       setFormData((prev) => ({ ...prev, profilePicture: publicUrl }));
-      await setDoc(doc(db, 'users', user.uid), { profilePicture: publicUrl }, { merge: true });
-      
     } catch {
-  alert('Failed to upload profile picture.');
+      alert("Failed to upload profile picture.");
     } finally {
       setUploading(false);
     }
@@ -65,9 +46,8 @@ export const useMyProfile = () => {
       if (!user?.uid) return;
 
       try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
+        const userData = await getUserProfileUseCase.execute(user.uid);
+        if (userData) {
           setFormData((prev) => ({
             ...prev,
             ...userData,
@@ -75,20 +55,19 @@ export const useMyProfile = () => {
             education: userData.education || [""],
           }));
         } else {
-
           setFormData((prev) => ({
             ...prev,
-            email: userDoc.data()?.email || "", // Fetch email from Firestore if available
+            email: "", // Keep email empty if profile is missing
           }));
         }
-  } catch {
-  } finally {
+      } catch {
+      } finally {
         setIsFetching(false);
       }
     };
 
     fetchUserData();
-  }, [user]);
+  }, [user, getUserProfileUseCase]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -120,7 +99,7 @@ export const useMyProfile = () => {
   const handlePasswordReset = async () => {
     try {
       const email = formData.email;
-      await resetUserPassword(email);
+      await resetUserPasswordUseCase.execute(email);
       setResetEmailSent(true);
       alert("Password reset email sent. Please check your inbox.");
     } catch {
@@ -135,10 +114,10 @@ export const useMyProfile = () => {
       const userId = user?.uid;
       if (!userId) throw new Error("User not authenticated");
 
-      await setDoc(doc(db, "users", userId), formData, { merge: true });
+      await updateUserProfileUseCase.execute(userId, formData);
       alert("Profile updated successfully!");
     } catch {
-  alert("Failed to update profile!");
+      alert("Failed to update profile!");
     }
   };
 

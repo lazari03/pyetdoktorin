@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useMyProfile } from "@/hooks/useMyProfile";
+import { useMyProfile } from "@/presentation/hooks/useMyProfile";
 
 /**
  * Known profile field names for type-safe form handling

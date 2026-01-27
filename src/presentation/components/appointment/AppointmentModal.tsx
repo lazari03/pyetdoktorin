@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import useNewAppointment from '@/hooks/useNewAppointment';
+import useNewAppointment from '@/presentation/hooks/useNewAppointment';
 import AppointmentConfirmation from './AppointmentConfirmation';
 import { useTranslation } from 'react-i18next';
 

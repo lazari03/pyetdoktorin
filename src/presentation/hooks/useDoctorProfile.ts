@@ -1,26 +1,20 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Doctor } from '@/domain/entities/Doctor';
-import { FirebaseUserRepository } from '@/infrastructure/repositories/FirebaseUserRepository';
+import { useDI } from '@/context/DIContext';
 
 
 export const useDoctorProfile = (id: string) => {
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const userRepo = useMemo(() => new FirebaseUserRepository(), []);
+  const { getDoctorProfileUseCase } = useDI();
 
   useEffect(() => {
     const fetchDoctor = async () => {
       try {
-        // Use repository to fetch doctor profile
-        const user = await userRepo.getById(id);
-        if (user && user.name) {
-          setDoctor({
-            id: user.id,
-            name: user.name,
-            specialization: user.specialization ?? [],
-            profilePicture: user.profilePicture,
-          });
+        const profile = await getDoctorProfileUseCase.execute(id);
+        if (profile) {
+          setDoctor(profile);
         } else {
           setError('Doctor not found');
         }
@@ -31,7 +25,7 @@ export const useDoctorProfile = (id: string) => {
       }
     };
     fetchDoctor();
-  }, [id, userRepo]);
+  }, [id, getDoctorProfileUseCase]);
 
   return { doctor, loading, error };
 };
