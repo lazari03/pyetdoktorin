@@ -118,7 +118,7 @@
   "jobs": "Punë",
   "jobsDescription": "Bashkohuni me ekipin e Alo Doktor dhe ndihmoni të formësoni të ardhmen e kujdesit shëndetësor digjital.",
   "jobsWillBePostedHere": "Punët do të postohen këtu",
-  "noVacantPosition": "Aktualisht nuk kemi pozicione të lira. Ju lutemi kthehuni më vonë.",
+  "noVacantPosition": "Aktualisht nuk kemi pozita të lira. Ju lutemi kthehuni më vonë.",
   "whatWeOfferDoctors": "Çfarë u ofrojmë mjekëve",
   "empoweringYourPractice": "Fuqizimi i praktikës tuaj mjekësore",
   "trackPatientVisits": "Gjurmoni vizitat dhe konsultimet e pacientëve",
@@ -329,5 +329,17 @@
   "loadingNotifications": "Po ngarkohen njoftimet...",
   "noNewNotifications": "Nuk ka njoftime të reja",
   "backToHome": "Kthehu te Kreu",
-  "patientName": "Emri i pacientit"
+  "patientName": "Emri i pacientit",
+  "hero": {
+    "title": {
+      "prefix": "Zgjidhja më e efikase",
+      "highlight": "tele-mjekësore",
+      "suffix": "online"
+    },
+    "subtitle": "Përjetoni pse më shumë se 1 milion ofrues na besojnë tashmë.",
+    "cta": {
+      "primary": "Fillo falas",
+      "secondary": "Eksploro zgjidhjet për klinika"
+    }
+  }
 }

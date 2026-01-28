@@ -9,21 +9,14 @@ import Loader from '../../../components/Loader';
 import { useAuth } from '../../../../context/AuthContext';
 import { useAppointmentStore } from '../../../../store/appointmentStore';
 import { Event as RBCEvent } from 'react-big-calendar';
-import { FetchAppointmentsUseCase } from '@/application/fetchAppointmentsUseCase';
-import { FirebaseAppointmentRepository } from '@/infrastructure/repositories/FirebaseAppointmentRepository';
+import { useDI } from '@/context/DIContext';
 
 export default function DoctorCalendarPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { appointments, fetchAppointments, loading } = useAppointmentStore();
   const [events, setEvents] = useState<RBCEvent[]>([]);
-
-  // Dependency injection for Clean Architecture
-  // Memoize use case to avoid recreating on every render
-  const fetchAppointmentsUseCase = React.useMemo(() => {
-    const appointmentRepo = new FirebaseAppointmentRepository();
-    return new FetchAppointmentsUseCase(appointmentRepo);
-  }, []);
+  const { fetchAppointmentsUseCase } = useDI();
 
   useEffect(() => {
     if (!user?.uid) return;

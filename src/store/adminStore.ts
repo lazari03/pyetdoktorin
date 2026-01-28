@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import type { User } from '@/domain/entities/User';
 import { UserRole } from '@/domain/entities/UserRole';
 import type { QueryDocumentSnapshot } from 'firebase/firestore';
-import { getAllUsers, resetUserPassword, deleteUserAccount, createAdminUser, getUsersPage, getDoctorProfile, getUserById } from '@/domain/users';
-import { apiClient } from '@/network/apiClient';
 
 type EditableUser = User & {
   // optional base profile fields (may be absent in base User entity)
@@ -28,17 +26,20 @@ interface AdminState {
   loading: boolean;
   error: string | null;
   // actions
-  loadUsers: () => Promise<void>;
-  loadUsersPage: (page: number) => Promise<void>;
-  searchUsers: (query: string) => Promise<void>;
+  loadUsers: (getAllUsersUseCase: () => Promise<User[]>) => Promise<void>;
+  loadUsersPage: (page: number, getUsersPageUseCase: (pageSize: number, cursor?: QueryDocumentSnapshot) => Promise<{ items: User[]; total: number; nextCursor?: QueryDocumentSnapshot }>, getAllUsersUseCase: () => Promise<User[]>) => Promise<void>;
+  searchUsers: (query: string, getAllUsersUseCase: () => Promise<User[]>, getUsersPageUseCase: (pageSize: number, cursor?: QueryDocumentSnapshot) => Promise<{ items: User[]; total: number; nextCursor?: QueryDocumentSnapshot }>) => Promise<void>;
   selectUser: (id: string | null) => void;
-  loadSelectedDetails: () => Promise<void>;
-  updateSelected: (payload: { name?: string; surname?: string; role?: User['role']; email?: string }) => Promise<void>;
-  updateDoctorProfile: (payload: { specialization?: string; bio?: string; specializations?: string[] }) => Promise<void>;
-  approveDoctor: (id: string) => Promise<void>;
-  resetPassword: (id: string) => Promise<void>;
-  deleteUser: (id: string) => Promise<void>;
-  createAdmin: (payload: { name: string; surname: string; email: string; password: string }) => Promise<void>;
+  loadSelectedDetails: (
+    getUserByIdUseCase: (id: string) => Promise<User | null>,
+    getDoctorProfileUseCase: (id: string) => Promise<(User & { name?: string; surname?: string; specialization?: string; bio?: string; specializations?: string[] }) | null>
+  ) => Promise<void>;
+  updateSelected: (payload: { name?: string; surname?: string; role?: User['role']; email?: string }, updateAdminUserUseCase: (id: string, payload: { name?: string; surname?: string; role?: User['role']; email?: string }) => Promise<void>) => Promise<void>;
+  updateDoctorProfile: (payload: { specialization?: string; bio?: string; specializations?: string[] }, updateAdminDoctorProfileUseCase: (id: string, payload: { specialization?: string; bio?: string; specializations?: string[] }) => Promise<void>) => Promise<void>;
+  approveDoctor: (id: string, approveDoctorUseCase: (id: string) => Promise<void>) => Promise<void>;
+  resetPassword: (id: string, resetAdminUserPasswordUseCase: (id: string) => Promise<{ resetLink?: string }>) => Promise<{ resetLink?: string } | null>;
+  deleteUser: (id: string, deleteUserAccountUseCase: (id: string) => Promise<void>) => Promise<void>;
+  createAdmin: (payload: { name: string; surname: string; email: string; password: string }, createAdminUserUseCase: (payload: { name: string; surname: string; email: string; password: string }) => Promise<User>, getAllUsersUseCase: () => Promise<User[]>) => Promise<void>;
 }
 
 export const useAdminStore = create<AdminState>((set, get) => ({
@@ -52,10 +53,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   searchQuery: '',
   loading: false,
   error: null,
-  async loadUsers() {
+  async loadUsers(getAllUsersUseCase) {
     set({ loading: true, error: null });
     try {
-      const users = await getAllUsers();
+      const users = await getAllUsersUseCase();
       // Coerce base users into EditableUser shape and carry approvalStatus if present
       const editable = users.map(u => ({
         ...u,
@@ -68,13 +69,13 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ loading: false });
     }
   },
-  async loadUsersPage(page) {
+  async loadUsersPage(page, getUsersPageUseCase, getAllUsersUseCase) {
     const { pageSize, cursors } = get();
     set({ loading: true, error: null });
     try {
       // Determine cursor: for page 0, no cursor; for >0, use last known cursor
       const cursor = page > 0 ? cursors[page - 1] : undefined;
-      const res = await getUsersPage(pageSize, cursor);
+      const res = await getUsersPageUseCase(pageSize, cursor);
       const nextCursors = [...cursors];
       if (res.nextCursor && nextCursors[page] !== res.nextCursor) {
         nextCursors[page] = res.nextCursor;
@@ -90,17 +91,17 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ loading: false });
     }
   },
-  async searchUsers(query) {
+  async searchUsers(query, getAllUsersUseCase, getUsersPageUseCase) {
     const q = query.trim().toLowerCase();
     if (!q) {
       // empty query resets to first page
-      await get().loadUsersPage(0);
+      await get().loadUsersPage(0, getUsersPageUseCase, getAllUsersUseCase);
       return;
     }
     set({ loading: true, error: null, searchQuery: q });
     try {
       // Fetch all users and filter client-side to cover global dataset
-      const all = await getAllUsers();
+      const all = await getAllUsersUseCase();
       const editable = all.map(u => ({
         ...u,
         approvalStatus: (u as unknown as { approvalStatus?: 'pending' | 'approved' }).approvalStatus,
@@ -119,12 +120,12 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   selectUser(id) {
     set({ selectedUserId: id, isPanelOpen: !!id });
   },
-  async loadSelectedDetails() {
+  async loadSelectedDetails(getUserByIdUseCase, getDoctorProfileUseCase) {
     const id = get().selectedUserId; if (!id) return;
     set({ loading: true, error: null });
     try {
-      const base = await getUserById(id);
-      const doc = await getDoctorProfile(id);
+      const base = await getUserByIdUseCase(id);
+      const doc = await getDoctorProfileUseCase(id);
       const merged = doc ?? base; // prefer doctor details if available
       if (merged) {
         // replace matching user in list for up-to-date editing
@@ -148,15 +149,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ loading: false });
     }
   },
-  async updateSelected(payload) {
+  async updateSelected(payload, updateAdminUserUseCase) {
     const id = get().selectedUserId; if (!id) return;
     set({ loading: true, error: null });
     try {
-      // Server-side admin update via API; token attached automatically by apiClient
-      await apiClient.post('/api/admin/update-user', {
-        id,
-        userFields: { ...payload },
-      });
+      await updateAdminUserUseCase(id, payload);
       const users = get().users.map(u => (u.id === id ? { ...u, ...payload } : u));
       set({ users });
     } catch (e) {
@@ -165,15 +162,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ loading: false });
     }
   },
-  async updateDoctorProfile(payload) {
+  async updateDoctorProfile(payload, updateAdminDoctorProfileUseCase) {
     const id = get().selectedUserId; if (!id) return;
     set({ loading: true, error: null });
     try {
-      // Server-side admin update via API; token attached automatically by apiClient
-      await apiClient.post('/api/admin/update-user', {
-        id,
-        doctorFields: { ...payload },
-      });
+      await updateAdminDoctorProfileUseCase(id, payload);
       const users = get().users.map(u => (u.id === id ? { ...u, ...payload } : u));
       set({ users });
     } catch (e) {
@@ -182,11 +175,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ loading: false });
     }
   },
-  async approveDoctor(id) {
+  async approveDoctor(id, approveDoctorUseCase) {
     set({ loading: true, error: null });
     try {
-      await apiClient.post('/api/admin/update-user', { id, approveDoctor: true });
-  const users = get().users.map(u => (u.id === id ? ({ ...u, approvalStatus: 'approved' } as EditableUser & { approvalStatus: 'approved' }) : u));
+      await approveDoctorUseCase(id);
+      const users = get().users.map(u => (u.id === id ? ({ ...u, approvalStatus: 'approved' } as EditableUser & { approvalStatus: 'approved' }) : u));
       set({ users });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : 'Failed to approve doctor' });
@@ -194,19 +187,19 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ loading: false });
     }
   },
-  async resetPassword(id) {
+  async resetPassword(id, resetAdminUserPasswordUseCase) {
     set({ loading: true, error: null });
-    try { await resetUserPassword(id); } catch (e) { set({ error: e instanceof Error ? e.message : 'Failed to reset password' }); }
+    try { return await resetAdminUserPasswordUseCase(id); } catch (e) { set({ error: e instanceof Error ? e.message : 'Failed to reset password' }); return null; }
     finally { set({ loading: false }); }
   },
-  async deleteUser(id) {
+  async deleteUser(id, deleteUserAccountUseCase) {
     set({ loading: true, error: null });
-    try { await deleteUserAccount(id); } catch (e) { set({ error: e instanceof Error ? e.message : 'Failed to delete user' }); }
+    try { await deleteUserAccountUseCase(id); } catch (e) { set({ error: e instanceof Error ? e.message : 'Failed to delete user' }); }
     finally { set({ loading: false }); }
   },
-  async createAdmin(payload) {
+  async createAdmin(payload, createAdminUserUseCase, getAllUsersUseCase) {
     set({ loading: true, error: null });
-    try { await createAdminUser(payload); await get().loadUsers(); }
+    try { await createAdminUserUseCase(payload); await get().loadUsers(getAllUsersUseCase); }
     catch (e) { set({ error: e instanceof Error ? e.message : 'Failed to create admin' }); }
     finally { set({ loading: false }); }
   }

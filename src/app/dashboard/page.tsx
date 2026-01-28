@@ -1,20 +1,18 @@
 
 "use client";
-import "@/i18n/i18n";
-
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
-import { useDashboardViewModel, DashboardUserContext } from "@/application/dashboard/userDashboardViewModel";
+import { useDashboardViewModel, DashboardUserContext } from "@/presentation/view-models/userDashboardViewModel";
 import { UserRole } from "@/domain/entities/UserRole";
 import Link from "next/link";
 import { AppointmentFilter } from "@/store/dashboardStore";
-import Loader from "@/app/components/Loader";
-import RedirectingModal from "@/app/components/RedirectingModal";
-import ProfileWarning from "@/app/components/ProfileWarning";
-import DashboardNotificationsBell from "@/app/components/DashboardNotificationsBell";
-import UpcomingAppointment from "@/app/components/appointment/UpcomingAppointment";
-import AppointmentsTable from "@/app/components/appointment/AppointmentsTable";
-import DashboardBanner from "@/app/components/DashboardBanner";
+import Loader from "@/presentation/components/Loader/Loader";
+import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
+import ProfileWarning from "@/presentation/components/ProfileWarning/ProfileWarning";
+import DashboardNotificationsBell from "@/presentation/components/DashboardNotificationsBell/DashboardNotificationsBell";
+import UpcomingAppointment from "@/presentation/components/appointment/UpcomingAppointment";
+import AppointmentsTable from "@/presentation/components/AppointmentsTable/AppointmentsTable";
+import DashboardBanner from "@/presentation/components/DashboardBanner/DashboardBanner";
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -45,12 +43,6 @@ export default function Dashboard() {
         {/* LEFT: main content without white outer card */}
         <main className="flex-1 flex flex-col">
           <div className="dashboard-main-inner flex flex-col flex-1">
-            {vm.role === UserRole.Doctor && user?.uid && (
-              <div className="flex items-center justify-between mb-4">
-                {/* keep bell aligned with nav, but inline above banner */}
-                <DashboardNotificationsBell doctorId={user.uid} />
-              </div>
-            )}
 
             <ProfileWarning show={vm.profileIncomplete} />
             <div className="flex-1 flex flex-col mt-2">

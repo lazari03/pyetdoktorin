@@ -28,7 +28,7 @@ export const useVideoStore = create<VideoState>()((set) => ({
   generateRoomCodeAndStore: async ({ appointmentId, userId, role, userName }) => {
     set({ loading: true, error: null });
     try {
-      const { generateRoomCodeAndToken } = await import('../domain/100msService');
+      const { generateRoomCodeAndToken } = await import('../infrastructure/services/100msService');
       const data = await generateRoomCodeAndToken({
         user_id: userId,
         room_id: appointmentId,

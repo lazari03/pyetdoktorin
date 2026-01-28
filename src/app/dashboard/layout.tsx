@@ -9,8 +9,6 @@ import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths, NavigationKey } from '@/store/navigationStore';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
-import { LogoutSessionUseCase } from '@/application/logoutSessionUseCase';
-import { FirebaseSessionRepository } from '@/infrastructure/repositories/FirebaseSessionRepository';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,7 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
 
   const { role, loading, isAuthenticated, user } = useAuth();
-  const { fetchAppointmentsUseCase } = useDI();
+  const { fetchAppointmentsUseCase, logoutSessionUseCase, logoutServerUseCase } = useDI();
   const initializeAppointments = useInitializeAppointments((userId: string, isDoctor: boolean) =>
     fetchAppointmentsUseCase.execute(userId, isDoctor),
   );
@@ -49,9 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Centralized logout wiring
   const logout = useSessionStore((s) => s.logout);
   const handleLogoutClick = () => {
-    const sessionRepo = new FirebaseSessionRepository();
-    const logoutSessionUseCase = new LogoutSessionUseCase(sessionRepo);
-    logout('manual', logoutSessionUseCase);
+    logout('manual', logoutSessionUseCase, logoutServerUseCase);
     setProfileMenuOpen(false);
   };
 
@@ -127,7 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     .toUpperCase();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-violet-200 via-white/80 to-white">
       {/* Mobile Top Bar with hamburger */}
   <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4">
         <button
@@ -174,7 +170,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Desktop top bar with centered menu and profile avatar */}
       <header className="bg-white shadow-md hidden md:block">
-        <div className="flex items-center justify-between px-10 py-6 relative">
+        <div className="flex items-center justify-between px-10 py-6 relative border-b border-gray-200 shadow-md bg-white/90 backdrop-blur">
           {/* Left spacer to help center menu visually */}
           <div className="w-24" />
 
@@ -229,7 +225,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main className="flex-1 pt-16 md:pt-0 p-4 md:p-6 lg:p-8">{children}</main>
+      <main className="flex-1 pt-14 md:pt-0 px-2 sm:px-4 md:px-8 lg:px-12 py-4 md:py-6 lg:py-8 bg-gradient-to-t from-violet-200 to-white">{children}</main>
     </div>
   );
 }
