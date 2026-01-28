@@ -1,9 +1,7 @@
 'use client';
-import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DoctorSearch from '@/presentation/components/doctor/DoctorSearch';
-import useNewAppointment from '@/presentation/hooks/useNewAppointment';
-import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
+import AppointmentConfirmation from './AppointmentConfirmation';
 
 import { useNewAppointmentViewModel } from '@/presentation/view-models/useNewAppointmentViewModel';
 

@@ -1,5 +1,4 @@
 'use client';
-import { VideoCameraIcon, ShieldCheckIcon, HeartIcon } from '@heroicons/react/20/solid';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 
@@ -7,7 +6,6 @@ export default function ContentSection() {
   const { t } = useTranslation();
   // Placeholder image and logo
   const doctorImage = "/api/images?key=child1";
-  const hipaaLogo = "/api/images?key=hipaa-logo";
 
   return (
     <section className="relative min-h-[70vh] flex items-center justify-center bg-[#ede9fe] px-2 py-20 overflow-x-hidden">

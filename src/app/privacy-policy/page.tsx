@@ -3,8 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import FooterSection from "../components/footerSection";
-import NavBar from "../components/navBar";
+import FooterSection from "@/presentation/components/footerSection/footerSection";
+import NavBar from "@/presentation/components/navBar/navBar";
 
 export default function PrivacyPolicyPage() {
   const { t } = useTranslation();

@@ -1,7 +1,7 @@
 import { db } from '@/config/firebaseconfig';
 // import { auth } from '@/config/firebaseconfig';
 import { doc, getDoc, collection, updateDoc } from 'firebase/firestore';
-import { Appointment } from './entities/Appointment';
+import { Appointment } from '@/domain/entities/Appointment';
 
 export async function getUserRole(userId: string): Promise<string | null> {
   const userRef = doc(db, 'users', userId);

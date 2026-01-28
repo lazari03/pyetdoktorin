@@ -4,7 +4,7 @@ export interface RegistrationData {
   phone: string;
   email: string;
   password: string;
-  role: 'patient' | 'doctor';
+  role: string;
 }
 
 export interface IRegistrationService {

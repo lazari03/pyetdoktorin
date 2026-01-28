@@ -1,8 +1,7 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppointmentStore } from '@/store/appointmentStore';
-import ProfileWarning from "@/presentation/components/ProfileWarning/ProfileWarning";
 import { useAuth } from '@/context/AuthContext';
+import CenteredLoader from '@/presentation/components/CenteredLoader/CenteredLoader';
 
 const UpcomingAppointment = () => {
 	const { t } = useTranslation();
@@ -56,7 +55,6 @@ const UpcomingAppointment = () => {
 			</div>
 		</div>
 	);
-	return <></>;
 };
 
 export default UpcomingAppointment;

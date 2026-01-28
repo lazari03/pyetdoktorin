@@ -3,13 +3,11 @@
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardViewModel, DashboardUserContext } from "@/presentation/view-models/userDashboardViewModel";
-import { UserRole } from "@/domain/entities/UserRole";
 import Link from "next/link";
 import { AppointmentFilter } from "@/store/dashboardStore";
 import Loader from "@/presentation/components/Loader/Loader";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import ProfileWarning from "@/presentation/components/ProfileWarning/ProfileWarning";
-import DashboardNotificationsBell from "@/presentation/components/DashboardNotificationsBell/DashboardNotificationsBell";
 import UpcomingAppointment from "@/presentation/components/appointment/UpcomingAppointment";
 import AppointmentsTable from "@/presentation/components/AppointmentsTable/AppointmentsTable";
 import DashboardBanner from "@/presentation/components/DashboardBanner/DashboardBanner";

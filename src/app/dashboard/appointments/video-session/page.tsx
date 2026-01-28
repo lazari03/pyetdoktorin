@@ -1,7 +1,7 @@
 
 "use client";
 import { useEffect, useState, useRef } from "react";
-import Loader from "../../../components/Loader";
+import Loader from "@/presentation/components/Loader/Loader";
 
 export default function VideoSessionPage() {
   const [loading, setLoading] = useState(true);

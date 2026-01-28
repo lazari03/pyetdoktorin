@@ -10,7 +10,6 @@ export default function FooterSection() {
     { code: 'sq', label: 'Shqip' },
     // Add more as needed
   ];
-  const currentLang = languages.find(l => l.code === i18n.language) || languages[0];
 
   return (
     <footer className="w-full bg-white text-[#0a2e2e] pt-12 pb-4 px-4 border-t border-gray-100">

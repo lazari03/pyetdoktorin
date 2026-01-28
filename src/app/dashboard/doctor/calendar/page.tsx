@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import RoleGuard from '../../../components/RoleGuard';
+import RoleGuard from '@/presentation/components/RoleGuard/RoleGuard';
 import { UserRole } from '@/domain/entities/UserRole';
 import Calendar from '../Calendar';
-import Loader from '../../../components/Loader';
+import Loader from '@/presentation/components/Loader/Loader';
 import { useAuth } from '../../../../context/AuthContext';
 import { useAppointmentStore } from '../../../../store/appointmentStore';
 import { Event as RBCEvent } from 'react-big-calendar';

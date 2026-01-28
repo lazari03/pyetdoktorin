@@ -17,15 +17,6 @@ export default function AppointmentModal({
 
 	const {
 		setSelectedDoctor,
-		appointmentType,
-		setAppointmentType,
-		preferredDate,
-		setPreferredDate,
-		preferredTime,
-		setPreferredTime,
-		notes,
-		setNotes,
-		availableTimes,
 		handleSubmit,
 	} = useNewAppointment();
 	const { t } = useTranslation();

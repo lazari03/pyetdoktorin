@@ -1,7 +1,7 @@
 'use client';
 
-import RoleGuard from '../../components/RoleGuard';
-import DoctorSearch from '../../components/doctor/DoctorSearch';
+import RoleGuard from '@/presentation/components/RoleGuard/RoleGuard';
+import DoctorSearch from '@/presentation/components/doctor/DoctorSearch';
 import { useTranslation } from 'react-i18next';
 
 export default function SearchDoctorsPage() {

@@ -64,7 +64,7 @@ export function useAdminStats(limit = 5) {
     })();
 
     return () => controller.abort();
-  }, [limit, cache, CACHE_TTL_MS]);
+  }, [limit, cache, CACHE_TTL_MS, getTopDoctorsByAppointmentsUseCase, getTopDoctorsByRequestsUseCase]);
 
   return { visits, requests, loading, error };
 }

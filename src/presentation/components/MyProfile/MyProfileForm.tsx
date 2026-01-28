@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface MyProfileFormData {
@@ -167,8 +167,6 @@ const MyProfileForm = ({
   const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState('');
-
-  const isDoctor = useMemo(() => role === 'doctor', [role]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

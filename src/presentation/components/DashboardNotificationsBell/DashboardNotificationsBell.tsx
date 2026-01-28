@@ -15,11 +15,21 @@ export default function DashboardNotificationsBell({ doctorId }: { doctorId: str
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { subscribePendingNotificationsUseCase } = useDI();
 
+  const toNotification = (data: Record<string, unknown>): Notification => {
+    return {
+      id: String(data.id ?? ''),
+      patientName: String(data.patientName ?? ''),
+      appointmentType: String(data.appointmentType ?? ''),
+      preferredDate: String(data.preferredDate ?? ''),
+      preferredTime: String(data.preferredTime ?? ''),
+    };
+  };
+
   useEffect(() => {
     if (!doctorId) return;
     const unsubscribe = subscribePendingNotificationsUseCase.execute(
       doctorId,
-      (data) => data as Notification,
+      (data) => toNotification(data),
       (items) => setNotifications(items)
     );
     return () => unsubscribe();

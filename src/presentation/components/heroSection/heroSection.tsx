@@ -3,6 +3,7 @@
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import Image from "next/image";
 
 // Use secure API endpoint for images
 const MAIN_IMAGE = "/api/images?key=hero1";
@@ -54,11 +55,14 @@ export default function HeroSection() {
         <div className="flex-1 flex items-center justify-center w-full md:w-auto">
           <div className="relative w-[340px] sm:w-[400px] aspect-[3/4] bg-white/10 rounded-2xl md:rounded-3xl shadow-2xl border border-white/20 backdrop-blur-xl flex items-center justify-center overflow-visible">
             {/* Main portrait image */}
-            <img
+            <Image
               src={MAIN_IMAGE}
               alt="Video call main"
-              className="w-full h-full object-cover rounded-2xl md:rounded-3xl"
+              fill
+              sizes="(max-width: 640px) 340px, (max-width: 1024px) 400px, 400px"
+              className="object-cover rounded-2xl md:rounded-3xl"
               draggable={false}
+              unoptimized
             />
             {/* Bottom control bar */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 bg-white/30 rounded-xl px-4 py-2 shadow-lg backdrop-blur-md border border-white/40">

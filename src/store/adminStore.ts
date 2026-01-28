@@ -27,7 +27,7 @@ interface AdminState {
   error: string | null;
   // actions
   loadUsers: (getAllUsersUseCase: () => Promise<User[]>) => Promise<void>;
-  loadUsersPage: (page: number, getUsersPageUseCase: (pageSize: number, cursor?: QueryDocumentSnapshot) => Promise<{ items: User[]; total: number; nextCursor?: QueryDocumentSnapshot }>, getAllUsersUseCase: () => Promise<User[]>) => Promise<void>;
+  loadUsersPage: (page: number, getUsersPageUseCase: (pageSize: number, cursor?: QueryDocumentSnapshot) => Promise<{ items: User[]; total: number; nextCursor?: QueryDocumentSnapshot }>) => Promise<void>;
   searchUsers: (query: string, getAllUsersUseCase: () => Promise<User[]>, getUsersPageUseCase: (pageSize: number, cursor?: QueryDocumentSnapshot) => Promise<{ items: User[]; total: number; nextCursor?: QueryDocumentSnapshot }>) => Promise<void>;
   selectUser: (id: string | null) => void;
   loadSelectedDetails: (
@@ -69,7 +69,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ loading: false });
     }
   },
-  async loadUsersPage(page, getUsersPageUseCase, getAllUsersUseCase) {
+  async loadUsersPage(page, getUsersPageUseCase) {
     const { pageSize, cursors } = get();
     set({ loading: true, error: null });
     try {
@@ -95,7 +95,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const q = query.trim().toLowerCase();
     if (!q) {
       // empty query resets to first page
-      await get().loadUsersPage(0, getUsersPageUseCase, getAllUsersUseCase);
+      await get().loadUsersPage(0, getUsersPageUseCase);
       return;
     }
     set({ loading: true, error: null, searchQuery: q });

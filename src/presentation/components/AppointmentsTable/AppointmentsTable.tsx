@@ -8,6 +8,7 @@ import { toUserRole } from '@/presentation/utils/toUserRole';
 import { DEFAULT_APPOINTMENT_PAYMENT_AMOUNT } from '@/config/paymentConfig';
 import { getAppointmentStatusPresentation } from '@/presentation/utils/getAppointmentStatusPresentation';
 import { AppointmentsTableProps } from './types';
+import { Appointment } from '@/domain/entities/Appointment';
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 	const { t } = useTranslation();
@@ -16,7 +17,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 };
 
 const ActionButtons: React.FC<{
-	appointment: any;
+	appointment: Appointment;
 	role: string;
 	action: { label: string; disabled: boolean };
 	onJoinCall: (id: string) => void;

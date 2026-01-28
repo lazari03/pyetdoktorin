@@ -29,12 +29,14 @@ export default function DoctorProfile({ id }: DoctorProfileProps) {
 
 	return (
 		<div className="w-full max-w-4xl mx-auto p-3 md:p-6">
-			<div className="card bg-base-100 shadow-xl overflow-hidden flex flex-col md:flex-row">
-				{doctor && (
-					<DoctorImage name={doctor.name} profilePicture={doctor.profilePicture} />
-				)}
-				<DoctorDetails doctor={doctor} onRequestAppointment={handleRequestAppointment} />
-			</div>
+        <div className="card bg-base-100 shadow-xl overflow-hidden flex flex-col md:flex-row">
+          {doctor && (
+            <>
+              <DoctorImage name={doctor.name} profilePicture={doctor.profilePicture} />
+              <DoctorDetails doctor={doctor} onRequestAppointment={handleRequestAppointment} />
+            </>
+          )}
+        </div>
 			{isModalOpen && doctor && (
 				<AppointmentModal
 					isOpen={isModalOpen}

@@ -1,7 +1,7 @@
 
 'use client';
 
-import DoctorProfile from '../../../components/doctor/DoctorProfile';
+import DoctorProfile from '@/presentation/components/doctor/DoctorProfile';
 import React from 'react';
 
 export default function DoctorPage({ params }: { params: Promise<{ doctorId: string }> }) {

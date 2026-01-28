@@ -22,7 +22,8 @@ export class AdminUserService implements IAdminUserService {
   }
 
   async resetUserPassword(id: string): Promise<{ resetLink?: string }> {
-    return resetUserPassword(id);
+    await resetUserPassword(id);
+    return {};
   }
 
   async deleteUserAccount(id: string): Promise<void> {

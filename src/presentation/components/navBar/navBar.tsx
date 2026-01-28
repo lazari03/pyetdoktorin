@@ -2,7 +2,6 @@
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useTranslation } from 'react-i18next';
 import '@i18n';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
@@ -11,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 export default function NavBar() {
   const nav = useNavigationCoordinator();
   const { isAuthenticated, loading } = useAuth();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasAuthCookie, setHasAuthCookie] = useState(false);
   const [scrolled, setScrolled] = useState(false);

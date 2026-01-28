@@ -3,4 +3,5 @@ export interface Doctor {
 	name: string;
 	specialization: string[];
 	profilePicture?: string; // URL to DigitalOcean Spaces image
+	bio?: string;
 }

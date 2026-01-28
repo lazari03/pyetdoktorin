@@ -1,7 +1,7 @@
 "use client";
 import { useAdminStore } from '@/store/adminStore';
 import { useEffect, useMemo, useState } from 'react';
-import GenericTable, { Column, RowAction } from '@/app/components/GenericTable';
+import { GenericTable, Column, RowAction } from '@/presentation/components/GenericTable/GenericTable';
 import { useTranslation } from 'react-i18next';
 import '@i18n';
 import { UserRole } from '@/domain/entities/UserRole';
@@ -25,7 +25,7 @@ export function UsersTable() {
   const [debounced, setDebounced] = useState('');
   // Initialize search input from store to preserve last search after edits
   useEffect(() => { setSearch(searchQuery || ''); setDebounced((searchQuery || '').trim().toLowerCase()); }, [searchQuery]);
-  useEffect(() => { if (!searchQuery) loadUsersPage(0, getUsersPageUseCase.execute.bind(getUsersPageUseCase), getAllUsersUseCase.execute.bind(getAllUsersUseCase)); }, [loadUsersPage, searchQuery, getUsersPageUseCase, getAllUsersUseCase]);
+  useEffect(() => { if (!searchQuery) loadUsersPage(0, getUsersPageUseCase.execute.bind(getUsersPageUseCase)); }, [loadUsersPage, searchQuery, getUsersPageUseCase]);
 
   // Debounce search input
   useEffect(() => {
@@ -71,7 +71,7 @@ export function UsersTable() {
       );
       setPage(0);
     } else {
-      loadUsersPage(0, getUsersPageUseCase.execute.bind(getUsersPageUseCase), getAllUsersUseCase.execute.bind(getAllUsersUseCase));
+      loadUsersPage(0, getUsersPageUseCase.execute.bind(getUsersPageUseCase));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced]);
@@ -81,7 +81,7 @@ export function UsersTable() {
   // When page changes via pagination controls, request server-side page and scroll-to-top handled by GenericTable
   const handlePageChange = (p: number) => {
     setPage(p);
-    loadUsersPage(p, getUsersPageUseCase.execute.bind(getUsersPageUseCase), getAllUsersUseCase.execute.bind(getAllUsersUseCase));
+    loadUsersPage(p, getUsersPageUseCase.execute.bind(getUsersPageUseCase));
   };
   return (
     <div>
