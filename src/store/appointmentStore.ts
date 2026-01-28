@@ -17,7 +17,13 @@ interface AppointmentState {
   handlePayNow: (appointmentId: string, amount: number, handlePayNowUseCase: (appointmentId: string, amount: number) => Promise<void>) => Promise<void>;
   checkIfPastAppointment: (appointmentId: string, checkIfPastAppointmentUseCase: (appointmentId: string) => Promise<boolean>) => Promise<boolean>;
   verifyStripePayment: (appointmentId: string, verifyStripePaymentUseCase: (appointmentId: string) => Promise<void>) => Promise<void>;
-  verifyAndUpdatePayment: (sessionId: string, userId: string, isDoctor: boolean, verifyAndUpdatePaymentUseCase: (sessionId: string, userId: string, isDoctor: boolean) => Promise<void>, fetchAppointmentsUseCase: (userId: string, isDoctor: boolean) => Promise<Appointment[]>) => Promise<void>;
+  verifyAndUpdatePayment: (
+    sessionId: string,
+    userId: string,
+    isDoctor: boolean,
+    verifyAndUpdatePaymentUseCase: (sessionId: string, userId: string, isDoctor: boolean, onRefresh: (userId: string, isDoctor: boolean) => Promise<void>) => Promise<void>,
+    fetchAppointmentsUseCase: (userId: string, isDoctor: boolean) => Promise<Appointment[]>
+  ) => Promise<void>;
   isPastAppointment: (date: string, time: string) => boolean;
   isAppointmentPast: (appointment: Appointment) => boolean;
   getAppointmentAction: (appointment: Appointment) => { label: string; disabled: boolean; variant: string };
@@ -53,8 +59,14 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   checkIfPastAppointment: async (appointmentId, checkIfPastAppointmentUseCase) => checkIfPastAppointmentUseCase(appointmentId),
   verifyStripePayment: async (appointmentId, verifyStripePaymentUseCase) => verifyStripePaymentUseCase(appointmentId),
   verifyAndUpdatePayment: async (sessionId, userId, isDoctor, verifyAndUpdatePaymentUseCase, fetchAppointmentsUseCase) => {
-    await verifyAndUpdatePaymentUseCase(sessionId, userId, isDoctor);
-    await get().fetchAppointments(userId, isDoctor, fetchAppointmentsUseCase);
+    await verifyAndUpdatePaymentUseCase(
+      sessionId,
+      userId,
+      isDoctor,
+      async (id, isDoc) => {
+        await get().fetchAppointments(id, isDoc, fetchAppointmentsUseCase);
+      }
+    );
   },
   isPastAppointment: (date, time) => {
     const appointmentDateTime = new Date(`${date}T${time}`);

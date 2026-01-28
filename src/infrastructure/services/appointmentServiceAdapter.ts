@@ -30,8 +30,13 @@ export class AppointmentServiceAdapter implements IAppointmentService {
     await verifyStripePayment(appointmentId, setAppointmentPaid);
   }
 
-  async verifyAndUpdatePayment(sessionId: string, userId: string, isDoctor: boolean): Promise<void> {
-    await verifyAndUpdatePayment(sessionId, userId, isDoctor, setAppointmentPaid, async () => {});
+  async verifyAndUpdatePayment(
+    sessionId: string,
+    userId: string,
+    isDoctor: boolean,
+    onRefresh: (userId: string, isDoctor: boolean) => Promise<void>
+  ): Promise<void> {
+    await verifyAndUpdatePayment(sessionId, userId, isDoctor, setAppointmentPaid, onRefresh);
   }
 
   async getUserRole(userId: string): Promise<string> {

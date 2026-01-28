@@ -6,6 +6,6 @@ export interface IAppointmentService {
   handlePayNow(appointmentId: string, amount: number): Promise<void>;
   checkIfPastAppointment(appointmentId: string): Promise<boolean>;
   verifyStripePayment(appointmentId: string): Promise<void>;
-  verifyAndUpdatePayment(sessionId: string, userId: string, isDoctor: boolean): Promise<void>;
+  verifyAndUpdatePayment(sessionId: string, userId: string, isDoctor: boolean, onRefresh: (userId: string, isDoctor: boolean) => Promise<void>): Promise<void>;
   getUserRole(userId: string): Promise<string>;
 }

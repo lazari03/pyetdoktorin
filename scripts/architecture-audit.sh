@@ -62,4 +62,34 @@ if $SEARCH_CMD "$pattern_store" src/store >/dev/null; then
   $SEARCH_CMD "$pattern_store" src/store
 fi
 
+# App pages should not import infrastructure directly (client pages)
+# App pages should not import infrastructure directly (ignore server-only app/api)
+pattern_app_infra="^[[:space:]]*import .*(@/infrastructure/|config/firebaseconfig|firebase)"
+if [ "$SEARCH_MODE" = "rg" ]; then
+  if rg -n --glob '!src/app/api/**' "$pattern_app_infra" src/app >/dev/null; then
+    warn "[WARN] App imports infrastructure/firebase directly (non-API)"
+    rg -n --glob '!src/app/api/**' "$pattern_app_infra" src/app
+  fi
+else
+  if grep -R -n -E --exclude-dir=api "$pattern_app_infra" src/app >/dev/null; then
+    warn "[WARN] App imports infrastructure/firebase directly (non-API)"
+    grep -R -n -E --exclude-dir=api "$pattern_app_infra" src/app
+  fi
+fi
+
+# Presentation should not import network layer directly
+pattern_network="@/network/"
+if $SEARCH_CMD "$pattern_network" src/presentation >/dev/null; then
+  warn "[WARN] Presentation imports network directly"
+  $SEARCH_CMD "$pattern_network" src/presentation
+fi
+
+# Domain should not import presentation/application/infrastructure
+pattern_domain_layers="@/presentation/|@/application/|@/infrastructure/"
+if $SEARCH_CMD "$pattern_domain_layers" src/domain >/dev/null; then
+  failmsg "[FAIL] Domain imports outer layers"
+  $SEARCH_CMD "$pattern_domain_layers" src/domain
+  fail=1
+fi
+
 exit $fail
