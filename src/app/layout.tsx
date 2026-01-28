@@ -13,20 +13,13 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  let lang = 'en';
-  if (typeof window === 'undefined') {
-    // SSR: read cookie from headers
-    const cookieStore = await cookies();
-    lang = cookieStore.get('language')?.value || 'en';
-  } else {
-    // Client: read cookie from document
-    lang = document.cookie.match(/language=([a-zA-Z-]+)/)?.[1] || 'en';
-  }
+  const lang = (await cookies()).get('language')?.value || 'en';
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
   return (
     <html lang={lang} data-theme="light">
       <head>
         <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
+          src={`https://www.googletagmanager.com/gtag/js?id=${gaId || process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`}
           strategy="afterInteractive"
         />
         <Script id="gtag-init" strategy="afterInteractive">

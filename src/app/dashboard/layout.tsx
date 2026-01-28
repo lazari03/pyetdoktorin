@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useInitializeAppointments } from '../../store/appointmentStore';
@@ -9,6 +9,12 @@ import { useAuth } from '@/context/AuthContext';
 import { getNavigationPaths, NavigationKey } from '@/store/navigationStore';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
+
+type NavItem = {
+  key: NavigationKey;
+  name: string;
+  href: string;
+};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -97,16 +103,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const isAdminSection = pathname?.startsWith('/admin');
-  const navPaths = isAdminSection
+  const navItems: NavItem[] = isAdminSection
     ? [
         { key: NavigationKey.Dashboard, name: 'dashboard', href: '/admin' },
         { key: NavigationKey.Appointments, name: 'users', href: '/admin/users' },
         { key: NavigationKey.AppointmentHistory, name: 'notifications', href: '/admin/notifications' },
-        // Profile nav removed for admin
       ]
     : getNavigationPaths(role);
-
-  const navItems = navPaths.map((item) => ({ ...item }));
 
   const handleNavClick = (href: string) => {
     setMobileMenuOpen(false);
@@ -124,108 +127,173 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-violet-200 via-white/80 to-white">
-      {/* Mobile Top Bar with hamburger */}
-  <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4">
-        <button
-          onClick={() => setMobileMenuOpen((open) => !open)}
-          className="text-gray-800 hover:text-gray-900"
-          aria-label="Toggle navigation menu"
-        >
-          {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
-        </button>
-
-        <span className="text-sm font-semibold text-gray-900">Dashboard</span>
-
-        {/* Right: avatar circle */}
-        <button
-          onClick={() => setProfileMenuOpen((open) => !open)}
-          className="ml-3 h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
-          aria-label="Open profile menu"
-        >
-          {initials}
-        </button>
-      </div>
-
-      {/* Mobile slide-down menu */}
-      {mobileMenuOpen && (
-  <div className="md:hidden fixed top-14 left-0 right-0 bg-white shadow-lg border-t border-gray-100">
-          <nav className="flex flex-col py-2">
-            {navItems.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <button
-                  key={item.href}
-                  onClick={() => handleNavClick(item.href)}
-                  className={`px-4 py-2 text-left text-sm font-medium ${
-                    active ? 'text-orange-600 bg-orange-50' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {item.name}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-      )}
-
-      {/* Desktop top bar with centered menu and profile avatar */}
-      <header className="bg-white shadow-md hidden md:block">
-        <div className="flex items-center justify-between px-10 py-6 relative border-b border-gray-200 shadow-md bg-white/90 backdrop-blur">
-          {/* Left spacer to help center menu visually */}
-          <div className="w-24" />
-
-          <nav className="flex items-center gap-8 text-sm font-medium text-gray-700">
-            {navItems.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <button
-                  key={item.href}
-                  onClick={() => handleNavClick(item.href)}
-                  className={`pb-1.5 border-b-2 transition-colors ${
-                    active
-                      ? 'border-purple-500 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  {item.name}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Right: profile avatar with dropdown below */}
-          <div className="relative flex items-center justify-end w-24" ref={profileMenuRef}>
-            <button
-              onClick={() => setProfileMenuOpen((open) => !open)}
-              className="h-9 w-9 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
-            >
-              {initials}
-            </button>
-
-            {profileMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-44 rounded-xl bg-white shadow-lg border border-gray-100 py-1 text-sm">
-                <button
-                  onClick={() => {
-                    setProfileMenuOpen(false);
-                    nav.pushPath('/dashboard/myprofile');
-                  }}
-                  className="w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-t-xl"
-                >
-                  Profile settings
-                </button>
-                <button
-                  onClick={handleLogoutClick}
-                  className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-xl"
-                >
-                  Log out
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 pt-14 md:pt-0 px-2 sm:px-4 md:px-8 lg:px-12 py-4 md:py-6 lg:py-8 bg-gradient-to-t from-violet-200 to-white">{children}</main>
+      <MobileTopBar
+        mobileMenuOpen={mobileMenuOpen}
+        onToggleMenu={() => setMobileMenuOpen((open) => !open)}
+        initials={initials}
+        onToggleProfile={() => setProfileMenuOpen((open) => !open)}
+      />
+      <MobileMenu
+        open={mobileMenuOpen}
+        items={navItems}
+        activePath={pathname ?? ''}
+        onNavigate={handleNavClick}
+      />
+      <DesktopTopBar
+        items={navItems}
+        activePath={pathname ?? ''}
+        onNavigate={handleNavClick}
+        initials={initials}
+        profileMenuOpen={profileMenuOpen}
+        onToggleProfile={() => setProfileMenuOpen((open) => !open)}
+        onProfileSettings={() => {
+          setProfileMenuOpen(false);
+          nav.pushPath('/dashboard/myprofile');
+        }}
+        onLogout={handleLogoutClick}
+        profileMenuRef={profileMenuRef}
+      />
+      <main className="flex-1 pt-14 md:pt-0 px-2 sm:px-4 md:px-8 lg:px-12 py-4 md:py-6 lg:py-8 bg-gradient-to-t from-violet-200 to-white">
+        {children}
+      </main>
     </div>
+  );
+}
+
+function MobileTopBar({
+  mobileMenuOpen,
+  onToggleMenu,
+  initials,
+  onToggleProfile,
+}: {
+  mobileMenuOpen: boolean;
+  onToggleMenu: () => void;
+  initials: string;
+  onToggleProfile: () => void;
+}) {
+  return (
+    <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4">
+      <button
+        onClick={onToggleMenu}
+        className="text-gray-800 hover:text-gray-900"
+        aria-label="Toggle navigation menu"
+      >
+        {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+      </button>
+      <span className="text-sm font-semibold text-gray-900">Dashboard</span>
+      <button
+        onClick={onToggleProfile}
+        className="ml-3 h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
+        aria-label="Open profile menu"
+      >
+        {initials}
+      </button>
+    </div>
+  );
+}
+
+function MobileMenu({
+  open,
+  items,
+  activePath,
+  onNavigate,
+}: {
+  open: boolean;
+  items: NavItem[];
+  activePath: string;
+  onNavigate: (href: string) => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="md:hidden fixed top-14 left-0 right-0 bg-white shadow-lg border-t border-gray-100">
+      <nav className="flex flex-col py-2">
+        {items.map((item) => {
+          const active = activePath === item.href;
+          return (
+            <button
+              key={item.href}
+              onClick={() => onNavigate(item.href)}
+              className={`px-4 py-2 text-left text-sm font-medium ${
+                active ? 'text-orange-600 bg-orange-50' : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {item.name}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+}
+
+function DesktopTopBar({
+  items,
+  activePath,
+  onNavigate,
+  initials,
+  profileMenuOpen,
+  onToggleProfile,
+  onProfileSettings,
+  onLogout,
+  profileMenuRef,
+}: {
+  items: NavItem[];
+  activePath: string;
+  onNavigate: (href: string) => void;
+  initials: string;
+  profileMenuOpen: boolean;
+  onToggleProfile: () => void;
+  onProfileSettings: () => void;
+  onLogout: () => void;
+  profileMenuRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  return (
+    <header className="bg-white shadow-md hidden md:block">
+      <div className="flex items-center justify-between px-10 py-6 relative border-b border-gray-200 shadow-md bg-white/90 backdrop-blur">
+        <div className="w-24" />
+        <nav className="flex items-center gap-8 text-sm font-medium text-gray-700">
+          {items.map((item) => {
+            const active = activePath === item.href;
+            return (
+              <button
+                key={item.href}
+                onClick={() => onNavigate(item.href)}
+                className={`pb-1.5 border-b-2 transition-colors ${
+                  active
+                    ? 'border-purple-500 text-gray-900'
+                    : 'border-transparent text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                {item.name}
+              </button>
+            );
+          })}
+        </nav>
+        <div className="relative flex items-center justify-end w-24" ref={profileMenuRef}>
+          <button
+            onClick={onToggleProfile}
+            className="h-9 w-9 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
+          >
+            {initials}
+          </button>
+          {profileMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-44 rounded-xl bg-white shadow-lg border border-gray-100 py-1 text-sm">
+              <button
+                onClick={onProfileSettings}
+                className="w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-t-xl"
+              >
+                Profile settings
+              </button>
+              <button
+                onClick={onLogout}
+                className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-xl"
+              >
+                Log out
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
   );
 }
