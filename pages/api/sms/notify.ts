@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { sendDoctorAppointmentRequestSMS, sendPatientAppointmentAcceptedSMS, sendPatientAppointmentReminderSMS } from '../../../src/domain/smsService';
+import { sendDoctorAppointmentRequestSMS, sendPatientAppointmentAcceptedSMS, sendPatientAppointmentReminderSMS } from '../../../src/infrastructure/services/smsService';
 
 // POST /api/sms/notify-doctor
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

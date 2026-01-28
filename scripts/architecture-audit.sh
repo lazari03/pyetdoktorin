@@ -77,6 +77,25 @@ else
   fi
 fi
 
+# API routes should not import presentation/UI or client-only modules
+pattern_api_forbidden="^[[:space:]]*import .*(@/presentation/|react|next/navigation|window|document)"
+if [ "$SEARCH_MODE" = "rg" ]; then
+  if rg -n --glob 'src/app/api/**' "$pattern_api_forbidden" src/app >/dev/null; then
+    failmsg "[FAIL] API routes import presentation/UI or client-only modules"
+    rg -n --glob 'src/app/api/**' "$pattern_api_forbidden" src/app
+    fail=1
+  fi
+else
+  if grep -R -n -E --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' "$pattern_api_forbidden" src/app/api >/dev/null; then
+    failmsg "[FAIL] API routes import presentation/UI or client-only modules"
+    grep -R -n -E --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' "$pattern_api_forbidden" src/app/api
+    fail=1
+  fi
+fi
+
+# API routes allowance is intentionally flexible beyond the forbidden list above.
+# Use the FAIL check for presentation/UI or client-only modules as the hard rule.
+
 # Presentation should not import network layer directly
 pattern_network="@/network/"
 if $SEARCH_CMD "$pattern_network" src/presentation >/dev/null; then
