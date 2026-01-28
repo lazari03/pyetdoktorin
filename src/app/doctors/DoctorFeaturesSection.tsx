@@ -11,7 +11,7 @@ export default function DoctorFeaturesSection() {
         {/* Right: Image */}
         <div className="hidden md:flex flex-1 items-center justify-center">
           <Image
-            src="https://portokalle-storage.fra1.digitaloceanspaces.com/img/Screenshot%202025-08-25%20at%209.27.02%E2%80%AFPM.png"
+            src="https://pyetdoktorin-storage.fra1.digitaloceanspaces.com/img/Screenshot%202025-08-25%20at%209.27.02%E2%80%AFPM.png"
             alt="Doctor at work"
             width={380}
             height={380}
@@ -42,11 +42,11 @@ export default function DoctorFeaturesSection() {
             </li>
             <li className="flex flex-col items-start">
               <span className="font-semibold text-gray-900 mb-1">{t('supportCredibility')}</span>
-              <span className="text-sm text-gray-600">{t('backedByPortokalle')}</span>
+              <span className="text-sm text-gray-600">{t('backedByPyetDoktorin')}</span>
             </li>
             <li className="flex flex-col items-start">
               <span className="font-semibold text-gray-900 mb-1">{t('yourOnlineClinic')}</span>
-              <span className="text-sm text-gray-600">{t('usePortokalleDigital')}</span>
+              <span className="text-sm text-gray-600">{t('usePyetDoktorinDigital')}</span>
             </li>
           </ul>
         </div>

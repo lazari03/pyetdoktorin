@@ -72,7 +72,7 @@ export default function AboutPage() {
             <div className="md:w-1/2 w-full flex justify-center order-1 md:order-2">
               <Image
                 src="/img/logo.png"
-                alt="Portokalle Logo"
+                alt="Alo Doktor Logo"
                 width={224}
                 height={224}
                 className="w-56 h-56 object-contain rounded-2xl bg-white p-4"
@@ -85,7 +85,7 @@ export default function AboutPage() {
           <section className="flex flex-col md:flex-row items-center gap-10 md:gap-20">
             <div className="md:w-1/2 w-full flex justify-center mb-6 md:mb-0">
               <Image
-                src="https://portokalle-storage.fra1.digitaloceanspaces.com/img/pexels-karolina-grabowska-7195123.jpg"
+                src="https://pyetdoktorin-storage.fra1.digitaloceanspaces.com/img/pexels-karolina-grabowska-7195123.jpg"
                 alt="Team"
                 width={448}
                 height={224}

@@ -33,7 +33,7 @@ export default function ClinicHowItWorksSection() {
           </ol>
         </div>
         <p className="text-sm text-gray-600 mt-8 text-center max-w-xl">
-          {t('usePortokalleAsOnlineClinic')}
+          {t('usePyetDoktorinAsOnlineClinic')}
         </p>
       </div>
     </section>

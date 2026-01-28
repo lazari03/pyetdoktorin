@@ -16,7 +16,7 @@ function loadServiceAccount() {
   // Fallback to local JSON file in repo
   try {
     // Adjust path if the file name changes
-    const sa = require('../portokalle-b76b9-firebase-adminsdk-fbsvc-801b17ac0b.json');
+    const sa = require('../pyetdoktorin-b76b9-firebase-adminsdk-fbsvc-801b17ac0b.json');
     if (sa.private_key && typeof sa.private_key === 'string') {
       sa.private_key = sa.private_key.replace(/\\n/g, '\n');
     }

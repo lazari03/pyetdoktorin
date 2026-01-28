@@ -27,10 +27,10 @@ export default function ContentSection() {
               <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#fff"/><path d="M12 17a5 5 0 0 1-5-5V9a5 5 0 0 1 10 0v3a5 5 0 0 1-5 5Zm0 0v2m-7 0h14" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-bold text-[#0a2e2e] mb-4">Enterprise grade security</h2>
-          <p className="text-lg text-[#0a2e2e] mb-6 max-w-lg">HIPAA, GDPR, PHIPA/PIPEDA, & HITECH compliant: We meet worldwide security requirements. A free BAA is also included in every plan.</p>
+          <h2 className="text-3xl sm:text-5xl font-bold text-[#0a2e2e] mb-4">{t('securityTitle')}</h2>
+          <p className="text-lg text-[#0a2e2e] mb-6 max-w-lg">{t('securityBody')}</p>
           <a href="#" className="inline-flex items-center text-[#0a2e2e] font-semibold hover:underline text-lg group">
-            Learn more about security
+            {t('securityCta')}
             <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="#0a2e2e" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </a>
         </div>

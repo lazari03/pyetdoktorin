@@ -35,7 +35,7 @@ export default function VideoSessionPage() {
       {loading && <Loader />}
       <iframe
         ref={iframeRef}
-        src={`https://portokalle-videoconf-1921.app.100ms.live/meeting/${roomCode}`}
+        src={`https://pyetdoktorin-videoconf-1921.app.100ms.live/meeting/${roomCode}`}
         title="100ms Video Call"
         allow="camera; microphone; fullscreen; display-capture"
         style={{ width: '100%', height: '100vh', border: 'none', display: loading ? 'none' : 'block' }}

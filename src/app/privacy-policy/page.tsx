@@ -34,7 +34,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-xl font-bold mt-8 mb-2">{t('howYourDataIsStored')}</h2>
             <p className="text-gray-700 mb-2">{t('howYourDataIsStoredText')}</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('yourRights')}</h2>
-            <p className="text-gray-700 mb-2">{t('yourRightsText')} <a href="mailto:info@portokalle.al" className="text-orange-500 hover:underline">info@portokalle.al</a>.</p>
+            <p className="text-gray-700 mb-2">{t('yourRightsText')} <a href="mailto:info@alodoktor.al" className="text-orange-500 hover:underline">info@alodoktor.al</a>.</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('dataProtectionStandards')}</h2>
             <p className="text-gray-700 mb-2">{t('dataProtectionStandardsText')}</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('security')}</h2>

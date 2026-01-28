@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await transporter.sendMail({
       from: '957e66001@smtp-brevo.com',
-      to: 'info@portokalle.al', // Change to your destination email
+      to: 'info@pyetDoktorin.al', // Change to your destination email
       subject: `Contact Form Submission from ${name}`,
       text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
       replyTo: email,

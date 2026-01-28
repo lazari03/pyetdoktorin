@@ -30,7 +30,7 @@ export async function sendSMSFromFirestore(userId: string, text: string): Promis
 }
 
 export async function sendDoctorAppointmentRequestSMS(doctorId: string, patientName: string) {
-  const text = `You have a new appointment request from ${patientName} on portokalle.al. Please log in to review.`;
+  const text = `You have a new appointment request from ${patientName} on PyetDoktorin.al. Please log in to review.`;
   await sendSMSFromFirestore(doctorId, text);
 }
 

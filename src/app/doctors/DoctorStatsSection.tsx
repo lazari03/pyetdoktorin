@@ -11,7 +11,7 @@ export default function DoctorStatsSection() {
         {/* Left: Image */}
         <div className="hidden md:flex flex-1 items-center justify-center">
           <Image
-            src="https://portokalle-storage.fra1.digitaloceanspaces.com/img/pexels-shvetsa-4225920.jpg"
+            src="https://pyetdoktorin-storage.fra1.digitaloceanspaces.com/img/pexels-shvetsa-4225920.jpg"
             alt="Doctor Telemedicine"
             width={380}
             height={380}
@@ -22,7 +22,7 @@ export default function DoctorStatsSection() {
         {/* Right: Stats */}
         <div className="flex-1 flex flex-col justify-center items-center text-center px-2 md:px-0">
           <h3 className="text-sm font-semibold text-orange-600 uppercase tracking-widest mb-2">{t('yourImpact')}</h3>
-          <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-4">{t('growPracticeWithPortokalle')}</h2>
+          <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-4">{t('growPracticeWithPyetDoktorin')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-2xl text-gray-700 mb-8">
             <div className="flex flex-col items-center">
               <span className="text-3xl font-extrabold text-orange-500 mb-1">124</span>

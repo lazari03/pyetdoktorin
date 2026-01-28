@@ -47,7 +47,7 @@ export default function DoctorHowItWorksSection() {
           </ol>
         </div>
         <p className="text-sm text-gray-600 mt-8 text-center max-w-xl">
-          {t('joinPortokalleSeamless')}
+          {t('joinPyetDoktorinSeamless')}
         </p>
         <a
           href="/register"

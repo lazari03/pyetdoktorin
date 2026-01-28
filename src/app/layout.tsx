@@ -8,7 +8,7 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
-  title: "Portokalle",
+  title: "Alo Doktor",
   description: "Telemedicine Platform",
 };
 
