@@ -11,6 +11,9 @@ export async function GET(req: NextRequest) {
 
 
     const bucketUrl = process.env.NEXT_PUBLIC_STORAGE_BUCKET;
+    if (!bucketUrl) {
+        return new Response("Storage bucket not configured", { status: 500 });
+    }
     const imageUrl = `${bucketUrl}/website-images/${key}`;
 
     const imageResponse = await fetch(imageUrl);

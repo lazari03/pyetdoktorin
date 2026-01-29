@@ -473,5 +473,21 @@
   "footerTagline": "Modern care delivery for clinics, clinicians, and patients worldwide.",
   "securityTitle": "Enterprise grade security",
   "securityBody": "GDPR-ready data handling with privacy-first controls built for global healthcare teams.",
-  "securityCta": "Learn more about security"
+  "securityCta": "Learn more about security",
+  "dashboardFilterAll": "All",
+  "dashboardFilterUnpaid": "Unpaid",
+  "dashboardFilterPast": "Past",
+  "dashboardWelcomeEyebrow": "Welcome back",
+  "dashboardWelcome": "Welcome back, {{name}}",
+  "dashboardWelcomeSubtitle": "Here are the latest updates for today.",
+  "dashboardKpiUpcoming": "Upcoming visits",
+  "dashboardKpiPending": "Pending requests",
+  "dashboardKpiCompleted": "Completed visits",
+  "dashboardProgressTitle": "Health progress score",
+  "dashboardProgressSubtitle": "Based on your completed appointments",
+  "dashboardProgressMetaLeft": "This month",
+  "dashboardProgressMetaRight": "Trend",
+  "dashboardPlanTitle": "Treatment plan",
+  "dashboardPlanSubtitle": "Care program",
+  "dashboardPlanCaption": "sessions / week"
 }

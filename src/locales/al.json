@@ -469,5 +469,21 @@
   },
   "securityTitle": "Siguri në nivel enterprise",
   "securityBody": "Menaxhim i të dhënave i përputhshëm me GDPR dhe kontrolle të forta privatësie për ekipe globale.",
-  "securityCta": "Mëso më shumë për sigurinë"
+  "securityCta": "Mëso më shumë për sigurinë",
+  "dashboardFilterAll": "Të gjitha",
+  "dashboardFilterUnpaid": "Pa pagesë",
+  "dashboardFilterPast": "Të kaluara",
+  "dashboardWelcomeEyebrow": "Mirë se u ktheve",
+  "dashboardWelcome": "Mirë se u ktheve, {{name}}",
+  "dashboardWelcomeSubtitle": "Këto janë përditësimet e fundit për sot.",
+  "dashboardKpiUpcoming": "Vizita të ardhshme",
+  "dashboardKpiPending": "Kërkesa në pritje",
+  "dashboardKpiCompleted": "Vizita të përfunduara",
+  "dashboardProgressTitle": "Skor progresi shëndetësor",
+  "dashboardProgressSubtitle": "Bazuar në vizitat e përfunduara",
+  "dashboardProgressMetaLeft": "Ky muaj",
+  "dashboardProgressMetaRight": "Trend",
+  "dashboardPlanTitle": "Plani i trajtimit",
+  "dashboardPlanSubtitle": "Program kujdesi",
+  "dashboardPlanCaption": "seanca / javë"
 }
