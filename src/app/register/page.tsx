@@ -6,6 +6,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useTranslation } from 'react-i18next';
 import { useDI } from '@/context/DIContext';
+import { AuthShell } from '@/presentation/components/auth/AuthShell';
 
 function RegisterPageInner() {
     const { t } = useTranslation();
@@ -84,168 +85,168 @@ function RegisterPageInner() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-            <div className="w-full max-w-5xl bg-white shadow-md rounded-xl overflow-hidden flex flex-col md:flex-row">
-                {/* LEFT: intro / CTA column */}
-                <div className="hidden md:flex w-1/2 flex-col justify-center bg-teal-700 text-teal-50 px-10 py-12 gap-4">
-                    <h2 className="text-3xl font-semibold">{t('register')}</h2>
-                    <p className="text-sm text-teal-100">
-                        {t('registerIntroText') ?? 'Create your account to book and manage your appointments in one calm, secure place.'}
-                    </p>
-                    <p className="text-xs text-teal-100/80">
-                        {t('registerBenefitsText') ?? 'One account for all your clinicians, appointments and health needs.'}
-                    </p>
-                </div>
-
-                {/* RIGHT: form column */}
-                <div className="w-full md:w-1/2 px-6 py-8 sm:px-8 sm:py-10">
-                    <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">{t('register')}</h2>
-
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-900">
-                                {t('name')}
-                            </label>
-                            <input
-                                type="text"
-                                name="name"
-                                placeholder={t('yourName')}
-                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                value={formData.name}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-900">
-                                {t('surname')}
-                            </label>
-                            <input
-                                type="text"
-                                name="surname"
-                                placeholder={t('yourSurname')}
-                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                value={formData.surname}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-900">
-                                {t('phoneNumber')}
-                            </label>
-                            <input
-                                type="tel"
-                                name="phone"
-                                placeholder={t('yourPhoneNumber')}
-                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-900">
-                                {t('email')}
-                            </label>
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder={t('yourEmailPlaceholder')}
-                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-900">
-                                {t('password')}
-                            </label>
-                            <input
-                                type="password"
-                                name="password"
-                                placeholder="••••••••"
-                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-900">
-                                {t('confirmPassword')}
-                            </label>
-                            <input
-                                type="password"
-                                name="confirmPassword"
-                                placeholder="••••••••"
-                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-900">
-                                {t('role')}
-                            </label>
-                            <select
-                                name="role"
-                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                value={formData.role}
-                                onChange={handleChange}
-                            >
-                                <option value="patient">{t('patient')}</option>
-                                <option value="doctor">{t('doctor')}</option>
-                            </select>
-                        </div>
-
-                        {error && <p className="text-red-500 text-sm">{error}</p>}
-
-                        <button
-                            type="submit"
-                            className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                            disabled={loading}
-                        >
-                            {loading ? t('registering') : t('register')}
-                        </button>
-                    </form>
-
-                    <div className="my-6 flex items-center gap-3">
-                        <div className="h-px flex-1 bg-gray-200" />
-                        <span className="text-xs text-gray-500 uppercase tracking-wide">{t('or')}</span>
-                        <div className="h-px flex-1 bg-gray-200" />
-                    </div>
-
-                    <div className="text-center">
-                        <p className="mb-2 text-gray-900">{t('alreadyHaveAccount')}</p>
-                        <Link
-                            href="/login"
-                            className="inline-flex items-center justify-center rounded-lg border border-teal-600 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50"
-                        >
-                            {t('backToLogin')}
-                        </Link>
-                    </div>
-                </div>
+      <AuthShell
+        eyebrow={t('secureAccessEyebrow') || 'Secure access'}
+        title={t('createCareAccount') || t('register')}
+        subtitle={t('onlyNeededData') || 'We only collect what’s needed for your clinician.'}
+        highlights={[
+          { title: t('secureHighlights1') || 'Medical-grade encryption', body: t('hipaaLine') || 'HIPAA-aware | Encrypted in transit' },
+          { title: t('secureHighlights2') || 'Consent-based sharing', body: t('consentLine') || 'We share only with your selected clinicians.' },
+          { title: t('secureHighlights3') || 'Role-based access control', body: t('loginSideSecure') || 'Access differs for patients and doctors.' },
+        ]}
+        rightCta={
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-white">{t('alreadyHaveAccount')}</p>
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center rounded-full bg-white text-purple-700 px-4 py-2 text-sm font-semibold hover:bg-purple-50"
+            >
+              {t('backToLogin')}
+            </Link>
+          </div>
+        }
+      >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('name')}</label>
+              <input
+                type="text"
+                name="name"
+                placeholder={t('yourName')}
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
             </div>
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('surname')}</label>
+              <input
+                type="text"
+                name="surname"
+                placeholder={t('yourSurname')}
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.surname}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
 
-            {/* Modal */}
-            {showModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-                        <h3 className="text-2xl font-bold mb-4">{t('registrationSuccessful')}</h3>
-                        <p className="text-gray-700">{t('redirectToLoginShortly')}</p>
-                    </div>
-                </div>
-            )}
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('phoneNumber')}</label>
+              <input
+                type="tel"
+                name="phone"
+                placeholder={t('yourPhoneNumber')}
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('email')}</label>
+              <input
+                type="email"
+                name="email"
+                placeholder={t('yourEmailPlaceholder')}
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('password')}</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="••••••••"
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('confirmPassword')}</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="••••••••"
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('role')}</label>
+              <select
+                name="role"
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.role}
+                onChange={handleChange}
+              >
+                <option value="patient">{t('patient')}</option>
+                <option value="doctor">{t('doctor')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('recoveryCode') || 'Recovery code (optional)'}</label>
+              <input
+                type="text"
+                name="recovery"
+                placeholder="••••••"
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                onChange={() => {}}
+              />
+            </div>
+          </div>
+
+          <label className="flex items-start gap-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              required
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            />
+            <span>{t('consentLine') || 'I consent to share my health info with my selected clinicians.'}</span>
+          </label>
+
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
+          <button
+            type="submit"
+            className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={loading}
+          >
+            {loading ? t('registering') : t('secureRegisterCta') || t('register')}
+          </button>
+        </form>
+
+        <div className="text-center text-xs text-gray-500 mt-2">
+          {t('onlyNeededData') || 'We only collect what’s needed for your clinician.'}
         </div>
+
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+            <div className="bg-white p-6 rounded-2xl shadow-lg text-center space-y-2">
+              <h3 className="text-2xl font-bold">{t('registrationSuccessful')}</h3>
+              <p className="text-gray-700">{t('redirectToLoginShortly')}</p>
+            </div>
+          </div>
+        )}
+      </AuthShell>
     );
 }
 

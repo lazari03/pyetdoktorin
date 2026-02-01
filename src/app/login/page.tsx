@@ -7,16 +7,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useDI } from '@/context/DIContext';
 import { useGoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
-
-type RegisterFormState = {
-  name: string;
-  surname: string;
-  phone: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  role: 'patient' | 'doctor';
-};
+import { AuthShell } from '@/presentation/components/auth/AuthShell';
 
 interface LoginPageContentProps {
   onRetryRecaptcha: () => void;
@@ -26,20 +17,11 @@ interface LoginPageContentProps {
 
 function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPageContentProps) {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [registerData, setRegisterData] = useState<RegisterFormState>({
-    name: '',
-    surname: '',
-    phone: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'patient',
-  });
+  const [privateDevice, setPrivateDevice] = useState(false);
   const searchParams = useSearchParams();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const [waitingForRecaptcha, setWaitingForRecaptcha] = useState(true);
@@ -120,289 +102,124 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-5xl bg-white shadow-md rounded-xl overflow-hidden flex flex-col md:flex-row">
-        {/* LEFT: card with login/register form */}
-        <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-center">
-          <h2 className="text-2xl font-bold text-center mx-auto mb-4 text-gray-800">
-            {mode === 'login' ? t('loginTitle') : t('register')}
-          </h2>
+    <AuthShell
+      eyebrow={t('secureAccessEyebrow') || 'Secure access'}
+      title={t('loginTitleSecure') || t('loginTitle')}
+      subtitle={t('loginSubtitleSecure') || 'Your data is encrypted and shared only with your care team.'}
+      highlights={[
+        { title: t('secureHighlights1') || 'Medical-grade encryption', body: t('hipaaLine') || 'HIPAA-aware | Encrypted in transit' },
+        { title: t('secureHighlights2') || 'Consent-based sharing', body: t('consentLine') || 'We share only with your selected clinicians.' },
+        { title: t('secureHighlights3') || 'Role-based access control', body: t('loginSideSecure') || 'Access differs for patients and doctors.' },
+      ]}
+      rightCta={
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-white">{t('noAccount')}</p>
+          <Link
+            href="/register"
+            className="inline-flex items-center justify-center rounded-full bg-white text-purple-700 px-4 py-2 text-sm font-semibold hover:bg-purple-50"
+          >
+            {t('registerNow')}
+          </Link>
+          <p className="text-[11px] text-white/80">{t('usePrivateWindow') || 'On a shared device? Use a private window.'}</p>
+        </div>
+      }
+    >
+      {errorMsg && (
+        <div className="mt-2 rounded-2xl bg-red-50 px-3 py-2 text-sm text-red-800 border border-red-100">
+          {errorMsg}
+        </div>
+      )}
 
-          {errorMsg && (
-            <div className="mt-4 rounded-md bg-red-100 px-3 py-2 text-sm text-red-800 border border-red-200">
-              {errorMsg}
-            </div>
-          )}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleLogin(e);
+        }}
+        className="flex flex-col gap-4"
+      >
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">
+            {t('email')}
+          </label>
+          <input
+            type="email"
+            placeholder={t('emailPlaceholder')}
+            className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-          {mode === 'login' ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleLogin(e);
-              }}
-              className="flex flex-col gap-4"
-            >
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  {t('email')}
-                </label>
-                <input
-                  type="email"
-                  placeholder={t('emailPlaceholder')}
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700">{t('password')}</span>
-                  <Link href="/forgot-password" className="text-xs text-primary hover:text-secondary">
-                    {t('forgotPassword')}
-                  </Link>
-                </div>
-                <input
-                  type="password"
-                  placeholder={t('passwordPlaceholder')}
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-secondary disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={loading || (waitingForRecaptcha && !isRecaptchaReady)}
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center">
-                    <svg
-                      className="animate-spin h-5 w-5 mr-2 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                      ></path>
-                    </svg>
-                    {t('loggingIn')}
-                  </span>
-                ) : (
-                  t('loginButton')
-                )}
-              </button>
-              {!isRecaptchaReady && (
-                <div className="text-xs text-gray-500 mt-2">
-                  {waitingForRecaptcha ? (
-                    <div className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                      </svg>
-                      <span>{t('recaptchaLoading')}</span>
-                    </div>
-                  ) : retryCount < maxRetries ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-amber-600">{t('recaptchaFailed') || 'reCAPTCHA failed to load.'}</span>
-                      <button
-                        type="button"
-                        onClick={onRetryRecaptcha}
-                        className="text-primary hover:text-secondary underline"
-                      >
-                        {t('retry') || 'Retry'} ({retryCount + 1}/{maxRetries})
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-red-600">
-                      {t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.'}
-                    </span>
-                  )}
-                </div>
-              )}
-            </form>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                // Delegate to existing full register page for now
-                window.location.href = '/register';
-              }}
-              className="flex flex-col gap-4"
-            >
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  {t('name')}
-                </label>
-                <input
-                  type="text"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  value={registerData.name}
-                  onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  {t('surname')}
-                </label>
-                <input
-                  type="text"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  value={registerData.surname}
-                  onChange={(e) => setRegisterData({ ...registerData, surname: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  {t('phoneNumber')}
-                </label>
-                <input
-                  type="tel"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  value={registerData.phone}
-                  onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  {t('email')}
-                </label>
-                <input
-                  type="email"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  value={registerData.email}
-                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  {t('password')}
-                </label>
-                <input
-                  type="password"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  value={registerData.password}
-                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  {t('confirmPassword')}
-                </label>
-                <input
-                  type="password"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  value={registerData.confirmPassword}
-                  onChange={(e) =>
-                    setRegisterData({ ...registerData, confirmPassword: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  {t('role')}
-                </label>
-                <select
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  value={registerData.role}
-                  onChange={(e) =>
-                    setRegisterData({ ...registerData, role: e.target.value as 'patient' | 'doctor' })
-                  }
-                >
-                  <option value="patient">{t('patient')}</option>
-                  <option value="doctor">{t('doctor')}</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-secondary"
-              >
-                {t('register')}
-              </button>
-            </form>
-          )}
-
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-gray-200" />
-            <span className="text-xs text-gray-500 uppercase tracking-wide">{t('orDivider')}</span>
-            <div className="h-px flex-1 bg-gray-200" />
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm font-medium text-gray-700">{t('password')}</span>
+            <Link href="/forgot-password" className="text-xs text-purple-600 hover:text-purple-700">
+              {t('forgotPassword')}
+            </Link>
           </div>
+          <input
+            type="password"
+            placeholder={t('passwordPlaceholder')}
+            className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
 
-          <div className="text-center text-sm text-gray-700">
-            {mode === 'login' ? (
-              <>
-                <span>{t('noAccount')}</span>{' '}
+        <label className="flex items-center gap-2 text-xs text-gray-700">
+          <input
+            type="checkbox"
+            checked={privateDevice}
+            onChange={(e) => setPrivateDevice(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+          />
+          {t('privateDevice') || 'This is a private device'}
+        </label>
+
+        <button
+          type="submit"
+          className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={loading || (waitingForRecaptcha && !isRecaptchaReady)}
+        >
+          {loading ? t('loggingIn') : t('loginButton')}
+        </button>
+
+        {!isRecaptchaReady && (
+          <div className="text-xs text-gray-500 mt-2">
+            {waitingForRecaptcha ? (
+              <div className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <span>{t('recaptchaLoading')}</span>
+              </div>
+            ) : retryCount < maxRetries ? (
+              <div className="flex items-center gap-2">
+                <span className="text-amber-600">{t('recaptchaFailed') || 'reCAPTCHA failed to load.'}</span>
                 <button
                   type="button"
-                  className="font-medium text-primary hover:text-secondary"
-                  onClick={() => setMode('register')}
+                  onClick={onRetryRecaptcha}
+                  className="text-purple-600 hover:text-purple-700 underline"
                 >
-                  {t('registerNow')}
+                  {t('retry') || 'Retry'} ({retryCount + 1}/{maxRetries})
                 </button>
-              </>
+              </div>
             ) : (
-              <>
-                <span>{t('alreadyHaveAccount')}</span>{' '}
-                <button
-                  type="button"
-                  className="font-medium text-primary hover:text-secondary"
-                  onClick={() => setMode('login')}
-                >
-                  {t('loginTitle')}
-                </button>
-              </>
+              <span className="text-red-600">
+                {t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.'}
+              </span>
             )}
           </div>
-        </div>
+        )}
+      </form>
 
-        {/* RIGHT: text + switch CTA panel */}
-        <div className="hidden md:flex w-1/2 flex-col justify-center bg-primary text-white px-10 py-12 gap-4">
-          <h3 className="text-3xl font-semibold">
-            {mode === 'login' ? t('welcomeBackTitle') ?? 'Welcome back' : t('newHere')}
-          </h3>
-          <p className="text-sm text-white/80">
-            {mode === 'login'
-              ? t('loginSideText') ?? 'Sign in to manage your appointments and stay on top of your care.'
-              : t('registerSideText') ??
-                'Create an account to book appointments and manage your health in one place.'}
-          </p>
-          <button
-            type="button"
-            className="mt-4 inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-primary hover:bg-violet-50"
-            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-          >
-            {mode === 'login' ? t('registerNow') : t('loginTitle')}
-          </button>
-        </div>
+      <div className="text-xs text-gray-500 text-center">
+        {t('hipaaLine') || 'HIPAA-aware | Encrypted in transit'}
       </div>
-    </div>
+    </AuthShell>
   );
 }
 
