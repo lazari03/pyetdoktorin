@@ -7,8 +7,6 @@ import { GetAppointmentsUseCase } from '@/application/getAppointmentsUseCase';
 import { SetAppointmentPaidUseCase } from '@/application/setAppointmentPaidUseCase';
 import { HandlePayNowUseCase } from '@/application/handlePayNowUseCase';
 import { CheckIfPastAppointmentUseCase } from '@/application/checkIfPastAppointmentUseCase';
-import { VerifyStripePaymentUseCase } from '@/application/verifyStripePaymentUseCase';
-import { VerifyAndUpdatePaymentUseCase } from '@/application/verifyAndUpdatePaymentUseCase';
 import { GetUserRoleUseCase } from '@/application/getUserRoleUseCase';
 import { UpdateAppointmentUseCase } from '@/application/updateAppointmentUseCase';
 import { GenerateRoomCodeUseCase } from '@/application/generateRoomCodeUseCase';
@@ -22,6 +20,7 @@ import { LogoutServerUseCase } from '@/application/logoutServerUseCase';
 import { LogoutSessionUseCase } from '@/application/logoutSessionUseCase';
 import { SubscribePendingAppointmentsUseCase } from '@/application/subscribePendingAppointmentsUseCase';
 import { SubscribePendingNotificationsUseCase } from '@/application/subscribePendingNotificationsUseCase';
+import { CapturePaywallPaymentUseCase } from '@/application/capturePaywallPaymentUseCase';
 import { LoginUseCase } from '@/application/loginUseCase';
 import { TestAuthConnectionUseCase } from '@/application/testAuthConnectionUseCase';
 import { RegisterUserUseCase } from '@/application/registerUserUseCase';
@@ -52,6 +51,7 @@ import { UserProfileService } from '@/infrastructure/services/userProfileService
 import { DoctorProfileService } from '@/infrastructure/services/doctorProfileService';
 import { AppointmentServiceAdapter } from '@/infrastructure/services/appointmentServiceAdapter';
 import { VideoSessionService } from '@/infrastructure/services/videoSessionService';
+import { PayPalGateway } from '@/infrastructure/services/paypalGateway';
 import { NotificationServiceAdapter } from '@/infrastructure/services/notificationServiceAdapter';
 import { AppointmentNotificationServiceAdapter } from '@/infrastructure/services/appointmentNotificationServiceAdapter';
 import { AdminStatsServiceAdapter } from '@/infrastructure/services/adminStatsServiceAdapter';
@@ -68,8 +68,6 @@ interface DIContextValue {
   setAppointmentPaidUseCase: SetAppointmentPaidUseCase;
   handlePayNowUseCase: HandlePayNowUseCase;
   checkIfPastAppointmentUseCase: CheckIfPastAppointmentUseCase;
-  verifyStripePaymentUseCase: VerifyStripePaymentUseCase;
-  verifyAndUpdatePaymentUseCase: VerifyAndUpdatePaymentUseCase;
   getUserRoleUseCase: GetUserRoleUseCase;
   updateAppointmentUseCase: UpdateAppointmentUseCase;
   generateRoomCodeUseCase: GenerateRoomCodeUseCase;
@@ -83,6 +81,7 @@ interface DIContextValue {
   logoutSessionUseCase: LogoutSessionUseCase;
   subscribePendingAppointmentsUseCase: SubscribePendingAppointmentsUseCase;
   subscribePendingNotificationsUseCase: SubscribePendingNotificationsUseCase;
+  capturePaywallPaymentUseCase: CapturePaywallPaymentUseCase;
   loginUseCase: LoginUseCase;
   testAuthConnectionUseCase: TestAuthConnectionUseCase;
   registerUserUseCase: RegisterUserUseCase;
@@ -129,13 +128,12 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const registrationService = new RegistrationService();
   const doctorSearchService = new DoctorSearchService();
   const adminUserService = new AdminUserService();
+  const paymentGateway = new PayPalGateway();
   const fetchAppointmentsUseCase = new FetchAppointmentsUseCase(appointmentRepo);
   const getAppointmentsUseCase = new GetAppointmentsUseCase(appointmentService);
   const setAppointmentPaidUseCase = new SetAppointmentPaidUseCase(appointmentService);
-  const handlePayNowUseCase = new HandlePayNowUseCase(appointmentService);
+  const handlePayNowUseCase = new HandlePayNowUseCase();
   const checkIfPastAppointmentUseCase = new CheckIfPastAppointmentUseCase(appointmentService);
-  const verifyStripePaymentUseCase = new VerifyStripePaymentUseCase(appointmentService);
-  const verifyAndUpdatePaymentUseCase = new VerifyAndUpdatePaymentUseCase(appointmentService);
   const getUserRoleUseCase = new GetUserRoleUseCase(appointmentService);
   const updateAppointmentUseCase = new UpdateAppointmentUseCase(appointmentRepo);
   const generateRoomCodeUseCase = new GenerateRoomCodeUseCase(videoSessionService);
@@ -158,6 +156,7 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const logoutSessionUseCase = new LogoutSessionUseCase(sessionRepo);
   const subscribePendingAppointmentsUseCase = new SubscribePendingAppointmentsUseCase(realtimeAppointmentsService);
   const subscribePendingNotificationsUseCase = new SubscribePendingNotificationsUseCase(realtimeAppointmentsService);
+  const capturePaywallPaymentUseCase = new CapturePaywallPaymentUseCase(paymentGateway);
   const loginUseCase = new LoginUseCase(authLoginService);
   const testAuthConnectionUseCase = new TestAuthConnectionUseCase(authLoginService);
   const registerUserUseCase = new RegisterUserUseCase(registrationService);
@@ -182,8 +181,6 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         setAppointmentPaidUseCase,
         handlePayNowUseCase,
         checkIfPastAppointmentUseCase,
-        verifyStripePaymentUseCase,
-        verifyAndUpdatePaymentUseCase,
         getUserRoleUseCase,
         updateAppointmentUseCase,
         generateRoomCodeUseCase,
@@ -206,6 +203,7 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         logoutSessionUseCase,
         subscribePendingAppointmentsUseCase,
         subscribePendingNotificationsUseCase,
+        capturePaywallPaymentUseCase,
         loginUseCase,
         testAuthConnectionUseCase,
         registerUserUseCase,

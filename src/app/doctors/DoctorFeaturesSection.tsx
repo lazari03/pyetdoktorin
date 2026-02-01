@@ -15,13 +15,13 @@ export default function DoctorFeaturesSection() {
             alt="Doctor at work"
             width={380}
             height={380}
-            className="object-cover w-full h-72 sm:h-80 rounded-2xl shadow border-2 border-orange-100 bg-white"
+            className="object-cover w-full h-72 sm:h-80 rounded-2xl shadow border-2 border-purple-100 bg-white"
             priority
           />
         </div>
         {/* Left: Features */}
         <div className="flex-1 flex flex-col justify-center items-center md:items-start px-2 md:px-0">
-          <h3 className="text-sm font-semibold text-orange-600 uppercase tracking-widest mb-2">{t('whatWeOfferDoctors')}</h3>
+          <h3 className="text-sm font-semibold text-purple-600 uppercase tracking-widest mb-2">{t('whatWeOfferDoctors')}</h3>
           <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-4">{t('empoweringYourPractice')}</h2>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl text-gray-700 mb-8">
             <li className="flex flex-col items-start">

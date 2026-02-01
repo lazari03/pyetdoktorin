@@ -7,6 +7,7 @@ import { useVideoStore } from "@/store/videoStore";
 import { useDI } from "@/context/DIContext";
 import { Appointment } from "@/domain/entities/Appointment";
 import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
+import { useTranslation } from "react-i18next";
 
 /**
  * View model result interface for appointments page
@@ -35,20 +36,19 @@ export interface AppointmentsViewModelResult {
  */
 export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   const [showRedirecting, setShowRedirecting] = useState(false);
+  const { t } = useTranslation();
 
   const { user, isAuthenticated } = useAuth();
   const {
     appointments,
     isDoctor,
-    handlePayNow: storeHandlePayNow,
     isAppointmentPast,
     fetchAppointments,
-    verifyAndUpdatePayment,
+    handlePayNow: storeHandlePayNow,
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
   const {
     getAppointmentsUseCase,
-    verifyAndUpdatePaymentUseCase,
     updateAppointmentUseCase,
     generateRoomCodeUseCase,
     handlePayNowUseCase,
@@ -65,28 +65,6 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
     fetchAppointments(user.uid, isDoctor, getAppointmentsUseCase.execute.bind(getAppointmentsUseCase));
   }, [user, isDoctor, fetchAppointments, getAppointmentsUseCase]);
 
-  // Check payment status on mount (from URL params)
-  useEffect(() => {
-    const sessionId = new URLSearchParams(window.location.search).get("session_id");
-    if (!sessionId) return;
-
-    (async () => {
-      try {
-        if (user?.uid && typeof isDoctor === "boolean") {
-          await verifyAndUpdatePayment(
-            sessionId,
-            user.uid,
-            isDoctor,
-            verifyAndUpdatePaymentUseCase.execute.bind(verifyAndUpdatePaymentUseCase),
-            getAppointmentsUseCase.execute.bind(getAppointmentsUseCase)
-          );
-        }
-      } catch {
-        // Payment verification failed silently
-      }
-    })();
-  }, [verifyAndUpdatePayment, user, isDoctor, verifyAndUpdatePaymentUseCase, getAppointmentsUseCase]);
-
   // Join video call handler
   const handleJoinCall = useCallback(
     async (appointmentId: string) => {
@@ -102,6 +80,12 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
         const appointment = appointments.find((a) => a.id === appointmentId);
         if (!appointment) throw new Error("Appointment not found");
+
+        if (!isDoctor && !appointment.isPaid) {
+          setShowRedirecting(false);
+          alert(t("paymentRequired"));
+          return;
+        }
 
         const patientName = appointment.patientName || user.name || "Guest";
         const role = isDoctor ? "doctor" : "patient";
@@ -135,7 +119,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         alert("An error occurred. Please try again.");
       }
     },
-    [user, appointments, isDoctor, setAuthStatus, updateAppointmentUseCase, generateRoomCodeUseCase]
+    [appointments, generateRoomCodeUseCase, isDoctor, setAuthStatus, t, updateAppointmentUseCase, user]
   );
 
   // Derive user role for table component

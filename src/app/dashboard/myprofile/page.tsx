@@ -2,9 +2,8 @@
 "use client";
 
 import { useMyProfile } from "@/presentation/hooks/useMyProfile";
-import Loader from "../../../presentation/components/Loader/Loader";
-import MyProfileForm from '../../../presentation/components/MyProfile/MyProfileForm';
-import PasswordResetSection from '../../../presentation/components/MyProfile/PasswordResetSection';
+import Loader from "@/presentation/components/Loader/Loader";
+import { ProfileLayout } from "@/presentation/components/MyProfile/ProfileLayout";
 
 export default function MyProfile() {
   const {
@@ -27,22 +26,17 @@ export default function MyProfile() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Profile Settings</h1>
-      <MyProfileForm
-        formData={formData}
-        role={role || ''}
-        handleInputChange={handleInputChange}
-        handleAddField={handleAddField}
-        handleRemoveField={handleRemoveField}
-        handleSubmit={handleSubmit}
-        onProfilePictureChange={handleProfilePictureChange}
-        uploading={uploading}
-      />
-      <PasswordResetSection
-        handlePasswordReset={handlePasswordReset}
-        resetEmailSent={resetEmailSent}
-      />
-    </div>
+    <ProfileLayout
+      formData={formData}
+      role={role || ""}
+      uploading={uploading}
+      resetEmailSent={resetEmailSent}
+      handleInputChange={handleInputChange}
+      handleAddField={handleAddField}
+      handleRemoveField={handleRemoveField}
+      handleSubmit={handleSubmit}
+      handleProfilePictureChange={handleProfilePictureChange}
+      handlePasswordReset={handlePasswordReset}
+    />
   );
 }

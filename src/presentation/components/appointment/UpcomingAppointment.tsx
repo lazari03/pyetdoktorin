@@ -41,11 +41,11 @@ const UpcomingAppointment = () => {
 		<div className="stats shadow h-full">
 			<div className="stat">
 				<div className="stat-title">{t('upcomingAppointment')}</div>
-				<div className="stat-value text-base text-orange-500">
+				<div className="stat-value text-base text-purple-500">
 					{loading ? (
 						<CenteredLoader />
 					) : upcoming ? (
-						<span className="block text-orange-500 whitespace-nowrap overflow-hidden text-ellipsis max-w-full" style={{wordBreak: 'break-word'}}>
+						<span className="block text-purple-500 whitespace-nowrap overflow-hidden text-ellipsis max-w-full" style={{wordBreak: 'break-word'}}>
 							{upcoming.preferredDate} {t('at')} {upcoming.preferredTime} &nbsp; {nameLabel}: {nameValue}
 						</span>
 					) : (

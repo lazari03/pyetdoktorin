@@ -132,6 +132,16 @@ The project uses two environment files:
 
 Make sure these files are properly configured before building or deploying.
 
+### PayPal Paywall (patients)
+- `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` – PayPal credentials (sandbox or live).
+- `PAYPAL_ENV` – `sandbox` or `live` (defaults to `sandbox`).
+- `PAYWALL_AMOUNT_USD` – Amount in USD charged to patients (defaults to `13` if unset).
+- `NEXT_PUBLIC_PAYWALL_AMOUNT_USD` – Same amount exposed to the client for display.
+- (Optional) `PAYPAL_API_BASE` – Override PayPal API base URL (otherwise chosen from `PAYPAL_ENV`).
+
+The PayPal return/cancel URLs are generated automatically as
+`/dashboard/appointments?paypal=success|cancel&appointmentId=<id>`.
+
 ## Deployment
 
 1. First, build the project using production environment:

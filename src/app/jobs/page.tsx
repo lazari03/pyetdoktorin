@@ -12,14 +12,14 @@ export default function JobsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
       <NavBar />
-      <section className="relative w-full bg-gradient-to-b from-orange-500 to-orange-100 pb-20 pt-16 md:pt-24 text-black overflow-hidden">
+      <section className="relative w-full bg-gradient-to-b from-purple-500 to-purple-100 pb-20 pt-16 md:pt-24 text-black overflow-hidden">
         <div className="max-w-5xl mx-auto px-4 flex flex-col items-center pt-10 md:pt-20">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{t('jobs')}</h1>
           <p className="text-lg md:text-xl mb-2 text-gray-700 text-center max-w-2xl">{t('jobsDescription')}</p>
           <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
             <span className="hover:underline cursor-pointer"><Link href="/">{t('home')}</Link></span>
             <span>/</span>
-            <span className="font-semibold text-orange-500">{t('jobs')}</span>
+            <span className="font-semibold text-purple-500">{t('jobs')}</span>
           </div>
         </div>
         <svg className="absolute bottom-0 left-0 w-full" height="60" viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M0,0 C480,60 960,0 1440,60 L1440,60 L0,60 Z"/></svg>

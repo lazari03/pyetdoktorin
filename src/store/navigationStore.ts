@@ -21,14 +21,14 @@ export function getNavigationPaths(role: UserRole): NavigationItem[] {
     case UserRole.Doctor:
       return [
         { key: NavigationKey.Dashboard, name: 'Dashboard', href: '/dashboard' },
-        { key: NavigationKey.Appointments, name: 'Appointments', href: '/dashboard/appointments' },
+        { key: NavigationKey.Appointments, name: 'Appointments', href: '/dashboard/appointments/journey' },
         { key: NavigationKey.Calendar, name: 'Calendar', href: '/dashboard/doctor/calendar' },
       ];
     case UserRole.Patient:
       return [
         { key: NavigationKey.Dashboard, name: 'Dashboard', href: '/dashboard' },
         { key: NavigationKey.NewAppointment, name: 'New Appointment', href: '/dashboard/new-appointment' },
-        { key: NavigationKey.AppointmentHistory, name: 'Appointment History', href: '/dashboard/appointments' },
+        { key: NavigationKey.AppointmentHistory, name: 'Appointment History', href: '/dashboard/appointments/journey' },
       ];
     default:
       return [];

@@ -126,7 +126,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     .toUpperCase();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-violet-200 via-white/80 to-white">
+    <div className="min-h-screen flex flex-col">
       <MobileTopBar
         mobileMenuOpen={mobileMenuOpen}
         onToggleMenu={() => setMobileMenuOpen((open) => !open)}
@@ -153,7 +153,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onLogout={handleLogoutClick}
         profileMenuRef={profileMenuRef}
       />
-      <main className="flex-1 pt-14 md:pt-0 px-2 sm:px-4 md:px-8 lg:px-12 py-4 md:py-6 lg:py-8 bg-gradient-to-t from-violet-200 to-white">
+      <main className="flex-1 pt-14 md:pt-0 px-2 sm:px-4 md:px-8 lg:px-12 py-4 md:py-6 lg:py-8">
         {children}
       </main>
     </div>
@@ -214,7 +214,7 @@ function MobileMenu({
               key={item.href}
               onClick={() => onNavigate(item.href)}
               className={`px-4 py-2 text-left text-sm font-medium ${
-                active ? 'text-orange-600 bg-orange-50' : 'text-gray-700 hover:bg-gray-50'
+                active ? 'text-purple-600 bg-purple-50' : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
               {item.name}
@@ -248,20 +248,20 @@ function DesktopTopBar({
   profileMenuRef: React.RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <header className="bg-white shadow-md hidden md:block">
-      <div className="flex items-center justify-between px-10 py-6 relative border-b border-gray-200 shadow-md bg-white/90 backdrop-blur">
+    <header className="hidden md:block">
+      <div className="flex items-center justify-between px-10 py-6 relative shadow-lg bg-gradient-to-r from-purple-700 via-purple-600 to-purple-500 text-white rounded-b-2xl border-b border-purple-400/40">
         <div className="w-24" />
-        <nav className="flex items-center gap-8 text-sm font-medium text-gray-700">
+        <nav className="flex items-center gap-3 text-sm font-semibold text-white/85">
           {items.map((item) => {
             const active = activePath === item.href;
             return (
               <button
                 key={item.href}
                 onClick={() => onNavigate(item.href)}
-                className={`pb-1.5 border-b-2 transition-colors ${
+                className={`px-3 py-2 rounded-full transition-colors ${
                   active
-                    ? 'border-purple-500 text-gray-900'
-                    : 'border-transparent text-gray-500 hover:text-gray-900'
+                    ? 'bg-white/25 text-white shadow-sm'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
                 }`}
               >
                 {item.name}
@@ -272,7 +272,7 @@ function DesktopTopBar({
         <div className="relative flex items-center justify-end w-24" ref={profileMenuRef}>
           <button
             onClick={onToggleProfile}
-            className="h-9 w-9 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
+            className="h-9 w-9 rounded-full bg-white text-xs font-semibold text-purple-600 flex items-center justify-center shadow"
           >
             {initials}
           </button>

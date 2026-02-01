@@ -55,7 +55,7 @@ export function UsersTable() {
   const actions: RowAction<TableUser>[] = useMemo(() => ([
     {
       label: t('edit'),
-      className: 'bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-purple-500 rounded-full',
+      className: 'bg-transparent hover:bg-purple-500 text-purple-700 font-semibold hover:text-white py-2 px-4 border border-purple-500 rounded-full',
       onClick: (u: TableUser) => selectUser(u.id),
     },
   ]), [selectUser, t]);

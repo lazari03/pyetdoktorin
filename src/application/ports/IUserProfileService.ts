@@ -7,6 +7,14 @@ export interface UserProfileData {
   specializations?: string[];
   education?: string[];
   profilePicture?: string;
+  lastCheckupDate?: string; // ISO yyyy-mm-dd
+  nextCheckupDueDate?: string; // ISO yyyy-mm-dd
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  preferredLanguage?: string;
+  timeZone?: string;
+  communicationPreference?: 'video' | 'voice' | 'chat';
+  shareSummaryConsent?: boolean;
 }
 
 export interface IUserProfileService {

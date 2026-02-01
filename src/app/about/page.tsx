@@ -16,7 +16,7 @@ export default function AboutPage() {
       <NavBar />
 
       {/* Hero Section */}
-      <section className="relative w-full bg-gradient-to-b from-orange-500 to-orange-100 pb-20 pt-16 md:pt-24 text-black overflow-hidden">
+      <section className="relative w-full bg-gradient-to-b from-purple-500 to-purple-100 pb-20 pt-16 md:pt-24 text-black overflow-hidden">
         <div className="max-w-5xl mx-auto px-4 flex flex-col items-center pt-10 md:pt-20">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{t("aboutUs")}</h1>
           <p className="text-lg md:text-xl mb-2 text-gray-700 text-center max-w-2xl">
@@ -28,7 +28,7 @@ export default function AboutPage() {
               <Link href="/">{t("home")}</Link>
             </span>
             <span>/</span>
-            <span className="font-semibold text-orange-500">{t("about")}</span>
+            <span className="font-semibold text-purple-500">{t("about")}</span>
           </div>
         </div>
 
@@ -105,32 +105,32 @@ export default function AboutPage() {
           </section>
 
           {/* Section 3 */}
-          <section className="w-full flex flex-wrap justify-center gap-8 py-10 bg-orange-500 rounded-2xl shadow-xl">
+          <section className="w-full flex flex-wrap justify-center gap-8 py-10 bg-purple-500 rounded-2xl shadow-xl">
             <div className="flex flex-col items-center">
               <span className="text-3xl md:text-4xl font-extrabold text-white">4+</span>
-              <span className="text-base text-orange-100">{t("yearsExperience")}</span>
+              <span className="text-base text-purple-100">{t("yearsExperience")}</span>
             </div>
 
             <div className="flex flex-col items-center">
               <span className="text-3xl md:text-4xl font-extrabold text-white">99%</span>
-              <span className="text-base text-orange-100">{t("satisfactionRate")}</span>
+              <span className="text-base text-purple-100">{t("satisfactionRate")}</span>
             </div>
 
             <div className="flex flex-col items-center">
               <span className="text-3xl md:text-4xl font-extrabold text-white">500+</span>
-              <span className="text-base text-orange-100">{t("positiveReviews")}</span>
+              <span className="text-base text-purple-100">{t("positiveReviews")}</span>
             </div>
 
             <div className="flex flex-col items-center">
               <span className="text-3xl md:text-4xl font-extrabold text-white">600+</span>
-              <span className="text-base text-orange-100">{t("trustedPartners")}</span>
+              <span className="text-base text-purple-100">{t("trustedPartners")}</span>
             </div>
           </section>
 
           {/* Section 4 */}
           <section className="w-full grid md:grid-cols-3 gap-8 bg-white rounded-2xl p-8">
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 mb-4 rounded-full bg-orange-50 flex items-center justify-center">
+              <div className="w-16 h-16 mb-4 rounded-full bg-purple-50 flex items-center justify-center">
                 <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
                   <path d="M12 4v16m8-8H4" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -140,7 +140,7 @@ export default function AboutPage() {
             </div>
 
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 mb-4 rounded-full bg-orange-50 flex items-center justify-center">
+              <div className="w-16 h-16 mb-4 rounded-full bg-purple-50 flex items-center justify-center">
                 <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
                   <path d="M12 20V4m0 0l-7 7m7-7l7 7" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -150,7 +150,7 @@ export default function AboutPage() {
             </div>
 
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 mb-4 rounded-full bg-orange-50 flex items-center justify-center">
+              <div className="w-16 h-16 mb-4 rounded-full bg-purple-50 flex items-center justify-center">
                 <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
                   <path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 9V7a5 5 0 0110 0v2" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

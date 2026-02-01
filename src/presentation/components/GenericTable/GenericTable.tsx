@@ -89,7 +89,7 @@ export function GenericTable<T extends { id?: string | number }>(props: GenericT
                     {actions.map((action, idx) => (
                       <button
                         key={idx}
-                        className={action.className || 'bg-orange-500 text-white px-3 py-1 rounded-full'}
+                        className={action.className || 'bg-purple-500 text-white px-3 py-1 rounded-full'}
                         onClick={() => action.onClick(row)}
                         disabled={action.disabled}
                       >
@@ -109,7 +109,7 @@ export function GenericTable<T extends { id?: string | number }>(props: GenericT
           {Array.from({ length: Math.ceil(total / pageSize) }, (_, i) => (
             <button
               key={i}
-              className={`px-3 py-1 rounded ${page === i ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-3 py-1 rounded ${page === i ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-700'}`}
               onClick={() => onPageChange(i)}
               disabled={page === i}
             >

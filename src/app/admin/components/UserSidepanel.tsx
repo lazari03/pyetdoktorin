@@ -129,12 +129,12 @@ export function UserSidepanel() {
         {/* Header */}
   <div className="sticky top-0 flex items-center justify-between border-b bg-white px-4 py-3 rounded-tl-2xl">
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-orange-100 text-orange-600">👤</span>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-purple-600">👤</span>
             <h3 className="text-base sm:text-lg font-semibold">Edit User</h3>
           </div>
           <div className="flex items-center gap-2">
             <button className="px-3 py-1.5 rounded-full border border-gray-300 hover:bg-gray-100" onClick={() => selectUser(null)} aria-label="Close sidebar">Close</button>
-            <button className="px-4 py-1.5 rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-60" disabled={loading} onClick={save}>Save</button>
+            <button className="px-4 py-1.5 rounded-full bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-60" disabled={loading} onClick={save}>Save</button>
           </div>
         </div>
 
@@ -158,7 +158,7 @@ export function UserSidepanel() {
               {/* Role selector */}
               <div>
                 <label className="text-sm text-gray-600">Role</label>
-                <select className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300" value={local.role ?? UserRole.Patient} onChange={e => setLocal({ ...local, role: e.target.value as unknown as UserRole })}>
+                <select className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.role ?? UserRole.Patient} onChange={e => setLocal({ ...local, role: e.target.value as unknown as UserRole })}>
                   <option value={UserRole.Patient}>Patient</option>
                   <option value={UserRole.Doctor}>Doctor</option>
                   <option value={UserRole.Admin}>Admin</option>
@@ -173,15 +173,15 @@ export function UserSidepanel() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="block">
                     <span className="text-sm text-gray-600">Name</span>
-                    <input className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300" value={local.name ?? ''} onChange={e => setLocal({ ...local, name: e.target.value })} />
+                    <input className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.name ?? ''} onChange={e => setLocal({ ...local, name: e.target.value })} />
                   </label>
                   <label className="block">
                     <span className="text-sm text-gray-600">Surname</span>
-                    <input className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300" value={local.surname ?? ''} onChange={e => setLocal({ ...local, surname: e.target.value })} />
+                    <input className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.surname ?? ''} onChange={e => setLocal({ ...local, surname: e.target.value })} />
                   </label>
                   <label className="block sm:col-span-2">
                     <span className="text-sm text-gray-600">Email</span>
-                    <input type="email" className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300" value={local.email ?? ''} onChange={e => setLocal({ ...local, email: e.target.value })} />
+                    <input type="email" className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.email ?? ''} onChange={e => setLocal({ ...local, email: e.target.value })} />
                   </label>
                 </div>
               </div>
@@ -195,11 +195,11 @@ export function UserSidepanel() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
                       <span className="text-sm text-gray-600">Specialization</span>
-                      <input className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300" value={local.specialization ?? ''} onChange={e => setLocal({ ...local, specialization: e.target.value })} />
+                      <input className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.specialization ?? ''} onChange={e => setLocal({ ...local, specialization: e.target.value })} />
                     </label>
                     <label className="block sm:col-span-2">
                       <span className="text-sm text-gray-600">Bio</span>
-                      <textarea className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300" rows={4} value={local.bio ?? ''} onChange={e => setLocal({ ...local, bio: e.target.value })} />
+                      <textarea className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" rows={4} value={local.bio ?? ''} onChange={e => setLocal({ ...local, bio: e.target.value })} />
                     </label>
                   </div>
                 </div>
@@ -208,7 +208,7 @@ export function UserSidepanel() {
               {/* Utilities */}
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <button className="px-4 py-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-60" disabled={loading} onClick={save}>Save changes</button>
+                  <button className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-60" disabled={loading} onClick={save}>Save changes</button>
                   <button className="px-4 py-2 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-100" disabled={loading} onClick={() => selectUser(null)}>Cancel</button>
                   <button className="px-4 py-2 rounded-full border border-red-300 text-red-600 hover:bg-red-50" disabled={loading} onClick={() => { if (user && confirm('Delete this user?')) deleteUser(user.id, deleteUserAccountUseCase.execute.bind(deleteUserAccountUseCase)); }}>Delete user</button>
                 </div>

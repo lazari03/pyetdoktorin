@@ -11,16 +11,16 @@ const PasswordResetSection = ({ handlePasswordReset, resetEmailSent }: PasswordR
   const { t } = useTranslation();
   
   return (
-    <div className="mt-8 text-center">
+    <div className="mt-2 text-center">
       <button
         type="button"
         onClick={handlePasswordReset}
-        className="text-black hover:text-orange-500 underline focus:outline-none"
+        className="text-purple-700 font-semibold hover:text-purple-500 underline focus:outline-none"
       >
         {t('requestPasswordReset')}
       </button>
       {resetEmailSent && (
-        <p className="text-green-500 mt-4">
+        <p className="text-green-600 mt-2 text-sm">
           {t('passwordResetEmailSent')}
         </p>
       )}

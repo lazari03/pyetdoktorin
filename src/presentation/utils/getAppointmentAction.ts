@@ -6,25 +6,18 @@ export function getAppointmentAction(
   isAppointmentPast: (appointment: Appointment) => boolean,
   role: UserRole | undefined
 ): { label: string; disabled: boolean } {
-  // Example logic, adapt as needed for your domain
   if (isAppointmentPast(appointment)) {
-    return { label: 'Past', disabled: true };
+    return { label: 'past', disabled: true };
   }
   if (role === 'doctor') {
-    if (appointment.status === 'pending') {
-      return { label: 'Join Now', disabled: true };
-    }
     if (appointment.status === 'accepted') {
-      return { label: 'Join Now', disabled: false };
+      return { label: 'joinNow', disabled: false };
     }
-    return { label: 'N/A', disabled: true };
+    return { label: 'waitingForPayment', disabled: true };
   }
   // Patient
-  if (appointment.status === 'pending') {
-    return { label: 'Pay Now', disabled: false };
+  if (!appointment.isPaid) {
+    return { label: 'payNow', disabled: false };
   }
-  if (appointment.status === 'accepted') {
-    return { label: 'Join Now', disabled: false };
-  }
-  return { label: 'N/A', disabled: true };
+  return { label: 'joinNow', disabled: false };
 }

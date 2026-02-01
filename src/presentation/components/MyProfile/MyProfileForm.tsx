@@ -2,7 +2,7 @@ import Image from 'next/image';
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-interface MyProfileFormData {
+export interface MyProfileFormData {
   name: string;
   surname: string;
   email: string;
@@ -11,10 +11,26 @@ interface MyProfileFormData {
   specializations: string[];
   education?: string[];
   profilePicture?: string;
+  preferredLanguage?: string;
+  timeZone?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
   [key: string]: unknown;
 }
 
-type FormField = 'name' | 'surname' | 'email' | 'phoneNumber' | 'about' | 'specializations' | 'education';
+export type FormField =
+  | 'name'
+  | 'surname'
+  | 'email'
+  | 'phoneNumber'
+  | 'about'
+  | 'specializations'
+  | 'education'
+  | 'profilePicture'
+  | 'preferredLanguage'
+  | 'timeZone'
+  | 'emergencyContactName'
+  | 'emergencyContactPhone';
 
 interface MyProfileFormProps {
   formData: MyProfileFormData;
@@ -184,7 +200,7 @@ const MyProfileForm = ({
   }, [onProfilePictureChange]);
 
   return (
-    <form onSubmit={handleSubmit} className="w-full">
+    <form onSubmit={handleSubmit} className="w-full space-y-6">
       <div className="flex flex-col md:flex-row items-start gap-8">
         {/* Avatar on the left */}
         <div className="flex flex-col items-center w-full md:w-1/3 mb-6 md:mb-0">
@@ -215,14 +231,14 @@ const MyProfileForm = ({
         </div>
         {/* Fields on the right */}
         <div className="flex-1 w-full">
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{t('name') || 'Name'}</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange(e, 'name')}
-                className="input input-bordered w-full rounded"
+                className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
               />
             </div>
             <div>
@@ -231,7 +247,7 @@ const MyProfileForm = ({
                 type="text"
                 value={formData.surname}
                 onChange={(e) => handleInputChange(e, 'surname')}
-                className="input input-bordered w-full rounded"
+                className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
               />
             </div>
             <div>
@@ -240,7 +256,7 @@ const MyProfileForm = ({
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange(e, 'email')}
-                className="input input-bordered w-full rounded"
+                className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
               />
             </div>
             <div>
@@ -249,7 +265,7 @@ const MyProfileForm = ({
                 type="text"
                 value={formData.phoneNumber}
                 onChange={(e) => handleInputChange(e, 'phoneNumber')}
-                className="input input-bordered w-full rounded"
+                className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
               />
             </div>
             {/* Doctor-only fields */}
@@ -260,7 +276,7 @@ const MyProfileForm = ({
                   <textarea
                     value={formData.about}
                     onChange={(e) => handleInputChange(e, 'about')}
-                    className="textarea textarea-bordered w-full rounded"
+                    className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white min-h-[120px]"
                   />
                 </div>
                 <div>
@@ -271,12 +287,12 @@ const MyProfileForm = ({
                         type="text"
                         value={spec}
                         onChange={(e) => handleInputChange(e, 'specializations', index)}
-                        className="input input-bordered w-full rounded"
+                        className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
                       />
                       <button
                         type="button"
                         onClick={() => handleRemoveField('specializations', index)}
-                        className="btn btn-error btn-xs rounded"
+                        className="inline-flex items-center rounded-full border border-red-200 px-3 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 transition"
                       >
                         {t('remove') || 'Remove'}
                       </button>
@@ -285,7 +301,7 @@ const MyProfileForm = ({
                   <button
                     type="button"
                     onClick={() => handleAddField('specializations')}
-                    className="btn btn-primary btn-xs rounded"
+                    className="inline-flex items-center rounded-full border border-purple-500 px-3 py-1 text-[11px] font-semibold text-purple-600 hover:bg-purple-500 hover:text-white transition"
                   >
                     {t('addSpecialization') || 'Add Specialization'}
                   </button>
@@ -293,8 +309,11 @@ const MyProfileForm = ({
               </>
             )}
           </div>
-          <div className="mt-6 text-right">
-            <button type="submit" className="btn btn-primary px-8 py-2 rounded shadow-md hover:shadow-lg">
+          <div className="mt-6 flex justify-end">
+            <button
+              type="submit"
+              className="inline-flex items-center rounded-full bg-purple-600 px-6 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition shadow-md"
+            >
               {t('saveChanges') || 'Save Changes'}
             </button>
           </div>

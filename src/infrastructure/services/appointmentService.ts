@@ -1,28 +1,9 @@
-// Verify payment and update appointment status
-import { verifyStripeSession, updateAppointmentStatus } from '@/network/stripeApiClient';
-
-export async function verifyAndUpdatePayment(sessionId: string, userId: string, isDoctor: boolean, setAppointmentPaid: (id: string) => Promise<void>, fetchAppointments: (userId: string, isDoctor: boolean) => Promise<void>) {
-  // 1. Verify payment with backend
-  const { data, status } = await verifyStripeSession(sessionId);
-  if (status !== 200 || !data.appointmentId) throw new Error('Failed to verify payment');
-  const { appointmentId } = data;
-  // 2. Mark appointment as paid
-  await setAppointmentPaid(appointmentId);
-  // 3. Update appointment status in backend
-  await updateAppointmentStatus(appointmentId, true);
-  // 4. Refresh appointments
-  if (userId && typeof isDoctor === 'boolean') {
-    await fetchAppointments(userId, isDoctor);
-  }
-}
 // Fetch appointments for a user (doctor or patient)
 // import { Appointment } from "@/domain/entities/Appointment";
 import { isValidAppointment, isAppointmentPaid } from '@/domain/rules/appointmentRules';
 import { getDefaultPatientName, getDefaultStatus } from "@/utils/userUtils";
 import { appointmentRepository } from '@/infrastructure/appointmentRepository';
 import { getAuth } from "firebase/auth";
-import { verifyPayment } from "@/network/apiClient+payment";
-import { startPayPalPayment } from "@/infrastructure/services/paypalPaymentService";
 import { getUserPhoneNumber } from "@/infrastructure/services/userService";
 import { sendDoctorAppointmentRequestSMS } from "@/infrastructure/services/smsService";
 
@@ -43,27 +24,6 @@ export async function setAppointmentPaid(appointmentId: string): Promise<void> {
 }
 
 
-// Handle PayPal payment
-export async function handlePayNow(appointmentId: string, amount: number): Promise<void> {
-  // You may want to set these URLs dynamically based on your app's routing
-  const returnUrl = `${window.location.origin}/payment/success`;
-  const cancelUrl = `${window.location.origin}/payment/cancel`;
-  const currency = 'USD'; // Or fetch from config
-  const { approvalUrl } = await startPayPalPayment({
-    appointmentId,
-    amount,
-    currency,
-    returnUrl,
-    cancelUrl,
-  });
-  if (approvalUrl) {
-    window.location.href = approvalUrl;
-  } else {
-    throw new Error('Failed to create PayPal order');
-  }
-}
-
-
 export async function getAppointments(userId: string, isDoctor: boolean) {
   if (!userId) throw new Error("User ID is missing");
   const appointments = await appointmentRepository.getByUser(userId, isDoctor);
@@ -79,18 +39,6 @@ export async function checkIfPastAppointment(appointmentId: string) {
   const appointmentEndTime = new Date(appointmentDateTime.getTime() + 30 * 60000);
   return appointmentEndTime < new Date();
 }
-
-// Verify Stripe payment and update paid status
-export async function verifyStripePayment(appointmentId: string, setAppointmentPaid: (id: string) => Promise<void>): Promise<void> {
-  const { data, status } = await verifyPayment(appointmentId);
-  if (status !== 200) {
-    throw new Error("Failed to verify payment");
-  }
-  if (data.isPaid) {
-    await setAppointmentPaid(appointmentId);
-  }
-}
-
 
 export async function getUserRole(userId: string) {
   try {

@@ -19,6 +19,10 @@ export const useMyProfile = () => {
     specializations: [""],
     education: [""],
     profilePicture: "",
+    preferredLanguage: "",
+    timeZone: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
   });
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isFetching, setIsFetching] = useState(true); // To handle data fetching state
@@ -53,6 +57,10 @@ export const useMyProfile = () => {
             ...userData,
             specializations: userData.specializations || [""],
             education: userData.education || [""],
+            preferredLanguage: userData.preferredLanguage || "",
+            timeZone: userData.timeZone || "",
+            emergencyContactName: userData.emergencyContactName || "",
+            emergencyContactPhone: userData.emergencyContactPhone || "",
           }));
         } else {
           setFormData((prev) => ({

@@ -10,4 +10,5 @@ export interface AppointmentsTableProps {
   showActions?: boolean;
   maxRows?: number;
   loading?: boolean;
+  variant?: 'default' | 'minimal';
 }

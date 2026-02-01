@@ -95,7 +95,7 @@ function NotificationsPage() {
                     ) : (
                       appointment.status === 'rejected' && (
                         <Link href="/dashboard/new-appointment">
-                          <button className="transition-all duration-150 ease-in-out bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300 w-28">
+                          <button className="transition-all duration-150 ease-in-out bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300 w-28">
                             {t('reschedule', 'Reschedule')}
                           </button>
                         </Link>
@@ -158,7 +158,7 @@ function NotificationsPage() {
               ) : (
                 appointment.status === 'rejected' && (
                   <Link href="/dashboard/new-appointment">
-                    <button className="transition-all duration-150 ease-in-out bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300 w-28">
+                    <button className="transition-all duration-150 ease-in-out bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300 w-28">
                       Reschedule
                     </button>
                   </Link>

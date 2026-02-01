@@ -1,16 +1,16 @@
 /* About Page Stylesheet */
 
 .about-breadcrumb {
-  @apply bg-white/95 rounded-2xl px-8 py-3 flex items-center gap-2 shadow-lg border border-orange-200 backdrop-blur-md mt-4;
+  @apply bg-white/95 rounded-2xl px-8 py-3 flex items-center gap-2 shadow-lg border border-purple-200 backdrop-blur-md mt-4;
   box-shadow: 0 6px 32px 0 rgba(255, 140, 0, 0.10), 0 1.5px 6px 0 rgba(0,0,0,0.04);
 }
 
 .about-title {
-  @apply text-2xl md:text-3xl font-bold text-orange-900 mb-1;
+  @apply text-2xl md:text-3xl font-bold text-purple-900 mb-1;
 }
 
 .about-section-title {
-  @apply text-lg md:text-xl font-semibold text-orange-800;
+  @apply text-lg md:text-xl font-semibold text-purple-800;
 }
 
 .about-section-text {

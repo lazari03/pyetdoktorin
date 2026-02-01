@@ -23,11 +23,11 @@ export function getAppointmentActionPresentation(
       : { type: 'waiting', label: 'waitingForPayment', disabled: true };
   }
 
-  if (action.label === 'Join Now') {
+  if (action.label === 'joinNow') {
     return { type: 'join', label: 'joinNow', disabled: false };
   }
 
-  if (isPatient && action.label === 'Pay Now') {
+  if (isPatient && action.label === 'payNow') {
     return { type: 'pay', label: 'payNow', disabled: false };
   }
 

@@ -38,9 +38,9 @@ export default function DashboardNotificationsBell({ doctorId }: { doctorId: str
   return (
     <div className="flex items-center gap-2">
       <span className="text-base text-gray-700">
-        You have <span className="font-bold text-orange-500">{notifications.length}</span> notification{notifications.length !== 1 ? 's' : ''}
+        You have <span className="font-bold text-purple-500">{notifications.length}</span> notification{notifications.length !== 1 ? 's' : ''}
       </span>
-      <Link href="/dashboard/notifications" className="text-orange-500 text-sm font-semibold hover:underline">
+      <Link href="/dashboard/notifications" className="text-purple-500 text-sm font-semibold hover:underline">
         View All
       </Link>
     </div>

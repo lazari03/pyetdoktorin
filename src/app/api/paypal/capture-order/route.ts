@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { completePayPalPayment } from "@/infrastructure/services/paypalPaymentService";
+import { getAdmin } from "../../_lib/admin";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +14,14 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await completePayPalPayment(orderId);
+
+    if (result.status === "COMPLETED" && result.appointmentId) {
+      const { db } = getAdmin();
+      await db
+        .collection("appointments")
+        .doc(result.appointmentId)
+        .set({ isPaid: true }, { merge: true });
+    }
 
     return NextResponse.json({ ok: true, result });
   } catch (err) {

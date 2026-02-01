@@ -37,7 +37,7 @@ export default function DashboardBanner({ href = "/dashboard/appointments" }: Da
           {t("bannerSubtitle")}
         </p>
         <div className="mt-2">
-          <Link href={href} className="inline-block rounded-full bg-orange-500 px-6 py-2 text-sm font-semibold text-white shadow hover:bg-orange-600 transition-colors">
+          <Link href={href} className="inline-block rounded-full bg-purple-500 px-6 py-2 text-sm font-semibold text-white shadow hover:bg-purple-600 transition-colors">
             {t("bannerCta")}
           </Link>
         </div>
