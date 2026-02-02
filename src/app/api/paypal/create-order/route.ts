@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { startPayPalPayment } from "@/infrastructure/services/paypalPaymentService";
+import { getAdmin } from "../../_lib/admin";
 
 export async function POST(req: NextRequest) {
   try {
-    const { appointmentId } = await req.json();
-    if (!appointmentId) {
+    const { appointmentId, patientId } = await req.json();
+    if (!appointmentId || !patientId) {
       return NextResponse.json(
-        { error: "Missing appointmentId" },
+        { error: "Missing appointmentId or patientId" },
         { status: 400 }
       );
+    }
+
+    // Validate appointment ownership and unpaid status
+    const { db } = getAdmin();
+    const snap = await db.collection("appointments").doc(appointmentId).get();
+    if (!snap.exists) {
+      return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+    }
+    const appt = snap.data() || {};
+    if (appt.patientId !== patientId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (appt.isPaid) {
+      return NextResponse.json({ error: "Already paid" }, { status: 409 });
     }
 
     const origin = req.nextUrl.origin || req.headers.get("origin") || "";

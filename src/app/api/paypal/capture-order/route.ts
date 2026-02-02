@@ -20,7 +20,22 @@ export async function POST(req: NextRequest) {
       await db
         .collection("appointments")
         .doc(result.appointmentId)
-        .set({ isPaid: true }, { merge: true });
+        .set(
+          {
+            isPaid: true,
+            paymentStatus: "paid",
+            transactionId: result.captureId,
+            paidAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+
+      await db.collection("payments").add({
+        appointmentId: result.appointmentId,
+        transactionId: result.captureId,
+        status: result.status,
+        createdAt: new Date().toISOString(),
+      });
     }
 
     return NextResponse.json({ ok: true, result });

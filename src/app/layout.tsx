@@ -6,6 +6,7 @@ import Script from "next/script";
 import Analytics from "./analytics/Analytics";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
+import HeadNonce from "./HeadNonce";
 
 export const metadata: Metadata = {
   title: "Alo Doktor",
@@ -30,6 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             gtag('config', '${process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}');
           `}
         </Script>
+        <HeadNonce />
       </head>
       <body className="bg-base-100 min-h-screen">
         <DIProvider>

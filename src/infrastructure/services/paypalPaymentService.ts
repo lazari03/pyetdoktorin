@@ -11,6 +11,12 @@ interface PayPalOrderResponse {
   approvalUrl: string;
 }
 
+export interface PayPalCaptureResult {
+  status: string;
+  appointmentId?: string;
+  captureId?: string;
+}
+
 const PAYPAL_ENV = process.env.PAYPAL_ENV || 'sandbox';
 const PAYPAL_API_BASE =
   process.env.PAYPAL_API_BASE ||
@@ -79,7 +85,7 @@ export async function startPayPalPayment(params: PayPalPaymentParams): Promise<P
   };
 }
 
-export async function completePayPalPayment(orderId: string): Promise<{ status: string; appointmentId?: string }> {
+export async function completePayPalPayment(orderId: string): Promise<PayPalCaptureResult> {
   const accessToken = await getAccessToken();
 
   const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}/capture`, {
@@ -97,9 +103,11 @@ export async function completePayPalPayment(orderId: string): Promise<{ status: 
 
   const data = await response.json();
   const appointmentId = data.purchase_units?.[0]?.reference_id;
+  const captureId = data.purchase_units?.[0]?.payments?.captures?.[0]?.id;
 
   return {
     status: data.status,
     appointmentId,
+    captureId,
   };
 }

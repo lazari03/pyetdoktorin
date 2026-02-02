@@ -1,9 +1,9 @@
 import { apiClient } from './apiClient';
 
-export function createPayPalOrder(appointmentId: string) {
+export function createPayPalOrder(appointmentId: string, patientId?: string) {
   return apiClient.post<{ orderId: string; approvalUrl: string }>(
     '/api/paypal/create-order',
-    { appointmentId }
+    { appointmentId, patientId }
   );
 }
 

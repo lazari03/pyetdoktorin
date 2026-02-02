@@ -10,6 +10,7 @@ export function middleware(req: NextRequest) {
   const lastActivity = lastActivityStr ? Number(lastActivityStr) : null;
   const now = Date.now();
   const idleMs = 30 * 60 * 1000; // 30 minutes
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
   // Redirect authenticated users away from auth pages
   // Admins should land on /admin, others on /dashboard
@@ -80,8 +81,13 @@ export function middleware(req: NextRequest) {
 
   // Pass language header for SSR
   const lang = req.cookies.get('language')?.value || 'en';
-  const res = NextResponse.next();
+  const res = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  });
   res.headers.set('x-language', lang);
+  res.headers.set('x-nonce', nonce);
   // Refresh lastActivity cookie while navigating SSR paths (sliding window)
   if (hasSession) {
     res.cookies.set('lastActivity', String(now), { path: '/', sameSite: 'lax', maxAge: 30 * 60 });
