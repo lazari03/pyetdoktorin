@@ -10,8 +10,26 @@ export default function ProfileWarning({ show }: ProfileWarningProps) {
   
   if (!show) return null;
   return (
-    <div className="alert alert-warning mb-6">
-      <span>{t('profileIncompleteWarning')}</span>
+    <div className="relative mb-6 rounded-2xl border border-amber-200 bg-amber-50/80 shadow-sm overflow-hidden px-4 py-3 flex items-start gap-3">
+      <div className="mt-0.5 h-9 w-9 rounded-full bg-white text-amber-600 border border-amber-200 flex items-center justify-center shadow-sm">
+        <span className="text-lg font-semibold">!</span>
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-semibold text-amber-800">
+          {t('profileIncompleteWarningTitle') || 'Complete your profile'}
+        </p>
+        <p className="text-xs text-amber-700">
+          {t('profileIncompleteWarning') || 'Add your details to keep your care team informed and unlock all features.'}
+        </p>
+      </div>
+      <div>
+        <a
+          href="/dashboard/myprofile"
+          className="text-xs font-semibold text-purple-700 hover:text-purple-800 underline"
+        >
+          {t('editProfile') || 'Update now'}
+        </a>
+      </div>
     </div>
   );
 }

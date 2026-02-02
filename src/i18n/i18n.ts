@@ -1,8 +1,8 @@
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import en from '../locales/en';
-import al from '../locales/al';
+import en from '../locales/en.json' assert { type: 'json' };
+import al from '../locales/al.json' assert { type: 'json' };
 
 
 const resources = {

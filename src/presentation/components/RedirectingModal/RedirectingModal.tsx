@@ -2,28 +2,21 @@ import React from "react";
 
 const RedirectingModal: React.FC<{ show: boolean }> = ({ show }) => {
   if (!show) return null;
+
   return (
-    <div style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100vw",
-      height: "100vh",
-      background: "rgba(0,0,0,0.6)",
-      zIndex: 10000,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }}>
-      <div style={{
-        background: "#222",
-        color: "#fff",
-        padding: "2rem 3rem",
-        borderRadius: "1rem",
-        fontSize: "1.5rem",
-        boxShadow: "0 2px 16px rgba(0,0,0,0.3)"
-      }}>
-        Redirecting you there...
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="relative w-[90%] max-w-md rounded-3xl bg-white shadow-2xl border border-purple-100 overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-purple-500 via-purple-400 to-blue-400" />
+        <div className="px-5 pb-5 pt-6 text-center space-y-3">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-purple-50 text-purple-600">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-purple-700">Redirecting</p>
+            <p className="text-base font-bold text-gray-900">We’re taking you to the secure page…</p>
+            <p className="text-xs text-gray-500">Please hold on. Your session stays protected by alodoktor.al.</p>
+          </div>
+        </div>
       </div>
     </div>
   );

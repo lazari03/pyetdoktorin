@@ -65,7 +65,8 @@
     "knip": "^5.61.2",
     "postcss": "^8.4.24",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "webpack-obfuscator": "^3.6.0"
   },
   "engines": {
     "node": ">=18.0.0"

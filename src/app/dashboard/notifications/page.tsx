@@ -1,11 +1,10 @@
 "use client";
 
+import { useState, useMemo } from 'react';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useTranslation } from 'react-i18next';
 import Link from "next/link";
-import styles from "./notifications.module.css";
 import { useNotificationsLogic } from './useNotificationsLogic';
-
 
 function NotificationsPage() {
   const { t } = useTranslation();
@@ -18,6 +17,15 @@ function NotificationsPage() {
     handleDismissNotification,
     handleAppointmentAction,
   } = useNotificationsLogic(nav);
+  const [page, setPage] = useState(0);
+  const pageSize = 8;
+
+  const pagedAppointments = useMemo(() => {
+    const start = page * pageSize;
+    return pendingAppointments.slice(start, start + pageSize);
+  }, [pendingAppointments, page]);
+
+  const totalPages = Math.max(1, Math.ceil(pendingAppointments.length / pageSize));
 
   // The logic has been moved to useNotificationsLogic
 
@@ -48,133 +56,133 @@ function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 py-8 px-2">
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-6 text-center tracking-tight">{t('notifications', 'Notifications')}</h1>
-      {/* Desktop Table */}
-      <div className={`overflow-x-auto max-w-6xl mx-auto ${styles['animate-pop-up']} ${styles['widget-elevated']} hidden md:block`}>
-        <table className="w-full text-base font-medium bg-transparent">
-          <thead className="bg-gradient-to-r from-purple-50 to-blue-50">
-            <tr>
-              <th className="px-3 py-3 text-left text-gray-700 font-semibold">{t('patientName', 'Patient Name')}</th>
-              <th className="px-3 py-3 text-left text-gray-700 font-semibold">{t('doctor', 'Doctor')}</th>
-              <th className="px-3 py-3 text-left text-gray-700 font-semibold">{t('date', 'Date')}</th>
-              <th className="px-3 py-3 text-left text-gray-700 font-semibold">{t('notes', 'Notes')}</th>
-              <th className="px-3 py-3 text-center text-gray-700 font-semibold">{t('status', 'Status')}</th>
-              <th className="px-3 py-3 text-center text-gray-700 font-semibold">{t('actions', 'Actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pendingAppointments.map((appointment: typeof pendingAppointments[number], idx: number) => (
-              <tr key={appointment.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                <td className="px-3 py-3 align-middle text-gray-800 whitespace-nowrap rounded-l-xl">{appointment.patientName || t('unknown', 'Unknown')}</td>
-                <td className="px-3 py-3 align-middle text-gray-700 whitespace-nowrap">{appointment.doctorName || t('unknown', 'Unknown')}</td>
-                <td className="px-3 py-3 align-middle text-gray-700 whitespace-nowrap">{appointment.preferredDate || '-'}</td>
-                <td className="px-3 py-3 align-middle text-gray-700 whitespace-nowrap">{appointment.notes || '-'}</td>
-                <td className="px-3 py-3 align-middle text-center">
-                  {appointment.status === 'accepted' && <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 font-semibold">{t('accepted', 'Accepted')}</span>}
-                  {appointment.status === 'rejected' && <span className="inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 font-semibold">{t('rejected', 'Rejected')}</span>}
-                  {appointment.status === 'pending' && <span className="inline-block px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 font-semibold">{t('pending', 'Pending')}</span>}
-                </td>
-                <td className="px-3 py-3 align-middle text-center rounded-r-xl">
-                  <div className="flex flex-row gap-2 justify-center items-center">
+    <div className="min-h-screen py-8 px-3">
+      <div className="max-w-5xl mx-auto space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+              {t('secureAccessEyebrow') ?? 'Secure access'}
+            </p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+              {t('notifications', 'Notifications')}
+            </h1>
+            <p className="text-sm text-gray-600">
+              {t('notificationsSubtitle') || 'Latest care updates to keep you in control.'}
+            </p>
+          </div>
+          <Link
+            href="/dashboard"
+            className="text-xs font-semibold text-purple-700 hover:text-purple-800"
+          >
+            {t('backToHome')}
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-gray-900">{t('notifications')}</p>
+            <span className="text-xs text-gray-500">
+              {t('hipaaLine') || 'HIPAA-aware | Encrypted in transit'}
+            </span>
+          </div>
+          <div className="space-y-3">
+            {pagedAppointments.map((appointment: typeof pendingAppointments[number]) => {
+              const status = appointment.status?.toLowerCase();
+              const chip =
+                status === 'accepted'
+                  ? { text: t('accepted'), classes: 'bg-green-50 text-green-700 border border-green-100' }
+                  : status === 'rejected'
+                  ? { text: t('rejected'), classes: 'bg-red-50 text-red-700 border border-red-100' }
+                  : { text: t('pending'), classes: 'bg-amber-50 text-amber-700 border border-amber-100' };
+              return (
+                <div
+                  key={appointment.id}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-2"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {appointment.status || t('appointment')}
+                      </p>
+                      <p className="text-xs text-gray-600 truncate">
+                        {appointment.patientName || t('patient')} • {appointment.doctorName || t('doctor')}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        {appointment.preferredDate} {appointment.preferredDate}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-[11px] font-semibold ${chip.classes}`}>
+                      {chip.text}
+                    </span>
+                  </div>
+
+                  {appointment.notes && (
+                    <p className="text-xs text-gray-700 bg-gray-50 rounded-xl px-3 py-2">
+                      {appointment.notes}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-2 flex-wrap">
                     {userRole === 'doctor' ? (
                       <>
                         <button
-                          className="transition-all duration-150 ease-in-out bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-300 w-24"
+                          className="inline-flex items-center rounded-full border border-green-300 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 transition"
                           onClick={() => handleAppointmentAction(appointment.id, "accepted")}
                         >
-                          {t('accept', 'Accept')}
+                          {t('accept')}
                         </button>
                         <button
-                          className="transition-all duration-150 ease-in-out bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-300 w-24"
+                          className="inline-flex items-center rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition"
                           onClick={() => handleAppointmentAction(appointment.id, "rejected")}
                         >
-                          {t('reject', 'Reject')}
+                          {t('reject')}
                         </button>
                       </>
                     ) : (
-                      appointment.status === 'rejected' && (
+                      status === 'rejected' && (
                         <Link href="/dashboard/new-appointment">
-                          <button className="transition-all duration-150 ease-in-out bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300 w-28">
-                            {t('reschedule', 'Reschedule')}
+                          <button className="inline-flex items-center rounded-full border border-purple-500 px-3 py-1.5 text-xs font-semibold text-purple-600 hover:bg-purple-500 hover:text-white transition">
+                            {t('reschedule')}
                           </button>
                         </Link>
                       )
                     )}
-                    {/* Dismiss Button */}
                     <button
-                      className="transition-all duration-150 ease-in-out bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                      className="ml-auto inline-flex items-center rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
                       onClick={() => handleDismissNotification(appointment.id)}
-                      aria-label={t('dismissNotification', 'Dismiss notification')}
                     >
-                      {t('dismiss', 'Dismiss')}
+                      {t('dismissNotification')}
                     </button>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {/* Mobile Card List */}
-      <div className={`block md:hidden mt-6 space-y-6 ${styles['animate-pop-up']} ${styles['widget-elevated']}`}>
-  {pendingAppointments.map((appointment: typeof pendingAppointments[number]) => (
-          <div key={appointment.id} className="rounded-xl shadow bg-white p-4 flex flex-col gap-3 mb-2">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-gray-700">{appointment.preferredDate}</span>
-              <span
-                className={
-                  appointment.status === 'accepted'
-                    ? 'text-xs font-semibold bg-green-100 text-green-700 px-2 py-1 rounded-full'
-                    : appointment.status === 'rejected'
-                    ? 'text-xs font-semibold bg-red-100 text-red-700 px-2 py-1 rounded-full'
-                    : 'text-xs font-semibold bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full'
-                }
-              >
-                {appointment.status === 'accepted' ? 'Accepted' : appointment.status === 'rejected' ? 'Rejected' : 'Pending'}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-              <span><span className="font-medium">Patient:</span> {appointment.patientName || 'Unknown'}</span>
-              <span><span className="font-medium">Doctor:</span> {appointment.doctorName || 'Unknown'}</span>
-            </div>
-            <div className="text-sm text-gray-600"><span className="font-medium">Notes:</span> {appointment.notes || '-'}</div>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {userRole === 'doctor' ? (
-                <>
-                  <button
-                    className="transition-all duration-150 ease-in-out bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-300 w-24"
-                    onClick={() => handleAppointmentAction(appointment.id, 'accepted')}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    className="transition-all duration-150 ease-in-out bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-300 w-24"
-                    onClick={() => handleAppointmentAction(appointment.id, 'rejected')}
-                  >
-                    Reject
-                  </button>
-                </>
-              ) : (
-                appointment.status === 'rejected' && (
-                  <Link href="/dashboard/new-appointment">
-                    <button className="transition-all duration-150 ease-in-out bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300 w-28">
-                      Reschedule
-                    </button>
-                  </Link>
-                )
-              )}
-              {/* Dismiss Button */}
+                </div>
+              );
+            })}
+            {pendingAppointments.length === 0 && (
+              <p className="text-sm text-gray-500 py-4">{t('noNotifications') || 'No notifications yet.'}</p>
+            )}
+          </div>
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
               <button
-                className="ml-auto transition-all duration-150 ease-in-out bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-                onClick={() => handleDismissNotification(appointment.id)}
-                aria-label="Dismiss notification"
+                className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1.5 font-semibold hover:border-purple-300 hover:text-purple-700 transition disabled:opacity-50"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
               >
-                Dismiss
+                {t('previous') || 'Previous'}
+              </button>
+              <span>
+                {t('page') || 'Page'} {page + 1} / {totalPages}
+              </span>
+              <button
+                className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1.5 font-semibold hover:border-purple-300 hover:text-purple-700 transition disabled:opacity-50"
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+              >
+                {t('next') || 'Next'}
               </button>
             </div>
-          </div>
-        ))}
+          )}
+        </div>
       </div>
     </div>
   );

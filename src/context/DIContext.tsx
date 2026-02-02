@@ -43,6 +43,12 @@ import { CreateAdminUserUseCase } from '@/application/createAdminUserUseCase';
 import { UpdateAdminUserUseCase } from '@/application/updateAdminUserUseCase';
 import { UpdateAdminDoctorProfileUseCase } from '@/application/updateAdminDoctorProfileUseCase';
 import { ApproveDoctorUseCase } from '@/application/approveDoctorUseCase';
+import { GetPharmaciesUseCase } from '@/application/getPharmaciesUseCase';
+import { CreateReciepeUseCase } from '@/application/createReciepeUseCase';
+import { GetReciepesByDoctorUseCase } from '@/application/getReciepesByDoctorUseCase';
+import { GetReciepesByPatientUseCase } from '@/application/getReciepesByPatientUseCase';
+import { GetReciepesByPharmacyUseCase } from '@/application/getReciepesByPharmacyUseCase';
+import { UpdateReciepeStatusUseCase } from '@/application/updateReciepeStatusUseCase';
 import { FirebaseAppointmentRepository } from '@/infrastructure/repositories/FirebaseAppointmentRepository';
 import { FirebaseUserRepository } from '@/infrastructure/repositories/FirebaseUserRepository';
 import { FirebaseSessionRepository } from '@/infrastructure/repositories/FirebaseSessionRepository';
@@ -61,6 +67,8 @@ import { AuthLoginService } from '@/infrastructure/services/authLoginService';
 import { RegistrationService } from '@/infrastructure/services/registrationService';
 import { DoctorSearchService } from '@/infrastructure/services/doctorSearchService';
 import { AdminUserService } from '@/infrastructure/services/adminUserService';
+import { PharmacyService } from '@/infrastructure/services/pharmacyService';
+import { ReciepeService } from '@/infrastructure/services/reciepeService';
 
 interface DIContextValue {
   fetchAppointmentsUseCase: FetchAppointmentsUseCase;
@@ -106,6 +114,12 @@ interface DIContextValue {
   updateAdminUserUseCase: UpdateAdminUserUseCase;
   updateAdminDoctorProfileUseCase: UpdateAdminDoctorProfileUseCase;
   approveDoctorUseCase: ApproveDoctorUseCase;
+  getPharmaciesUseCase: GetPharmaciesUseCase;
+  createReciepeUseCase: CreateReciepeUseCase;
+  getReciepesByDoctorUseCase: GetReciepesByDoctorUseCase;
+  getReciepesByPatientUseCase: GetReciepesByPatientUseCase;
+  getReciepesByPharmacyUseCase: GetReciepesByPharmacyUseCase;
+  updateReciepeStatusUseCase: UpdateReciepeStatusUseCase;
 }
 
 const DIContext = createContext<DIContextValue | undefined>(undefined);
@@ -128,6 +142,8 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const registrationService = new RegistrationService();
   const doctorSearchService = new DoctorSearchService();
   const adminUserService = new AdminUserService();
+  const pharmacyService = new PharmacyService();
+  const reciepeService = new ReciepeService();
   const paymentGateway = new PayPalGateway();
   const fetchAppointmentsUseCase = new FetchAppointmentsUseCase(appointmentRepo);
   const getAppointmentsUseCase = new GetAppointmentsUseCase(appointmentService);
@@ -163,6 +179,12 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const fetchDoctorsUseCase = new FetchDoctorsUseCase(doctorSearchService);
   const checkProfileCompleteUseCase = new CheckProfileCompleteUseCase(userRepo);
   const getAllUsersUseCase = new GetAllUsersUseCase(adminUserService);
+  const getPharmaciesUseCase = new GetPharmaciesUseCase(pharmacyService);
+  const createReciepeUseCase = new CreateReciepeUseCase(reciepeService);
+  const getReciepesByDoctorUseCase = new GetReciepesByDoctorUseCase(reciepeService);
+  const getReciepesByPatientUseCase = new GetReciepesByPatientUseCase(reciepeService);
+  const getReciepesByPharmacyUseCase = new GetReciepesByPharmacyUseCase(reciepeService);
+  const updateReciepeStatusUseCase = new UpdateReciepeStatusUseCase(reciepeService);
   const getUsersPageUseCase = new GetUsersPageUseCase(adminUserService);
   const getAdminUserByIdUseCase = new GetAdminUserByIdUseCase(adminUserService);
   const getAdminDoctorProfileUseCase = new GetAdminDoctorProfileUseCase(adminUserService);
@@ -210,6 +232,12 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         fetchDoctorsUseCase,
         checkProfileCompleteUseCase,
         getAllUsersUseCase,
+        getPharmaciesUseCase,
+        createReciepeUseCase,
+        getReciepesByDoctorUseCase,
+        getReciepesByPatientUseCase,
+        getReciepesByPharmacyUseCase,
+        updateReciepeStatusUseCase,
         getUsersPageUseCase,
         getAdminUserByIdUseCase,
         getAdminDoctorProfileUseCase,

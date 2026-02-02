@@ -8,6 +8,8 @@ export enum NavigationKey {
   Profile = 'profile',
   Calendar = 'calendar',
   NewAppointment = 'newAppointment',
+  Reciepe = 'reciepe',
+  MyReciepes = 'myReciepes',
 }
 
 export interface NavigationItem {
@@ -23,12 +25,14 @@ export function getNavigationPaths(role: UserRole): NavigationItem[] {
         { key: NavigationKey.Dashboard, name: 'Dashboard', href: '/dashboard' },
         { key: NavigationKey.Appointments, name: 'Appointments', href: '/dashboard/appointments/journey' },
         { key: NavigationKey.Calendar, name: 'Calendar', href: '/dashboard/doctor/calendar' },
+        { key: NavigationKey.Reciepe, name: 'Reciepe', href: '/dashboard/reciepe' },
       ];
     case UserRole.Patient:
       return [
         { key: NavigationKey.Dashboard, name: 'Dashboard', href: '/dashboard' },
         { key: NavigationKey.NewAppointment, name: 'New Appointment', href: '/dashboard/new-appointment' },
         { key: NavigationKey.AppointmentHistory, name: 'Appointment History', href: '/dashboard/appointments/journey' },
+        { key: NavigationKey.MyReciepes, name: 'My Reciepes', href: '/dashboard/reciepes' },
       ];
     default:
       return [];

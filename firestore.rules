@@ -12,8 +12,8 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
-      // Allow reads for all
-      allow read: if true;
+      // Allow reads only for the user themself or admins
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
 
       // Allow user to write own doc OR allow admins to write any user doc
       allow write: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
@@ -30,8 +30,10 @@ service cloud.firestore {
 
     // Appointments collection
     match /appointments/{appointmentId} {
-      // Allow reads for all
-      allow read: if true;
+      // Allow reads only to patient, doctor, or admin
+      allow read: if isAdmin() ||
+        (isSignedIn() &&
+         (resource.data.patientId == request.auth.uid || resource.data.doctorId == request.auth.uid));
 
       // Allow creation if authenticated and patientId matches, or admin
       allow create: if (isSignedIn() && request.resource.data.patientId == request.auth.uid) || isAdmin();
@@ -51,8 +53,45 @@ service cloud.firestore {
 
     // Notifications collection
     match /notifications/{notificationId} {
-      allow read: if true;
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
       allow write: if (isSignedIn() && request.auth.uid == request.resource.data.userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Prescriptions / recipe collection
+    match /recipe/{reciepeId} {
+      // Doctors create prescriptions for patients and target pharmacies
+      allow create: if isSignedIn() && request.resource.data.doctorId == request.auth.uid;
+
+      // Reads allowed to doctor, patient, or destination pharmacy (and admins)
+      allow read: if isAdmin() ||
+        (isSignedIn() && (
+          resource.data.doctorId == request.auth.uid ||
+          resource.data.patientId == request.auth.uid ||
+          resource.data.pharmacyId == request.auth.uid
+        ));
+
+      // Updates only by issuing doctor (or admin) and immutable core references
+      // Doctor can update; pharmacy can update status only; IDs immutable
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        (
+          // doctor updating
+          (resource.data.doctorId == request.auth.uid &&
+           request.resource.data.patientId == resource.data.patientId &&
+           request.resource.data.doctorId == resource.data.doctorId &&
+           request.resource.data.pharmacyId == resource.data.pharmacyId)
+          ||
+          // pharmacy updating status only
+          (resource.data.pharmacyId == request.auth.uid &&
+           request.resource.data.patientId == resource.data.patientId &&
+           request.resource.data.doctorId == resource.data.doctorId &&
+           request.resource.data.pharmacyId == resource.data.pharmacyId &&
+           request.resource.data.status in ["accepted", "rejected"])
+        )
+      );
+
+      // No deletes except admin
       allow delete: if isAdmin();
     }
   }

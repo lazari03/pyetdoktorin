@@ -3,125 +3,58 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
-import { useInitializeAppointments } from '../../store/appointmentStore';
-import { useDI } from '@/context/DIContext';
 import { useAuth } from '@/context/AuthContext';
-import { getNavigationPaths, NavigationKey } from '@/store/navigationStore';
+import { useDI } from '@/context/DIContext';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
+import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 
-type NavItem = {
-  key: NavigationKey;
-  name: string;
-  href: string;
-};
+type NavItem = { name: string; href: string };
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+const adminNav: NavItem[] = [
+  { name: 'Dashboard', href: '/admin' },
+  { name: 'Users', href: '/admin/users' },
+  { name: 'Notifications', href: '/admin/notifications' },
+];
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
 
   const { role, loading, isAuthenticated, user } = useAuth();
-  const { fetchAppointmentsUseCase, logoutSessionUseCase, logoutServerUseCase } = useDI();
-  const initializeAppointments = useInitializeAppointments((userId: string, isDoctor: boolean) =>
-    fetchAppointmentsUseCase.execute(userId, isDoctor),
-  );
-
-  const initializedRef = useRef(false);
-  useEffect(() => {
-    if (!initializedRef.current && isAuthenticated && role && user && initializeAppointments) {
-      const isDoctor = role === 'doctor';
-      initializeAppointments(user.uid, isDoctor);
-      initializedRef.current = true;
-    }
-  }, [isAuthenticated, role, user, initializeAppointments]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js');
-    }
-  }, []);
-
+  const { logoutSessionUseCase, logoutServerUseCase } = useDI();
   const nav = useNavigationCoordinator();
+  const logout = useSessionStore((s) => s.logout);
+
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      nav.toLogin(pathname ?? undefined);
-    }
+    if (!loading && !isAuthenticated) nav.toLogin(pathname ?? undefined);
   }, [loading, isAuthenticated, pathname, nav]);
 
   useEffect(() => {
-    if (!loading && role === 'pharmacy' && !pathname?.startsWith('/pharmacy')) {
-      nav.pushPath('/pharmacy');
-    }
-  }, [loading, role, pathname, nav]);
-
-  // Centralized logout wiring
-  const logout = useSessionStore((s) => s.logout);
-  const handleLogoutClick = () => {
-    logout('manual', logoutSessionUseCase, logoutServerUseCase);
-    setProfileMenuOpen(false);
-  };
-
-  // Close profile menu on outside click
-  useEffect(() => {
     if (!profileMenuOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileMenuRef.current &&
-        event.target instanceof Node &&
-        !profileMenuRef.current.contains(event.target)
-      ) {
+    const handler = (e: MouseEvent) => {
+      if (profileMenuRef.current && e.target instanceof Node && !profileMenuRef.current.contains(e.target)) {
         setProfileMenuOpen(false);
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [profileMenuOpen]);
 
-  // Also close profile menu when route changes
-  useEffect(() => {
-    setProfileMenuOpen(false);
-  }, [pathname]);
+  useEffect(() => setProfileMenuOpen(false), [pathname]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center items-center min-h-screen" />;
+  if (!isAuthenticated || role !== 'admin') return <RedirectingModal show />;
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // If a pharmacy user hits /dashboard, push them to /pharmacy and stop rendering to avoid a stuck modal
-  if (role === 'pharmacy') {
-    nav.pushPath('/pharmacy');
-    return null;
-  }
-
-  if (!role) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg" />
-      </div>
-    );
-  }
-
-  const isAdminSection = pathname?.startsWith('/admin');
-  const navItems: NavItem[] = isAdminSection
-    ? [
-        { key: NavigationKey.Dashboard, name: 'dashboard', href: '/admin' },
-        { key: NavigationKey.Appointments, name: 'users', href: '/admin/users' },
-        { key: NavigationKey.AppointmentHistory, name: 'notifications', href: '/admin/notifications' },
-      ]
-    : getNavigationPaths(role);
+  const initials =
+    (user?.name || 'A')
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'AD';
 
   const handleNavClick = (href: string) => {
     setMobileMenuOpen(false);
@@ -129,40 +62,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     nav.pushPath(href);
   };
 
-  const displayName = user?.name || 'Profile';
-  const initials = displayName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const handleLogout = () => {
+    logout('manual', logoutSessionUseCase, logoutServerUseCase);
+    setProfileMenuOpen(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <MobileTopBar
         mobileMenuOpen={mobileMenuOpen}
-        onToggleMenu={() => setMobileMenuOpen((open) => !open)}
+        onToggleMenu={() => setMobileMenuOpen((o) => !o)}
         initials={initials}
-        onToggleProfile={() => setProfileMenuOpen((open) => !open)}
+        onToggleProfile={() => setProfileMenuOpen((o) => !o)}
       />
-      <MobileMenu
-        open={mobileMenuOpen}
-        items={navItems}
-        activePath={pathname ?? ''}
-        onNavigate={handleNavClick}
-      />
+      <MobileMenu open={mobileMenuOpen} items={adminNav} activePath={pathname ?? ''} onNavigate={handleNavClick} />
       <DesktopTopBar
-        items={navItems}
+        items={adminNav}
         activePath={pathname ?? ''}
         onNavigate={handleNavClick}
         initials={initials}
         profileMenuOpen={profileMenuOpen}
-        onToggleProfile={() => setProfileMenuOpen((open) => !open)}
-        onProfileSettings={() => {
-          setProfileMenuOpen(false);
-          nav.pushPath('/dashboard/myprofile');
-        }}
-        onLogout={handleLogoutClick}
+        onToggleProfile={() => setProfileMenuOpen((o) => !o)}
+        onProfileSettings={() => handleNavClick('/dashboard/myprofile')}
+        onLogout={handleLogout}
         profileMenuRef={profileMenuRef}
       />
       <main className="flex-1 pt-14 md:pt-0 px-2 sm:px-4 md:px-8 lg:px-12 py-4 md:py-6 lg:py-8">
@@ -185,17 +107,13 @@ function MobileTopBar({
 }) {
   return (
     <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4">
-      <button
-        onClick={onToggleMenu}
-        className="text-gray-800 hover:text-gray-900"
-        aria-label="Toggle navigation menu"
-      >
+      <button onClick={onToggleMenu} className="text-gray-800 hover:text-gray-900" aria-label="Toggle navigation menu">
         {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
       </button>
-      <span className="text-sm font-semibold text-gray-900">Dashboard</span>
+      <span className="text-sm font-semibold text-gray-900">Admin</span>
       <button
         onClick={onToggleProfile}
-        className="ml-3 h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
+        className="ml-3 h-8 w-8 rounded-full bg-purple-600 text-xs font-semibold text-white flex items-center justify-center"
         aria-label="Open profile menu"
       >
         {initials}
@@ -225,9 +143,7 @@ function MobileMenu({
             <button
               key={item.href}
               onClick={() => onNavigate(item.href)}
-              className={`px-4 py-2 text-left text-sm font-medium ${
-                active ? 'text-purple-600 bg-purple-50' : 'text-gray-700 hover:bg-gray-50'
-              }`}
+              className={`px-4 py-3 text-left text-sm ${active ? 'text-purple-700 font-semibold' : 'text-gray-800'}`}
             >
               {item.name}
             </button>

@@ -50,38 +50,39 @@ interface MyProfileFormProps {
 const ProfileImage = React.memo<{
   previewUrl: string | null;
   profilePicture?: string;
-  role: string;
   uploading: boolean;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   selectedFileName: string;
-}>(({ previewUrl, profilePicture, role, uploading, onFileChange, selectedFileName }) => {
+}>(({ previewUrl, profilePicture, uploading, onFileChange, selectedFileName }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col items-center w-full md:w-1/3 mb-6 md:mb-0">
+    <div className="flex flex-col items-center w-full md:w-40 mb-4 md:mb-0 gap-3">
       <Image
         src={previewUrl || profilePicture || "/img/profile_placeholder.png"}
         alt="Profile Preview"
-        width={96}
-        height={96}
-        className="w-24 h-24 rounded-full object-cover border"
+        width={88}
+        height={88}
+        className="w-22 h-22 rounded-full object-cover border border-purple-100 shadow-sm"
         style={{ objectFit: 'cover' }}
         priority
       />
-      {role === 'doctor' && (
-        <label className={`btn btn-primary cursor-pointer mt-2 ${uploading ? 'loading' : ''}`}>
-          {uploading ? t('uploading') : t('chooseProfilePicture') || 'Choose Profile Picture'}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={onFileChange}
-            className="hidden"
-            disabled={uploading}
-          />
-        </label>
-      )}
+      <label
+        className={`inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white px-4 py-2 text-xs font-semibold text-purple-700 shadow-sm hover:bg-purple-50 cursor-pointer transition ${
+          uploading ? 'opacity-60 cursor-not-allowed' : ''
+        }`}
+      >
+        {uploading ? (t('uploading') || 'Uploading...') : (t('chooseProfilePicture') || 'Choose Profile Picture')}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={onFileChange}
+          className="hidden"
+          disabled={uploading}
+        />
+      </label>
       {selectedFileName && (
-        <span className="mt-2 text-xs text-gray-600">
+        <span className="text-[11px] text-gray-500">
           {t('selectedFile') || 'Selected File'}: {selectedFileName}
         </span>
       )}
@@ -200,37 +201,16 @@ const MyProfileForm = ({
   }, [onProfilePictureChange]);
 
   return (
-    <form onSubmit={handleSubmit} className="w-full space-y-6">
-      <div className="flex flex-col md:flex-row items-start gap-8">
-        {/* Avatar on the left */}
-        <div className="flex flex-col items-center w-full md:w-1/3 mb-6 md:mb-0">
-          <Image
-            src={previewUrl || formData.profilePicture || "/img/profile_placeholder.png"}
-            alt="Profile Preview"
-            width={96}
-            height={96}
-            className="w-24 h-24 rounded-full object-cover border"
-            style={{ objectFit: 'cover' }}
-            priority
-          />
-          {role === 'doctor' && (
-            <label className={`btn btn-primary cursor-pointer mt-2 ${uploading ? 'loading' : ''}`}>
-              {uploading ? t('uploading') : t('chooseProfilePicture') || 'Choose Profile Picture'}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-                disabled={uploading}
-              />
-            </label>
-          )}
-          {selectedFileName && (
-            <span className="mt-2 text-xs text-gray-600">{t('selectedFile') || 'Selected File'}: {selectedFileName}</span>
-          )}
-        </div>
-        {/* Fields on the right */}
-        <div className="flex-1 w-full">
+    <form onSubmit={handleSubmit} className="w-full space-y-5">
+      <div className="flex flex-col md:flex-row gap-6">
+        <ProfileImage
+          previewUrl={previewUrl}
+          profilePicture={formData.profilePicture}
+          uploading={uploading}
+          onFileChange={handleFileChange}
+          selectedFileName={selectedFileName}
+        />
+        <div className="flex-1 w-full space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{t('name') || 'Name'}</label>

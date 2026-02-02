@@ -9,13 +9,15 @@ import ProfileWarning from "@/presentation/components/ProfileWarning/ProfileWarn
 import AppointmentsTable from "@/presentation/components/AppointmentsTable/AppointmentsTable";
 import Link from "next/link";
 import { HeroCard } from "@/presentation/components/dashboard/HeroCard";
-import { ActivityCard } from "@/presentation/components/dashboard/ActivityCard";
 import { RecentDoctorsList, RecentDoctor } from "@/presentation/components/dashboard/RecentDoctorsList";
 import { CheckupReminderCard } from "@/presentation/components/dashboard/CheckupReminderCard";
+import { NotificationCard } from "@/presentation/components/dashboard/NotificationCard";
+import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user, role, loading: authLoading } = useAuth();
+  const nav = useNavigationCoordinator();
   const authContext: DashboardUserContext = {
   userId: user?.uid ?? null,
   role: role ?? null,
@@ -35,7 +37,7 @@ export default function Dashboard() {
 
   if (vm.authLoading || vm.loading) return <Loader />;
 
-  const upcoming = vm.filteredAppointments.slice(0, 3);
+  const upcoming = vm.filteredAppointments.filter((a) => !vm.isAppointmentPast(a)).slice(0, 3);
   const heroAppointment = upcoming[0];
   const recentDoctorsMap = vm.filteredAppointments
     .filter((a) => a.doctorId)
@@ -61,23 +63,44 @@ export default function Dashboard() {
         <ProfileWarning show={vm.profileIncomplete} />
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <HeroCard
-              title={heroAppointment?.doctorName || "Your next consultation"}
-              subtitle={heroAppointment?.appointmentType || "Stay prepared for your upcoming session"}
-              helper={`Consultation • ${heroAppointment?.preferredDate ?? "Today"}`}
-              onJoin={() => heroAppointment && handleJoinCall(heroAppointment.id)}
-            />
+            {heroAppointment ? (
+              <HeroCard
+                title={heroAppointment.doctorName || t("yourNextConsultation") || "Your next consultation"}
+                subtitle={heroAppointment.appointmentType || t("stayPrepared") || "Stay prepared for your upcoming session"}
+                helper={`${t("consultation") || "Consultation"} • ${heroAppointment.preferredDate ?? (t("today") || "Today")}`}
+                onJoin={() => heroAppointment && handleJoinCall(heroAppointment.id)}
+                onPay={
+                  heroAppointment && role === "patient" && !heroAppointment.isPaid
+                    ? () => {
+                        const amount = Number.parseFloat(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || "");
+                        const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 13;
+                        vm.handlePayNow(heroAppointment.id, safeAmount);
+                      }
+                    : undefined
+                }
+                isPaid={heroAppointment.isPaid}
+                onViewProfile={
+                  heroAppointment.doctorId
+                    ? () => nav.pushPath(`/doctor/${heroAppointment.doctorId}`)
+                    : undefined
+                }
+                ctaLabel={t("joinNow") || "Join now"}
+                payLabel={t("payNow") || "Pay now"}
+                profileLabel={t("viewDoctor") || "View doctor"}
+              />
+            ) : (
+              <HeroCard
+                title={t("noUpcomingTitle") || "When was your last visit?"}
+                subtitle={t("noUpcomingSubtitle") || "Stay on top of your health—book a quick consultation now."}
+                helper={t("noUpcomingHelper") || "Secure telemedicine on alodoktor.al"}
+                onJoin={() => nav.pushPath("/dashboard/new-appointment")}
+                ctaLabel={t("bookNow") || "Book now"}
+              />
+            )}
           </div>
-          <ActivityCard
-            score={69}
-            stats={[
-              { label: "Kcal", value: "1,236" },
-              { label: "Steps", value: "8,152" },
-              { label: "Sleep", value: "7.4h" },
-            ]}
-            note="Nikolas doesn’t sleep much and has gained weight..."
-            actionLabel="Book sleep specialist"
-          />
+          <div className="lg:col-span-1">
+            <NotificationCard appointments={vm.filteredAppointments} />
+          </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">

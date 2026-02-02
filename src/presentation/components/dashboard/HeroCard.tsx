@@ -1,5 +1,4 @@
-import { PhoneIcon, VideoCameraIcon, MicrophoneIcon } from "@heroicons/react/24/outline";
-import { PhoneXMarkIcon } from "@heroicons/react/24/solid";
+import { PhoneIcon, CreditCardIcon, UserIcon } from "@heroicons/react/24/outline";
 import React from "react";
 
 type HeroCardProps = {
@@ -7,9 +6,26 @@ type HeroCardProps = {
   subtitle?: string;
   helper?: string;
   onJoin?: () => void;
+  onPay?: () => void;
+  onViewProfile?: () => void;
+  isPaid?: boolean;
+  ctaLabel?: string;
+  payLabel?: string;
+  profileLabel?: string;
 };
 
-export function HeroCard({ title, subtitle, helper, onJoin }: HeroCardProps) {
+export function HeroCard({
+  title,
+  subtitle,
+  helper,
+  onJoin,
+  onPay,
+  onViewProfile,
+  isPaid,
+  ctaLabel = "Join now",
+  payLabel = "Pay now",
+  profileLabel = "View doctor",
+}: HeroCardProps) {
   return (
     <section className="bg-white rounded-3xl shadow-lg overflow-hidden border border-purple-50">
       <div className="relative min-h-[220px] flex items-end">
@@ -21,22 +37,34 @@ export function HeroCard({ title, subtitle, helper, onJoin }: HeroCardProps) {
             <h1 className="text-3xl font-semibold leading-tight drop-shadow">{title}</h1>
             {subtitle && <p className="text-sm text-white/80">{subtitle}</p>}
           </div>
-          <div className="flex items-center gap-3">
-            <button className="h-11 w-11 rounded-full bg-white/90 text-purple-700 shadow hover:bg-white transition">
-              <VideoCameraIcon className="h-5 w-5 mx-auto" />
-            </button>
-            <button className="h-11 w-11 rounded-full bg-white/90 text-purple-700 shadow hover:bg-white transition">
-              <MicrophoneIcon className="h-5 w-5 mx-auto" />
-            </button>
-            <button
-              onClick={onJoin}
-              className="h-11 w-11 rounded-full border border-white/80 text-white hover:bg-white hover:text-purple-700 transition"
-            >
-              <PhoneIcon className="h-5 w-5 mx-auto" />
-            </button>
-            <button className="h-11 w-11 rounded-full bg-red-500 text-white shadow hover:bg-red-600 transition">
-              <PhoneXMarkIcon className="h-5 w-5 mx-auto" />
-            </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {onJoin && (
+              <button
+                onClick={onJoin}
+                className="inline-flex items-center gap-2 rounded-full bg-white text-purple-700 px-4 py-2 text-sm font-semibold shadow hover:bg-purple-50 transition"
+              >
+                <PhoneIcon className="h-4 w-4" />
+                {ctaLabel}
+              </button>
+            )}
+            {!isPaid && onPay && (
+              <button
+                onClick={onPay}
+                className="inline-flex items-center gap-2 rounded-full border border-white/80 text-white px-4 py-2 text-sm font-semibold hover:bg-white hover:text-purple-700 transition"
+              >
+                <CreditCardIcon className="h-4 w-4" />
+                {payLabel}
+              </button>
+            )}
+            {onViewProfile && (
+              <button
+                onClick={onViewProfile}
+                className="inline-flex items-center gap-2 rounded-full bg-white/20 text-white px-4 py-2 text-sm font-semibold hover:bg-white/30 transition"
+              >
+                <UserIcon className="h-4 w-4" />
+                {profileLabel}
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -44,7 +44,7 @@ export function ProfileLayout(props: Props) {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen py-6 px-4 bg-gradient-to-br from-purple-50 via-white to-purple-100">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <header className="backdrop-blur flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -94,7 +94,9 @@ export function ProfileLayout(props: Props) {
                 <p className="text-[11px] uppercase tracking-wide text-gray-600 font-semibold">
                   {t("recentLogin") ?? "Recent login"}
                 </p>
-                <p className="text-sm text-gray-900">{t("recentLoginInfo") ?? new Date().toLocaleString()}</p>
+                <p className="text-sm text-gray-900">
+                  {t("recentLoginInfo") ?? new Date().toISOString()}
+                </p>
               </div>
             </div>
           </aside>

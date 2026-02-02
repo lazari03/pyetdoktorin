@@ -9,6 +9,10 @@ export function useDashboardActions() {
   const { setAuthStatus, generateRoomCodeAndStore } = useVideoStore();
   const { handlePayNow: storeHandlePayNow } = useAppointmentStore();
   const { handlePayNowUseCase } = useDI();
+  const clearRoomCode = () => {
+    localStorage.removeItem('videoSessionRoomCode');
+    localStorage.removeItem('videoSessionUserName');
+  };
 
   // Join call using Zustand store and localStorage hydration
   const handleJoinCall = useCallback(async (appointmentId: string) => {
@@ -32,6 +36,9 @@ export function useDashboardActions() {
       window.location.href = '/dashboard/appointments/video-session';
     } catch (error) {
       alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      // set a short TTL / cleanup
+      setTimeout(clearRoomCode, 10 * 60 * 1000);
     }
   }, [user, setAuthStatus, generateRoomCodeAndStore]);
 
