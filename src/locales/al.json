@@ -48,6 +48,7 @@
   "recaptchaNotReady": "reCAPTCHA nuk është gati",
   "recaptchaFailed": "reCAPTCHA dështoi. Ju lutem provoni përsëri.",
   "authTokenWarning": "Kujdes: Tokeni i autentikimit nuk u vendos siç duhet. Provoni përsëri ose kontaktoni mbështetjen.",
+  "sessionExpired": "Seanca juaj ka skaduar. Ju lutem hyni përsëri.",
   "unknownError": "Ndodhi një gabim i panjohur",
   "about": "Rreth",
   "contact": "Kontakt",

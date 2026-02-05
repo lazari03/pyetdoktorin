@@ -42,6 +42,7 @@
   "recaptchaNotReady": "reCAPTCHA not ready",
   "recaptchaFailed": "reCAPTCHA failed. Please try again.",
   "authTokenWarning": "Warning: Authentication token not set properly. Try again or contact support.",
+  "sessionExpired": "Your session has expired. Please log in again.",
   "unknownError": "An unknown error occurred",
   "about": "About",
   "contact": "Contact",

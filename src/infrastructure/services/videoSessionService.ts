@@ -8,6 +8,7 @@ export class VideoSessionService implements IVideoSessionService {
     room_id: string;
     role: string;
     template_id?: string;
+    idToken: string;
   }): Promise<GenerateRoomCodeAndTokenResponse> {
     return generateRoomCodeAndToken(params);
   }

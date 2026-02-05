@@ -8,6 +8,7 @@ import { useDI } from "@/context/DIContext";
 import { Appointment } from "@/domain/entities/Appointment";
 import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 import { useTranslation } from "react-i18next";
+import { auth } from "@/config/firebaseconfig";
 
 /**
  * View model result interface for appointments page
@@ -87,33 +88,36 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
           return;
         }
 
-        const patientName = appointment.patientName || user.name || "Guest";
         const role = isDoctor ? "doctor" : "patient";
-        let roomCode = appointment.roomCode;
-        let roomId = appointment.roomId;
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          setShowRedirecting(false);
+          alert(t("sessionExpired") || "Your session has expired. Please log in again.");
+          return;
+        }
+        const idToken = await currentUser.getIdToken();
 
-        // Generate room code if missing
-        if (!roomCode || !roomId) {
-          const data = await generateRoomCodeUseCase.execute({
-            user_id: user.uid,
-            room_id: appointmentId,
-            role,
-          });
-          roomCode = data.roomCode;
-          roomId = data.room_id;
+        const data = await generateRoomCodeUseCase.execute({
+          user_id: user.uid,
+          room_id: appointmentId,
+          role,
+          idToken,
+        });
 
-          // Update appointment in Firestore
-          if (roomCode && roomId) {
-            await updateAppointmentUseCase.execute(appointmentId, { roomCode, roomId });
-          }
+        const roomCode = data.roomCode || appointment.roomCode;
+        const roomId = data.room_id || appointment.roomId;
+        const sessionToken = data.sessionToken;
+
+        if (!roomCode || !sessionToken) {
+          throw new Error("Missing room information from server");
         }
 
-        if (!roomCode) throw new Error("No roomCode available");
+        if ((!appointment.roomCode || !appointment.roomId) && roomCode && roomId) {
+          await updateAppointmentUseCase.execute(appointmentId, { roomCode, roomId });
+        }
 
-        // Store session data and redirect
-        window.localStorage.setItem("videoSessionRoomCode", roomCode);
-        window.localStorage.setItem("videoSessionUserName", patientName);
-        window.location.href = "/dashboard/appointments/video-session";
+        const joinUrl = `/dashboard/appointments/video-session?session=${encodeURIComponent(sessionToken)}`;
+        window.location.href = joinUrl;
       } catch {
         setShowRedirecting(false);
         alert("An error occurred. Please try again.");

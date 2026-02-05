@@ -155,13 +155,6 @@ export default function PayPage() {
             <p className="text-xs font-semibold text-gray-700 mb-2">{t('payWithPaypal')}</p>
             <div id="paypal-button-container" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-gray-700 mb-2">{t('payWithCard')}</p>
-            <div id="card-button-container" />
-            {cardEligible === false && (
-              <p className="text-[11px] text-red-500 mt-1">{t('cardUnavailable')}</p>
-            )}
-          </div>
         </div>
 
         {status === 'loading' && (
