@@ -1,4 +1,5 @@
 import { Appointment } from "@/domain/entities/Appointment";
+import { UserRole } from "@/domain/entities/UserRole";
 
 enum AppointmentActionVariant {
 	Finished = "finished",
@@ -17,7 +18,7 @@ const AppointmentActionLabels: Record<AppointmentActionVariant, string> = {
 export function getAppointmentAction(
 	appointment: Appointment,
 	isAppointmentPast: (appointment: Appointment) => boolean,
-	role?: string
+	role?: UserRole
 ): { label: string; disabled: boolean; variant: string } {
 	if (isAppointmentPast(appointment)) {
 		return {
@@ -26,8 +27,8 @@ export function getAppointmentAction(
 			variant: AppointmentActionVariant.Finished
 		};
 	}
-	if (role === 'doctor') {
-		if (appointment.status === 'accepted') {
+	if (role === UserRole.Doctor) {
+		if (appointment.isPaid) {
 			return {
 				label: AppointmentActionLabels[AppointmentActionVariant.Join],
 				disabled: false,
@@ -54,7 +55,7 @@ export function getAppointmentAction(
 			variant: AppointmentActionVariant.None
 		};
 	}
-	if (!appointment.isPaid && appointment.status === "accepted" && role !== 'doctor') {
+	if (!appointment.isPaid && appointment.status === "accepted") {
 		return {
 			label: AppointmentActionLabels[AppointmentActionVariant.Pay],
 			disabled: false,

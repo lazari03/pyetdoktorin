@@ -31,9 +31,9 @@ export async function getDoctorAppointmentCount(doctorId: string): Promise<numbe
   return apps.length;
 }
 
-export async function createAdminUser(payload: { name: string; surname: string; email: string; password: string }): Promise<User> {
-  const res = await apiCreateAdmin(payload);
-  return { id: res.id, email: payload.email, role: UserRole.Admin } as User;
+export async function createAdminUser(payload: { name: string; surname: string; email: string; password: string; role: UserRole; phone?: string }): Promise<User> {
+  const res = await apiCreateAdmin({ ...payload });
+  return { id: res.id, email: payload.email, role: payload.role } as User;
 }
 
 export async function resetUserPassword(userId: string): Promise<void> {

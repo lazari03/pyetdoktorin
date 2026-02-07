@@ -1,6 +1,7 @@
 
 "use client";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardViewModel, DashboardUserContext } from "@/presentation/view-models/userDashboardViewModel";
 import Loader from "@/presentation/components/Loader/Loader";
@@ -10,9 +11,78 @@ import AppointmentsTable from "@/presentation/components/AppointmentsTable/Appoi
 import Link from "next/link";
 import { HeroCard } from "@/presentation/components/dashboard/HeroCard";
 import { RecentDoctorsList, RecentDoctor } from "@/presentation/components/dashboard/RecentDoctorsList";
+import { RecentPatientsList, RecentPatient } from "@/presentation/components/dashboard/RecentPatientsList";
 import { CheckupReminderCard } from "@/presentation/components/dashboard/CheckupReminderCard";
+import { DoctorEarningsCard, MonthlyEarning } from "@/presentation/components/dashboard/DoctorEarningsCard";
 import { NotificationCard } from "@/presentation/components/dashboard/NotificationCard";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
+import { UserRole } from "@/domain/entities/UserRole";
+
+// Helper function to calculate monthly earnings
+function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: UserRole) {
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  
+  const payoutPercentage = 0.70; // 70% to doctor
+  const appointmentAmount = 13; // $13 per appointment
+  
+  // Filter completed/paid appointments for this doctor
+  const doctorAppointments = appointments.filter(a => 
+    a.doctorId === userId && 
+    a.status?.toLowerCase() === "completed" && 
+    a.isPaid
+  );
+  
+  // Current month earnings
+  const currentMonthAppointments = doctorAppointments.filter(a => {
+    const appDate = new Date(a.preferredDate);
+    return appDate.getMonth() === currentMonth && appDate.getFullYear() === currentYear;
+  });
+  
+  const currentMonthEarnings = currentMonthAppointments.length * appointmentAmount * payoutPercentage;
+  
+  // Previous month earnings
+  const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+  const previousMonthAppointments = doctorAppointments.filter(a => {
+    const appDate = new Date(a.preferredDate);
+    return appDate.getMonth() === prevMonth && appDate.getFullYear() === prevYear;
+  });
+  
+  const previousMonthEarnings = previousMonthAppointments.length * appointmentAmount * payoutPercentage;
+  
+  // Build monthly history (last 6 months)
+  const monthlyHistory: MonthlyEarning[] = [];
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  
+  for (let i = 0; i < 6; i++) {
+    const monthIndex = currentMonth - i < 0 ? 12 + (currentMonth - i) : currentMonth - i;
+    const year = currentMonth - i < 0 ? currentYear - 1 : currentYear;
+    
+    const monthApps = doctorAppointments.filter(a => {
+      const appDate = new Date(a.preferredDate);
+      return appDate.getMonth() === monthIndex && appDate.getFullYear() === year;
+    });
+    
+    monthlyHistory.push({
+      month: monthNames[monthIndex],
+      year,
+      amount: monthApps.length * appointmentAmount * payoutPercentage,
+      appointmentCount: monthApps.length
+    });
+  }
+  
+  return {
+    currentMonthEarnings,
+    currentMonthAppointments: currentMonthAppointments.length,
+    previousMonthEarnings,
+    monthlyHistory
+  };
+}
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -24,6 +94,19 @@ export default function Dashboard() {
   authLoading,
   };
   const vm = useDashboardViewModel(authContext);
+  const [pendingPaidId, setPendingPaidId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const startedAt = Number(window.sessionStorage.getItem("pendingPaidStartedAt") || "0");
+      const isFresh = startedAt > 0 && Date.now() - startedAt < 10 * 60 * 1000;
+      const storedId = window.sessionStorage.getItem("pendingPaidAppointmentId");
+      setPendingPaidId(isFresh && storedId ? storedId : null);
+    } catch {
+      setPendingPaidId(null);
+    }
+  }, []);
 
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
@@ -35,12 +118,18 @@ export default function Dashboard() {
     }
   };
 
-  if (vm.authLoading || vm.loading) return <Loader />;
+  if (vm.authLoading || vm.loading || !vm.role) return <Loader />;
 
   const upcoming = vm.filteredAppointments.filter((a) => !vm.isAppointmentPast(a)).slice(0, 3);
   const heroAppointment = upcoming[0];
+  const heroIsPaid = Boolean(
+    heroAppointment &&
+    (heroAppointment.isPaid || (pendingPaidId && heroAppointment.id === pendingPaidId))
+  );
+  
+  // Recent Doctors (for patients)
   const recentDoctorsMap = vm.filteredAppointments
-    .filter((a) => a.doctorId)
+    .filter((a) => a.doctorId && role !== UserRole.Doctor)
     .map(
       (a): RecentDoctor => ({
         id: a.doctorId,
@@ -49,12 +138,35 @@ export default function Dashboard() {
         lastVisit: a.preferredDate,
       })
     )
-    .filter((d) => d.name) // ensure name exists
+    .filter((d) => d.name)
     .reduce<Record<string, RecentDoctor>>((acc, doc) => {
       if (!acc[doc.id] || (acc[doc.id].lastVisit ?? "") < (doc.lastVisit ?? "")) acc[doc.id] = doc;
       return acc;
     }, {});
   const recentDoctorList = Object.values(recentDoctorsMap).slice(0, 3);
+  
+  // Recent Patients (for doctors)
+  const recentPatientsMap = vm.filteredAppointments
+    .filter((a) => a.patientId && role === UserRole.Doctor)
+    .map(
+      (a): RecentPatient => ({
+        id: a.patientId,
+        name: a.patientName || "Patient",
+        appointmentType: a.appointmentType,
+        lastVisit: a.preferredDate,
+      })
+    )
+    .filter((p) => p.name)
+    .reduce<Record<string, RecentPatient>>((acc, patient) => {
+      if (!acc[patient.id] || (acc[patient.id].lastVisit ?? "") < (patient.lastVisit ?? "")) acc[patient.id] = patient;
+      return acc;
+    }, {});
+  const recentPatientList = Object.values(recentPatientsMap).slice(0, 3);
+  
+  // Calculate earnings for doctors
+  const earningsData = role === UserRole.Doctor && user?.uid
+    ? calculateMonthlyEarnings(vm.filteredAppointments, user.uid, role)
+    : null;
 
   return (
     <div className="min-h-screen">
@@ -65,12 +177,16 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             {heroAppointment ? (
               <HeroCard
-                title={heroAppointment.doctorName || t("yourNextConsultation") || "Your next consultation"}
+                title={
+                  role === UserRole.Doctor
+                    ? heroAppointment.patientName || t("yourNextConsultation") || "Your next consultation"
+                    : heroAppointment.doctorName || t("yourNextConsultation") || "Your next consultation"
+                }
                 subtitle={heroAppointment.appointmentType || t("stayPrepared") || "Stay prepared for your upcoming session"}
                 helper={`${t("consultation") || "Consultation"} • ${heroAppointment.preferredDate ?? (t("today") || "Today")}`}
-                onJoin={() => heroAppointment && handleJoinCall(heroAppointment.id)}
+                onJoin={heroAppointment && heroIsPaid ? () => handleJoinCall(heroAppointment.id) : undefined}
                 onPay={
-                  heroAppointment && role === "patient" && !heroAppointment.isPaid
+                  role === UserRole.Patient && heroAppointment && !heroIsPaid
                     ? () => {
                         const amount = Number.parseFloat(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || "");
                         const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 13;
@@ -78,9 +194,9 @@ export default function Dashboard() {
                       }
                     : undefined
                 }
-                isPaid={heroAppointment.isPaid}
+                isPaid={heroIsPaid}
                 onViewProfile={
-                  heroAppointment.doctorId
+                  role === UserRole.Patient && heroAppointment.doctorId
                     ? () => nav.pushPath(`/doctor/${heroAppointment.doctorId}`)
                     : undefined
                 }
@@ -90,11 +206,19 @@ export default function Dashboard() {
               />
             ) : (
               <HeroCard
-                title={t("noUpcomingTitle") || "When was your last visit?"}
-                subtitle={t("noUpcomingSubtitle") || "Stay on top of your health—book a quick consultation now."}
+                title={
+                  role === UserRole.Doctor
+                    ? t("noUpcomingDoctorTitle") || "No upcoming consultations"
+                    : t("noUpcomingTitle") || "When was your last visit?"
+                }
+                subtitle={
+                  role === UserRole.Doctor
+                    ? t("noUpcomingDoctorSubtitle") || "Your schedule is clear for now."
+                    : t("noUpcomingSubtitle") || "Stay on top of your health—book a quick consultation now."
+                }
                 helper={t("noUpcomingHelper") || "Secure telemedicine on alodoktor.al"}
-                onJoin={() => nav.pushPath("/dashboard/new-appointment")}
-                ctaLabel={t("bookNow") || "Book now"}
+                onJoin={role === UserRole.Doctor ? undefined : () => nav.pushPath("/dashboard/new-appointment")}
+                ctaLabel={role === UserRole.Doctor ? undefined : (t("bookNow") || "Book now")}
               />
             )}
           </div>
@@ -104,16 +228,36 @@ export default function Dashboard() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
+          {/* Recent Doctors/Patients Section */}
           <section className="bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-gray-900">{t("recentDoctors") ?? "Recent doctors"}</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {role === UserRole.Doctor 
+                  ? (t("recentPatients") ?? "Recent Patients")
+                  : (t("recentDoctors") ?? "Recent doctors")
+                }
+              </p>
             </div>
             <div className="flex-1">
-              <RecentDoctorsList doctors={recentDoctorList} />
+              {role === UserRole.Doctor ? (
+                <RecentPatientsList patients={recentPatientList} />
+              ) : (
+                <RecentDoctorsList doctors={recentDoctorList} />
+              )}
             </div>
           </section>
 
-          <CheckupReminderCard />
+          {/* Checkup Reminder (patients) or Earnings (doctors) */}
+          {role === UserRole.Doctor && earningsData ? (
+            <DoctorEarningsCard
+              currentMonthEarnings={earningsData.currentMonthEarnings}
+              currentMonthAppointments={earningsData.currentMonthAppointments}
+              previousMonthEarnings={earningsData.previousMonthEarnings}
+              monthlyHistory={earningsData.monthlyHistory}
+            />
+          ) : (
+            <CheckupReminderCard />
+          )}
 
           <section className="bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col gap-4">
             <div className="flex items-start justify-between">
@@ -157,7 +301,7 @@ export default function Dashboard() {
           </div>
           <AppointmentsTable
             appointments={vm.filteredAppointments}
-            role={vm.role || ""}
+            role={vm.role}
             isAppointmentPast={vm.isAppointmentPast}
             handleJoinCall={handleJoinCall}
             handlePayNow={vm.handlePayNow}

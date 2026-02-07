@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Doctor } from '@/domain/entities/Doctor';
 import { useEffect } from 'react';
 import { useDI } from '@/context/DIContext';
+import { z } from '@/config/zIndex';
 
 interface DoctorSearchProps {
 	onDoctorSelect?: (doctor: Doctor) => void;
@@ -100,7 +101,7 @@ export default function DoctorSearch({ onDoctorSelect }: DoctorSearchProps) {
 			{error && <p className="text-red-500 text-center py-2">{error}</p>}
 
 			{filteredDoctors.length > 0 && (
-				<ul className="mt-3 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto relative z-10">
+				<ul className={`mt-3 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto relative ${z.dropdown}`}>
 					{filteredDoctors.map((doctor) => (
 						<li
 							key={doctor.id}

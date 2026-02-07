@@ -4,7 +4,9 @@ import { useAdminStore } from "@/store/adminStore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "./ToastProvider";
 import { UserRole } from "@/domain/entities/UserRole";
-import { useDI } from "@/context/DIContext";
+import { useClinicBookings } from "@/presentation/hooks/useClinicBookings";
+import { useTranslation } from "react-i18next";
+import "@i18n";
 
 export function UserSidepanel() {
   const {
@@ -18,42 +20,37 @@ export function UserSidepanel() {
     updateSelected,
     updateDoctorProfile,
     loadSelectedDetails,
+    approveDoctor,
+    resetPassword,
   } = useAdminStore();
-  const {
-    getAdminUserByIdUseCase,
-    getAdminDoctorProfileUseCase,
-    updateAdminUserUseCase,
-    updateAdminDoctorProfileUseCase,
-    approveDoctorUseCase,
-    deleteUserAccountUseCase,
-    resetAdminUserPasswordUseCase,
-  } = useDI();
 
   const user = useMemo(() => users.find(u => u.id === selectedUserId) ?? null, [users, selectedUserId]) as (typeof users[number] & { approvalStatus?: 'pending' | 'approved' }) | null;
   const [resetLink, setResetLink] = useState<string | null>(null);
   const { showToast } = useToast();
-  const [local, setLocal] = useState<{ name?: string; surname?: string; email?: string; role?: UserRole; specialization?: string; bio?: string; specializations?: string[] }>({});
+  const { t } = useTranslation();
+  const [local, setLocal] = useState<{ name?: string; surname?: string; email?: string; role?: UserRole; specialization?: string; bio?: string; specializations?: string[]; patientNotes?: string; allergies?: string; chronicConditions?: string }>({});
   const panelRef = useRef<HTMLElement | null>(null);
+  const { bookings: patientBookings, loading: bookingsLoading } = useClinicBookings({ patientId: user && user.role === UserRole.Patient ? user.id : undefined });
 
   useEffect(() => {
     if (selectedUserId) {
-      loadSelectedDetails(
-        getAdminUserByIdUseCase.execute.bind(getAdminUserByIdUseCase),
-        getAdminDoctorProfileUseCase.execute.bind(getAdminDoctorProfileUseCase)
-      );
+      loadSelectedDetails();
     }
-  }, [selectedUserId, loadSelectedDetails, getAdminUserByIdUseCase, getAdminDoctorProfileUseCase]);
+  }, [selectedUserId, loadSelectedDetails]);
   useEffect(() => {
     if (user) {
-      setLocal({
-        name: user.name,
-        surname: user.surname,
-        email: user.email,
-        role: (user.role as UserRole) ?? undefined,
-        specialization: user.specialization,
-        bio: user.bio,
-        specializations: user.specializations,
-      });
+        setLocal({
+          name: user.name,
+          surname: user.surname,
+          email: user.email,
+          role: (user.role as UserRole) ?? undefined,
+          specialization: user.specialization,
+          bio: user.bio,
+          specializations: user.specializations,
+          patientNotes: user.patientNotes,
+          allergies: user.allergies,
+          chronicConditions: user.chronicConditions,
+        });
     }
   }, [user]);
 
@@ -77,13 +74,19 @@ export function UserSidepanel() {
   const save = async () => {
     try {
       await updateSelected(
-        { name: local.name, surname: local.surname, role: local.role, email: local.email },
-        updateAdminUserUseCase.execute.bind(updateAdminUserUseCase)
+        {
+          name: local.name,
+          surname: local.surname,
+          role: local.role,
+          email: local.email,
+          patientNotes: local.patientNotes,
+          allergies: local.allergies,
+          chronicConditions: local.chronicConditions,
+        }
       );
       if (local.role === UserRole.Doctor) {
         await updateDoctorProfile(
-          { specialization: local.specialization, bio: local.bio, specializations: local.specializations },
-          updateAdminDoctorProfileUseCase.execute.bind(updateAdminDoctorProfileUseCase)
+          { specialization: local.specialization, bio: local.bio, specializations: local.specializations }
         );
       }
       showToast('Profile updated', 'success');
@@ -95,10 +98,7 @@ export function UserSidepanel() {
   const approve = async () => {
     if (!user) return;
     try {
-      await useAdminStore.getState().approveDoctor(
-        user.id,
-        approveDoctorUseCase.execute.bind(approveDoctorUseCase)
-      );
+      await approveDoctor(user.id);
       showToast('Doctor approved', 'success');
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Failed to approve doctor', 'error');
@@ -108,9 +108,10 @@ export function UserSidepanel() {
   const generateReset = async () => {
     if (!user) return;
     try {
-      const res = await resetAdminUserPasswordUseCase.execute(user.id);
-      setResetLink(res.resetLink || null);
-      showToast(res.resetLink ? 'Password reset link generated' : 'Password reset requested', res.resetLink ? 'success' : 'info');
+      const res = await resetPassword(user.id);
+      const link = res?.resetLink ?? null;
+      setResetLink(link);
+      showToast(link ? 'Password reset link generated' : 'Password reset requested', link ? 'success' : 'info');
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Failed to generate reset link', 'error');
     }
@@ -140,7 +141,7 @@ export function UserSidepanel() {
 
         {/* Body */}
         <div className="px-4 py-4 overflow-y-auto h-[calc(100vh-60px)]">
-          {error && <div className="mb-3 rounded-md bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
+        {error && <div className="mb-3 rounded-md bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
           {user && user.role === UserRole.Doctor && user.approvalStatus === 'pending' && (
             <div className="mb-3 flex items-center justify-between">
               <div className="text-sm">
@@ -205,12 +206,70 @@ export function UserSidepanel() {
                 </div>
               )}
 
+              {local.role === UserRole.Patient && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-gray-700">{t('patientDetails') || 'Patient details'}</h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="block sm:col-span-2">
+                      <span className="text-sm text-gray-600">{t('notes') || 'Notes'}</span>
+                      <textarea
+                        className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                        rows={3}
+                        value={local.patientNotes ?? ''}
+                        onChange={e => setLocal({ ...local, patientNotes: e.target.value })}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-gray-600">{t('allergies') || 'Allergies'}</span>
+                      <input
+                        className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                        value={local.allergies ?? ''}
+                        onChange={e => setLocal({ ...local, allergies: e.target.value })}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-gray-600">{t('chronicConditions') || 'Chronic conditions'}</span>
+                      <input
+                        className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                        value={local.chronicConditions ?? ''}
+                        onChange={e => setLocal({ ...local, chronicConditions: e.target.value })}
+                      />
+                    </label>
+                  </div>
+                  <div className="rounded-2xl border border-gray-200 p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="text-sm font-semibold text-gray-700">{t('clinicBookings') || 'Clinic bookings'}</h5>
+                      <span className="text-xs text-gray-500">
+                        {bookingsLoading ? t('loading') || 'Loading...' : `${patientBookings.length || 0} ${t('bookings') || 'bookings'}`}
+                      </span>
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {bookingsLoading ? (
+                        <p className="text-xs text-gray-500">{t('loading') || 'Loading...'}</p>
+                      ) : patientBookings.length ? (
+                        patientBookings.slice(0, 4).map((booking) => (
+                          <div key={booking.id} className="bg-white rounded-xl border border-gray-200 px-3 py-2 text-xs">
+                            <div className="font-semibold text-gray-800">{booking.clinicName}</div>
+                            <div className="text-gray-500">{booking.preferredDate || booking.createdAt.split('T')[0]}</div>
+                            <div className="text-gray-600 truncate">{booking.note}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-gray-500">{t('noClinicBookings') || 'No clinic bookings yet'}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Utilities */}
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
                   <button className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-60" disabled={loading} onClick={save}>Save changes</button>
                   <button className="px-4 py-2 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-100" disabled={loading} onClick={() => selectUser(null)}>Cancel</button>
-                  <button className="px-4 py-2 rounded-full border border-red-300 text-red-600 hover:bg-red-50" disabled={loading} onClick={() => { if (user && confirm('Delete this user?')) deleteUser(user.id, deleteUserAccountUseCase.execute.bind(deleteUserAccountUseCase)); }}>Delete user</button>
+                  <button className="px-4 py-2 rounded-full border border-red-300 text-red-600 hover:bg-red-50" disabled={loading} onClick={() => { if (user && confirm('Delete this user?')) deleteUser(user.id); }}>Delete user</button>
                 </div>
 
                 <div className="mt-2 rounded-xl border bg-gray-50 p-3">

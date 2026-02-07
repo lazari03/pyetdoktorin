@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdmin } from '../../_lib/admin';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export async function POST(req: NextRequest) {
   const role = req.cookies.get('userRole')?.value;
-  if (role !== 'admin') {
+  if (role !== UserRole.Admin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   interface DeleteUserPayload { userId: string }

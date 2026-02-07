@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppointmentStore } from '@/store/appointmentStore';
 import { useAuth } from '@/context/AuthContext';
 import CenteredLoader from '@/presentation/components/CenteredLoader/CenteredLoader';
+import { UserRole } from '@/domain/entities/UserRole';
 
 const UpcomingAppointment = () => {
 	const { t } = useTranslation();
@@ -28,7 +29,7 @@ const UpcomingAppointment = () => {
 	let nameLabel = '';
 	let nameValue = '';
 	if (upcoming) {
-		if (role === 'doctor') {
+		if (role === UserRole.Doctor) {
 			nameLabel = t('patient');
 			nameValue = upcoming.patientName || t('unknown');
 		} else {

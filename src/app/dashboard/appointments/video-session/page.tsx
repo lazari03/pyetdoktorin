@@ -1,46 +1,95 @@
 
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Loader from "@/presentation/components/Loader/Loader";
+import { auth } from "@/config/firebaseconfig";
 
 export default function VideoSessionPage() {
   const [loading, setLoading] = useState(true);
-  const [, setUserName] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const sessionToken = searchParams?.get("session") || null;
 
   useEffect(() => {
-    // Read from localStorage (or Zustand if you prefer)
-    const code = window.localStorage.getItem('videoSessionRoomCode');
-    const uname = window.localStorage.getItem('videoSessionUserName');
-    if (code && uname) {
-      setRoomCode(code);
-      setUserName(uname);
-      // Keep loading true until iframe loads
-    } else {
-      setLoading(false);
+    const fetchRoomCode = async () => {
+      if (!sessionToken) {
+        setError("missingSession");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          setError("sessionExpired");
+          setLoading(false);
+          return;
+        }
+
+        const idToken = await currentUser.getIdToken();
+        const response = await fetch('/api/100ms/validate-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ sessionToken }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok || !payload.roomCode) {
+          setError(payload.error || 'unauthorized');
+          setLoading(false);
+          return;
+        }
+
+        setRoomCode(payload.roomCode);
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to validate session', err);
+        setError('validationFailed');
+        setLoading(false);
+      }
+    };
+
+    fetchRoomCode();
+  }, [sessionToken]);
+
+  useEffect(() => {
+    if (error && !roomCode) {
+      const timer = setTimeout(() => router.replace('/dashboard'), 2000);
+      return () => clearTimeout(timer);
     }
+    return undefined;
+  }, [error, roomCode, router]);
 
-    // Fallback: if iframe doesn't load in 15s, hide loader
-    const timeout = setTimeout(() => setLoading(false), 15000);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  if (loading || !roomCode) {
+  if (loading) {
     return <Loader />;
   }
 
+  if (!roomCode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="rounded-2xl bg-white shadow-lg p-8 text-center max-w-md">
+          <p className="text-sm text-gray-700">
+            {error === 'sessionExpired'
+              ? 'Your session expired. Please go back and try joining again.'
+              : 'Unable to start the video session. Redirecting to dashboard...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      {loading && <Loader />}
-      <iframe
-        ref={iframeRef}
-        src={`https://pyetdoktorin-videoconf-1921.app.100ms.live/meeting/${roomCode}`}
-        title="100ms Video Call"
-        allow="camera; microphone; fullscreen; display-capture"
-        style={{ width: '100%', height: '100vh', border: 'none', display: loading ? 'none' : 'block' }}
-        onLoad={() => setLoading(false)}
-      />
-    </>
+    <iframe
+      src={`https://pyetdoktorin-videoconf-1921.app.100ms.live/meeting/${roomCode}`}
+      title="100ms Video Call"
+      allow="camera; microphone; fullscreen; display-capture"
+      style={{ width: '100%', height: '100vh', border: 'none' }}
+    />
   );
 }

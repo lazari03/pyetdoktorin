@@ -5,11 +5,12 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebaseconfig'; // Import your Firestore config
 import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeRole } from '@/domain/rules/userRules';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   uid: string | null; // Add `uid` property
-  user: { uid: string; name: string } | null;
+  user: { uid: string; name: string; email?: string; phoneNumber?: string } | null;
   role: UserRole | null;
   loading: boolean;
 }
@@ -25,7 +26,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uid, setUid] = useState<string | null>(null); // Add state for `uid`
-  const [user, setUser] = useState<{ uid: string; name: string } | null>(null);
+  const [user, setUser] = useState<{ uid: string; name: string; email?: string; phoneNumber?: string } | null>(null);
   const [role, setRole] = useState<UserRole | null>(null); // Fix type here
   const [loading, setLoading] = useState(true);
 
@@ -42,10 +43,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            const role = userData.role || null;
-            setRole(role); // Set the user's role
-            localStorage.setItem('userRole', role); // Store the role in localStorage
-            setUser({ uid: currentUser.uid, name: userData.name || 'Unknown' }); // Ensure name is set
+            const normalizedRole = normalizeRole(userData.role);
+            setRole(normalizedRole);
+            if (normalizedRole) {
+              localStorage.setItem('userRole', normalizedRole);
+            } else {
+              localStorage.removeItem('userRole');
+            }
+            setUser({
+              uid: currentUser.uid,
+              name: userData.name || currentUser.displayName || 'Unknown',
+              email: currentUser.email || userData.email,
+              phoneNumber: currentUser.phoneNumber || userData.phoneNumber,
+            });
           } else {
 
             setRole(null);

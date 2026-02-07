@@ -30,7 +30,7 @@ export class AdminUserService implements IAdminUserService {
     await deleteUserAccount(id);
   }
 
-  async createAdminUser(payload: { name: string; surname: string; email: string; password: string }): Promise<User> {
+  async createAdminUser(payload: { name: string; surname: string; email: string; password: string; role: User['role']; phone?: string }): Promise<User> {
     return createAdminUser(payload);
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { useAuth } from "@/context/AuthContext";
 import { useVideoStore } from "@/store/videoStore";
@@ -8,6 +9,7 @@ import { useDI } from "@/context/DIContext";
 import { Appointment } from "@/domain/entities/Appointment";
 import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 import { useTranslation } from "react-i18next";
+import { auth } from "@/config/firebaseconfig";
 
 /**
  * View model result interface for appointments page
@@ -37,18 +39,19 @@ export interface AppointmentsViewModelResult {
 export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   const [showRedirecting, setShowRedirecting] = useState(false);
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
 
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, role } = useAuth();
   const {
     appointments,
     isDoctor,
     isAppointmentPast,
     fetchAppointments,
+    optimisticMarkPaid,
     handlePayNow: storeHandlePayNow,
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
   const {
-    getAppointmentsUseCase,
     updateAppointmentUseCase,
     generateRoomCodeUseCase,
     handlePayNowUseCase,
@@ -61,9 +64,85 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
   // Fetch appointments when user/role changes
   useEffect(() => {
-    if (!user?.uid || typeof isDoctor !== "boolean") return;
-    fetchAppointments(user.uid, isDoctor, getAppointmentsUseCase.execute.bind(getAppointmentsUseCase));
-  }, [user, isDoctor, fetchAppointments, getAppointmentsUseCase]);
+    if (!role) return;
+    fetchAppointments(role);
+  }, [role, fetchAppointments]);
+
+  // For doctors, poll to pick up payment status changes from patients.
+  useEffect(() => {
+    if (!isDoctor || !role) return;
+    const hasPendingPayment = appointments.some(
+      (appointment) => appointment.status === "accepted" && !appointment.isPaid
+    );
+    if (!hasPendingPayment) return;
+
+    let cancelled = false;
+    const timer = setInterval(() => {
+      if (cancelled) return;
+      fetchAppointments(role);
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [appointments, fetchAppointments, isDoctor, role]);
+
+  const appointmentsRef = useRef(appointments);
+  useEffect(() => {
+    appointmentsRef.current = appointments;
+  }, [appointments]);
+
+  // Refresh appointments after payment return so isPaid updates
+  useEffect(() => {
+    if (!role) return;
+    const fromQuery = searchParams?.get("paid");
+    let paidId = fromQuery;
+    if (!paidId && typeof window !== "undefined") {
+      try {
+        const startedAt = Number(window.sessionStorage.getItem("pendingPaidStartedAt") || "0");
+        const isFresh = startedAt > 0 && Date.now() - startedAt < 10 * 60 * 1000;
+        const storedId = window.sessionStorage.getItem("pendingPaidAppointmentId");
+        if (isFresh && storedId) paidId = storedId;
+      } catch {
+        // ignore storage failures
+      }
+    }
+    if (!paidId) return;
+    optimisticMarkPaid(paidId);
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 30;
+    const pollIntervalMs = 1000;
+
+    const poll = async () => {
+      if (cancelled) return;
+      attempts += 1;
+      await fetchAppointments(role);
+      if (cancelled) return;
+      const isPaid = appointmentsRef.current.some(
+        (appointment) => appointment.id === paidId && appointment.isPaid
+      );
+      if (isPaid || attempts >= maxAttempts) {
+        if (timer) clearInterval(timer);
+      }
+      if (isPaid && typeof window !== "undefined") {
+        try {
+          window.sessionStorage.removeItem("pendingPaidAppointmentId");
+          window.sessionStorage.removeItem("pendingPaidStartedAt");
+        } catch {
+          // ignore storage failures
+        }
+      }
+    };
+
+    poll();
+    const timer = setInterval(poll, pollIntervalMs);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [fetchAppointments, optimisticMarkPaid, role, searchParams]);
 
   // Join video call handler
   const handleJoinCall = useCallback(
@@ -87,33 +166,36 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
           return;
         }
 
-        const patientName = appointment.patientName || user.name || "Guest";
         const role = isDoctor ? "doctor" : "patient";
-        let roomCode = appointment.roomCode;
-        let roomId = appointment.roomId;
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          setShowRedirecting(false);
+          alert(t("sessionExpired") || "Your session has expired. Please log in again.");
+          return;
+        }
+        const idToken = await currentUser.getIdToken();
 
-        // Generate room code if missing
-        if (!roomCode || !roomId) {
-          const data = await generateRoomCodeUseCase.execute({
-            user_id: user.uid,
-            room_id: appointmentId,
-            role,
-          });
-          roomCode = data.roomCode;
-          roomId = data.room_id;
+        const data = await generateRoomCodeUseCase.execute({
+          user_id: user.uid,
+          room_id: appointmentId,
+          role,
+          idToken,
+        });
 
-          // Update appointment in Firestore
-          if (roomCode && roomId) {
-            await updateAppointmentUseCase.execute(appointmentId, { roomCode, roomId });
-          }
+        const roomCode = data.roomCode || appointment.roomCode;
+        const roomId = data.room_id || appointment.roomId;
+        const sessionToken = data.sessionToken;
+
+        if (!roomCode || !sessionToken) {
+          throw new Error("Missing room information from server");
         }
 
-        if (!roomCode) throw new Error("No roomCode available");
+        if ((!appointment.roomCode || !appointment.roomId) && roomCode && roomId) {
+          await updateAppointmentUseCase.execute(appointmentId, { roomCode, roomId });
+        }
 
-        // Store session data and redirect
-        window.localStorage.setItem("videoSessionRoomCode", roomCode);
-        window.localStorage.setItem("videoSessionUserName", patientName);
-        window.location.href = "/dashboard/appointments/video-session";
+        const joinUrl = `/dashboard/appointments/video-session?session=${encodeURIComponent(sessionToken)}`;
+        window.location.href = joinUrl;
       } catch {
         setShowRedirecting(false);
         alert("An error occurred. Please try again.");

@@ -5,6 +5,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useTranslation } from 'react-i18next';
 import Link from "next/link";
 import { useNotificationsLogic } from './useNotificationsLogic';
+import { UserRole } from '@/domain/entities/UserRole';
 
 function NotificationsPage() {
   const { t } = useTranslation();
@@ -123,7 +124,7 @@ function NotificationsPage() {
                   )}
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    {userRole === 'doctor' ? (
+                    {userRole === UserRole.Doctor ? (
                       <>
                         <button
                           className="inline-flex items-center rounded-full border border-green-300 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 transition"

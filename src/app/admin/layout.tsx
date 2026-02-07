@@ -2,12 +2,23 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
+import {
+  Bars3Icon,
+  XMarkIcon,
+  UserCircleIcon,
+  ArrowRightOnRectangleIcon,
+  BellIcon,
+  UsersIcon,
+  HomeModernIcon,
+} from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
+import { z } from '@/config/zIndex';
+import { UserRole } from '@/domain/entities/UserRole';
 
 type NavItem = { name: string; href: string };
 
@@ -24,6 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   const { role, loading, isAuthenticated, user } = useAuth();
+  const { t } = useTranslation();
   const { logoutSessionUseCase, logoutServerUseCase } = useDI();
   const nav = useNavigationCoordinator();
   const logout = useSessionStore((s) => s.logout);
@@ -46,7 +58,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => setProfileMenuOpen(false), [pathname]);
 
   if (loading) return <div className="flex justify-center items-center min-h-screen" />;
-  if (!isAuthenticated || role !== 'admin') return <RedirectingModal show />;
+  if (!isAuthenticated || role !== UserRole.Admin) return <RedirectingModal show />;
 
   const initials =
     (user?.name || 'A')
@@ -86,6 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         onProfileSettings={() => handleNavClick('/dashboard/myprofile')}
         onLogout={handleLogout}
         profileMenuRef={profileMenuRef}
+        t={t}
       />
       <main className="flex-1 pt-14 md:pt-0 px-2 sm:px-4 md:px-8 lg:px-12 py-4 md:py-6 lg:py-8">
         {children}
@@ -106,7 +119,7 @@ function MobileTopBar({
   onToggleProfile: () => void;
 }) {
   return (
-    <div className="md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4">
+    <div className={`md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4 ${z.navbar}`}>
       <button onClick={onToggleMenu} className="text-gray-800 hover:text-gray-900" aria-label="Toggle navigation menu">
         {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
       </button>
@@ -135,21 +148,27 @@ function MobileMenu({
 }) {
   if (!open) return null;
   return (
-    <div className="md:hidden fixed top-14 left-0 right-0 bg-white shadow-lg border-t border-gray-100">
-      <nav className="flex flex-col py-2">
-        {items.map((item) => {
-          const active = activePath === item.href;
-          return (
-            <button
-              key={item.href}
-              onClick={() => onNavigate(item.href)}
-              className={`px-4 py-3 text-left text-sm ${active ? 'text-purple-700 font-semibold' : 'text-gray-800'}`}
-            >
-              {item.name}
-            </button>
-          );
-        })}
-      </nav>
+    <div className={`md:hidden fixed inset-0 top-14 left-0 right-0 bg-white ${z.dropdown}`}>
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] px-6">
+        <nav className="flex flex-col items-center w-full max-w-sm space-y-2">
+          {items.map((item) => {
+            const active = activePath === item.href;
+            return (
+              <button
+                key={item.href}
+                onClick={() => onNavigate(item.href)}
+                className={`w-full py-4 text-center text-lg font-medium rounded-xl transition-all duration-200 ${
+                  active
+                    ? 'text-purple-600 bg-purple-50 shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
+                }`}
+              >
+                <span className="capitalize">{item.name}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 }
@@ -164,6 +183,7 @@ function DesktopTopBar({
   onProfileSettings,
   onLogout,
   profileMenuRef,
+  t,
 }: {
   items: NavItem[];
   activePath: string;
@@ -174,6 +194,7 @@ function DesktopTopBar({
   onProfileSettings: () => void;
   onLogout: () => void;
   profileMenuRef: React.RefObject<HTMLDivElement | null>;
+  t: ReturnType<typeof useTranslation>['t'];
 }) {
   return (
     <header className="hidden md:block">
@@ -205,18 +226,42 @@ function DesktopTopBar({
             {initials}
           </button>
           {profileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-44 rounded-xl bg-white shadow-lg border border-gray-100 py-1 text-sm">
+            <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
               <button
                 onClick={onProfileSettings}
-                className="w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-t-xl"
+                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
-                Profile settings
+                <UserCircleIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{t('profileSettings') || 'Profile settings'}</span>
               </button>
               <button
-                onClick={onLogout}
-                className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-xl"
+                onClick={() => onNavigate('/admin')}
+                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
-                Log out
+                <HomeModernIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{t('adminDashboard') || 'Dashboard'}</span>
+              </button>
+              <button
+                onClick={() => onNavigate('/admin/users')}
+                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              >
+                <UsersIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{t('users') || 'Users'}</span>
+              </button>
+              <button
+                onClick={() => onNavigate('/admin/notifications')}
+                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              >
+                <BellIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{t('notifications') || 'Notifications'}</span>
+              </button>
+              <div className="my-2 border-t border-gray-100" />
+              <button
+                onClick={onLogout}
+                className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-500" />
+                <span className="font-medium">{t('logOut') || 'Log out'}</span>
               </button>
             </div>
           )}

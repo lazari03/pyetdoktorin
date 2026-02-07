@@ -6,7 +6,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 
 export async function fetchAppointmentsForUser(id: string): Promise<Appointment[]> {
   const col = collection(db, FirestoreCollections.Appointments);
-  const q = query(col, where('userId', '==', id));
+  const q = query(col, where('patientId', '==', id));
   const snap = await getDocs(q);
   return snap.docs.map((d) => {
     const data = d.data() as Record<string, unknown>;
@@ -19,7 +19,7 @@ export async function fetchAppointmentsForUser(id: string): Promise<Appointment[
       appointmentType: data.appointmentType as string,
       preferredDate: data.preferredDate as string,
       preferredTime: data.preferredTime as string,
-      notes: data.notes as string,
+      notes: (data.notes ?? data.note ?? '') as string,
       isPaid: Boolean(data.isPaid),
       createdAt: data.createdAt as string,
   status: data.status as AppointmentStatus,
@@ -45,7 +45,7 @@ export async function fetchAppointmentsForDoctor(id: string): Promise<Appointmen
       appointmentType: data.appointmentType as string,
       preferredDate: data.preferredDate as string,
       preferredTime: data.preferredTime as string,
-      notes: data.notes as string,
+      notes: (data.notes ?? data.note ?? '') as string,
       isPaid: Boolean(data.isPaid),
       createdAt: data.createdAt as string,
   status: data.status as AppointmentStatus,

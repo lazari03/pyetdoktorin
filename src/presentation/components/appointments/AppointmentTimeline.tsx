@@ -7,10 +7,11 @@ import { getAppointmentActionPresentation } from "@/presentation/utils/getAppoin
 import { toUserRole } from "@/presentation/utils/toUserRole";
 import { PhoneIcon, CreditCardIcon } from "@heroicons/react/24/outline";
 import { PAYWALL_AMOUNT_USD } from "@/config/paywallConfig";
+import { UserRole } from "@/domain/entities/UserRole";
 
 type Props = {
   items: Appointment[];
-  role: string;
+  role: UserRole;
   isAppointmentPast: (appointment: Appointment) => boolean;
   onJoinCall: (id: string) => void;
   onPayNow: (id: string, amount: number) => void;

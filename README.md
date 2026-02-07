@@ -24,7 +24,7 @@ This project follows a modular, scalable architecture inspired by Domain-Driven 
 - Use cases are invoked from UI or API routes.
 
 ### 5. Infrastructure Layer (`src/infrastructure/`)
-- Implements data access, API clients, and integration with external services (e.g., Firebase, PayPal).
+- Implements data access, API clients, and integration with external services (e.g., Firebase, Paddle).
 - Provides concrete implementations for domain repositories.
 
 ### 6. Store Layer (`src/store/`)
@@ -70,7 +70,7 @@ src/
 - **UI components** in `presentation/` are composed in `app/` pages and layouts.
 - **Business logic** is encapsulated in `domain/` and orchestrated by use cases in `application/`.
 - **State** is managed via Zustand stores in `store/`.
-- **External services** (APIs, Firebase, PayPal) are accessed via `infrastructure/`.
+- **External services** (APIs, Firebase, Paddle) are accessed via `infrastructure/`.
 - **Configuration** and **context** are injected where needed for flexibility and testability.
 - **Internationalization** is supported via `i18n/` and `locales/`.
 
@@ -132,15 +132,19 @@ The project uses two environment files:
 
 Make sure these files are properly configured before building or deploying.
 
-### PayPal Paywall (patients)
-- `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` – PayPal credentials (sandbox or live).
-- `PAYPAL_ENV` – `sandbox` or `live` (defaults to `sandbox`).
-- `PAYWALL_AMOUNT_USD` – Amount in USD charged to patients (defaults to `13` if unset).
+### Paddle (Billing) Paywall (patients)
+- `PADDLE_ENV` – `sandbox` or `live` (defaults to `sandbox`).
+- `PADDLE_API_KEY` – Paddle API key (server-side, optional for future server calls).
+- `PADDLE_WEBHOOK_SECRET` – Paddle webhook secret for signature verification.
+- `PADDLE_WEBHOOK_URL` – Webhook endpoint URL.
+- `NEXT_PUBLIC_PADDLE_ENV` – `sandbox` or `live` (client-side).
+- `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` – Paddle client token for Paddle.js.
+- `NEXT_PUBLIC_PADDLE_PRICE_ID` – Paddle Billing price ID for the one-time payment.
+- `PAYWALL_AMOUNT_USD` – Display-only amount in USD (defaults to `13` if unset).
 - `NEXT_PUBLIC_PAYWALL_AMOUNT_USD` – Same amount exposed to the client for display.
-- (Optional) `PAYPAL_API_BASE` – Override PayPal API base URL (otherwise chosen from `PAYPAL_ENV`).
 
-The PayPal return/cancel URLs are generated automatically as
-`/dashboard/appointments?paypal=success|cancel&appointmentId=<id>`.
+Paddle checkout redirects back to:
+`/dashboard/appointments?paid=<appointmentId>`.
 
 ## Deployment
 

@@ -3,16 +3,13 @@ import { useAppointmentStore } from '@/store/appointmentStore';
 import { useVideoStore } from '@/store/videoStore';
 import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export function useDashboardActions() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { setAuthStatus, generateRoomCodeAndStore } = useVideoStore();
   const { handlePayNow: storeHandlePayNow } = useAppointmentStore();
   const { handlePayNowUseCase } = useDI();
-  const clearRoomCode = () => {
-    localStorage.removeItem('videoSessionRoomCode');
-    localStorage.removeItem('videoSessionUserName');
-  };
 
   // Join call using Zustand store and localStorage hydration
   const handleJoinCall = useCallback(async (appointmentId: string) => {
@@ -22,25 +19,18 @@ export function useDashboardActions() {
         alert('You must be logged in to join a call. Please log in and try again.');
         return;
       }
-      // For dashboard actions, assume patient role and use user name
-      const role = 'patient';
-      const patientName = user.name || 'Guest';
-      const roomCode = await generateRoomCodeAndStore({
+      const effectiveRole = role === UserRole.Doctor ? UserRole.Doctor : UserRole.Patient;
+      const sessionToken = await generateRoomCodeAndStore({
         appointmentId,
         userId: user.uid,
-        role,
-        userName: patientName,
+        role: effectiveRole,
       });
-      window.localStorage.setItem('videoSessionRoomCode', roomCode);
-      window.localStorage.setItem('videoSessionUserName', patientName);
-      window.location.href = '/dashboard/appointments/video-session';
+      const url = `/dashboard/appointments/video-session?session=${encodeURIComponent(sessionToken)}`;
+      window.location.href = url;
     } catch (error) {
       alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      // set a short TTL / cleanup
-      setTimeout(clearRoomCode, 10 * 60 * 1000);
     }
-  }, [user, setAuthStatus, generateRoomCodeAndStore]);
+  }, [user, role, setAuthStatus, generateRoomCodeAndStore]);
 
   const handlePayNow = useCallback((appointmentId: string, amount: number) => {
     storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase));

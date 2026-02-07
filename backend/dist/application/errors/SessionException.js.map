@@ -1,0 +1,1 @@
+{"version":3,"file":"SessionException.js","sourceRoot":"","sources":["../../../src/application/errors/SessionException.ts"],"names":[],"mappings":";;;AAAA,MAAa,gBAAiB,SAAQ,KAAK;IACzC,YAAY,OAAe,EAAS,MAAc;QAChD,KAAK,CAAC,OAAO,CAAC,CAAC;QADmB,WAAM,GAAN,MAAM,CAAQ;QAEhD,IAAI,CAAC,IAAI,GAAG,kBAAkB,CAAC;IACjC,CAAC;CACF;AALD,4CAKC"}

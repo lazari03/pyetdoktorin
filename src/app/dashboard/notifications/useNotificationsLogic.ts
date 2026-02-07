@@ -1,70 +1,73 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useAppointmentStore } from '../../../store/appointmentStore';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { useAppointmentStore } from '@/store/appointmentStore';
 import type { NavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useAuth } from '@/context/AuthContext';
-import { useDI } from '@/context/DIContext';
+import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeRole } from '@/domain/rules/userRules';
+import { backendFetch } from '@/network/backendClient';
+
+interface AppointmentDetail {
+  id: string;
+  patientName: string | null;
+  doctorName: string | null;
+  preferredDate: string;
+  notes: string;
+}
 
 export function useNotificationsLogic(nav: NavigationCoordinator) {
   const { appointments, loading: isLoading, error, fetchAppointments } = useAppointmentStore();
   const { user } = useAuth();
-  const {
-    fetchAppointmentsUseCase,
-    getNotificationUserRoleUseCase,
-    fetchAppointmentDetailsUseCase,
-    dismissNotificationUseCase,
-    updateAppointmentStatusAndNotifyUseCase,
-  } = useDI();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [appointmentDetails, setAppointmentDetails] = useState<
-    { id: string; patientName: string | null; doctorName: string | null; preferredDate: string; notes: string }[]
-  >([]);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [appointmentDetails, setAppointmentDetails] = useState<AppointmentDetail[]>([]);
   const [pendingAppointments, setPendingAppointments] = useState<
-    { id: string; patientName: string | null; doctorName: string | null; preferredDate: string; notes: string; status?: string; dismissedBy?: Record<string, boolean> }[]
+    (AppointmentDetail & { status?: string; dismissedBy?: Record<string, boolean> })[]
   >([]);
 
+  const didInitRef = useRef(false);
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
     const fetchUserRoleAndAppointments = async () => {
       if (!user?.uid) {
         nav.toLogin();
         return;
       }
-      const userId = user.uid;
-      const role = await getNotificationUserRoleUseCase.execute(userId);
+      const response = await backendFetch<{ role: string }>('/api/notifications/role');
+      const role = normalizeRole(response.role);
       if (role) {
         setUserRole(role);
-        await fetchAppointments(
-          userId,
-          role === 'doctor',
-          (id: string, isDoc: boolean) => fetchAppointmentsUseCase.execute(id, isDoc)
-        );
+        await fetchAppointments(role);
       } else {
         nav.toLogin();
       }
     };
     fetchUserRoleAndAppointments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchAppointments, user, fetchAppointmentsUseCase, getNotificationUserRoleUseCase]);
+  }, [fetchAppointments, user?.uid, nav]);
 
   useEffect(() => {
     const fetchDetails = async () => {
       if (appointments.length > 0) {
-        const details = await fetchAppointmentDetailsUseCase.execute(appointments);
-        setAppointmentDetails(details);
+        const ids = appointments.map((a) => a.id);
+        const response = await backendFetch<{ items: AppointmentDetail[] }>('/api/notifications/appointment-details', {
+          method: 'POST',
+          body: JSON.stringify({ ids }),
+        });
+        setAppointmentDetails(response.items || []);
       }
     };
     fetchDetails();
-  }, [appointments, fetchAppointmentDetailsUseCase]);
+  }, [appointments]);
 
   useEffect(() => {
     const fetchRelevantAppointments = async () => {
       if (!user?.uid) return;
-      if (userRole === 'doctor') {
+      if (userRole === UserRole.Doctor) {
         const pending = appointmentDetails.filter((appointment) => {
           const found = appointments.find((a) => a.id === appointment.id);
           return found?.status === 'pending' && !(found?.dismissedBy && found.dismissedBy[user.uid]);
         });
         setPendingAppointments(pending);
-      } else if (userRole === 'patient') {
+      } else if (userRole === UserRole.Patient) {
         const withStatus = appointmentDetails.map((appointment) => {
           const found = appointments.find((a) => a.id === appointment.id);
           return { ...appointment, status: found?.status || 'pending', doctorName: found?.doctorName || appointment.doctorName, dismissedBy: found?.dismissedBy };
@@ -80,17 +83,23 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
   const handleDismissNotification = useCallback(async (id: string) => {
     setPendingAppointments((prev) => prev.filter((appt) => appt.id !== id));
     if (!user?.uid) return;
-    await dismissNotificationUseCase.execute(id, user.uid);
-  }, [dismissNotificationUseCase, user]);
+    await backendFetch(`/api/notifications/dismiss/${id}`, {
+      method: 'POST',
+      body: JSON.stringify({ userId: user.uid }),
+    });
+  }, [user]);
 
   const handleAppointmentAction = useCallback(async (appointmentId: string, action: 'accepted' | 'rejected') => {
     try {
-      await updateAppointmentStatusAndNotifyUseCase.execute(appointmentId, action);
+      await backendFetch(`/api/appointments/${appointmentId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: action }),
+      });
       setPendingAppointments((prev) =>
         prev.filter((appointment) => appointment.id !== appointmentId)
       );
     } catch {}
-  }, [updateAppointmentStatusAndNotifyUseCase]);
+  }, []);
 
   return {
     isLoading,

@@ -4,6 +4,7 @@ export type GenerateRoomCodeAndTokenResponse = {
   token?: string;
   room_id?: string;
   roomCode?: string;
+  sessionToken?: string;
   join_url?: string;
   [key: string]: unknown;
 };

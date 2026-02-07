@@ -37,14 +37,23 @@ export const login = async (email: string, password: string) => {
         const role = userDoc.exists() ? userDoc.data()?.role || 'patient' : 'patient';
 
         // Get ID token and send to server to create an HttpOnly session cookie
-        const idToken = await user.getIdToken();
+        const idToken = await user.getIdToken(true);
         const res = await fetch('/api/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken }),
         });
         if (!res.ok) {
-            throw new Error('Failed to establish session');
+            const body = await res.text();
+            console.error('Session API error', res.status, body);
+            throw new Error(body || 'Failed to establish session');
+        }
+
+        // Refresh token to pull updated custom claims (role/admin) after session is established
+        try {
+            await user.getIdToken(true);
+        } catch (refreshError) {
+            console.warn('Failed to refresh token after session setup', refreshError);
         }
 
         return { user, role };

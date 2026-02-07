@@ -2,10 +2,11 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import MyProfileForm, { FormField, MyProfileFormData } from "./MyProfileForm";
 import PasswordResetSection from "./PasswordResetSection";
+import { UserRole } from "@/domain/entities/UserRole";
 
 type Props = {
   formData: MyProfileFormData;
-  role: string;
+  role: UserRole;
   uploading: boolean;
   resetEmailSent: boolean;
   handleInputChange: (
@@ -44,7 +45,7 @@ export function ProfileLayout(props: Props) {
   };
 
   return (
-    <div className="min-h-screen py-6 px-4 bg-gradient-to-br from-purple-50 via-white to-purple-100">
+    <div className="min-h-screen py-6 px-4 ">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <header className="backdrop-blur flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>

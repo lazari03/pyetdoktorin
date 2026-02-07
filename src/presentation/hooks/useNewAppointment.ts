@@ -4,8 +4,9 @@ import { useNewAppointmentStore } from '@/store/newAppointmentStore';
 import { Appointment } from '@/domain/entities/Appointment';
 import { AppointmentStatus } from '@/domain/entities/AppointmentStatus';
 import { useAuth } from '@/context/AuthContext';
-import { useDI } from '@/context/DIContext';
+import { createAppointment } from '@/network/appointments';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 export default function useNewAppointment() {
   const {
@@ -22,28 +23,19 @@ export default function useNewAppointment() {
     resetAppointment,
   } = useNewAppointmentStore();
 
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [patientName, setPatientName] = useState<string>('');
   const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>();
   const { user } = useAuth();
-  const {
-    observeAuthStateUseCase,
-    fetchUserDetailsUseCase,
-    createAppointmentUseCase,
-    checkAppointmentExistsUseCase,
-  } = useDI();
 
   useEffect(() => {
-    observeAuthStateUseCase.execute(async (authState) => {
-      if (authState.userId) {
-        const userDetails = await fetchUserDetailsUseCase.execute(authState.userId);
-        if (userDetails?.name) {
-          setPatientName(userDetails.name);
-        }
-      }
-    });
-  }, [observeAuthStateUseCase, fetchUserDetailsUseCase]);
+    if (user?.name) {
+      setPatientName(user.name);
+    }
+  }, [user?.name]);
 
   useEffect(() => {
     if (preferredDate) {
@@ -75,13 +67,19 @@ export default function useNewAppointment() {
   ) => {
     e.preventDefault();
 
-    if (isSubmitting || !selectedDoctor) {
+    setSubmitError(null);
 
+    if (isSubmitting) {
+      return;
+    }
+
+    if (!selectedDoctor) {
+      setSubmitError(t('selectDoctorError') || 'Please select a doctor before continuing.');
       return;
     }
 
     if (!user || !user.uid || !user.name) {
-
+      setSubmitError(t('signInToBookError') || 'Please sign in to book an appointment.');
       return;
     }
 
@@ -100,29 +98,28 @@ export default function useNewAppointment() {
       status: AppointmentStatus.Pending,
     };
     try {
-      const exists = await checkAppointmentExistsUseCase.execute(
-        appointmentData.patientId,
-        appointmentData.doctorId,
-        appointmentData.preferredDate,
-        appointmentData.preferredTime
-      );
-      if (exists) {
-        setIsSubmitting(false);
-        return;
-      }
-      // Use application layer use case for creation
-      await createAppointmentUseCase.execute(appointmentData as Appointment);
+      await createAppointment({
+        doctorId: appointmentData.doctorId,
+        doctorName: appointmentData.doctorName,
+        appointmentType,
+        preferredDate: appointmentData.preferredDate!,
+        preferredTime: appointmentData.preferredTime,
+        note: notes,
+      });
       resetAppointment();
       setShowModal(true);
       let progressValue = 100;
       const interval = setInterval(() => {
         progressValue -= 10;
-        setProgress(progressValue);
+      setProgress(progressValue);
         if (progressValue <= 0) {
           clearInterval(interval);
         }
       }, 300);
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setSubmitError(message || (t('appointmentBookingFailed') || 'Failed to book appointment.'));
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -142,6 +139,8 @@ export default function useNewAppointment() {
     handleSubmit,
     isSubmitting,
     loading, // Return loading
+    submitError,
+    clearSubmitError: () => setSubmitError(null),
     patientName,
     availableTimes,
   };

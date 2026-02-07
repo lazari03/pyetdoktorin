@@ -3,6 +3,7 @@
 // It returns the type of button, label, and disabled state for the action.
 
 import { Appointment } from '@/domain/entities/Appointment';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export interface AppointmentActionPresentation {
   type: 'join' | 'pay' | 'disabled' | 'waiting' | 'none';
@@ -12,10 +13,10 @@ export interface AppointmentActionPresentation {
 
 export function getAppointmentActionPresentation(
   appointment: Appointment,
-  role: string,
+  role: UserRole,
   action: { label: string; disabled: boolean }
 ): AppointmentActionPresentation {
-  const isPatient = role !== 'doctor';
+  const isPatient = role !== UserRole.Doctor;
 
   if (action.disabled) {
     return isPatient

@@ -1,5 +1,6 @@
 import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeRole } from '@/domain/rules/userRules';
 
-export function toUserRole(role: string): UserRole | undefined {
-  return Object.values(UserRole).includes(role as UserRole) ? (role as UserRole) : undefined;
+export function toUserRole(role: unknown): UserRole | undefined {
+  return normalizeRole(role) ?? undefined;
 }

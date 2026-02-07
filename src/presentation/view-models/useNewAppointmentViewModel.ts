@@ -71,6 +71,8 @@ export interface NewAppointmentViewModelResult {
   // Form state
   isSubmitting: boolean;
   canSubmit: boolean;
+  submitError: string | null;
+  clearSubmitError: () => void;
 
   // Actions
   handleFormSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
@@ -97,6 +99,8 @@ export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
     setNotes,
     handleSubmit,
     isSubmitting,
+    submitError,
+    clearSubmitError,
     availableTimes,
   } = useNewAppointment();
 
@@ -203,6 +207,8 @@ export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
     // Form state
     isSubmitting,
     canSubmit,
+    submitError,
+    clearSubmitError,
 
     // Actions
     handleFormSubmit,

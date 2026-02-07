@@ -7,10 +7,11 @@ import { toUserRole } from "@/presentation/utils/toUserRole";
 import { useTranslation } from "react-i18next";
 import { PhoneIcon, CreditCardIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 import { PAYWALL_AMOUNT_USD } from "@/config/paywallConfig";
+import { UserRole } from "@/domain/entities/UserRole";
 
 type Props = {
   appointment: Appointment;
-  role: string;
+  role: UserRole;
   isAppointmentPast: (appointment: Appointment) => boolean;
   onJoinCall: (id: string) => void;
   onPayNow: (id: string, amount: number) => void;
@@ -33,7 +34,9 @@ export function AppointmentSummaryCard({
   const handlePrimary = () => {
     if (actionPresentation.type === "join") return onJoinCall(appointment.id);
     if (actionPresentation.type === "pay") return onPayNow(appointment.id, PAYWALL_AMOUNT_USD);
-    if (actionPresentation.type === "disabled" && onReschedule) return onReschedule(appointment.id);
+    if (actionPresentation.type === "disabled" && onReschedule && role === UserRole.Patient) {
+      return onReschedule(appointment.id);
+    }
   };
 
   const primaryLabel = (() => {
@@ -44,7 +47,7 @@ export function AppointmentSummaryCard({
         return t(actionPresentation.label);
       case "waiting":
       case "disabled":
-        return t("reschedule");
+        return role === UserRole.Patient ? t("reschedule") : t("waitingForPayment");
       default:
         return t("seeDetails");
     }
@@ -63,6 +66,10 @@ export function AppointmentSummaryCard({
         return null;
     }
   })();
+
+  const isPrimaryDisabled =
+    actionPresentation.type === "waiting" ||
+    (actionPresentation.type === "disabled" && role !== UserRole.Patient);
 
   return (
     <div className="rounded-3xl bg-white shadow-lg border border-purple-50 p-5 flex flex-col gap-4">
@@ -92,12 +99,17 @@ export function AppointmentSummaryCard({
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={handlePrimary}
-          className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition-colors"
+          disabled={isPrimaryDisabled}
+          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+            isPrimaryDisabled
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-purple-600 text-white hover:bg-purple-700"
+          }`}
         >
           {primaryIcon}
           {primaryLabel}
         </button>
-        {onReschedule && (
+        {onReschedule && role === UserRole.Patient && (
           <button
             onClick={() => onReschedule(appointment.id)}
             className="inline-flex items-center gap-2 rounded-full border border-purple-200 px-4 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-50 transition-colors"

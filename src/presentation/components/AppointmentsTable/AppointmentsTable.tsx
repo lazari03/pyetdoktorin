@@ -10,6 +10,7 @@ import { getAppointmentStatusPresentation } from '@/presentation/utils/getAppoin
 import { AppointmentsTableProps } from './types';
 import { Appointment } from '@/domain/entities/Appointment';
 import { PhoneIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import { UserRole } from '@/domain/entities/UserRole';
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 	const { t } = useTranslation();
@@ -19,7 +20,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 
 const ActionButtons: React.FC<{
 	appointment: Appointment;
-	role: string;
+	role: UserRole;
 	action: { label: string; disabled: boolean };
 	onJoinCall: (id: string) => void;
 	onPayNow: (id: string, amount: number) => void;
@@ -96,7 +97,7 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 	if (loading) return <CenteredLoader />;
 
 	const sortedAppointments = appointments?.length > 0 ? sortAppointments(appointments, maxRows) : [];
-	const isDoctor = role === 'doctor';
+	const isDoctor = role === UserRole.Doctor;
 
 	const headers = [
 		{ key: 'date', label: t('date'), width: 'w-[12%]' },

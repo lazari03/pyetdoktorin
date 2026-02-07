@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
-import { useDI } from "@/context/DIContext";
 import { SignaturePad } from "@/presentation/components/SignaturePad";
-import { encryptString } from "@/presentation/utils/crypto";
+import { fetchAdminUsers } from '@/network/adminUsers';
+import { createPrescription, fetchPrescriptions } from '@/network/prescriptions';
+import type { Prescription } from '@/network/prescriptions';
+import { UserRole } from '@/domain/entities/UserRole';
 
 type Reciepe = {
   id: string;
@@ -26,7 +28,6 @@ type Reciepe = {
 export default function DoctorReciepePage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const { getAllUsersUseCase, getPharmaciesUseCase, createReciepeUseCase, getReciepesByDoctorUseCase } = useDI();
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [pharmacies, setPharmacies] = useState<{ id: string; name: string }[]>([]);
@@ -43,29 +44,54 @@ export default function DoctorReciepePage() {
   const [search, setSearch] = useState("");
   const [pharmacySearch, setPharmacySearch] = useState("");
   const [signatureUrl, setSignatureUrl] = useState<string>("");
-  const [passphrase, setPassphrase] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toReciepe = useCallback((p: Prescription): Reciepe => ({
+    id: p.id,
+    patientId: p.patientId,
+    patient: p.patientName,
+    pharmacyId: p.pharmacyId,
+    pharmacy: p.pharmacyName,
+    title: p.title || t("reciepeTitleDoctor") || "Reciepe",
+    medicines: Array.isArray(p.medicines) ? p.medicines.join(', ') : String(p.medicines ?? ''),
+    dosage: p.dosage || "",
+    notes: p.notes,
+    date: new Date(p.createdAt).toISOString().split("T")[0],
+    status: p.status,
+    signatureDataUrl: p.signatureDataUrl,
+  }), [t]);
 
   useEffect(() => {
-    getAllUsersUseCase
-      .execute()
-      .then((users) => {
-        const pts = (users || [])
-          .filter((u: { role?: string }) => u.role === 'patient')
-          .map((u: { uid?: string; id?: string; name?: string; surname?: string; email?: string }) => ({
-            id: u.uid || u.id || "",
-            name: `${u.name ?? ""} ${u.surname ?? ""}`.trim() || u.email || "Unknown",
-          }));
+    const loadPatients = async () => {
+      try {
+        const response = await fetchAdminUsers({ role: UserRole.Patient, pageSize: 500 });
+        const pts = (response.items || []).map((u: Record<string, unknown>) => ({
+          id: String(u.id ?? u.uid ?? ''),
+          name: `${(u.name as string | undefined) ?? ''} ${(u.surname as string | undefined) ?? ''}`.trim() || (u.email as string | undefined) || 'Unknown',
+        }));
         setPatients(pts);
-      })
-      .catch(() => setPatients([]));
-  }, [getAllUsersUseCase]);
+      } catch {
+        setPatients([]);
+      }
+    };
+    loadPatients();
+  }, []);
 
   useEffect(() => {
-    getPharmaciesUseCase
-      .execute()
-      .then((list) => setPharmacies(list || []))
-      .catch(() => setPharmacies([]));
-  }, [getPharmaciesUseCase]);
+    const loadPharmacies = async () => {
+      try {
+        const response = await fetchAdminUsers({ role: UserRole.Pharmacy, pageSize: 200 });
+        const mapped = (response.items || []).map((entry: Record<string, unknown>) => ({
+          id: String(entry.id ?? ''),
+          name: (entry.pharmacyName as string | undefined) || `${(entry.name as string | undefined) ?? ''} ${(entry.surname as string | undefined) ?? ''}`.trim() || 'Pharmacy',
+        }));
+        setPharmacies(mapped);
+      } catch {
+        setPharmacies([]);
+      }
+    };
+    loadPharmacies();
+  }, []);
 
   const filteredPatients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -83,53 +109,48 @@ export default function DoctorReciepePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.patientId || !form.pharmacyId || !user?.uid) return;
-    let encryptedSignature;
-    let encryptedNotes;
-    if (passphrase.trim()) {
-      if (signatureUrl) encryptedSignature = await encryptString(passphrase, signatureUrl);
-      if (form.notes) encryptedNotes = await encryptString(passphrase, form.notes);
+    setSubmitError(null);
+    if (!form.patientId || !form.pharmacyId || !user?.uid) {
+      setSubmitError(t("missingRequiredFields") || "Please select a patient and pharmacy.");
+      return;
     }
-    const newId = await createReciepeUseCase.execute({
-      patientId: form.patientId,
-      patientName: form.patient,
-      pharmacyId: form.pharmacyId,
-      pharmacyName: form.pharmacy || "",
-      doctorId: user.uid,
-      doctorName: user.name,
-      title: form.title,
-      medicines: form.medicines,
-      dosage: form.dosage,
-      notes: passphrase ? undefined : form.notes,
-      createdAt: new Date().toISOString(),
-      signatureDataUrl: passphrase ? undefined : signatureUrl,
-      encrypted: !!passphrase,
-      encryptedSignature,
-      encryptedNotes,
-    });
-    setReciepes((prev) => [
-      {
-        id: newId,
+    if (!form.patient || !form.pharmacy) {
+      setSubmitError(t("missingRequiredFields") || "Please select a patient and pharmacy.");
+      return;
+    }
+    const medicineList = form.medicines
+      .split(/[\n,]+/)
+      .map((m) => m.trim())
+      .filter(Boolean);
+    if (medicineList.length === 0) {
+      setSubmitError(t("missingMedicines") || "Please add at least one medicine.");
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      const created = await createPrescription({
         patientId: form.patientId,
-        patient: form.patient,
+        patientName: form.patient,
         pharmacyId: form.pharmacyId,
-        pharmacy: form.pharmacy,
-        title: form.title,
-        medicines: form.medicines,
+        pharmacyName: form.pharmacy || '',
+        doctorName: user?.name || '',
+        medicines: medicineList,
         dosage: form.dosage,
-        notes: passphrase ? undefined : form.notes,
-        date: new Date().toISOString().split("T")[0],
-        status: "pending",
-        signatureDataUrl: passphrase ? undefined : signatureUrl,
-        signatureEncrypted: !!passphrase,
-      },
-      ...prev,
-    ]);
-    setForm({ patientId: "", patient: "", pharmacyId: "", pharmacy: "", title: "", medicines: "", dosage: "", notes: "" });
-    setSearch("");
-    setPharmacySearch("");
-    setSignatureUrl("");
-    setPassphrase("");
+        notes: form.notes,
+        title: form.title,
+        signatureDataUrl: signatureUrl,
+      });
+      setReciepes((prev) => [toReciepe(created), ...prev]);
+      setForm({ patientId: '', patient: '', pharmacyId: '', pharmacy: '', title: '', medicines: '', dosage: '', notes: '' });
+      setSearch('');
+      setPharmacySearch('');
+      setSignatureUrl('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : (t("unknownError") || "Failed to issue prescription.");
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const downloadPdf = (r: Reciepe) => {
@@ -166,27 +187,18 @@ export default function DoctorReciepePage() {
   useEffect(() => {
     const loadReciepes = async () => {
       if (!user?.uid) return;
-      const data = await getReciepesByDoctorUseCase.execute(user.uid);
-      const mapped: Reciepe[] = (data || []).map((r) => ({
-        id: r.id || (r.patientId + r.createdAt),
-        patientId: r.patientId,
-        patient: r.patientName,
-        pharmacyId: r.pharmacyId,
-        pharmacy: r.pharmacyName,
-        title: r.title,
-        medicines: r.medicines,
-        dosage: r.dosage,
-        notes: r.notes,
-        date: r.createdAt.split("T")[0],
-        status: (r.status as Reciepe["status"]) || "pending",
-        signatureDataUrl: r.signatureDataUrl,
-      }));
-      setReciepes(mapped);
+      try {
+        const response = await fetchPrescriptions();
+        const mapped = (response.items || []).map(toReciepe);
+        setReciepes(mapped);
+      } catch {
+        setReciepes([]);
+      }
     };
     loadReciepes();
-  }, [getReciepesByDoctorUseCase, user?.uid]);
+  }, [user?.uid, toReciepe]);
 
-  if (role !== "doctor") {
+  if (role !== UserRole.Doctor) {
     return <RedirectingModal show />;
   }
 
@@ -240,6 +252,11 @@ export default function DoctorReciepePage() {
           <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
             <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("newReciepe") || "New reciepe"}</h2>
             <form className="space-y-3" onSubmit={handleSubmit}>
+              {submitError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {submitError}
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">{t("patientName")}</label>
                 <input
@@ -362,17 +379,6 @@ export default function DoctorReciepePage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Encrypt with passphrase (optional)</label>
-                <input
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  type="password"
-                  value={passphrase}
-                  onChange={(e) => setPassphrase(e.target.value)}
-                  placeholder="Set a passphrase to encrypt signature/notes"
-                />
-                <p className="text-[11px] text-gray-500 mt-1">Only someone with this passphrase can view signature/notes.</p>
-              </div>
-              <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">{t("notesLabel")}</label>
                 <textarea
                   className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -385,9 +391,10 @@ export default function DoctorReciepePage() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="inline-flex items-center rounded-full bg-purple-600 text-white px-4 py-2 text-sm font-semibold hover:bg-purple-700 transition"
+                  className="inline-flex items-center rounded-full bg-purple-600 text-white px-4 py-2 text-sm font-semibold hover:bg-purple-700 transition disabled:opacity-60"
+                  disabled={isSubmitting}
                 >
-                  {t("issueReciepe") || "Issue reciepe"}
+                  {isSubmitting ? (t("sending") || "Sending...") : (t("issueReciepe") || "Issue reciepe")}
                 </button>
               </div>
             </form>

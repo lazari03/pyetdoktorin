@@ -92,6 +92,11 @@ export default function NewAppointmentStepper() {
 					{/* Main panel */}
 					<div className="lg:col-span-2 space-y-6">
 						<div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-6 space-y-5">
+							{vm.submitError && (
+								<div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+									{vm.submitError}
+								</div>
+							)}
 							{step === 0 && (
 								<div className="space-y-3">
 									<h2 className="text-lg font-semibold text-gray-900">{t('selectDoctor')}</h2>
