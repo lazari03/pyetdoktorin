@@ -130,7 +130,7 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [fetchAllAppointments, fetchAppointments, role, searchParams]);
+  }, [fetchAllAppointments, fetchAppointments, optimisticMarkPaid, role, searchParams]);
 
   const filteredAppointments = useMemo(() => {
   if (!appointments) return [];

@@ -3,6 +3,17 @@ import { db } from '@/config/firebaseconfig';
 import { doc, getDoc, collection, updateDoc } from 'firebase/firestore';
 import { Appointment } from '@/domain/entities/Appointment';
 
+function normalizePreferredDate(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && typeof (value as { toDate?: () => Date }).toDate === 'function') {
+    const date = (value as { toDate: () => Date }).toDate();
+    if (date instanceof Date && !Number.isNaN(date.getTime())) {
+      return date.toISOString().slice(0, 10);
+    }
+  }
+  return '';
+}
+
 export async function getUserRole(userId: string): Promise<string | null> {
   const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
@@ -19,12 +30,12 @@ export async function fetchAppointmentDetails(appointments: Appointment[]): Prom
         const { patientId, doctorId, preferredDate, notes, note } = appointmentSnap.data() as Record<string, unknown>;
         let patientName: string | null = null;
         let doctorName: string | null = null;
-        if (patientId) {
+        if (typeof patientId === 'string' && patientId) {
           const patientRef = doc(collection(db, 'users'), patientId);
           const patientSnap = await getDoc(patientRef);
           if (patientSnap.exists()) patientName = patientSnap.data().name;
         }
-        if (doctorId) {
+        if (typeof doctorId === 'string' && doctorId) {
           const doctorRef = doc(collection(db, 'users'), doctorId);
           const doctorSnap = await getDoc(doctorRef);
           if (doctorSnap.exists()) doctorName = doctorSnap.data().name;
@@ -33,7 +44,7 @@ export async function fetchAppointmentDetails(appointments: Appointment[]): Prom
           id: appointment.id,
           patientName,
           doctorName,
-          preferredDate: preferredDate || '',
+          preferredDate: normalizePreferredDate(preferredDate),
           notes: (notes as string) || (note as string) || '',
         };
       } catch {

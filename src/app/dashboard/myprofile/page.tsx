@@ -21,14 +21,14 @@ export default function MyProfile() {
     handleProfilePictureChange,
   } = useMyProfile();
 
-  if (authLoading || isFetching) {
+  if (authLoading || isFetching || !role) {
     return <Loader />;
   }
 
   return (
     <ProfileLayout
       formData={formData}
-      role={role || ""}
+      role={role}
       uploading={uploading}
       resetEmailSent={resetEmailSent}
       handleInputChange={handleInputChange}

@@ -42,7 +42,6 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
       }
     };
     fetchUserRoleAndAppointments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAppointments, user?.uid, nav]);
 
   useEffect(() => {

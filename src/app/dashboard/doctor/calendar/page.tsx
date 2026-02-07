@@ -12,14 +12,14 @@ import { Event as RBCEvent } from 'react-big-calendar';
 
 export default function DoctorCalendarPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { role } = useAuth();
   const { appointments, fetchAppointments, loading } = useAppointmentStore();
   const [events, setEvents] = useState<RBCEvent[]>([]);
 
   useEffect(() => {
-    if (!user?.role) return;
-    fetchAppointments(user.role);
-  }, [user?.role, fetchAppointments]);
+    if (!role) return;
+    fetchAppointments(role);
+  }, [role, fetchAppointments]);
 
   useEffect(() => {
     // Map appointments to calendar events whenever appointments change

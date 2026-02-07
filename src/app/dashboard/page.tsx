@@ -118,7 +118,7 @@ export default function Dashboard() {
     }
   };
 
-  if (vm.authLoading || vm.loading) return <Loader />;
+  if (vm.authLoading || vm.loading || !vm.role) return <Loader />;
 
   const upcoming = vm.filteredAppointments.filter((a) => !vm.isAppointmentPast(a)).slice(0, 3);
   const heroAppointment = upcoming[0];
@@ -301,7 +301,7 @@ export default function Dashboard() {
           </div>
           <AppointmentsTable
             appointments={vm.filteredAppointments}
-            role={vm.role || ""}
+            role={vm.role}
             isAppointmentPast={vm.isAppointmentPast}
             handleJoinCall={handleJoinCall}
             handlePayNow={vm.handlePayNow}

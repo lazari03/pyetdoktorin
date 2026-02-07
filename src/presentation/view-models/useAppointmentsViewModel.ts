@@ -142,7 +142,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [fetchAppointments, role, searchParams]);
+  }, [fetchAppointments, optimisticMarkPaid, role, searchParams]);
 
   // Join video call handler
   const handleJoinCall = useCallback(

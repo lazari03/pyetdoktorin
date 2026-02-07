@@ -55,7 +55,7 @@ export function getAppointmentAction(
 			variant: AppointmentActionVariant.None
 		};
 	}
-	if (!appointment.isPaid && appointment.status === "accepted" && role !== UserRole.Doctor) {
+	if (!appointment.isPaid && appointment.status === "accepted") {
 		return {
 			label: AppointmentActionLabels[AppointmentActionVariant.Pay],
 			disabled: false,
