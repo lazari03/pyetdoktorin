@@ -18,6 +18,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 import { z } from '@/config/zIndex';
+import { UserRole } from '@/domain/entities/UserRole';
 
 type NavItem = { name: string; href: string };
 
@@ -57,7 +58,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => setProfileMenuOpen(false), [pathname]);
 
   if (loading) return <div className="flex justify-center items-center min-h-screen" />;
-  if (!isAuthenticated || role !== 'admin') return <RedirectingModal show />;
+  if (!isAuthenticated || role !== UserRole.Admin) return <RedirectingModal show />;
 
   const initials =
     (user?.name || 'A')

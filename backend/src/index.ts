@@ -16,7 +16,24 @@ import notificationsRouter from '@/routes/notifications';
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: true, credentials: true }));
+const isProd = process.env.NODE_ENV === 'production';
+const allowAllOrigins = !isProd && env.corsOrigins.length === 0;
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    if (allowAllOrigins) {
+      return callback(null, true);
+    }
+    if (env.corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan('combined'));

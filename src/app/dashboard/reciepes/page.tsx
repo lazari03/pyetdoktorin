@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import Image from "next/image";
 import { fetchPrescriptions } from '@/network/prescriptions';
+import { UserRole } from "@/domain/entities/UserRole";
 
 type Reciepe = {
   id: string;
@@ -52,7 +53,7 @@ export default function PatientReciepesPage() {
     load();
   }, [user?.uid, t]);
 
-  if (role !== "patient") {
+  if (role !== UserRole.Patient) {
     return <RedirectingModal show />;
   }
 

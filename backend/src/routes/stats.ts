@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
+import { env } from '@/config/env';
 
 const router = Router();
-const DEFAULT_APPOINTMENT_PRICE = Number(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || 13);
+const DEFAULT_APPOINTMENT_PRICE = env.paywallAmountUsd;
 
 router.get('/admin', requireAuth([UserRole.Admin]), async (_req: AuthenticatedRequest, res) => {
   try {

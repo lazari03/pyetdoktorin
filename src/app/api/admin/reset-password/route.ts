@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdmin } from '../../_lib/admin';
+import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeRole } from '@/domain/rules/userRules';
 
 export async function POST(req: NextRequest) {
-  const role = req.cookies.get('userRole')?.value;
-  if (role !== 'admin') {
+  const role = normalizeRole(req.cookies.get('userRole')?.value);
+  if (role !== UserRole.Admin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   interface ResetPasswordPayload { userId: string }

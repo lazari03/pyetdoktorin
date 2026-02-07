@@ -5,6 +5,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebaseconfig'; // Import your Firestore config
 import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeRole } from '@/domain/rules/userRules';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -42,9 +43,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            const role = userData.role || null;
-            setRole(role); // Set the user's role
-            localStorage.setItem('userRole', role); // Store the role in localStorage
+            const normalizedRole = normalizeRole(userData.role);
+            setRole(normalizedRole);
+            if (normalizedRole) {
+              localStorage.setItem('userRole', normalizedRole);
+            } else {
+              localStorage.removeItem('userRole');
+            }
             setUser({
               uid: currentUser.uid,
               name: userData.name || currentUser.displayName || 'Unknown',

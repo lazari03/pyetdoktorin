@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import { fetchPrescriptions, updatePrescriptionStatus } from '@/network/prescriptions';
+import { UserRole } from "@/domain/entities/UserRole";
 
 type PharmacyNotification = {
   id: string;
@@ -42,7 +43,7 @@ export default function PharmacyDashboardPage() {
   }, [reciepes, t]);
 
   useEffect(() => {
-    if (role === "pharmacy") return;
+    if (role === UserRole.Pharmacy) return;
   }, [role]);
 
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function PharmacyDashboardPage() {
     load();
   }, [user?.uid, t]);
 
-  if (role !== "pharmacy") return <RedirectingModal show />;
+  if (role !== UserRole.Pharmacy) return <RedirectingModal show />;
 
   const pendingCount = reciepes.filter((r) => r.status === "pending").length;
   const processedCount = reciepes.filter((r) => r.status !== "pending").length;

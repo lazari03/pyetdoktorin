@@ -4,9 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardViewModel, DashboardUserContext } from "@/presentation/view-models/userDashboardViewModel";
 import Loader from "@/presentation/components/Loader/Loader";
-import { ArrowLeftIcon, BanknotesIcon, CalendarIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, BanknotesIcon, CalendarIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useMemo } from "react";
+import { UserRole } from "@/domain/entities/UserRole";
 
 
 // Helper function to calculate earnings data
@@ -119,7 +120,7 @@ export default function EarningsPage() {
   if (authLoading || vm.loading) return <Loader />;
   
   // Only doctors can access this page
-  if (role !== 'doctor') {
+  if (role !== UserRole.Doctor) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -168,9 +169,6 @@ export default function EarningsPage() {
             <p className="text-3xl font-bold text-gray-900">
               ${earningsData.totalEarnings.toFixed(2)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {earningsData.totalAppointments} {t("appointments") || "appointments"}
-            </p>
           </div>
 
           {/* Current Month */}
@@ -184,42 +182,21 @@ export default function EarningsPage() {
             <p className="text-3xl font-bold">
               ${earningsData.currentMonthEarnings.toFixed(2)}
             </p>
-            <p className="text-xs text-white/70 mt-1">
-              {earningsData.currentMonthAppointments} {t("appointments") || "appointments"}
-            </p>
           </div>
 
-          {/* Month-over-Month Change */}
+          {/* Total Appointments */}
           <div className="bg-white rounded-2xl shadow-md p-6 border border-purple-50">
             <div className="flex items-center gap-3 mb-2">
-              <div className={`p-2 rounded-lg ${
-                earningsData.currentMonthEarnings >= earningsData.previousMonthEarnings 
-                  ? 'bg-green-100' 
-                  : 'bg-red-100'
-              }`}>
-                {earningsData.currentMonthEarnings >= earningsData.previousMonthEarnings ? (
-                  <ArrowTrendingUpIcon className="h-5 w-5 text-green-600" />
-                ) : (
-                  <ArrowTrendingDownIcon className="h-5 w-5 text-red-600" />
-                )}
+              <div className="p-2 rounded-lg bg-purple-100">
+                <CalendarIcon className="h-5 w-5 text-purple-600" />
               </div>
-              <p className="text-sm text-gray-600">{t("vsLastMonth") || "vs Last Month"}</p>
+              <p className="text-sm text-gray-600">{t("appointmentsInTotal") || "Appointments in total"}</p>
             </div>
-            <p className={`text-3xl font-bold ${
-              earningsData.currentMonthEarnings >= earningsData.previousMonthEarnings 
-                ? 'text-green-600' 
-                : 'text-red-600'
-            }`}>
-              {earningsData.previousMonthEarnings > 0 
-                ? `${((Math.abs(earningsData.currentMonthEarnings - earningsData.previousMonthEarnings) / earningsData.previousMonthEarnings) * 100).toFixed(1)}%`
-                : "N/A"
-              }
+            <p className="text-3xl font-bold text-gray-900">
+              {earningsData.totalAppointments}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {earningsData.currentMonthEarnings >= earningsData.previousMonthEarnings 
-                ? (t("increase") || "Increase")
-                : (t("decrease") || "Decrease")
-              }
+              {t("allTime") || "All time"}
             </p>
           </div>
         </div>

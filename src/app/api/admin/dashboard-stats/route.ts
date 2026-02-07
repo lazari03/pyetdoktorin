@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdmin } from '@/app/api/_lib/admin';
+import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeRole } from '@/domain/rules/userRules';
 
 const DEFAULT_APPOINTMENT_PRICE = Number(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || 13);
 
@@ -11,8 +13,8 @@ function getMonthBoundaries() {
 }
 
 export async function GET(request: NextRequest) {
-  const role = request.cookies.get('userRole')?.value?.toLowerCase();
-  if (role !== 'admin') {
+  const role = normalizeRole(request.cookies.get('userRole')?.value);
+  if (role !== UserRole.Admin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

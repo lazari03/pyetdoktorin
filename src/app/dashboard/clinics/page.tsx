@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Clinic } from '@/domain/entities/Clinic';
 import { z } from '@/config/zIndex';
 import { backendFetch } from '@/network/backendClient';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export default function ClinicsPage() {
   const { t } = useTranslation();
@@ -38,7 +39,7 @@ export default function ClinicsPage() {
     loadClinics();
   }, []);
 
-  const canBook = role === 'patient';
+  const canBook = role === UserRole.Patient;
 
   const handleBooking = async () => {
     if (!selectedClinic || !user) return;

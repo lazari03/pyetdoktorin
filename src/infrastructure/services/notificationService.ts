@@ -16,7 +16,7 @@ export async function fetchAppointmentDetails(appointments: Appointment[]): Prom
         const appointmentRef = doc(collection(db, 'appointments'), appointment.id);
         const appointmentSnap = await getDoc(appointmentRef);
         if (!appointmentSnap.exists()) throw new Error('Appointment not found');
-        const { patientId, doctorId, preferredDate, notes } = appointmentSnap.data();
+        const { patientId, doctorId, preferredDate, notes, note } = appointmentSnap.data() as Record<string, unknown>;
         let patientName: string | null = null;
         let doctorName: string | null = null;
         if (patientId) {
@@ -34,7 +34,7 @@ export async function fetchAppointmentDetails(appointments: Appointment[]): Prom
           patientName,
           doctorName,
           preferredDate: preferredDate || '',
-          notes: notes || '',
+          notes: (notes as string) || (note as string) || '',
         };
       } catch {
         return { id: appointment.id, patientName: null, doctorName: null, preferredDate: '', notes: '' };

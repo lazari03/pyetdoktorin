@@ -10,6 +10,7 @@ import { sortAppointments } from "@/presentation/utils/sortAppointments";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { UserRole } from "@/domain/entities/UserRole";
 
 function JourneyPage() {
   const vm = useAppointmentsViewModel();
@@ -67,14 +68,16 @@ function JourneyPage() {
               {t("yourAppointments")}
             </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/new-appointment"
-              className="inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-purple-700"
-            >
-              {t("bookNewAppointment")}
-            </Link>
-          </div>
+          {vm.userRole === UserRole.Patient && (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/dashboard/new-appointment"
+                className="inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-purple-700"
+              >
+                {t("bookNewAppointment")}
+              </Link>
+            </div>
+          )}
         </header>
 
         {heroAppointment ? (
@@ -89,12 +92,14 @@ function JourneyPage() {
           <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center">
             <p className="text-lg font-semibold text-gray-900">{t("noUpcoming")}</p>
             <p className="text-sm text-gray-600 mt-1">{t("emptyJourneyCopy")}</p>
-            <Link
-              href="/dashboard/new-appointment"
-              className="mt-3 inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
-            >
-              {t("bookNewAppointment")}
-            </Link>
+            {vm.userRole === UserRole.Patient && (
+              <Link
+                href="/dashboard/new-appointment"
+                className="mt-3 inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+              >
+                {t("bookNewAppointment")}
+              </Link>
+            )}
           </div>
         )}
 
@@ -154,7 +159,7 @@ function MetricTile({
 
 function JourneyPageWrapper() {
   return (
-    <RoleGuard allowedRoles={['doctor', 'patient']}>
+    <RoleGuard allowedRoles={[UserRole.Doctor, UserRole.Patient]}>
       <JourneyPage />
     </RoleGuard>
   );

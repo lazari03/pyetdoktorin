@@ -25,18 +25,24 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
   const searchParams = useSearchParams();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const [waitingForRecaptcha, setWaitingForRecaptcha] = useState(true);
+  const [recaptchaUnavailable, setRecaptchaUnavailable] = useState(false);
   const isRecaptchaReady = !!executeRecaptcha;
+  const allowRecaptchaBypass =
+    process.env.NODE_ENV !== 'production' ||
+    process.env.NEXT_PUBLIC_RECAPTCHA_OPTIONAL === 'true';
   const { loginUseCase, testAuthConnectionUseCase } = useDI();
 
   // Give reCAPTCHA 5 seconds to load, then allow retry or proceed
   useEffect(() => {
     if (isRecaptchaReady) {
       setWaitingForRecaptcha(false);
+      setRecaptchaUnavailable(false);
       return;
     }
     
     const timer = setTimeout(() => {
       setWaitingForRecaptcha(false);
+      setRecaptchaUnavailable(true);
     }, 5000);
     
     return () => clearTimeout(timer);
@@ -46,6 +52,7 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
   useEffect(() => {
     if (retryCount > 0) {
       setWaitingForRecaptcha(true);
+      setRecaptchaUnavailable(false);
     }
   }, [retryCount]);
 
@@ -67,20 +74,24 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
       if (!navigator.onLine) {
         throw new Error(t('offlineError'));
       }
-      if (!executeRecaptcha) {
-        throw new Error(t('recaptchaNotReady'));
+      let token: string | null = null;
+      if (executeRecaptcha) {
+        token = await executeRecaptcha('login');
       }
-      // Get reCAPTCHA token
-      const token = await executeRecaptcha('login');
-      // Verify token with backend
-      const recaptchaRes = await fetch('/api/verify-recaptcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      });
-      const recaptchaData = await recaptchaRes.json();
-      if (!recaptchaData.success) {
-        setErrorMsg(t('recaptchaFailed'));
+      if (token) {
+        const recaptchaRes = await fetch('/api/verify-recaptcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        const recaptchaData = await recaptchaRes.json();
+        if (!recaptchaData.success) {
+          setErrorMsg(t('recaptchaFailed'));
+          setLoading(false);
+          return;
+        }
+      } else if (!allowRecaptchaBypass) {
+        setErrorMsg(t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.');
         setLoading(false);
         return;
       }
@@ -181,7 +192,7 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
         <button
           type="submit"
           className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
-          disabled={loading || (waitingForRecaptcha && !isRecaptchaReady)}
+          disabled={loading || (waitingForRecaptcha && !isRecaptchaReady && !recaptchaUnavailable)}
         >
           {loading ? t('loggingIn') : t('loginButton')}
         </button>
@@ -208,8 +219,10 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
                 </button>
               </div>
             ) : (
-              <span className="text-red-600">
-                {t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.'}
+              <span className={`text-${allowRecaptchaBypass ? 'amber' : 'red'}-600`}>
+                {allowRecaptchaBypass
+                  ? (t('recaptchaUnavailable') || 'reCAPTCHA unavailable. You can continue without it.')
+                  : (t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.')}
               </span>
             )}
           </div>

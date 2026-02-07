@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { backendFetch } from '@/network/backendClient';
 import { ClinicBooking } from '@/domain/entities/ClinicBooking';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export default function ClinicBookingHistoryPage() {
   const { role } = useAuth();
@@ -27,7 +28,7 @@ export default function ClinicBookingHistoryPage() {
     load();
   }, []);
 
-  if (role !== 'patient') {
+  if (role !== UserRole.Patient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center text-gray-600">

@@ -19,7 +19,25 @@ export function requireAuth(requiredRoles?: UserRole[]) {
       const token = authHeader.slice('Bearer '.length);
       const admin = getFirebaseAdmin();
       const decoded = await admin.auth().verifyIdToken(token);
-      const role = (decoded.role as UserRole | undefined) ?? UserRole.Patient;
+      const normalizeRole = (raw: unknown): UserRole | null => {
+        if (typeof raw !== 'string') return null;
+        const normalized = raw.toLowerCase();
+        return Object.values(UserRole).includes(normalized as UserRole) ? (normalized as UserRole) : null;
+      };
+
+      let role = normalizeRole(decoded.role);
+      if (!role) {
+        const userDoc = await admin.firestore().collection('users').doc(decoded.uid).get();
+        const storedRole = normalizeRole(userDoc.data()?.role);
+        role = storedRole ?? UserRole.Patient;
+        // Backfill custom claims when missing or out of sync
+        if (storedRole && storedRole !== normalizeRole(decoded.role)) {
+          await admin.auth().setCustomUserClaims(decoded.uid, {
+            role: storedRole,
+            admin: storedRole === UserRole.Admin,
+          });
+        }
+      }
       req.user = { uid: decoded.uid, role };
       if (requiredRoles && !requiredRoles.includes(role)) {
         return res.status(403).json({ error: 'Forbidden' });

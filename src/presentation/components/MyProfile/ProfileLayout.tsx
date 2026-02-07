@@ -2,10 +2,11 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import MyProfileForm, { FormField, MyProfileFormData } from "./MyProfileForm";
 import PasswordResetSection from "./PasswordResetSection";
+import { UserRole } from "@/domain/entities/UserRole";
 
 type Props = {
   formData: MyProfileFormData;
-  role: string;
+  role: UserRole;
   uploading: boolean;
   resetEmailSent: boolean;
   handleInputChange: (

@@ -3,6 +3,7 @@ import { useAppointmentStore } from '@/store/appointmentStore';
 import type { NavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeRole } from '@/domain/rules/userRules';
 import { backendFetch } from '@/network/backendClient';
 
 interface AppointmentDetail {
@@ -16,7 +17,7 @@ interface AppointmentDetail {
 export function useNotificationsLogic(nav: NavigationCoordinator) {
   const { appointments, loading: isLoading, error, fetchAppointments } = useAppointmentStore();
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [appointmentDetails, setAppointmentDetails] = useState<AppointmentDetail[]>([]);
   const [pendingAppointments, setPendingAppointments] = useState<
     (AppointmentDetail & { status?: string; dismissedBy?: Record<string, boolean> })[]
@@ -30,13 +31,10 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
       }
       const userId = user.uid;
       const response = await backendFetch<{ role: string }>('/api/notifications/role');
-      const role = response.role;
+      const role = normalizeRole(response.role);
       if (role) {
         setUserRole(role);
-        const normalizedRole = role === 'doctor' ? UserRole.Doctor : role === 'patient' ? UserRole.Patient : role === 'admin' ? UserRole.Admin : null;
-        if (normalizedRole) {
-          await fetchAppointments(normalizedRole);
-        }
+        await fetchAppointments(role);
       } else {
         nav.toLogin();
       }
@@ -62,13 +60,13 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
   useEffect(() => {
     const fetchRelevantAppointments = async () => {
       if (!user?.uid) return;
-      if (userRole === 'doctor') {
+      if (userRole === UserRole.Doctor) {
         const pending = appointmentDetails.filter((appointment) => {
           const found = appointments.find((a) => a.id === appointment.id);
           return found?.status === 'pending' && !(found?.dismissedBy && found.dismissedBy[user.uid]);
         });
         setPendingAppointments(pending);
-      } else if (userRole === 'patient') {
+      } else if (userRole === UserRole.Patient) {
         const withStatus = appointmentDetails.map((appointment) => {
           const found = appointments.find((a) => a.id === appointment.id);
           return { ...appointment, status: found?.status || 'pending', doctorName: found?.doctorName || appointment.doctorName, dismissedBy: found?.dismissedBy };

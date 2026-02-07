@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { clinicsCatalog } from '@/data/clinics';
-import { createClinicBooking, listBookingsByClinic, listBookingsByPatient, listAllBookings, updateClinicBookingStatus } from '@/services/clinicBookingsService';
+import { createClinicBooking, listBookingsByClinic, listBookingsByPatient, listAllBookings, updateClinicBookingStatus, getClinicBookingById } from '@/services/clinicBookingsService';
 import { UserRole } from '@/domain/entities/UserRole';
+import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 
 const router = Router();
 
@@ -39,13 +40,17 @@ router.post('/bookings', requireAuth([UserRole.Patient]), async (req: Authentica
   if (!clinicId || !clinicName || !note) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+  const patientProfile = await getUserProfile(user.uid);
+  const patientName = buildDisplayName(patientProfile, req.body.patientName || 'Patient');
+  const patientEmail = patientProfile?.email ?? req.body.patientEmail ?? '';
+  const patientPhone = patientProfile?.phone ?? req.body.patientPhone;
   const booking = await createClinicBooking({
     clinicId,
     clinicName,
     patientId: user.uid,
-    patientName: req.body.patientName || 'Patient',
-    patientEmail: req.body.patientEmail || '',
-    patientPhone: req.body.patientPhone,
+    patientName,
+    patientEmail,
+    patientPhone,
     note,
     preferredDate,
   });
@@ -57,6 +62,14 @@ router.patch('/bookings/:id/status', requireAuth([UserRole.Admin, UserRole.Clini
   const { status } = req.body || {};
   if (!status) {
     return res.status(400).json({ error: 'Missing status' });
+  }
+  const user = (req as AuthenticatedRequest).user!;
+  const booking = await getClinicBookingById(id);
+  if (!booking) {
+    return res.status(404).json({ error: 'Booking not found' });
+  }
+  if (user.role === UserRole.Clinic && booking.clinicId !== user.uid) {
+    return res.status(403).json({ error: 'Forbidden' });
   }
   await updateClinicBookingStatus(id, status);
   res.json({ ok: true });

@@ -11,6 +11,7 @@ import { getNavigationPaths, NavigationKey } from '@/store/navigationStore';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
 import { z } from '@/config/zIndex';
+import { UserRole } from '@/domain/entities/UserRole';
 
 type NavItem = {
   key: NavigationKey;
@@ -50,7 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [loading, isAuthenticated, pathname, nav]);
 
   useEffect(() => {
-    if (!loading && role === 'pharmacy' && !pathname?.startsWith('/pharmacy')) {
+    if (!loading && role === UserRole.Pharmacy && !pathname?.startsWith('/pharmacy')) {
       nav.pushPath('/pharmacy');
     }
   }, [loading, role, pathname, nav]);
@@ -100,7 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   // If a pharmacy user hits /dashboard, push them to /pharmacy and stop rendering to avoid a stuck modal
-  if (role === 'pharmacy') {
+  if (role === UserRole.Pharmacy) {
     nav.pushPath('/pharmacy');
     return null;
   }
@@ -330,7 +331,7 @@ function DesktopTopBar({
               </button>
               
               {/* Earnings - Doctor only */}
-              {role === 'doctor' && (
+              {role === UserRole.Doctor && (
                 <button
                   onClick={onEarnings}
                   className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
@@ -341,7 +342,7 @@ function DesktopTopBar({
               )}
               
               {/* Payment Methods - Patient only */}
-              {role === 'patient' && (
+              {role === UserRole.Patient && (
                 <button
                   onClick={() => onNavigate('/dashboard/payments')}
                   className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"

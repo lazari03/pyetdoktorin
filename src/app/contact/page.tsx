@@ -12,27 +12,38 @@ import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recapt
 function ContactPageInner() {
   const { t } = useTranslation();
   const { executeRecaptcha } = useGoogleReCaptcha();
+  const allowRecaptchaBypass =
+    process.env.NODE_ENV !== "production" ||
+    process.env.NEXT_PUBLIC_RECAPTCHA_OPTIONAL === "true";
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!executeRecaptcha) return;
-    const token = await executeRecaptcha("contact");
+    let token: string | null = null;
+    if (executeRecaptcha) {
+      token = await executeRecaptcha("contact");
+    }
+    if (!token && !allowRecaptchaBypass) {
+      alert(t("recaptchaUnavailable") || "reCAPTCHA unavailable. Please refresh the page.");
+      return;
+    }
     const name = nameRef.current?.value || "";
     const email = emailRef.current?.value || "";
     const message = messageRef.current?.value || "";
     // Verify token with backend
-    const recaptchaRes = await fetch("/api/verify-recaptcha", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
-    const recaptchaData = await recaptchaRes.json();
-    if (!recaptchaData.success) {
-      alert(t('recaptchaFailed'));
-      return;
+    if (token) {
+      const recaptchaRes = await fetch("/api/verify-recaptcha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const recaptchaData = await recaptchaRes.json();
+      if (!recaptchaData.success) {
+        alert(t('recaptchaFailed'));
+        return;
+      }
     }
     // Only proceed with sending email if reCAPTCHA passes
     const res = await fetch("/api/contact/send-email", {

@@ -195,7 +195,7 @@ export default function DoctorReciepePage() {
     loadReciepes();
   }, [user?.uid, toReciepe]);
 
-  if (role !== "doctor") {
+  if (role !== UserRole.Doctor) {
     return <RedirectingModal show />;
   }
 

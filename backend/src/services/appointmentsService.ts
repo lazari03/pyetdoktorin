@@ -12,6 +12,7 @@ export interface AppointmentInput {
   preferredDate: string;
   preferredTime?: string;
   note?: string;
+  notes?: string;
 }
 
 export interface Appointment extends AppointmentInput {
@@ -35,14 +36,22 @@ export async function listAppointmentsForUser(uid: string, role: UserRole): Prom
     query = query.where('clinicId', '==', uid);
   }
   const snapshot = await query.get();
-  return snapshot.docs.map((doc) => ({ ...(doc.data() as Appointment), id: doc.id }));
+  return snapshot.docs.map((doc) => {
+    const data = doc.data() as Appointment & { note?: string; notes?: string };
+    const normalizedNotes = data.notes ?? data.note;
+    return { ...data, notes: normalizedNotes, id: doc.id };
+  });
 }
 
 export async function createAppointment(input: AppointmentInput): Promise<Appointment> {
   const admin = getFirebaseAdmin();
   const db = admin.firestore();
+  const { note, notes, ...rest } = input;
+  const normalizedNotes = notes ?? note;
   const payload = {
-    ...input,
+    ...rest,
+    note: normalizedNotes,
+    notes: normalizedNotes,
     status: 'pending' as AppointmentStatus,
     isPaid: false,
     createdAt: Date.now(),
@@ -55,7 +64,9 @@ export async function getAppointmentById(id: string): Promise<Appointment | null
   const admin = getFirebaseAdmin();
   const doc = await admin.firestore().collection(COLLECTION).doc(id).get();
   if (!doc.exists) return null;
-  return { ...(doc.data() as Appointment), id: doc.id };
+  const data = doc.data() as Appointment & { note?: string; notes?: string };
+  const normalizedNotes = data.notes ?? data.note;
+  return { ...data, notes: normalizedNotes, id: doc.id };
 }
 
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus, actor: UserRole): Promise<void> {

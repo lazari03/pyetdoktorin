@@ -15,9 +15,10 @@ import { CheckupReminderCard } from "@/presentation/components/dashboard/Checkup
 import { DoctorEarningsCard, MonthlyEarning } from "@/presentation/components/dashboard/DoctorEarningsCard";
 import { NotificationCard } from "@/presentation/components/dashboard/NotificationCard";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
+import { UserRole } from "@/domain/entities/UserRole";
 
 // Helper function to calculate monthly earnings
-function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: string) {
+function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: UserRole) {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -110,7 +111,7 @@ export default function Dashboard() {
   
   // Recent Doctors (for patients)
   const recentDoctorsMap = vm.filteredAppointments
-    .filter((a) => a.doctorId && role !== "doctor")
+    .filter((a) => a.doctorId && role !== UserRole.Doctor)
     .map(
       (a): RecentDoctor => ({
         id: a.doctorId,
@@ -128,7 +129,7 @@ export default function Dashboard() {
   
   // Recent Patients (for doctors)
   const recentPatientsMap = vm.filteredAppointments
-    .filter((a) => a.patientId && role === "doctor")
+    .filter((a) => a.patientId && role === UserRole.Doctor)
     .map(
       (a): RecentPatient => ({
         id: a.patientId,
@@ -145,7 +146,7 @@ export default function Dashboard() {
   const recentPatientList = Object.values(recentPatientsMap).slice(0, 3);
   
   // Calculate earnings for doctors
-  const earningsData = role === "doctor" && user?.uid
+  const earningsData = role === UserRole.Doctor && user?.uid
     ? calculateMonthlyEarnings(vm.filteredAppointments, user.uid, role)
     : null;
 
@@ -159,7 +160,7 @@ export default function Dashboard() {
             {heroAppointment ? (
               <HeroCard
                 title={
-                  role === "doctor"
+                  role === UserRole.Doctor
                     ? heroAppointment.patientName || t("yourNextConsultation") || "Your next consultation"
                     : heroAppointment.doctorName || t("yourNextConsultation") || "Your next consultation"
                 }
@@ -167,7 +168,7 @@ export default function Dashboard() {
                 helper={`${t("consultation") || "Consultation"} • ${heroAppointment.preferredDate ?? (t("today") || "Today")}`}
                 onJoin={() => heroAppointment && handleJoinCall(heroAppointment.id)}
                 onPay={
-                  role === "patient" && heroAppointment && !heroAppointment.isPaid
+                  role === UserRole.Patient && heroAppointment && !heroAppointment.isPaid
                     ? () => {
                         const amount = Number.parseFloat(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || "");
                         const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 13;
@@ -177,7 +178,7 @@ export default function Dashboard() {
                 }
                 isPaid={heroAppointment.isPaid}
                 onViewProfile={
-                  role === "patient" && heroAppointment.doctorId
+                  role === UserRole.Patient && heroAppointment.doctorId
                     ? () => nav.pushPath(`/doctor/${heroAppointment.doctorId}`)
                     : undefined
                 }
@@ -187,11 +188,19 @@ export default function Dashboard() {
               />
             ) : (
               <HeroCard
-                title={t("noUpcomingTitle") || "When was your last visit?"}
-                subtitle={t("noUpcomingSubtitle") || "Stay on top of your health—book a quick consultation now."}
+                title={
+                  role === UserRole.Doctor
+                    ? t("noUpcomingDoctorTitle") || "No upcoming consultations"
+                    : t("noUpcomingTitle") || "When was your last visit?"
+                }
+                subtitle={
+                  role === UserRole.Doctor
+                    ? t("noUpcomingDoctorSubtitle") || "Your schedule is clear for now."
+                    : t("noUpcomingSubtitle") || "Stay on top of your health—book a quick consultation now."
+                }
                 helper={t("noUpcomingHelper") || "Secure telemedicine on alodoktor.al"}
-                onJoin={() => nav.pushPath("/dashboard/new-appointment")}
-                ctaLabel={t("bookNow") || "Book now"}
+                onJoin={role === UserRole.Doctor ? undefined : () => nav.pushPath("/dashboard/new-appointment")}
+                ctaLabel={role === UserRole.Doctor ? undefined : (t("bookNow") || "Book now")}
               />
             )}
           </div>
@@ -205,14 +214,14 @@ export default function Dashboard() {
           <section className="bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-gray-900">
-                {role === "doctor" 
+                {role === UserRole.Doctor 
                   ? (t("recentPatients") ?? "Recent Patients")
                   : (t("recentDoctors") ?? "Recent doctors")
                 }
               </p>
             </div>
             <div className="flex-1">
-              {role === "doctor" ? (
+              {role === UserRole.Doctor ? (
                 <RecentPatientsList patients={recentPatientList} />
               ) : (
                 <RecentDoctorsList doctors={recentDoctorList} />
@@ -221,7 +230,7 @@ export default function Dashboard() {
           </section>
 
           {/* Checkup Reminder (patients) or Earnings (doctors) */}
-          {role === "doctor" && earningsData ? (
+          {role === UserRole.Doctor && earningsData ? (
             <DoctorEarningsCard
               currentMonthEarnings={earningsData.currentMonthEarnings}
               currentMonthAppointments={earningsData.currentMonthAppointments}

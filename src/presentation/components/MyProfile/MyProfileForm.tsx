@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export interface MyProfileFormData {
   name: string;
@@ -34,7 +35,7 @@ export type FormField =
 
 interface MyProfileFormProps {
   formData: MyProfileFormData;
-  role: string;
+  role: UserRole;
   handleInputChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     field: FormField,
@@ -249,7 +250,7 @@ const MyProfileForm = ({
               />
             </div>
             {/* Doctor-only fields */}
-            {role === 'doctor' && (
+            {role === UserRole.Doctor && (
               <>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">{t('about') || 'About'}</label>

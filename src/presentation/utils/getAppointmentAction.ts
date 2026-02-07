@@ -9,7 +9,7 @@ export function getAppointmentAction(
   if (isAppointmentPast(appointment)) {
     return { label: 'past', disabled: true };
   }
-  if (role === 'doctor') {
+  if (role === UserRole.Doctor) {
     if (appointment.status === 'accepted') {
       return { label: 'joinNow', disabled: false };
     }

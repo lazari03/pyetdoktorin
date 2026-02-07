@@ -2,6 +2,7 @@ import { IRegistrationService, RegistrationData } from '@/application/ports/IReg
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/config/firebaseconfig';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export class RegistrationService implements IRegistrationService {
   async register(data: RegistrationData): Promise<void> {
@@ -12,7 +13,7 @@ export class RegistrationService implements IRegistrationService {
     );
     const user = userCredential.user;
 
-    const isDoctor = data.role === 'doctor';
+    const isDoctor = data.role === UserRole.Doctor;
     await setDoc(doc(db, 'users', user.uid), {
       name: data.name,
       surname: data.surname,

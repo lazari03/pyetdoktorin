@@ -60,3 +60,10 @@ export async function updatePrescriptionStatus(id: string, status: PrescriptionS
   const admin = getFirebaseAdmin();
   await admin.firestore().collection(COLLECTION).doc(id).set({ status }, { merge: true });
 }
+
+export async function getPrescriptionById(id: string): Promise<Prescription | null> {
+  const admin = getFirebaseAdmin();
+  const doc = await admin.firestore().collection(COLLECTION).doc(id).get();
+  if (!doc.exists) return null;
+  return { ...(doc.data() as Prescription), id: doc.id };
+}

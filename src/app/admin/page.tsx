@@ -3,7 +3,6 @@
 import { useTranslation } from 'react-i18next';
 import '@i18n';
 import { useAdminDashboardStats } from '@/presentation/hooks/useAdminDashboardStats';
-import { StatsCards } from './components/StatsCards';
 import { UsersTable } from './components/UsersTable';
 import { UserSidepanel } from './components/UserSidepanel';
 import { ToastProvider } from './components/ToastProvider';
@@ -68,14 +67,6 @@ export default function AdminPage() {
               <p className="text-xs text-gray-500 mt-1">{card.helper}</p>
             </div>
           ))}
-        </section>
-
-        <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-5 space-y-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">{t('mjeketMeTeNgarkuar') || 'Most loaded doctors'}</h2>
-            <p className="text-sm text-gray-600">{t('topDoctorsOverview') || 'Top performers based on appointments and requests.'}</p>
-          </div>
-          <StatsCards />
         </section>
 
         <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-5">

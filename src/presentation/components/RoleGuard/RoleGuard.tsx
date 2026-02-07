@@ -2,10 +2,12 @@
 import Loader from '../Loader/Loader';
 import { useEffect, useState } from 'react';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
+import { UserRole } from '@/domain/entities/UserRole';
+import { hasRole } from '@/domain/rules/userRules';
 
 interface RoleGuardProps {
   children: React.ReactNode;
-  allowedRoles: string[];
+  allowedRoles: UserRole[];
   fallbackPath?: string;
 }
 
@@ -20,7 +22,7 @@ export default function RoleGuard({ children, allowedRoles, fallbackPath = '/das
       try {
         const userRole = localStorage.getItem('userRole');
         
-        if (!userRole || !allowedRoles.includes(userRole)) {
+        if (!userRole || !hasRole(userRole, allowedRoles)) {
           setRedirecting(true);
           // Use replace instead of push to avoid adding to history
           nav.replacePath(fallbackPath);

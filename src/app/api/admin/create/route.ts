@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdmin } from '../../_lib/admin';
 import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeRole } from '@/domain/rules/userRules';
 
 const ALLOWED_ROLES: UserRole[] = [
   UserRole.Admin,
@@ -11,8 +12,8 @@ const ALLOWED_ROLES: UserRole[] = [
 ];
 
 export async function POST(req: NextRequest) {
-  const currentRole = req.cookies.get('userRole')?.value;
-  if (currentRole !== 'admin') {
+  const currentRole = normalizeRole(req.cookies.get('userRole')?.value);
+  if (currentRole !== UserRole.Admin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   const body = await req.json().catch(() => null);

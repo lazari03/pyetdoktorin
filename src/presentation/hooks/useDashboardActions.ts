@@ -3,6 +3,7 @@ import { useAppointmentStore } from '@/store/appointmentStore';
 import { useVideoStore } from '@/store/videoStore';
 import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export function useDashboardActions() {
   const { user, role } = useAuth();
@@ -18,7 +19,7 @@ export function useDashboardActions() {
         alert('You must be logged in to join a call. Please log in and try again.');
         return;
       }
-      const effectiveRole = role === 'doctor' ? 'doctor' : 'patient';
+      const effectiveRole = role === UserRole.Doctor ? UserRole.Doctor : UserRole.Patient;
       const sessionToken = await generateRoomCodeAndStore({
         appointmentId,
         userId: user.uid,

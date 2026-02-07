@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 
 import type { Appointment } from '@/domain/entities/Appointment';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export default function UpcomingRequestsPage() {
   const [requests, setRequests] = useState<Appointment[]>([]);
@@ -21,7 +22,7 @@ export default function UpcomingRequestsPage() {
       setLoading(true);
       try {
         if (isAuthenticated && user && role) {
-          const isDoctor = role === 'doctor';
+          const isDoctor = role === UserRole.Doctor;
           const allAppointments = await fetchAppointmentsUseCase.execute(user.uid, isDoctor);
           // Filter for pending requests (assuming status field exists)
           const pendingRequests = allAppointments.filter((appt: Appointment) => appt.status === 'pending');

@@ -57,3 +57,10 @@ export async function updateClinicBookingStatus(id: string, status: ClinicBookin
   const admin = getFirebaseAdmin();
   await admin.firestore().collection(COLLECTION).doc(id).set({ status }, { merge: true });
 }
+
+export async function getClinicBookingById(id: string): Promise<ClinicBooking | null> {
+  const admin = getFirebaseAdmin();
+  const doc = await admin.firestore().collection(COLLECTION).doc(id).get();
+  if (!doc.exists) return null;
+  return { ...(doc.data() as ClinicBooking), id: doc.id };
+}

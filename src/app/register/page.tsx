@@ -25,6 +25,9 @@ function RegisterPageInner() {
     const [showModal, setShowModal] = useState(false); // State to control modal visibility
     const nav = useNavigationCoordinator();
     const { executeRecaptcha } = useGoogleReCaptcha();
+    const allowRecaptchaBypass =
+        process.env.NODE_ENV !== 'production' ||
+        process.env.NEXT_PUBLIC_RECAPTCHA_OPTIONAL === 'true';
     const { registerUserUseCase } = useDI();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -42,20 +45,24 @@ function RegisterPageInner() {
 
         setLoading(true);
         try {
-            if (!executeRecaptcha) {
-                throw new Error('reCAPTCHA not ready');
+            let token: string | null = null;
+            if (executeRecaptcha) {
+                token = await executeRecaptcha("register");
             }
-            // Get reCAPTCHA token
-            const token = await executeRecaptcha("register");
-            // Verify token with backend
-            const recaptchaRes = await fetch("/api/verify-recaptcha", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token }),
-            });
-            const recaptchaData = await recaptchaRes.json();
-            if (!recaptchaData.success) {
-                setError(t('recaptchaFailed'));
+            if (token) {
+                const recaptchaRes = await fetch("/api/verify-recaptcha", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ token }),
+                });
+                const recaptchaData = await recaptchaRes.json();
+                if (!recaptchaData.success) {
+                    setError(t('recaptchaFailed'));
+                    setLoading(false);
+                    return;
+                }
+            } else if (!allowRecaptchaBypass) {
+                setError(t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.');
                 setLoading(false);
                 return;
             }
