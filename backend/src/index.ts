@@ -9,7 +9,7 @@ import usersRouter from '@/routes/users';
 import appointmentsRouter from '@/routes/appointments';
 import prescriptionsRouter from '@/routes/prescriptions';
 import clinicsRouter from '@/routes/clinics';
-import paymentsRouter from '@/routes/payments';
+import paddleRouter from '@/routes/paddle';
 import statsRouter from '@/routes/stats';
 import notificationsRouter from '@/routes/notifications';
 
@@ -34,6 +34,7 @@ app.use(cors({
   },
   credentials: true,
 }));
+app.use('/api/paddle', paddleRouter);
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan('combined'));
@@ -47,11 +48,10 @@ app.use('/api/users', usersRouter);
 app.use('/api/appointments', appointmentsRouter);
 app.use('/api/prescriptions', prescriptionsRouter);
 app.use('/api/clinics', clinicsRouter);
-app.use('/api/payments', paymentsRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/notifications', notificationsRouter);
 
-app.use((err: unknown, _req: express.Request, res: express.Response) => {
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error', err);
   res.status(500).json({ error: 'Internal server error' });
 });

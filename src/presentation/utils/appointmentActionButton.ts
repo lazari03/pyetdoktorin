@@ -28,7 +28,7 @@ export function getAppointmentAction(
 		};
 	}
 	if (role === UserRole.Doctor) {
-		if (appointment.status === 'accepted') {
+		if (appointment.isPaid) {
 			return {
 				label: AppointmentActionLabels[AppointmentActionVariant.Join],
 				disabled: false,

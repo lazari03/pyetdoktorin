@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
     useDashboardStore,
     AppointmentFilter,
@@ -19,6 +20,7 @@ export type DashboardUserContext = {
 
 export function useDashboardViewModel(auth: DashboardUserContext) {
   const { userId, role, authLoading } = auth;
+  const searchParams = useSearchParams();
     const {
         totalAppointments,
         fetchAppointments,
@@ -31,6 +33,7 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
         appointments,
         isAppointmentPast,
         fetchAppointments: fetchAllAppointments,
+        optimisticMarkPaid,
     } = useAppointmentStore();
     const { handleJoinCall: baseHandleJoinCall, handlePayNow } =
         useDashboardActions();
@@ -38,6 +41,11 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
 
     const [profileIncomplete, setProfileIncomplete] = useState(true);
     const [loading, setLoading] = useState(true);
+
+  const appointmentsRef = useRef(appointments);
+  useEffect(() => {
+    appointmentsRef.current = appointments;
+  }, [appointments]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -73,6 +81,56 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
     authLoading,
     checkProfileCompleteUseCase,
   ]);
+
+  useEffect(() => {
+    if (!role) return;
+    const fromQuery = searchParams?.get("paid");
+    let paidId = fromQuery;
+    if (!paidId && typeof window !== "undefined") {
+      try {
+        const startedAt = Number(window.sessionStorage.getItem("pendingPaidStartedAt") || "0");
+        const isFresh = startedAt > 0 && Date.now() - startedAt < 10 * 60 * 1000;
+        const storedId = window.sessionStorage.getItem("pendingPaidAppointmentId");
+        if (isFresh && storedId) paidId = storedId;
+      } catch {
+        // ignore storage failures
+      }
+    }
+    if (!paidId) return;
+    optimisticMarkPaid(paidId);
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 30;
+    const pollIntervalMs = 1000;
+
+    const poll = async () => {
+      if (cancelled) return;
+      attempts += 1;
+      await Promise.all([fetchAllAppointments(role), fetchAppointments(role)]);
+      if (cancelled) return;
+      const isPaid = appointmentsRef.current.some(
+        (appointment) => appointment.id === paidId && appointment.isPaid
+      );
+      if (isPaid || attempts >= maxAttempts) {
+        if (timer) clearInterval(timer);
+      }
+      if (isPaid && typeof window !== "undefined") {
+        try {
+          window.sessionStorage.removeItem("pendingPaidAppointmentId");
+          window.sessionStorage.removeItem("pendingPaidStartedAt");
+        } catch {
+          // ignore storage failures
+        }
+      }
+    };
+
+    poll();
+    const timer = setInterval(poll, pollIntervalMs);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [fetchAllAppointments, fetchAppointments, role, searchParams]);
 
   const filteredAppointments = useMemo(() => {
   if (!appointments) return [];

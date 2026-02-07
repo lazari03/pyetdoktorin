@@ -24,37 +24,26 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
   const [privateDevice, setPrivateDevice] = useState(false);
   const searchParams = useSearchParams();
   const { executeRecaptcha } = useGoogleReCaptcha();
-  const [waitingForRecaptcha, setWaitingForRecaptcha] = useState(true);
-  const [recaptchaUnavailable, setRecaptchaUnavailable] = useState(false);
   const isRecaptchaReady = !!executeRecaptcha;
+  const [recaptchaState, setRecaptchaState] = useState<'loading' | 'ready' | 'failed'>('loading');
   const allowRecaptchaBypass =
     process.env.NODE_ENV !== 'production' ||
     process.env.NEXT_PUBLIC_RECAPTCHA_OPTIONAL === 'true';
   const { loginUseCase, testAuthConnectionUseCase } = useDI();
+  const recaptchaTimeoutMs = 5000;
 
-  // Give reCAPTCHA 5 seconds to load, then allow retry or proceed
+  // Track reCAPTCHA readiness with a hard timeout so UI never gets stuck
   useEffect(() => {
     if (isRecaptchaReady) {
-      setWaitingForRecaptcha(false);
-      setRecaptchaUnavailable(false);
+      setRecaptchaState('ready');
       return;
     }
-    
+    setRecaptchaState('loading');
     const timer = setTimeout(() => {
-      setWaitingForRecaptcha(false);
-      setRecaptchaUnavailable(true);
-    }, 5000);
-    
+      setRecaptchaState('failed');
+    }, recaptchaTimeoutMs);
     return () => clearTimeout(timer);
-  }, [isRecaptchaReady]);
-
-  // Reset waiting state when retry happens (provider remounts)
-  useEffect(() => {
-    if (retryCount > 0) {
-      setWaitingForRecaptcha(true);
-      setRecaptchaUnavailable(false);
-    }
-  }, [retryCount]);
+  }, [isRecaptchaReady, retryCount, recaptchaTimeoutMs]);
 
   // Get the 'from' parameter to redirect after login
   const fromPath = searchParams?.get('from') || '/dashboard';
@@ -192,14 +181,14 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
         <button
           type="submit"
           className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
-          disabled={loading || (waitingForRecaptcha && !isRecaptchaReady && !recaptchaUnavailable)}
+          disabled={loading || (!allowRecaptchaBypass && recaptchaState === 'loading' && !isRecaptchaReady)}
         >
           {loading ? t('loggingIn') : t('loginButton')}
         </button>
 
         {!isRecaptchaReady && (
           <div className="text-xs text-gray-500 mt-2">
-            {waitingForRecaptcha ? (
+            {recaptchaState === 'loading' ? (
               <div className="flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />

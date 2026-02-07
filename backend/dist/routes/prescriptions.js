@@ -12,11 +12,11 @@ router.get('/', (0, auth_1.requireAuth)(), async (req, res) => {
 });
 router.post('/', (0, auth_1.requireAuth)([UserRole_1.UserRole.Doctor]), async (req, res) => {
     const user = req.user;
-    const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, signatureDataUrl, encrypted, encryptedNotes, encryptedSignature } = req.body || {};
+    const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, signatureDataUrl } = req.body || {};
     if (!patientId || !patientName || !Array.isArray(medicines) || medicines.length === 0) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
-    const prescription = await (0, prescriptionsService_1.createPrescription)({
+    const payload = {
         doctorId: user.uid,
         doctorName: req.body.doctorName || 'Doctor',
         patientId,
@@ -28,10 +28,8 @@ router.post('/', (0, auth_1.requireAuth)([UserRole_1.UserRole.Doctor]), async (r
         notes,
         title,
         signatureDataUrl,
-        encrypted,
-        encryptedNotes,
-        encryptedSignature,
-    });
+    };
+    const prescription = await (0, prescriptionsService_1.createPrescription)(payload);
     res.status(201).json(prescription);
 });
 router.patch('/:id/status', (0, auth_1.requireAuth)([UserRole_1.UserRole.Pharmacy, UserRole_1.UserRole.Doctor, UserRole_1.UserRole.Admin]), async (req, res) => {

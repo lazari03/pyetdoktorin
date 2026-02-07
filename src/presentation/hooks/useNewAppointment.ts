@@ -6,6 +6,7 @@ import { AppointmentStatus } from '@/domain/entities/AppointmentStatus';
 import { useAuth } from '@/context/AuthContext';
 import { createAppointment } from '@/network/appointments';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 export default function useNewAppointment() {
   const {
@@ -22,8 +23,10 @@ export default function useNewAppointment() {
     resetAppointment,
   } = useNewAppointmentStore();
 
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [patientName, setPatientName] = useState<string>('');
   const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>();
   const { user } = useAuth();
@@ -64,13 +67,19 @@ export default function useNewAppointment() {
   ) => {
     e.preventDefault();
 
-    if (isSubmitting || !selectedDoctor) {
+    setSubmitError(null);
 
+    if (isSubmitting) {
+      return;
+    }
+
+    if (!selectedDoctor) {
+      setSubmitError(t('selectDoctorError') || 'Please select a doctor before continuing.');
       return;
     }
 
     if (!user || !user.uid || !user.name) {
-
+      setSubmitError(t('signInToBookError') || 'Please sign in to book an appointment.');
       return;
     }
 
@@ -102,12 +111,15 @@ export default function useNewAppointment() {
       let progressValue = 100;
       const interval = setInterval(() => {
         progressValue -= 10;
-        setProgress(progressValue);
+      setProgress(progressValue);
         if (progressValue <= 0) {
           clearInterval(interval);
         }
       }, 300);
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setSubmitError(message || (t('appointmentBookingFailed') || 'Failed to book appointment.'));
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -127,6 +139,8 @@ export default function useNewAppointment() {
     handleSubmit,
     isSubmitting,
     loading, // Return loading
+    submitError,
+    clearSubmitError: () => setSubmitError(null),
     patientName,
     availableTimes,
   };

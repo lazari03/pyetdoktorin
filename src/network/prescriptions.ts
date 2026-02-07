@@ -15,9 +15,6 @@ export interface Prescription {
   notes?: string;
   title?: string;
   signatureDataUrl?: string;
-  encrypted?: boolean;
-  encryptedSignature?: string;
-  encryptedNotes?: string;
   status: PrescriptionStatus;
   createdAt: number;
 }
@@ -37,9 +34,6 @@ export interface CreatePrescriptionPayload {
   notes?: string;
   title?: string;
   signatureDataUrl?: string;
-  encrypted?: boolean;
-  encryptedSignature?: string;
-  encryptedNotes?: string;
 }
 
 export async function fetchPrescriptions() {

@@ -8,7 +8,7 @@ async function getIdToken(): Promise<string> {
   if (!user) {
     throw new Error('Not authenticated');
   }
-  return user.getIdToken(true);
+  return user.getIdToken();
 }
 
 export async function backendFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {

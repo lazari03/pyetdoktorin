@@ -10,8 +10,10 @@ Backend expects the following at runtime (see `backend/.env.example`):
 |----------|-------------|
 | `PORT` | Port the Express server listens on (default `4000`). |
 | `FIREBASE_SERVICE_ACCOUNT` | JSON string for a Firebase service account with Auth + Firestore admin permissions. |
-| `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | PayPal REST credentials (sandbox or live). |
-| `PAYPAL_API_BASE` | Either `https://api-m.sandbox.paypal.com` or `https://api-m.paypal.com`. |
+| `PADDLE_ENV` | `sandbox` or `live` to match your Paddle Billing environment. |
+| `PADDLE_API_KEY` | Paddle API key (server-side, optional for future server calls). |
+| `PADDLE_WEBHOOK_SECRET` | Paddle webhook secret for signature verification. |
+| `PADDLE_WEBHOOK_URL` | Paddle webhook endpoint URL. |
 | `NEXT_PUBLIC_PAYWALL_AMOUNT_USD` | Amount (USD) displayed to patients; also used server-side when computing revenue. |
 
 Frontend `.env` must include:
@@ -89,7 +91,7 @@ CMD ["dist/index.js"]
 
 1. Ensure `NEXT_PUBLIC_BACKEND_URL` is set for each environment (local, staging, prod).
 2. Configure Firebase web client to point at the same project the backend service account uses.
-3. Verify PayPal environment (sandbox vs. production) matches the backend config.
+3. Verify Paddle environment (sandbox vs. production) matches the backend config.
 4. Run `npm run lint` (frontend) and `npm --prefix backend run build` before deploying to catch type issues.
 
 ### 7. Remaining TODOs

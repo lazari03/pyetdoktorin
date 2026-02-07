@@ -1,6 +1,7 @@
 
 "use client";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardViewModel, DashboardUserContext } from "@/presentation/view-models/userDashboardViewModel";
 import Loader from "@/presentation/components/Loader/Loader";
@@ -93,6 +94,19 @@ export default function Dashboard() {
   authLoading,
   };
   const vm = useDashboardViewModel(authContext);
+  const [pendingPaidId, setPendingPaidId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const startedAt = Number(window.sessionStorage.getItem("pendingPaidStartedAt") || "0");
+      const isFresh = startedAt > 0 && Date.now() - startedAt < 10 * 60 * 1000;
+      const storedId = window.sessionStorage.getItem("pendingPaidAppointmentId");
+      setPendingPaidId(isFresh && storedId ? storedId : null);
+    } catch {
+      setPendingPaidId(null);
+    }
+  }, []);
 
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
@@ -108,6 +122,10 @@ export default function Dashboard() {
 
   const upcoming = vm.filteredAppointments.filter((a) => !vm.isAppointmentPast(a)).slice(0, 3);
   const heroAppointment = upcoming[0];
+  const heroIsPaid = Boolean(
+    heroAppointment &&
+    (heroAppointment.isPaid || (pendingPaidId && heroAppointment.id === pendingPaidId))
+  );
   
   // Recent Doctors (for patients)
   const recentDoctorsMap = vm.filteredAppointments
@@ -166,9 +184,9 @@ export default function Dashboard() {
                 }
                 subtitle={heroAppointment.appointmentType || t("stayPrepared") || "Stay prepared for your upcoming session"}
                 helper={`${t("consultation") || "Consultation"} • ${heroAppointment.preferredDate ?? (t("today") || "Today")}`}
-                onJoin={() => heroAppointment && handleJoinCall(heroAppointment.id)}
+                onJoin={heroAppointment && heroIsPaid ? () => handleJoinCall(heroAppointment.id) : undefined}
                 onPay={
-                  role === UserRole.Patient && heroAppointment && !heroAppointment.isPaid
+                  role === UserRole.Patient && heroAppointment && !heroIsPaid
                     ? () => {
                         const amount = Number.parseFloat(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || "");
                         const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 13;
@@ -176,7 +194,7 @@ export default function Dashboard() {
                       }
                     : undefined
                 }
-                isPaid={heroAppointment.isPaid}
+                isPaid={heroIsPaid}
                 onViewProfile={
                   role === UserRole.Patient && heroAppointment.doctorId
                     ? () => nav.pushPath(`/doctor/${heroAppointment.doctorId}`)

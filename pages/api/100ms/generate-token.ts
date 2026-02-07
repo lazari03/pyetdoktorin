@@ -83,6 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const appointmentStatus = (appointmentData?.status || '').toString().toLowerCase();
   const isDoctor = appointmentData?.doctorId === authenticatedUserId;
   const isPatient = appointmentData?.patientId === authenticatedUserId;
+  const isPaid = Boolean(appointmentData?.isPaid);
 
   if (!isDoctor && !isPatient) {
     const auditService = new SecurityAuditService();
@@ -98,12 +99,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ error: 'You are not assigned to this appointment' });
   }
 
-  if (appointmentStatus === 'cancelled') {
+  const isCancelled = ['cancelled', 'canceled', 'rejected'].includes(appointmentStatus);
+  const isFinished = ['finished', 'completed'].includes(appointmentStatus);
+  const isAccepted = appointmentStatus === 'accepted';
+
+  if (isCancelled) {
     return res.status(403).json({ error: 'Cancelled appointments cannot start video sessions' });
+  }
+  if (isFinished) {
+    return res.status(403).json({ error: 'Finished appointments cannot start video sessions' });
   }
 
   if (isPatient) {
-    if (!appointmentData?.isPaid && appointmentStatus !== 'completed') {
+    if (!isPaid) {
       const auditService = new SecurityAuditService();
       await auditService.logVideoAccessAttempt({
         userId: authenticatedUserId,
@@ -116,19 +124,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
       return res.status(402).json({ error: 'Payment required before joining' });
     }
-    if (!['confirmed', 'completed'].includes(appointmentStatus)) {
+    if (!isAccepted) {
       const auditService = new SecurityAuditService();
       await auditService.logVideoAccessAttempt({
         userId: authenticatedUserId,
         appointmentId: room_id,
         role,
         success: false,
-        reason: 'appointment_not_confirmed',
+        reason: 'appointment_not_accepted',
         ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
         userAgent: req.headers['user-agent'],
       });
-      return res.status(403).json({ error: 'Appointment must be confirmed before joining' });
+      return res.status(403).json({ error: 'Appointment must be accepted before joining' });
     }
+  }
+
+  if (isDoctor && !isPaid) {
+    return res.status(402).json({ error: 'Payment required before joining' });
   }
 
   const expectedRole = isDoctor ? 'doctor' : 'patient';

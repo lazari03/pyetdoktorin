@@ -12,9 +12,6 @@ export interface PrescriptionInput {
     notes?: string;
     title?: string;
     signatureDataUrl?: string;
-    encrypted?: boolean;
-    encryptedSignature?: string;
-    encryptedNotes?: string;
 }
 export interface Prescription extends PrescriptionInput {
     id: string;

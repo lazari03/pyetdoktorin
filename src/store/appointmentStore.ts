@@ -11,6 +11,8 @@ interface AppointmentState {
   loading: boolean;
   error: string | null;
   setAppointments: (appointments: Appointment[]) => void;
+  optimisticMarkPaid: (appointmentId: string) => void;
+  optimisticPaidIds: Record<string, true>;
   setIsDoctor: (isDoctor: boolean | null) => void;
   fetchAppointments: (role?: UserRole | null) => Promise<void>;
   setAppointmentPaid: (appointmentId: string, setAppointmentPaidUseCase: (appointmentId: string) => Promise<void>) => Promise<void>;
@@ -27,12 +29,38 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   loading: false,
   error: null,
   setAppointments: (appointments) => set({ appointments }),
+  optimisticMarkPaid: (appointmentId) =>
+    set((state) => ({
+      appointments: state.appointments.map((appointment) =>
+        appointment.id === appointmentId ? { ...appointment, isPaid: true } : appointment
+      ),
+      optimisticPaidIds: { ...state.optimisticPaidIds, [appointmentId]: true },
+    })),
+  optimisticPaidIds: {},
   setIsDoctor: (isDoctor) => set({ isDoctor }),
   fetchAppointments: async (role) => {
     set({ loading: true, error: null });
     try {
       const response = await listAppointments();
-      set({ appointments: response.items, loading: false, isDoctor: typeof role === 'undefined' ? get().isDoctor : role === UserRole.Doctor });
+      set((state) => {
+        const optimisticPaidIds = { ...state.optimisticPaidIds };
+        const items = response.items.map((appointment) => {
+          if (optimisticPaidIds[appointment.id]) {
+            if (appointment.isPaid) {
+              delete optimisticPaidIds[appointment.id];
+              return appointment;
+            }
+            return { ...appointment, isPaid: true };
+          }
+          return appointment;
+        });
+        return {
+          appointments: items,
+          optimisticPaidIds,
+          loading: false,
+          isDoctor: typeof role === 'undefined' ? get().isDoctor : role === UserRole.Doctor,
+        };
+      });
     } catch {
       set({ error: "Failed to fetch appointments", loading: false });
     }

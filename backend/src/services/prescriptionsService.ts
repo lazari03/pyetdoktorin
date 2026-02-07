@@ -15,9 +15,6 @@ export interface PrescriptionInput {
   notes?: string;
   title?: string;
   signatureDataUrl?: string;
-  encrypted?: boolean;
-  encryptedSignature?: string;
-  encryptedNotes?: string;
 }
 
 export interface Prescription extends PrescriptionInput {
@@ -30,13 +27,23 @@ const COLLECTION = 'recipe';
 
 export async function createPrescription(input: PrescriptionInput): Promise<Prescription> {
   const admin = getFirebaseAdmin();
-  const payload = {
-    ...input,
+  const payload: Omit<Prescription, 'id'> = {
+    doctorId: input.doctorId,
+    doctorName: input.doctorName,
+    patientId: input.patientId,
+    patientName: input.patientName,
+    medicines: input.medicines,
     status: 'pending' as PrescriptionStatus,
     createdAt: Date.now(),
+    ...(input.pharmacyId !== undefined ? { pharmacyId: input.pharmacyId } : {}),
+    ...(input.pharmacyName !== undefined ? { pharmacyName: input.pharmacyName } : {}),
+    ...(input.dosage !== undefined ? { dosage: input.dosage } : {}),
+    ...(input.notes !== undefined ? { notes: input.notes } : {}),
+    ...(input.title !== undefined ? { title: input.title } : {}),
+    ...(input.signatureDataUrl !== undefined ? { signatureDataUrl: input.signatureDataUrl } : {}),
   };
   const ref = await admin.firestore().collection(COLLECTION).add(payload);
-  return { ...(payload as Prescription), id: ref.id };
+  return { id: ref.id, ...payload };
 }
 
 export async function listPrescriptionsForRole(uid: string, role: UserRole): Promise<Prescription[]> {
@@ -49,8 +56,31 @@ export async function listPrescriptionsForRole(uid: string, role: UserRole): Pro
   } else if (role === UserRole.Pharmacy) {
     query = query.where('pharmacyId', '==', uid);
   }
-  const snapshot = await query.limit(200).get();
-  return snapshot.docs.map((doc) => ({ ...(doc.data() as Prescription), id: doc.id }));
+  const mapDocs = (docs: FirebaseFirestore.QueryDocumentSnapshot[]) =>
+    docs.map((doc) => ({ ...(doc.data() as Prescription), id: doc.id }));
+
+  try {
+    const snapshot = await query.limit(200).get();
+    return mapDocs(snapshot.docs);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    // Fallback for missing composite index in dev/preview environments.
+    if (message.toLowerCase().includes('index')) {
+      const base = admin.firestore().collection(COLLECTION);
+      let fallbackQuery = base;
+      if (role === UserRole.Doctor) {
+        fallbackQuery = fallbackQuery.where('doctorId', '==', uid);
+      } else if (role === UserRole.Patient) {
+        fallbackQuery = fallbackQuery.where('patientId', '==', uid);
+      } else if (role === UserRole.Pharmacy) {
+        fallbackQuery = fallbackQuery.where('pharmacyId', '==', uid);
+      }
+      const snapshot = await fallbackQuery.limit(200).get();
+      const items = mapDocs(snapshot.docs);
+      return items.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+    }
+    throw error;
+  }
 }
 
 export async function updatePrescriptionStatus(id: string, status: PrescriptionStatus): Promise<void> {

@@ -27,20 +27,39 @@ const COLLECTION = 'appointments';
 export async function listAppointmentsForUser(uid: string, role: UserRole): Promise<Appointment[]> {
   const admin = getFirebaseAdmin();
   const db = admin.firestore();
-  let query = db.collection(COLLECTION).orderBy('createdAt', 'desc').limit(200);
+  const baseCollection = db.collection(COLLECTION);
+  let filteredQuery = baseCollection;
   if (role === UserRole.Patient) {
-    query = query.where('patientId', '==', uid);
+    filteredQuery = filteredQuery.where('patientId', '==', uid);
   } else if (role === UserRole.Doctor) {
-    query = query.where('doctorId', '==', uid);
+    filteredQuery = filteredQuery.where('doctorId', '==', uid);
   } else if (role === UserRole.Clinic) {
-    query = query.where('clinicId', '==', uid);
+    filteredQuery = filteredQuery.where('clinicId', '==', uid);
   }
-  const snapshot = await query.get();
-  return snapshot.docs.map((doc) => {
-    const data = doc.data() as Appointment & { note?: string; notes?: string };
-    const normalizedNotes = data.notes ?? data.note;
-    return { ...data, notes: normalizedNotes, id: doc.id };
-  });
+  const mapDocs = (docs: FirebaseFirestore.QueryDocumentSnapshot[]) =>
+    docs.map((doc) => {
+      const data = doc.data() as Appointment & { note?: string; notes?: string };
+      const normalizedNotes = data.notes ?? data.note;
+      const base = { ...data, id: doc.id } as Appointment;
+      if (normalizedNotes !== undefined) {
+        base.notes = normalizedNotes;
+      }
+      return base;
+    });
+
+  try {
+    const snapshot = await filteredQuery.orderBy('createdAt', 'desc').limit(200).get();
+    return mapDocs(snapshot.docs);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    // Fallback for missing composite index in dev/preview environments.
+    if (message.toLowerCase().includes('index')) {
+      const snapshot = await filteredQuery.limit(200).get();
+      const items = mapDocs(snapshot.docs);
+      return items.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+    }
+    throw error;
+  }
 }
 
 export async function createAppointment(input: AppointmentInput): Promise<Appointment> {
@@ -48,14 +67,16 @@ export async function createAppointment(input: AppointmentInput): Promise<Appoin
   const db = admin.firestore();
   const { note, notes, ...rest } = input;
   const normalizedNotes = notes ?? note;
-  const payload = {
+  const payload: Omit<Appointment, 'id'> = {
     ...rest,
-    note: normalizedNotes,
-    notes: normalizedNotes,
     status: 'pending' as AppointmentStatus,
     isPaid: false,
     createdAt: Date.now(),
   };
+  if (normalizedNotes !== undefined) {
+    payload.note = normalizedNotes;
+    payload.notes = normalizedNotes;
+  }
   const ref = await db.collection(COLLECTION).add(payload);
   return { id: ref.id, ...payload };
 }
@@ -66,7 +87,11 @@ export async function getAppointmentById(id: string): Promise<Appointment | null
   if (!doc.exists) return null;
   const data = doc.data() as Appointment & { note?: string; notes?: string };
   const normalizedNotes = data.notes ?? data.note;
-  return { ...data, notes: normalizedNotes, id: doc.id };
+  const base = { ...data, id: doc.id } as Appointment;
+  if (normalizedNotes !== undefined) {
+    base.notes = normalizedNotes;
+  }
+  return base;
 }
 
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus, actor: UserRole): Promise<void> {

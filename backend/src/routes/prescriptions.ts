@@ -1,10 +1,24 @@
 import { Router } from 'express';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
-import { createPrescription, listPrescriptionsForRole, updatePrescriptionStatus, getPrescriptionById } from '@/services/prescriptionsService';
+import { createPrescription, listPrescriptionsForRole, updatePrescriptionStatus, getPrescriptionById, type PrescriptionInput } from '@/services/prescriptionsService';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
+import { z } from 'zod';
 
 const router = Router();
+
+const createPrescriptionSchema = z.object({
+  patientId: z.string().min(1),
+  patientName: z.string().min(1),
+  pharmacyId: z.string().optional(),
+  pharmacyName: z.string().optional(),
+  medicines: z.array(z.string().min(1)).min(1),
+  dosage: z.string().optional(),
+  notes: z.string().optional(),
+  title: z.string().optional(),
+  signatureDataUrl: z.string().optional(),
+  doctorName: z.string().optional(),
+}).strict();
 
 router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
@@ -14,7 +28,11 @@ router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
 
 router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
-  const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, signatureDataUrl, encrypted, encryptedNotes, encryptedSignature } = req.body || {};
+  const parsed = createPrescriptionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid payload', issues: parsed.error.issues });
+  }
+  const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, signatureDataUrl, doctorName } = parsed.data;
   if (!patientId || !patientName || !Array.isArray(medicines) || medicines.length === 0) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -23,25 +41,23 @@ router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedReques
     getUserProfile(patientId),
     pharmacyId ? getUserProfile(pharmacyId) : Promise.resolve(null),
   ]);
-  const doctorDisplayName = buildDisplayName(doctorProfile, req.body.doctorName || 'Doctor');
+  const doctorDisplayName = buildDisplayName(doctorProfile, doctorName || 'Doctor');
   const patientDisplayName = buildDisplayName(patientProfile, patientName || 'Patient');
   const pharmacyDisplayName = pharmacyProfile?.pharmacyName ?? pharmacyName;
-  const prescription = await createPrescription({
+  const payload: PrescriptionInput = {
     doctorId: user.uid,
     doctorName: doctorDisplayName,
     patientId,
     patientName: patientDisplayName,
-    pharmacyId,
-    pharmacyName: pharmacyDisplayName,
     medicines,
-    dosage,
-    notes,
-    title,
-    signatureDataUrl,
-    encrypted,
-    encryptedNotes,
-    encryptedSignature,
-  });
+    ...(pharmacyId !== undefined ? { pharmacyId } : {}),
+    ...(pharmacyDisplayName !== undefined ? { pharmacyName: pharmacyDisplayName } : {}),
+    ...(dosage !== undefined ? { dosage } : {}),
+    ...(notes !== undefined ? { notes } : {}),
+    ...(title !== undefined ? { title } : {}),
+    ...(signatureDataUrl !== undefined ? { signatureDataUrl } : {}),
+  };
+  const prescription = await createPrescription(payload);
   res.status(201).json(prescription);
 });
 

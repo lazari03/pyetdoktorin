@@ -10,7 +10,7 @@ export function getAppointmentAction(
     return { label: 'past', disabled: true };
   }
   if (role === UserRole.Doctor) {
-    if (appointment.status === 'accepted') {
+    if (appointment.isPaid) {
       return { label: 'joinNow', disabled: false };
     }
     return { label: 'waitingForPayment', disabled: true };

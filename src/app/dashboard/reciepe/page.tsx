@@ -5,7 +5,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import { SignaturePad } from "@/presentation/components/SignaturePad";
-import { encryptString } from "@/presentation/utils/crypto";
 import { fetchAdminUsers } from '@/network/adminUsers';
 import { createPrescription, fetchPrescriptions } from '@/network/prescriptions';
 import type { Prescription } from '@/network/prescriptions';
@@ -45,7 +44,8 @@ export default function DoctorReciepePage() {
   const [search, setSearch] = useState("");
   const [pharmacySearch, setPharmacySearch] = useState("");
   const [signatureUrl, setSignatureUrl] = useState<string>("");
-  const [passphrase, setPassphrase] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const toReciepe = useCallback((p: Prescription): Reciepe => ({
     id: p.id,
     patientId: p.patientId,
@@ -109,45 +109,48 @@ export default function DoctorReciepePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.patientId || !form.pharmacyId || !user?.uid) return;
+    setSubmitError(null);
+    if (!form.patientId || !form.pharmacyId || !user?.uid) {
+      setSubmitError(t("missingRequiredFields") || "Please select a patient and pharmacy.");
+      return;
+    }
+    if (!form.patient || !form.pharmacy) {
+      setSubmitError(t("missingRequiredFields") || "Please select a patient and pharmacy.");
+      return;
+    }
     const medicineList = form.medicines
       .split(/[\n,]+/)
       .map((m) => m.trim())
       .filter(Boolean);
-    if (medicineList.length === 0) return;
-    let encryptedSignature: string | undefined;
-    let encryptedNotes: string | undefined;
-    if (passphrase.trim()) {
-      if (signatureUrl) {
-        const payload = await encryptString(passphrase, signatureUrl);
-        encryptedSignature = JSON.stringify(payload);
-      }
-      if (form.notes) {
-        const payload = await encryptString(passphrase, form.notes);
-        encryptedNotes = JSON.stringify(payload);
-      }
+    if (medicineList.length === 0) {
+      setSubmitError(t("missingMedicines") || "Please add at least one medicine.");
+      return;
     }
-    const created = await createPrescription({
-      patientId: form.patientId,
-      patientName: form.patient,
-      pharmacyId: form.pharmacyId,
-      pharmacyName: form.pharmacy || '',
-      doctorName: user?.name || '',
-      medicines: medicineList,
-      dosage: form.dosage,
-      notes: passphrase ? undefined : form.notes,
-      title: form.title,
-      signatureDataUrl: passphrase ? undefined : signatureUrl,
-      encrypted: !!passphrase,
-      encryptedSignature,
-      encryptedNotes,
-    });
-    setReciepes((prev) => [toReciepe(created), ...prev]);
-    setForm({ patientId: '', patient: '', pharmacyId: '', pharmacy: '', title: '', medicines: '', dosage: '', notes: '' });
-    setSearch('');
-    setPharmacySearch('');
-    setSignatureUrl('');
-    setPassphrase('');
+    try {
+      setIsSubmitting(true);
+      const created = await createPrescription({
+        patientId: form.patientId,
+        patientName: form.patient,
+        pharmacyId: form.pharmacyId,
+        pharmacyName: form.pharmacy || '',
+        doctorName: user?.name || '',
+        medicines: medicineList,
+        dosage: form.dosage,
+        notes: form.notes,
+        title: form.title,
+        signatureDataUrl: signatureUrl,
+      });
+      setReciepes((prev) => [toReciepe(created), ...prev]);
+      setForm({ patientId: '', patient: '', pharmacyId: '', pharmacy: '', title: '', medicines: '', dosage: '', notes: '' });
+      setSearch('');
+      setPharmacySearch('');
+      setSignatureUrl('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : (t("unknownError") || "Failed to issue prescription.");
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const downloadPdf = (r: Reciepe) => {
@@ -249,6 +252,11 @@ export default function DoctorReciepePage() {
           <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
             <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("newReciepe") || "New reciepe"}</h2>
             <form className="space-y-3" onSubmit={handleSubmit}>
+              {submitError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {submitError}
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">{t("patientName")}</label>
                 <input
@@ -371,17 +379,6 @@ export default function DoctorReciepePage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Encrypt with passphrase (optional)</label>
-                <input
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  type="password"
-                  value={passphrase}
-                  onChange={(e) => setPassphrase(e.target.value)}
-                  placeholder="Set a passphrase to encrypt signature/notes"
-                />
-                <p className="text-[11px] text-gray-500 mt-1">Only someone with this passphrase can view signature/notes.</p>
-              </div>
-              <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">{t("notesLabel")}</label>
                 <textarea
                   className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -394,9 +391,10 @@ export default function DoctorReciepePage() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="inline-flex items-center rounded-full bg-purple-600 text-white px-4 py-2 text-sm font-semibold hover:bg-purple-700 transition"
+                  className="inline-flex items-center rounded-full bg-purple-600 text-white px-4 py-2 text-sm font-semibold hover:bg-purple-700 transition disabled:opacity-60"
+                  disabled={isSubmitting}
                 >
-                  {t("issueReciepe") || "Issue reciepe"}
+                  {isSubmitting ? (t("sending") || "Sending...") : (t("issueReciepe") || "Issue reciepe")}
                 </button>
               </div>
             </form>

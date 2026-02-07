@@ -7,7 +7,7 @@ This document outlines how to evolve the Alo Doktor web application into a produ
 - **Frontend**: Next.js (App Router + legacy pages), client-heavy Firebase interactions.
 - **Auth**: Firebase Authentication; Next.js API route `/api/auth/session` issues cookies.
 - **Data**: Firestore accessed directly from the client, with Firestore rules guarding access.
-- **Payments**: PayPal (create/capture) triggered from the client.
+- **Payments**: Paddle Classic checkout triggered from the client.
 - **Admin tooling**: Next.js API routes for user provisioning, no centralized audit log.
 
 ## 2. Target Architecture
@@ -35,7 +35,7 @@ Introduce a backend layer (can be implemented as Next.js API routes or a separat
    - Provide admin/clinic dashboards via backend queries.
 
 5. **Payments & Payouts**
-   - Server-owned PayPal integration (create/capture).
+   - Server-owned Paddle Classic webhook integration.
    - Record transactions, doctor payouts, refund hooks.
 
 6. **Notifications & Analytics**
@@ -53,7 +53,7 @@ Introduce a backend layer (can be implemented as Next.js API routes or a separat
 |-------|-------|--------------|
 | 1 | Session hardening | Backend session service, cookie issuance, RBAC middleware |
 | 2 | User management APIs | Admin create/update/delete endpoints; client integration |
-| 3 | Payments & payouts | Secure PayPal APIs, transaction ledger |
+| 3 | Payments & payouts | Secure Paddle webhook, transaction ledger |
 | 4 | Appointments & prescriptions | Backend CRUD, validation, logging |
 | 5 | Clinic bookings | Server-managed booking queue/workflows |
 | 6 | Monitoring & deployment | Structured logging, error tracking, CI/CD pipeline |

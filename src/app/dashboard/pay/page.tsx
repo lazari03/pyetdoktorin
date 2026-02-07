@@ -1,25 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Script from 'next/script';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
-import { createPayPalOrder, capturePayPalOrder } from '@/network/paypalApiClient';
 import { useAuth } from '@/context/AuthContext';
-
-type PayPalButtons = (config: unknown) => { render: (selector: string) => Promise<void> };
-type PayPalFunding = { PAYPAL?: string; CARD?: string };
-type PayPalClient = {
-  Buttons: PayPalButtons;
-  FUNDING: PayPalFunding;
-};
-
-declare global {
-  interface Window {
-    paypal?: PayPalClient;
-  }
-}
+import { openPaddleCheckout, preparePaddleCheckout } from '@/infrastructure/services/paddleCheckout';
 
 export default function PayPage() {
   const { t } = useTranslation();
@@ -28,113 +14,45 @@ export default function PayPage() {
   const { user } = useAuth();
 
   const appointmentId = searchParams?.get('appointmentId') || '';
-  const clientId =
-    process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ||
-    'BAAmC82dZnH-aMF5R14OE87F-QRurvsOnMoQLtxRoqKyhkf1i8v-TLxBmLWEm1xThf3dGkOX4P2QYNPXes';
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [paypalReady, setPaypalReady] = useState(false);
-  const [approvalUrl, setApprovalUrl] = useState<string | null>(null);
-  const renderedRef = useRef(false);
+  const [paddleReady, setPaddleReady] = useState(false);
 
-  const renderButtons = useCallback(() => {
-    if (!window.paypal || !appointmentId || !user?.uid || renderedRef.current) return;
-    renderedRef.current = true;
-
-    const baseConfig = {
-      style: {
-        shape: 'pill',
-        layout: 'vertical',
-        color: 'silver',
-        label: 'paypal',
-      },
-      createOrder: async () => {
-        setStatus('loading');
-        setErrorMessage(null);
-        const data = await createPayPalOrder(appointmentId);
-        setApprovalUrl(data.approvalUrl || null);
-        return data.orderId;
-      },
-      onApprove: async (data: { orderID?: string }) => {
-        if (!data.orderID) return;
-        try {
-          setStatus('loading');
-          await capturePayPalOrder(data.orderID, appointmentId);
-          setStatus('success');
-          router.push(`/dashboard/appointments?paid=${appointmentId}`);
-        } catch (err) {
-          console.error(err);
-          setStatus('error');
-          setErrorMessage(t('paymentFailed'));
-        }
-      },
-      onError: (err: unknown) => {
-        console.error(err);
-        setStatus('error');
-        setErrorMessage(t('paymentFailed'));
-      },
-      onCancel: () => {
-        setStatus('idle');
-      },
-    };
-
-    // PayPal wallet
-    window.paypal.Buttons(baseConfig).render('#paypal-button-container');
-
-    // Card funding
-    window.paypal
-      .Buttons({
-        ...baseConfig,
-        fundingSource: window.paypal.FUNDING.CARD,
-        style: {
-          shape: 'pill',
-          layout: 'vertical',
-          color: 'white',
-          label: 'pay',
-        },
+  useEffect(() => {
+    let cancelled = false;
+    preparePaddleCheckout()
+      .then(() => {
+        if (!cancelled) setPaddleReady(true);
       })
-      .render('#card-button-container')
       .catch(() => {
-        // Ignore
-      });
-  }, [appointmentId, router, t, user?.uid]);
-
-  // Re-render buttons once user info arrives and SDK is present (e.g., after hydration)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (paypalReady && window.paypal && appointmentId && user?.uid) {
-      renderButtons();
-    }
-  }, [appointmentId, paypalReady, renderButtons, user?.uid]);
-
-  // Fallback: pre-create approval link in case buttons are blocked
-  useEffect(() => {
-    const fetchLink = async () => {
-      if (!appointmentId || !user?.uid) return;
-      try {
-        const data = await createPayPalOrder(appointmentId);
-        setApprovalUrl(data.approvalUrl || null);
-      } catch (err) {
-        console.error(err);
+        if (cancelled) return;
+        setStatus('error');
         setErrorMessage(t('paymentFailed'));
-        setStatus('error');
-      }
+        setPaddleReady(true);
+      });
+    return () => {
+      cancelled = true;
     };
-    fetchLink();
-  }, [appointmentId, t, user?.uid]);
+  }, [t]);
 
-  // Detect SDK failure (blocked CSP / network)
-  useEffect(() => {
-    if (!paypalReady) return;
-    const timer = setTimeout(() => {
-      if (!window.paypal) {
-        setStatus('error');
-        setErrorMessage(t('paypalBlocked') || 'PayPal was blocked by the browser. Use the fallback button below.');
-      }
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [paypalReady, t]);
+  const openCheckout = useCallback(() => {
+    if (!appointmentId) {
+      setErrorMessage(t('missingAppointmentId'));
+      setStatus('error');
+      return;
+    }
+    setStatus('loading');
+    setErrorMessage(null);
+    openPaddleCheckout({
+      appointmentId,
+      userId: user?.uid ?? null,
+      onClose: () => setStatus('idle'),
+    }).catch(() => {
+      setStatus('error');
+      setErrorMessage(t('paymentFailed'));
+    });
+  }, [appointmentId, t, user?.uid]);
 
   if (!appointmentId) {
     return (
@@ -152,8 +70,14 @@ export default function PayPage() {
 
         <div className="space-y-4">
           <div>
-            <p className="text-xs font-semibold text-gray-700 mb-2">{t('payWithPaypal')}</p>
-            <div id="paypal-button-container" />
+            <p className="text-xs font-semibold text-gray-700 mb-2">{t('payWithCard')}</p>
+            <button
+              onClick={openCheckout}
+              disabled={!paddleReady || status === 'loading'}
+              className="w-full inline-flex items-center justify-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {t('payNow')}
+            </button>
           </div>
         </div>
 
@@ -167,22 +91,6 @@ export default function PayPage() {
           <div className="text-sm text-red-600">{errorMessage || t('paymentFailed')}</div>
         )}
 
-        {approvalUrl && (
-          <div className="pt-2 space-y-2">
-            <p className="text-xs font-semibold text-gray-700">
-              {t('fallbackCheckout') || 'If buttons do not appear, use the secure PayPal checkout link:'}
-            </p>
-            <a
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-purple-400 px-4 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-50 transition"
-              href={approvalUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t('openPaypal') || 'Open PayPal'}
-            </a>
-          </div>
-        )}
-
         <button
           className="w-full mt-2 text-sm font-medium text-gray-700 underline"
           onClick={() => router.back()}
@@ -191,17 +99,7 @@ export default function PayPage() {
         </button>
       </div>
 
-      <Script
-        src={`https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&intent=capture&components=buttons,funding-eligibility&enable-funding=card&disable-funding=venmo`}
-        strategy="afterInteractive"
-        onLoad={() => setPaypalReady(true)}
-        onError={() => {
-          setStatus('error');
-          setErrorMessage(t('paymentFailed'));
-        }}
-      />
-
-      {!paypalReady && (
+      {!paddleReady && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-lg px-4 py-2 rounded-full text-sm text-gray-700">
           {t('loadingPayments')}
         </div>

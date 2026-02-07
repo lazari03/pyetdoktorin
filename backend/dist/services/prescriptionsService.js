@@ -8,11 +8,12 @@ const UserRole_1 = require("@/domain/entities/UserRole");
 const COLLECTION = 'recipe';
 async function createPrescription(input) {
     const admin = (0, firebaseAdmin_1.getFirebaseAdmin)();
-    const payload = {
+    const rawPayload = {
         ...input,
         status: 'pending',
         createdAt: Date.now(),
     };
+    const payload = Object.fromEntries(Object.entries(rawPayload).filter(([, value]) => value !== undefined));
     const ref = await admin.firestore().collection(COLLECTION).add(payload);
     return { ...payload, id: ref.id };
 }

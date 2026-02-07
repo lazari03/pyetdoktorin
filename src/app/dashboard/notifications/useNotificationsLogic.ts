@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useAppointmentStore } from '@/store/appointmentStore';
 import type { NavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useAuth } from '@/context/AuthContext';
@@ -23,13 +23,15 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     (AppointmentDetail & { status?: string; dismissedBy?: Record<string, boolean> })[]
   >([]);
 
+  const didInitRef = useRef(false);
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
     const fetchUserRoleAndAppointments = async () => {
       if (!user?.uid) {
         nav.toLogin();
         return;
       }
-      const userId = user.uid;
       const response = await backendFetch<{ role: string }>('/api/notifications/role');
       const role = normalizeRole(response.role);
       if (role) {
@@ -41,7 +43,7 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     };
     fetchUserRoleAndAppointments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchAppointments, user, nav]);
+  }, [fetchAppointments, user?.uid, nav]);
 
   useEffect(() => {
     const fetchDetails = async () => {

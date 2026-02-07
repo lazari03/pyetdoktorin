@@ -27,6 +27,9 @@ export function HeroCard({
   payLabel = "Pay now",
   profileLabel = "View doctor",
 }: HeroCardProps) {
+  const showPay = Boolean(onPay && isPaid === false);
+  const showJoin = Boolean(onJoin && !showPay);
+
   return (
     <section className="bg-white rounded-3xl shadow-lg overflow-hidden border border-purple-50">
       <div className="relative min-h-[220px] flex items-end">
@@ -39,7 +42,7 @@ export function HeroCard({
             {subtitle && <p className="text-sm text-white/80">{subtitle}</p>}
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {onJoin && (
+            {showJoin && (
               <button
                 onClick={onJoin}
                 className="inline-flex items-center gap-2 rounded-full bg-white text-purple-700 px-4 py-2 text-sm font-semibold shadow hover:bg-purple-50 transition"
@@ -48,7 +51,7 @@ export function HeroCard({
                 {ctaLabel}
               </button>
             )}
-            {!isPaid && onPay && (
+            {showPay && (
               <button
                 onClick={onPay}
                 className="inline-flex items-center gap-2 rounded-full border border-white/80 text-white px-4 py-2 text-sm font-semibold hover:bg-white hover:text-purple-700 transition"
