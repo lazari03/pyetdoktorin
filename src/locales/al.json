@@ -681,8 +681,9 @@
   "patientDetails": "Detajet e pacientit",
   "allergies": "Alergjitë",
   "chronicConditions": "Sëmundje kronike",
-  "bookClinic": "Rezervo këtë klinikë"
-  ,
+  "bookClinic": "Rezervo këtë klinikë",
+  "noClinicsAvailable": "Nuk ka klinika të disponueshme ende",
+  "noClinicsAvailableSubtitle": "Ju lutemi provoni më vonë.",
   "accessDenied": "Qasja e ndaluar",
   "backToDashboard": "Kthehu te paneli",
   "bookNow": "Rezervo tani",

@@ -680,8 +680,9 @@
   "patientDetails": "Patient details",
   "allergies": "Allergies",
   "chronicConditions": "Chronic conditions",
-  "bookClinic": "Book this clinic"
-  ,
+  "bookClinic": "Book this clinic",
+  "noClinicsAvailable": "No clinics available yet",
+  "noClinicsAvailableSubtitle": "Please check back later.",
   "accessDenied": "Access denied",
   "backToDashboard": "Back to dashboard",
   "bookNow": "Book now",

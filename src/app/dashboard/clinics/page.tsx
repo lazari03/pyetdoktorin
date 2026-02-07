@@ -9,6 +9,7 @@ import { Clinic } from '@/domain/entities/Clinic';
 import { z } from '@/config/zIndex';
 import { backendFetch } from '@/network/backendClient';
 import { UserRole } from '@/domain/entities/UserRole';
+import AppointmentConfirmation from '@/presentation/components/appointment/AppointmentConfirmation';
 
 export default function ClinicsPage() {
   const { t } = useTranslation();
@@ -20,6 +21,7 @@ export default function ClinicsPage() {
   const [preferredDate, setPreferredDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const userEmail = (user as { email?: string } | null)?.email ?? '';
   const userPhone = (user as { phoneNumber?: string } | null)?.phoneNumber ?? '';
@@ -28,10 +30,11 @@ export default function ClinicsPage() {
   useEffect(() => {
     const loadClinics = async () => {
       try {
-        const response = await backendFetch<{ items: Clinic[] }>('/api/clinics/catalog', { method: 'GET' });
-        setClinics(response.items);
+        const response = await backendFetch<{ items: Clinic[] }>('/api/clinics/private', { method: 'GET' });
+        setClinics(response.items ?? []);
       } catch (error) {
         console.error('Failed to load clinics', error);
+        setClinics([]);
       } finally {
         setLoading(false);
       }
@@ -61,7 +64,8 @@ export default function ClinicsPage() {
           preferredDate,
         }),
       });
-      setFeedback({ type: 'success', text: t('bookingSubmitted') || 'Booking request sent' });
+      setFeedback(null);
+      setShowConfirmation(true);
       setNote('');
       setPreferredDate('');
       setSelectedClinic(null);
@@ -103,6 +107,15 @@ export default function ClinicsPage() {
 
         {loading ? (
           <div className="text-center py-10 text-gray-500">{t('loading') || 'Loading...'}</div>
+        ) : clinics.length === 0 ? (
+          <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center">
+            <p className="text-lg font-semibold text-gray-900">
+              {t('noClinicsAvailable') || 'No clinics available yet'}
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              {t('noClinicsAvailableSubtitle') || 'Please check back later.'}
+            </p>
+          </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
             {clinics.map((clinic) => (
@@ -171,7 +184,7 @@ export default function ClinicsPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-gray-600">Email</label>
+                  <label className="text-xs font-semibold text-gray-600">{t('email') || 'Email'}</label>
                   <input type="email" value={userEmail} disabled className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50" />
                 </div>
                 <div>
@@ -208,6 +221,10 @@ export default function ClinicsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showConfirmation && (
+        <AppointmentConfirmation onClose={() => setShowConfirmation(false)} />
       )}
     </div>
   );

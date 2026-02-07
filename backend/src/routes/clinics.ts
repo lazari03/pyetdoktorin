@@ -4,11 +4,36 @@ import { clinicsCatalog } from '@/data/clinics';
 import { createClinicBooking, listBookingsByClinic, listBookingsByPatient, listAllBookings, updateClinicBookingStatus, getClinicBookingById } from '@/services/clinicBookingsService';
 import { UserRole } from '@/domain/entities/UserRole';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
+import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 
 const router = Router();
 
 router.get('/catalog', (_req, res) => {
   res.json({ items: clinicsCatalog });
+});
+
+router.get('/private', requireAuth([UserRole.Patient, UserRole.Admin]), async (_req: AuthenticatedRequest, res) => {
+  const admin = getFirebaseAdmin();
+  const snapshot = await admin.firestore().collection('users').where('role', '==', UserRole.Clinic).get();
+  const items = snapshot.docs.map((doc) => {
+    const data = doc.data() as Record<string, unknown>;
+    const clinicName = (data.clinicName as string | undefined) ?? '';
+    const name = clinicName || `${(data.name as string | undefined) ?? ''} ${(data.surname as string | undefined) ?? ''}`.trim() || 'Clinic';
+    const specialization = data.specialization as string | undefined;
+    const specializations = Array.isArray(data.specializations) ? (data.specializations as string[]) : [];
+    const specialties = specializations.length > 0 ? specializations : (specialization ? [specialization] : []);
+    return {
+      id: doc.id,
+      name,
+      address: (data.address as string | undefined) ?? '',
+      description: (data.bio as string | undefined) ?? (data.about as string | undefined) ?? '',
+      specialties,
+      phone: (data.phone as string | undefined) ?? '',
+      email: (data.email as string | undefined) ?? '',
+      imageUrl: (data.imageUrl as string | undefined) ?? undefined,
+    };
+  });
+  res.json({ items });
 });
 
 router.get('/bookings', requireAuth(), async (req: AuthenticatedRequest, res) => {
