@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { z } from '@/config/zIndex';
 
 export default function AppointmentConfirmation({ onClose }: { onClose: () => void }) {
 	const { t } = useTranslation();
 
 	return (
-	<div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-			<div className="relative w-full max-w-sm rounded-3xl bg-white border border-gray-100 shadow-xl overflow-hidden">
+	<div className={`fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm ${z.modal}`}>
+			<div className={`relative w-full max-w-sm rounded-3xl bg-white border border-gray-100 shadow-xl overflow-hidden ${z.modalContent}`}>
 				{/* Close Button */}
 				<button
 					className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"

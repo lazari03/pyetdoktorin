@@ -3,5 +3,6 @@ export enum UserRole {
 	Patient = 'patient',
 	Admin = 'admin',
 	Pharmacy = 'pharmacy',
+	Clinic = 'clinic',
 	null = "null"
 }

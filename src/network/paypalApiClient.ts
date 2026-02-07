@@ -1,15 +1,25 @@
-import { apiClient } from './apiClient';
+import { backendFetch } from './backendClient';
 
-export function createPayPalOrder(appointmentId: string, patientId?: string) {
-  return apiClient.post<{ orderId: string; approvalUrl: string }>(
-    '/api/paypal/create-order',
-    { appointmentId, patientId }
-  );
+export interface PayPalOrderResponse {
+  orderId: string;
+  approvalUrl: string;
 }
 
-export function capturePayPalOrder(orderId: string) {
-  return apiClient.post<{ ok: boolean; result: { status: string; appointmentId?: string } }>(
-    '/api/paypal/capture-order',
-    { orderId }
-  );
+export async function createPayPalOrder(appointmentId: string) {
+  return backendFetch<PayPalOrderResponse>('/api/payments/create-order', {
+    method: 'POST',
+    body: JSON.stringify({ appointmentId }),
+  });
+}
+
+export interface CaptureOrderResponse {
+  status: string;
+  appointmentId?: string;
+}
+
+export async function capturePayPalOrder(orderId: string, appointmentId: string) {
+  return backendFetch<CaptureOrderResponse>('/api/payments/capture-order', {
+    method: 'POST',
+    body: JSON.stringify({ orderId, appointmentId }),
+  });
 }

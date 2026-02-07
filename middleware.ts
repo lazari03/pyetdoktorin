@@ -66,6 +66,19 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // Protect clinic routes
+  if (url.pathname.startsWith('/clinic')) {
+    if (!hasSession) {
+      url.pathname = '/login';
+      url.searchParams.set('from', req.nextUrl.pathname);
+      return NextResponse.redirect(url);
+    }
+    if (role !== 'clinic') {
+      url.pathname = role === 'pharmacy' ? '/pharmacy' : '/dashboard';
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Protect admin routes: require role=admin
   if (url.pathname.startsWith('/admin')) {
     if (!hasSession) {
@@ -97,5 +110,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/clinic/:path*', '/login', '/register'],
 };

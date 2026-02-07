@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
-import { useDI } from "@/context/DIContext";
 import { SignaturePad } from "@/presentation/components/SignaturePad";
 import { encryptString } from "@/presentation/utils/crypto";
+import { fetchAdminUsers } from '@/network/adminUsers';
+import { createPrescription, fetchPrescriptions } from '@/network/prescriptions';
+import type { Prescription } from '@/network/prescriptions';
+import { UserRole } from '@/domain/entities/UserRole';
 
 type Reciepe = {
   id: string;
@@ -26,7 +29,6 @@ type Reciepe = {
 export default function DoctorReciepePage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const { getAllUsersUseCase, getPharmaciesUseCase, createReciepeUseCase, getReciepesByDoctorUseCase } = useDI();
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [pharmacies, setPharmacies] = useState<{ id: string; name: string }[]>([]);
@@ -44,28 +46,52 @@ export default function DoctorReciepePage() {
   const [pharmacySearch, setPharmacySearch] = useState("");
   const [signatureUrl, setSignatureUrl] = useState<string>("");
   const [passphrase, setPassphrase] = useState<string>("");
+  const toReciepe = useCallback((p: Prescription): Reciepe => ({
+    id: p.id,
+    patientId: p.patientId,
+    patient: p.patientName,
+    pharmacyId: p.pharmacyId,
+    pharmacy: p.pharmacyName,
+    title: p.title || t("reciepeTitleDoctor") || "Reciepe",
+    medicines: Array.isArray(p.medicines) ? p.medicines.join(', ') : String(p.medicines ?? ''),
+    dosage: p.dosage || "",
+    notes: p.notes,
+    date: new Date(p.createdAt).toISOString().split("T")[0],
+    status: p.status,
+    signatureDataUrl: p.signatureDataUrl,
+  }), [t]);
 
   useEffect(() => {
-    getAllUsersUseCase
-      .execute()
-      .then((users) => {
-        const pts = (users || [])
-          .filter((u: { role?: string }) => u.role === 'patient')
-          .map((u: { uid?: string; id?: string; name?: string; surname?: string; email?: string }) => ({
-            id: u.uid || u.id || "",
-            name: `${u.name ?? ""} ${u.surname ?? ""}`.trim() || u.email || "Unknown",
-          }));
+    const loadPatients = async () => {
+      try {
+        const response = await fetchAdminUsers({ role: UserRole.Patient, pageSize: 500 });
+        const pts = (response.items || []).map((u: Record<string, unknown>) => ({
+          id: String(u.id ?? u.uid ?? ''),
+          name: `${(u.name as string | undefined) ?? ''} ${(u.surname as string | undefined) ?? ''}`.trim() || (u.email as string | undefined) || 'Unknown',
+        }));
         setPatients(pts);
-      })
-      .catch(() => setPatients([]));
-  }, [getAllUsersUseCase]);
+      } catch {
+        setPatients([]);
+      }
+    };
+    loadPatients();
+  }, []);
 
   useEffect(() => {
-    getPharmaciesUseCase
-      .execute()
-      .then((list) => setPharmacies(list || []))
-      .catch(() => setPharmacies([]));
-  }, [getPharmaciesUseCase]);
+    const loadPharmacies = async () => {
+      try {
+        const response = await fetchAdminUsers({ role: UserRole.Pharmacy, pageSize: 200 });
+        const mapped = (response.items || []).map((entry: Record<string, unknown>) => ({
+          id: String(entry.id ?? ''),
+          name: (entry.pharmacyName as string | undefined) || `${(entry.name as string | undefined) ?? ''} ${(entry.surname as string | undefined) ?? ''}`.trim() || 'Pharmacy',
+        }));
+        setPharmacies(mapped);
+      } catch {
+        setPharmacies([]);
+      }
+    };
+    loadPharmacies();
+  }, []);
 
   const filteredPatients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -84,52 +110,44 @@ export default function DoctorReciepePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.patientId || !form.pharmacyId || !user?.uid) return;
-    let encryptedSignature;
-    let encryptedNotes;
+    const medicineList = form.medicines
+      .split(/[\n,]+/)
+      .map((m) => m.trim())
+      .filter(Boolean);
+    if (medicineList.length === 0) return;
+    let encryptedSignature: string | undefined;
+    let encryptedNotes: string | undefined;
     if (passphrase.trim()) {
-      if (signatureUrl) encryptedSignature = await encryptString(passphrase, signatureUrl);
-      if (form.notes) encryptedNotes = await encryptString(passphrase, form.notes);
+      if (signatureUrl) {
+        const payload = await encryptString(passphrase, signatureUrl);
+        encryptedSignature = JSON.stringify(payload);
+      }
+      if (form.notes) {
+        const payload = await encryptString(passphrase, form.notes);
+        encryptedNotes = JSON.stringify(payload);
+      }
     }
-    const newId = await createReciepeUseCase.execute({
+    const created = await createPrescription({
       patientId: form.patientId,
       patientName: form.patient,
       pharmacyId: form.pharmacyId,
-      pharmacyName: form.pharmacy || "",
-      doctorId: user.uid,
-      doctorName: user.name,
-      title: form.title,
-      medicines: form.medicines,
+      pharmacyName: form.pharmacy || '',
+      doctorName: user?.name || '',
+      medicines: medicineList,
       dosage: form.dosage,
       notes: passphrase ? undefined : form.notes,
-      createdAt: new Date().toISOString(),
+      title: form.title,
       signatureDataUrl: passphrase ? undefined : signatureUrl,
       encrypted: !!passphrase,
       encryptedSignature,
       encryptedNotes,
     });
-    setReciepes((prev) => [
-      {
-        id: newId,
-        patientId: form.patientId,
-        patient: form.patient,
-        pharmacyId: form.pharmacyId,
-        pharmacy: form.pharmacy,
-        title: form.title,
-        medicines: form.medicines,
-        dosage: form.dosage,
-        notes: passphrase ? undefined : form.notes,
-        date: new Date().toISOString().split("T")[0],
-        status: "pending",
-        signatureDataUrl: passphrase ? undefined : signatureUrl,
-        signatureEncrypted: !!passphrase,
-      },
-      ...prev,
-    ]);
-    setForm({ patientId: "", patient: "", pharmacyId: "", pharmacy: "", title: "", medicines: "", dosage: "", notes: "" });
-    setSearch("");
-    setPharmacySearch("");
-    setSignatureUrl("");
-    setPassphrase("");
+    setReciepes((prev) => [toReciepe(created), ...prev]);
+    setForm({ patientId: '', patient: '', pharmacyId: '', pharmacy: '', title: '', medicines: '', dosage: '', notes: '' });
+    setSearch('');
+    setPharmacySearch('');
+    setSignatureUrl('');
+    setPassphrase('');
   };
 
   const downloadPdf = (r: Reciepe) => {
@@ -166,25 +184,16 @@ export default function DoctorReciepePage() {
   useEffect(() => {
     const loadReciepes = async () => {
       if (!user?.uid) return;
-      const data = await getReciepesByDoctorUseCase.execute(user.uid);
-      const mapped: Reciepe[] = (data || []).map((r) => ({
-        id: r.id || (r.patientId + r.createdAt),
-        patientId: r.patientId,
-        patient: r.patientName,
-        pharmacyId: r.pharmacyId,
-        pharmacy: r.pharmacyName,
-        title: r.title,
-        medicines: r.medicines,
-        dosage: r.dosage,
-        notes: r.notes,
-        date: r.createdAt.split("T")[0],
-        status: (r.status as Reciepe["status"]) || "pending",
-        signatureDataUrl: r.signatureDataUrl,
-      }));
-      setReciepes(mapped);
+      try {
+        const response = await fetchPrescriptions();
+        const mapped = (response.items || []).map(toReciepe);
+        setReciepes(mapped);
+      } catch {
+        setReciepes([]);
+      }
     };
     loadReciepes();
-  }, [getReciepesByDoctorUseCase, user?.uid]);
+  }, [user?.uid, toReciepe]);
 
   if (role !== "doctor") {
     return <RedirectingModal show />;

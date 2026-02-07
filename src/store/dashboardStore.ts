@@ -5,6 +5,7 @@ import { formatDate } from '../utils/dateUtils';
 import { UserRole } from '@/domain/entities/UserRole';
 import { getNavigationPaths, NavigationItem } from './navigationStore';
 import { JSX } from 'react';
+import { listAppointments } from '@/network/appointments';
 
 export enum AppointmentFilter {
   All = 'all',
@@ -16,14 +17,7 @@ interface DashboardState {
   totalAppointments: number;
   nextAppointment: string | null;
   recentAppointments: Appointment[];
-  fetchAppointments: (
-    userId: string,
-    role: UserRole,
-    fetchAppointmentsUseCase: (
-      userId: string,
-      isDoctor: boolean
-    ) => Promise<Appointment[]>
-  ) => Promise<void>;
+  fetchAppointments: (role: UserRole) => Promise<void>;
   sidebarOpen: boolean;
   navPaths: (NavigationItem & { icon?: JSX.Element })[];
   toggleSidebar: () => void;
@@ -39,9 +33,9 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   totalAppointments: 0,
   nextAppointment: null,
   recentAppointments: [],
-  fetchAppointments: async (userId, role, fetchAppointmentsUseCase) => {
+  fetchAppointments: async (role) => {
     try {
-      const appointments = await fetchAppointmentsUseCase(userId, isDoctor(role));
+      const { items: appointments } = await listAppointments();
 
       const upcomingAppointments = appointments
         .filter((appointment) => {

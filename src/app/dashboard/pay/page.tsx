@@ -34,7 +34,6 @@ export default function PayPage() {
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [cardEligible, setCardEligible] = useState<boolean | null>(null);
   const [paypalReady, setPaypalReady] = useState(false);
   const [approvalUrl, setApprovalUrl] = useState<string | null>(null);
   const renderedRef = useRef(false);
@@ -53,7 +52,7 @@ export default function PayPage() {
       createOrder: async () => {
         setStatus('loading');
         setErrorMessage(null);
-        const { data } = await createPayPalOrder(appointmentId, user.uid);
+        const data = await createPayPalOrder(appointmentId);
         setApprovalUrl(data.approvalUrl || null);
         return data.orderId;
       },
@@ -61,7 +60,7 @@ export default function PayPage() {
         if (!data.orderID) return;
         try {
           setStatus('loading');
-          await capturePayPalOrder(data.orderID);
+          await capturePayPalOrder(data.orderID, appointmentId);
           setStatus('success');
           router.push(`/dashboard/appointments?paid=${appointmentId}`);
         } catch (err) {
@@ -96,8 +95,9 @@ export default function PayPage() {
         },
       })
       .render('#card-button-container')
-      .then(() => setCardEligible(true))
-      .catch(() => setCardEligible(false));
+      .catch(() => {
+        // Ignore
+      });
   }, [appointmentId, router, t, user?.uid]);
 
   // Re-render buttons once user info arrives and SDK is present (e.g., after hydration)
@@ -113,7 +113,7 @@ export default function PayPage() {
     const fetchLink = async () => {
       if (!appointmentId || !user?.uid) return;
       try {
-        const { data } = await createPayPalOrder(appointmentId, user.uid);
+        const data = await createPayPalOrder(appointmentId);
         setApprovalUrl(data.approvalUrl || null);
       } catch (err) {
         console.error(err);

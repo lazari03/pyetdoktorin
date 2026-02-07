@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
-import { useDI } from "@/context/DIContext";
 import Image from "next/image";
+import { fetchPrescriptions } from '@/network/prescriptions';
 
 type Reciepe = {
   id: string;
@@ -22,31 +22,35 @@ type Reciepe = {
 export default function PatientReciepesPage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const { getReciepesByPatientUseCase } = useDI();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
 
   useEffect(() => {
     const load = async () => {
       if (!user?.uid) return;
-      const data = await getReciepesByPatientUseCase.execute(user.uid);
-      setReciepes(
-        (data || []).map((r) => ({
-          id: r.id || (r.patientId + r.createdAt),
-          doctor: r.doctorName || "",
-          title: r.title,
-          medicines: r.medicines,
-          dosage: r.dosage,
-          notes: r.notes,
-          date: r.createdAt.split("T")[0],
-          status: (r.status as Reciepe["status"]) || "pending",
-          signatureDataUrl: r.signatureDataUrl,
-        }))
-      );
-      setActiveId((prev) => prev || (data?.[0] ? data[0].patientId + data[0].createdAt : null));
+      try {
+        const response = await fetchPrescriptions();
+        const mapped = (response.items || [])
+          .filter((r) => r.patientId === user.uid)
+          .map((r) => ({
+            id: r.id || (r.patientId + r.createdAt),
+            doctor: r.doctorName || "",
+            title: r.title || t("reciepeTitleDoctor") || "Reciepe",
+            medicines: Array.isArray(r.medicines) ? r.medicines.join(', ') : String(r.medicines ?? ''),
+            dosage: r.dosage || "",
+            notes: r.notes,
+            date: new Date(r.createdAt).toISOString().split("T")[0],
+            status: r.status || "pending",
+            signatureDataUrl: r.signatureDataUrl,
+          }));
+        setReciepes(mapped);
+        setActiveId((prev) => prev || mapped[0]?.id || null);
+      } catch {
+        setReciepes([]);
+      }
     };
     load();
-  }, [getReciepesByPatientUseCase, user?.uid]);
+  }, [user?.uid, t]);
 
   if (role !== "patient") {
     return <RedirectingModal show />;

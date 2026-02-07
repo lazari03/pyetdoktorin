@@ -1,0 +1,1 @@
+{"version":3,"file":"SessionException.d.ts","sourceRoot":"","sources":["../../../src/application/errors/SessionException.ts"],"names":[],"mappings":"AAAA,qBAAa,gBAAiB,SAAQ,KAAK;IACL,MAAM,EAAE,MAAM;gBAAtC,OAAO,EAAE,MAAM,EAAS,MAAM,EAAE,MAAM;CAInD"}

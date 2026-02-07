@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useState, ReactNode } from 'react';
+import { z } from '@/config/zIndex';
 
 type Toast = { id: number; message: string; type: 'success' | 'error' | 'info' };
 
@@ -22,7 +23,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed bottom-4 right-4 space-y-2 z-[10002]">
+      <div className={`fixed bottom-4 right-4 space-y-2 ${z.toast}`}>
         {toasts.map((t) => (
           <div
             key={t.id}

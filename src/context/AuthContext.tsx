@@ -9,7 +9,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 interface AuthContextType {
   isAuthenticated: boolean;
   uid: string | null; // Add `uid` property
-  user: { uid: string; name: string } | null;
+  user: { uid: string; name: string; email?: string; phoneNumber?: string } | null;
   role: UserRole | null;
   loading: boolean;
 }
@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uid, setUid] = useState<string | null>(null); // Add state for `uid`
-  const [user, setUser] = useState<{ uid: string; name: string } | null>(null);
+  const [user, setUser] = useState<{ uid: string; name: string; email?: string; phoneNumber?: string } | null>(null);
   const [role, setRole] = useState<UserRole | null>(null); // Fix type here
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +45,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const role = userData.role || null;
             setRole(role); // Set the user's role
             localStorage.setItem('userRole', role); // Store the role in localStorage
-            setUser({ uid: currentUser.uid, name: userData.name || 'Unknown' }); // Ensure name is set
+            setUser({
+              uid: currentUser.uid,
+              name: userData.name || currentUser.displayName || 'Unknown',
+              email: currentUser.email || userData.email,
+              phoneNumber: currentUser.phoneNumber || userData.phoneNumber,
+            });
           } else {
 
             setRole(null);

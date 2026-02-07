@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import useNewAppointment from '@/presentation/hooks/useNewAppointment';
 import AppointmentConfirmation from './AppointmentConfirmation';
 import { useTranslation } from 'react-i18next';
+import { z } from '@/config/zIndex';
 
 export default function AppointmentModal({
 	isOpen,
@@ -39,8 +40,8 @@ export default function AppointmentModal({
 	}
 
 	return (
-	<div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-			<div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+	<div className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 ${z.modal}`}>
+			<div className={`bg-white rounded-lg shadow-lg w-full max-w-md p-6 ${z.modalContent}`}>
 				<h2 className="text-xl font-bold mb-4">{t('newAppointment')}</h2>
 				<form
 					className="space-y-4"

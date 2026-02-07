@@ -1,5 +1,6 @@
 import { PhoneIcon, CreditCardIcon, UserIcon } from "@heroicons/react/24/outline";
 import React from "react";
+import { z } from "@/config/zIndex";
 
 type HeroCardProps = {
   title: string;
@@ -31,7 +32,7 @@ export function HeroCard({
       <div className="relative min-h-[220px] flex items-end">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.25),transparent_45%)]" />
-        <div className="relative z-10 w-full p-6 flex flex-col gap-4 text-white">
+        <div className={`relative ${z.absoluteContent} w-full p-6 flex flex-col gap-4 text-white`}>
           <div className="space-y-1">
             {helper && <p className="text-xs text-white/80">{helper}</p>}
             <h1 className="text-3xl font-semibold leading-tight drop-shadow">{title}</h1>

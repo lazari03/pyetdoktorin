@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { completePayPalPayment } from "@/infrastructure/services/paypalPaymentService";
 import { getAdmin } from "../../_lib/admin";
+import { DoctorPayoutService } from "@/infrastructure/services/doctorPayoutService";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,6 +18,11 @@ export async function POST(req: NextRequest) {
 
     if (result.status === "COMPLETED" && result.appointmentId) {
       const { db } = getAdmin();
+      
+      // Get appointment details for payout
+      const apptSnap = await db.collection("appointments").doc(result.appointmentId).get();
+      const apptData = apptSnap.data();
+      
       await db
         .collection("appointments")
         .doc(result.appointmentId)
@@ -36,6 +42,17 @@ export async function POST(req: NextRequest) {
         status: result.status,
         createdAt: new Date().toISOString(),
       });
+
+      // Record doctor payout
+      if (apptData?.doctorId) {
+        const payoutService = new DoctorPayoutService();
+        const paywallAmount = Number(process.env.PAYWALL_AMOUNT_USD ?? 13);
+        await payoutService.recordPayout(
+          result.appointmentId,
+          apptData.doctorId,
+          paywallAmount
+        );
+      }
     }
 
     return NextResponse.json({ ok: true, result });

@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
 import Link from "next/link";
@@ -10,6 +11,7 @@ type Props = {
 
 export function NotificationCard({ appointments }: Props) {
   const { t } = useTranslation();
+  const router = useRouter();
 
   const items = useMemo(() => {
     return [...appointments]
@@ -27,6 +29,10 @@ export function NotificationCard({ appointments }: Props) {
         return { id: a.id, title, desc, ts, status };
       });
   }, [appointments, t]);
+
+  const handleNotificationClick = () => {
+    router.push("/dashboard/notifications");
+  };
 
   return (
     <section className="bg-white rounded-3xl shadow-lg p-5 border border-purple-50 flex flex-col gap-3 h-full min-h-[260px]">
@@ -48,7 +54,11 @@ export function NotificationCard({ appointments }: Props) {
           <div className="py-4 px-4 text-xs text-gray-500">{t("noNotifications") || "No notifications yet."}</div>
         )}
         {items.map((item) => (
-          <div key={item.id} className="px-4 py-3 flex items-start gap-3 bg-white hover:bg-gray-50 transition">
+          <div 
+            key={item.id} 
+            onClick={handleNotificationClick}
+            className="px-4 py-3 flex items-start gap-3 bg-white hover:bg-gray-50 transition cursor-pointer"
+          >
             <div
               className={`mt-1 h-2.5 w-2.5 rounded-full ${
                 item.status.color?.includes("green")

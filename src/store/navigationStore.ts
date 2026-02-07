@@ -10,6 +10,7 @@ export enum NavigationKey {
   NewAppointment = 'newAppointment',
   Reciepe = 'reciepe',
   MyReciepes = 'myReciepes',
+  Clinics = 'clinics',
 }
 
 export interface NavigationItem {
@@ -33,6 +34,7 @@ export function getNavigationPaths(role: UserRole): NavigationItem[] {
         { key: NavigationKey.NewAppointment, name: 'New Appointment', href: '/dashboard/new-appointment' },
         { key: NavigationKey.AppointmentHistory, name: 'Appointment History', href: '/dashboard/appointments/journey' },
         { key: NavigationKey.MyReciepes, name: 'My Reciepes', href: '/dashboard/reciepes' },
+        { key: NavigationKey.Clinics, name: 'Private Clinics', href: '/dashboard/clinics' },
       ];
     default:
       return [];

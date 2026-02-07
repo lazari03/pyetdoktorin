@@ -39,7 +39,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   const [showRedirecting, setShowRedirecting] = useState(false);
   const { t } = useTranslation();
 
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, role } = useAuth();
   const {
     appointments,
     isDoctor,
@@ -49,7 +49,6 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
   const {
-    getAppointmentsUseCase,
     updateAppointmentUseCase,
     generateRoomCodeUseCase,
     handlePayNowUseCase,
@@ -62,9 +61,9 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
   // Fetch appointments when user/role changes
   useEffect(() => {
-    if (!user?.uid || typeof isDoctor !== "boolean") return;
-    fetchAppointments(user.uid, isDoctor, getAppointmentsUseCase.execute.bind(getAppointmentsUseCase));
-  }, [user, isDoctor, fetchAppointments, getAppointmentsUseCase]);
+    if (!role) return;
+    fetchAppointments(role);
+  }, [role, fetchAppointments]);
 
   // Join video call handler
   const handleJoinCall = useCallback(

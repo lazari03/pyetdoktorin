@@ -4,7 +4,7 @@ import { useNewAppointmentStore } from '@/store/newAppointmentStore';
 import { Appointment } from '@/domain/entities/Appointment';
 import { AppointmentStatus } from '@/domain/entities/AppointmentStatus';
 import { useAuth } from '@/context/AuthContext';
-import { useDI } from '@/context/DIContext';
+import { createAppointment } from '@/network/appointments';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 
 export default function useNewAppointment() {
@@ -27,23 +27,12 @@ export default function useNewAppointment() {
   const [patientName, setPatientName] = useState<string>('');
   const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>();
   const { user } = useAuth();
-  const {
-    observeAuthStateUseCase,
-    fetchUserDetailsUseCase,
-    createAppointmentUseCase,
-    checkAppointmentExistsUseCase,
-  } = useDI();
 
   useEffect(() => {
-    observeAuthStateUseCase.execute(async (authState) => {
-      if (authState.userId) {
-        const userDetails = await fetchUserDetailsUseCase.execute(authState.userId);
-        if (userDetails?.name) {
-          setPatientName(userDetails.name);
-        }
-      }
-    });
-  }, [observeAuthStateUseCase, fetchUserDetailsUseCase]);
+    if (user?.name) {
+      setPatientName(user.name);
+    }
+  }, [user?.name]);
 
   useEffect(() => {
     if (preferredDate) {
@@ -100,18 +89,14 @@ export default function useNewAppointment() {
       status: AppointmentStatus.Pending,
     };
     try {
-      const exists = await checkAppointmentExistsUseCase.execute(
-        appointmentData.patientId,
-        appointmentData.doctorId,
-        appointmentData.preferredDate,
-        appointmentData.preferredTime
-      );
-      if (exists) {
-        setIsSubmitting(false);
-        return;
-      }
-      // Use application layer use case for creation
-      await createAppointmentUseCase.execute(appointmentData as Appointment);
+      await createAppointment({
+        doctorId: appointmentData.doctorId,
+        doctorName: appointmentData.doctorName,
+        appointmentType,
+        preferredDate: appointmentData.preferredDate!,
+        preferredTime: appointmentData.preferredTime,
+        note: notes,
+      });
       resetAppointment();
       setShowModal(true);
       let progressValue = 100;

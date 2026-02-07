@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
-import { useDI } from "@/context/DIContext";
+import { fetchPrescriptions, updatePrescriptionStatus } from '@/network/prescriptions';
 
 type Reciepe = {
   id: string;
@@ -23,36 +23,40 @@ export default function PharmacyReciepesPage() {
   const { t } = useTranslation();
   const [activeId, setActiveId] = useState<string | null>(null);
   const { user } = useAuth();
-  const { getReciepesByPharmacyUseCase, updateReciepeStatusUseCase } = useDI();
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
 
   useEffect(() => {
     const load = async () => {
       if (!user?.uid) return;
-      const data = await getReciepesByPharmacyUseCase.execute(user.uid);
-      setReciepes(
-        (data || []).map((r) => ({
-          id: r.id || (r.pharmacyId + r.createdAt),
-          patient: r.patientName,
-          doctor: r.doctorName || "",
-          title: r.title,
-          medicines: r.medicines,
-          dosage: r.dosage,
-          createdAt: r.createdAt.split("T")[0],
-          status: (r.status as Reciepe["status"]) || "pending",
-          signatureDataUrl: r.signatureDataUrl,
-        }))
-      );
-      setActiveId((prev) => prev || (data?.[0] ? data[0].pharmacyId + data[0].createdAt : null));
+      try {
+        const response = await fetchPrescriptions();
+        const mapped = (response.items || [])
+          .filter((r) => (!r.pharmacyId || !user.uid) ? true : r.pharmacyId === user.uid)
+          .map((r) => ({
+            id: r.id || `${r.pharmacyId ?? ''}${r.createdAt}`,
+            patient: r.patientName,
+            doctor: r.doctorName || "",
+            title: r.title || t("reciepeTitleDoctor") || "Reciepe",
+            medicines: Array.isArray(r.medicines) ? r.medicines.join(', ') : String(r.medicines ?? ''),
+            dosage: r.dosage || "",
+            createdAt: new Date(r.createdAt).toISOString().split("T")[0],
+            status: (r.status as Reciepe["status"]) || "pending",
+            signatureDataUrl: r.signatureDataUrl,
+          }));
+        setReciepes(mapped);
+        setActiveId((prev) => prev || mapped[0]?.id || null);
+      } catch {
+        setReciepes([]);
+      }
     };
     load();
-  }, [getReciepesByPharmacyUseCase, user?.uid]);
+  }, [user?.uid, t]);
 
   if (role !== "pharmacy") return <RedirectingModal show />;
 
   const active = reciepes.find((r) => r.id === activeId) || reciepes[0];
   const handleStatus = async (id: string, status: "accepted" | "rejected") => {
-    await updateReciepeStatusUseCase.execute(id, status);
+    await updatePrescriptionStatus(id, status);
     setReciepes((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
   };
 

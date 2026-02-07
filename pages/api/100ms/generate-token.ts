@@ -23,6 +23,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { getAdmin } from '@/app/api/_lib/admin';
+import { SecurityAuditService } from '@/infrastructure/services/securityAuditService';
 const HMS_BASE_URL = 'https://api.100ms.live/v2';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -53,13 +54,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const authenticatedUserId = decodedIdToken.uid;
 
   const { user_id, room_id, role } = req.body;
-  // Always use the correct template_id for Prebuilt UI
-  const template_id = req.body.template_id || '68811a0774147bd574ba97d9';
+  // Use template_id from request body, env var, or fallback
+  const template_id = req.body.template_id || process.env.HMS_TEMPLATE_ID;
   if (!user_id || !room_id || !role) {
     return res.status(400).json({ error: 'Missing user_id, room_id, or role' });
   }
 
   if (user_id !== authenticatedUserId) {
+    const auditService = new SecurityAuditService();
+    await auditService.logVideoAccessAttempt({
+      userId: authenticatedUserId,
+      appointmentId: room_id,
+      role,
+      success: false,
+      reason: 'user_mismatch',
+      ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
+      userAgent: req.headers['user-agent'],
+    });
     return res.status(403).json({ error: 'Authenticated user mismatch' });
   }
 
@@ -74,6 +85,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const isPatient = appointmentData?.patientId === authenticatedUserId;
 
   if (!isDoctor && !isPatient) {
+    const auditService = new SecurityAuditService();
+    await auditService.logVideoAccessAttempt({
+      userId: authenticatedUserId,
+      appointmentId: room_id,
+      role,
+      success: false,
+      reason: 'not_assigned_to_appointment',
+      ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
+      userAgent: req.headers['user-agent'],
+    });
     return res.status(403).json({ error: 'You are not assigned to this appointment' });
   }
 
@@ -83,9 +104,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (isPatient) {
     if (!appointmentData?.isPaid && appointmentStatus !== 'completed') {
+      const auditService = new SecurityAuditService();
+      await auditService.logVideoAccessAttempt({
+        userId: authenticatedUserId,
+        appointmentId: room_id,
+        role,
+        success: false,
+        reason: 'payment_required',
+        ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(402).json({ error: 'Payment required before joining' });
     }
     if (!['confirmed', 'completed'].includes(appointmentStatus)) {
+      const auditService = new SecurityAuditService();
+      await auditService.logVideoAccessAttempt({
+        userId: authenticatedUserId,
+        appointmentId: room_id,
+        role,
+        success: false,
+        reason: 'appointment_not_confirmed',
+        ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(403).json({ error: 'Appointment must be confirmed before joining' });
     }
   }
@@ -97,8 +138,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const accessKey = process.env.HMS_ACCESS_KEY;
   const accessSecret = process.env.HMS_SECRET;
+  const hmsTemplateId = process.env.HMS_TEMPLATE_ID;
   if (!accessKey || !accessSecret) {
     return res.status(500).json({ error: '100ms access key/secret not set in environment' });
+  }
+  if (!hmsTemplateId && !template_id) {
+    return res.status(500).json({ error: 'HMS_TEMPLATE_ID not set in environment and no template_id provided' });
   }
   // Always generate management token on the fly
   const now = Math.floor(Date.now() / 1000);
@@ -132,7 +177,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         body: JSON.stringify({
           name: room_id,
-          template_id: template_id || undefined
+          template_id: template_id || hmsTemplateId
         })
       });
       const createRoomRaw = await createRoomRes.text();
@@ -341,6 +386,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         jwtid: uuidv4(),
       }
     );
+
+    // Log successful access
+    const auditService = new SecurityAuditService();
+    await auditService.logVideoAccessAttempt({
+      userId: authenticatedUserId,
+      appointmentId: room_id,
+      role: expectedRole,
+      success: true,
+      ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
+      userAgent: req.headers['user-agent'],
+    });
 
     // Response: token (JWT), room_id (UUID), roomCode (Prebuilt code), session token for app validation
     return res.status(200).json({ token, room_id: actualRoomId, roomCode, sessionToken });

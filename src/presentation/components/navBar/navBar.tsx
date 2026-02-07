@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { z } from '@/config/zIndex';
 
 export default function NavBar() {
   const nav = useNavigationCoordinator();
@@ -76,10 +77,10 @@ export default function NavBar() {
     ));
 
   return (
-    <header className={`w-full ${scrolled ? 'fixed top-0 left-0 z-50' : 'static'} top-0 left-0`}>
+    <header className={`w-full ${scrolled ? `fixed top-0 left-0 ${z.navbar}` : 'static'} top-0 left-0`}>
       {isMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/40 transition-opacity duration-200 ease-in-out"
+          className={`fixed inset-0 bg-black/40 transition-opacity duration-200 ease-in-out ${z.overlay}`}
           style={{ pointerEvents: 'auto' }}
           onClick={() => setIsMenuOpen(false)}
         />
@@ -122,7 +123,7 @@ export default function NavBar() {
         </div>
       </div>
       {isMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-white shadow-lg flex flex-col overflow-hidden border-t border-gray-100">
+        <div className={`absolute top-full left-0 w-full bg-white shadow-lg flex flex-col overflow-hidden border-t border-gray-100 ${z.dropdown}`}>
           <nav className="flex flex-col">
             {navItems.map((item) => (
               <a

@@ -1,4 +1,4 @@
-export async function apiCreateAdmin(payload: { name: string; surname: string; email: string; password: string }) {
+export async function apiCreateAdmin(payload: { name: string; surname: string; email: string; password: string; role: string; phone?: string }) {
   const res = await fetch('/api/admin/create', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -6,8 +6,8 @@ export async function apiCreateAdmin(payload: { name: string; surname: string; e
     credentials: 'include',
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Failed to create admin');
-  return data as { id: string; role: 'admin' };
+  if (!res.ok) throw new Error(data.error || 'Failed to create user');
+  return data as { id: string; role: string };
 }
 
 export async function apiResetPassword(userId: string) {

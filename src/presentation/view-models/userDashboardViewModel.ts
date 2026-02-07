@@ -34,7 +34,7 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
     } = useAppointmentStore();
     const { handleJoinCall: baseHandleJoinCall, handlePayNow } =
         useDashboardActions();
-    const { checkProfileCompleteUseCase, fetchAppointmentsUseCase } = useDI();
+    const { checkProfileCompleteUseCase } = useDI();
 
     const [profileIncomplete, setProfileIncomplete] = useState(true);
     const [loading, setLoading] = useState(true);
@@ -52,16 +52,8 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
             )
           );
           await Promise.all([
-            fetchAppointments(
-              userId,
-              role,
-              fetchAppointmentsUseCase.execute.bind(fetchAppointmentsUseCase)
-            ),
-            fetchAllAppointments(
-              userId,
-              role === UserRole.Doctor,
-              fetchAppointmentsUseCase.execute.bind(fetchAppointmentsUseCase)
-            ),
+            fetchAppointments(role),
+            fetchAllAppointments(role),
           ]);
         }
       } finally {
@@ -80,7 +72,6 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
     fetchAllAppointments,
     authLoading,
     checkProfileCompleteUseCase,
-    fetchAppointmentsUseCase,
   ]);
 
   const filteredAppointments = useMemo(() => {
