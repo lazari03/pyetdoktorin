@@ -86,8 +86,12 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
       }
       // Only proceed with login if reCAPTCHA passes
       await loginUseCase.execute(email, password);
-      // Verify if the 'loggedIn' cookie is set (HttpOnly session is not visible to JS)
-      if (!document.cookie.includes('loggedIn=')) {
+      // Only enforce cookie check when using same-origin session endpoint.
+      const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+      const isSameOrigin =
+        !backendBaseUrl ||
+        (typeof window !== 'undefined' && backendBaseUrl.startsWith(window.location.origin));
+      if (isSameOrigin && !document.cookie.includes('loggedIn=')) {
         setErrorMsg(t('authTokenWarning'));
         setLoading(false);
         return;

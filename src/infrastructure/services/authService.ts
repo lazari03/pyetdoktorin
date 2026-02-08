@@ -43,6 +43,7 @@ export const login = async (email: string, password: string) => {
         const res = await fetch(sessionUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ idToken }),
         });
         if (!res.ok) {
