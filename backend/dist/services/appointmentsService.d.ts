@@ -1,4 +1,4 @@
-import { UserRole } from '@/domain/entities/UserRole';
+import { UserRole } from '../domain/entities/UserRole';
 export type AppointmentStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
 export interface AppointmentInput {
     patientId: string;
@@ -9,6 +9,7 @@ export interface AppointmentInput {
     preferredDate: string;
     preferredTime?: string;
     note?: string;
+    notes?: string;
 }
 export interface Appointment extends AppointmentInput {
     id: string;

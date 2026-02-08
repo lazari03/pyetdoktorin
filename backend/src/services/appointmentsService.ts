@@ -28,7 +28,7 @@ export async function listAppointmentsForUser(uid: string, role: UserRole): Prom
   const admin = getFirebaseAdmin();
   const db = admin.firestore();
   const baseCollection = db.collection(COLLECTION);
-  let filteredQuery = baseCollection;
+  let filteredQuery: FirebaseFirestore.Query = baseCollection;
   if (role === UserRole.Patient) {
     filteredQuery = filteredQuery.where('patientId', '==', uid);
   } else if (role === UserRole.Doctor) {

@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FirebaseServerSessionService = void 0;
-const SessionException_1 = require("@/application/errors/SessionException");
-const UserRole_1 = require("@/domain/entities/UserRole");
-const firebaseAdmin_1 = require("@/config/firebaseAdmin");
+const SessionException_1 = require("../application/errors/SessionException");
+const UserRole_1 = require("../domain/entities/UserRole");
+const firebaseAdmin_1 = require("../config/firebaseAdmin");
 const THIRTY_MIN = 30 * 60; // seconds
 class FirebaseServerSessionService {
     constructor(isProd) {

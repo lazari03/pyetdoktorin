@@ -18,7 +18,7 @@ function parseSignature(header: string) {
   let timestamp = '';
   const signatures: string[] = [];
   for (const part of parts) {
-    const [key, value] = part.split('=');
+    const [key, value = ''] = part.split('=');
     if (key === 'ts') timestamp = value;
     if (key === 'h1' && value) signatures.push(value);
   }

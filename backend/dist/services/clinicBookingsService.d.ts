@@ -19,4 +19,5 @@ export declare function listBookingsByClinic(clinicId: string): Promise<ClinicBo
 export declare function listBookingsByPatient(patientId: string): Promise<ClinicBooking[]>;
 export declare function listAllBookings(limit?: number): Promise<ClinicBooking[]>;
 export declare function updateClinicBookingStatus(id: string, status: ClinicBookingStatus): Promise<void>;
+export declare function getClinicBookingById(id: string): Promise<ClinicBooking | null>;
 //# sourceMappingURL=clinicBookingsService.d.ts.map

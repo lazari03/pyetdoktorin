@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const auth_1 = require("@/middleware/auth");
-const UserRole_1 = require("@/domain/entities/UserRole");
-const firebaseAdmin_1 = require("@/config/firebaseAdmin");
+const auth_1 = require("../middleware/auth");
+const UserRole_1 = require("../domain/entities/UserRole");
+const firebaseAdmin_1 = require("../config/firebaseAdmin");
 const router = (0, express_1.Router)();
 router.get('/', (0, auth_1.requireAuth)([UserRole_1.UserRole.Admin, UserRole_1.UserRole.Doctor, UserRole_1.UserRole.Pharmacy]), async (req, res) => {
     const admin = (0, firebaseAdmin_1.getFirebaseAdmin)();

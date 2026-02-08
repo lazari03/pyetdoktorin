@@ -1,4 +1,4 @@
-import { IServerSessionService, SessionCookiesResult } from '@/application/ports/IServerSessionService';
+import { IServerSessionService, SessionCookiesResult } from '../application/ports/IServerSessionService';
 export declare class FirebaseServerSessionService implements IServerSessionService {
     private readonly isProd;
     constructor(isProd: boolean);

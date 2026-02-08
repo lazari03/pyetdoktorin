@@ -67,7 +67,7 @@ export async function listPrescriptionsForRole(uid: string, role: UserRole): Pro
     // Fallback for missing composite index in dev/preview environments.
     if (message.toLowerCase().includes('index')) {
       const base = admin.firestore().collection(COLLECTION);
-      let fallbackQuery = base;
+      let fallbackQuery: FirebaseFirestore.Query = base;
       if (role === UserRole.Doctor) {
         fallbackQuery = fallbackQuery.where('doctorId', '==', uid);
       } else if (role === UserRole.Patient) {

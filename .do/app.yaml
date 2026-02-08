@@ -1,0 +1,12 @@
+spec:
+  name: alo-dok-backend
+  services:
+    - name: backend
+      dockerfile_path: backend/Dockerfile
+      source_dir: backend
+      envs:
+        - key: PORT
+          value: "3000"
+      http_port: 3000
+      instance_count: 1
+      instance_size_slug: basic-xxs

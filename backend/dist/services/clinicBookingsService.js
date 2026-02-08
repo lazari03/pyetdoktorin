@@ -5,7 +5,8 @@ exports.listBookingsByClinic = listBookingsByClinic;
 exports.listBookingsByPatient = listBookingsByPatient;
 exports.listAllBookings = listAllBookings;
 exports.updateClinicBookingStatus = updateClinicBookingStatus;
-const firebaseAdmin_1 = require("@/config/firebaseAdmin");
+exports.getClinicBookingById = getClinicBookingById;
+const firebaseAdmin_1 = require("../config/firebaseAdmin");
 const COLLECTION = 'clinicBookings';
 async function createClinicBooking(input) {
     const admin = (0, firebaseAdmin_1.getFirebaseAdmin)();
@@ -38,5 +39,12 @@ async function updateClinicBookingStatus(id, status) {
     }
     const admin = (0, firebaseAdmin_1.getFirebaseAdmin)();
     await admin.firestore().collection(COLLECTION).doc(id).set({ status }, { merge: true });
+}
+async function getClinicBookingById(id) {
+    const admin = (0, firebaseAdmin_1.getFirebaseAdmin)();
+    const doc = await admin.firestore().collection(COLLECTION).doc(id).get();
+    if (!doc.exists)
+        return null;
+    return { ...doc.data(), id: doc.id };
 }
 //# sourceMappingURL=clinicBookingsService.js.map

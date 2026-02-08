@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const auth_1 = require("@/middleware/auth");
-const UserRole_1 = require("@/domain/entities/UserRole");
-const paymentsService_1 = require("@/services/paymentsService");
-const appointmentsService_1 = require("@/services/appointmentsService");
+const auth_1 = require("../middleware/auth");
+const UserRole_1 = require("../domain/entities/UserRole");
+const paymentsService_1 = require("../services/paymentsService");
+const appointmentsService_1 = require("../services/appointmentsService");
 const router = (0, express_1.Router)();
 const PAYWALL_AMOUNT = Number(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || 13);
 router.post('/create-order', (0, auth_1.requireAuth)([UserRole_1.UserRole.Patient]), async (req, res) => {

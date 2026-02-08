@@ -1,4 +1,4 @@
-import { IServerSessionService, SessionCookiesResult } from '@/application/ports/IServerSessionService';
+import { IServerSessionService, SessionCookiesResult } from '../../application/ports/IServerSessionService';
 export declare class EstablishSessionUseCase {
     private readonly sessionService;
     constructor(sessionService: IServerSessionService);

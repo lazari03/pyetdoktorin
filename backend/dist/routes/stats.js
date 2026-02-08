@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const auth_1 = require("@/middleware/auth");
-const UserRole_1 = require("@/domain/entities/UserRole");
-const firebaseAdmin_1 = require("@/config/firebaseAdmin");
+const auth_1 = require("../middleware/auth");
+const UserRole_1 = require("../domain/entities/UserRole");
+const firebaseAdmin_1 = require("../config/firebaseAdmin");
+const env_1 = require("../config/env");
 const router = (0, express_1.Router)();
-const DEFAULT_APPOINTMENT_PRICE = Number(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || 13);
+const DEFAULT_APPOINTMENT_PRICE = env_1.env.paywallAmountUsd;
 router.get('/admin', (0, auth_1.requireAuth)([UserRole_1.UserRole.Admin]), async (_req, res) => {
     try {
         const admin = (0, firebaseAdmin_1.getFirebaseAdmin)();

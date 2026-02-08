@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const EstablishSessionUseCase_1 = require("@/application/auth/EstablishSessionUseCase");
-const serverSessionService_1 = require("@/services/serverSessionService");
-const SessionException_1 = require("@/application/errors/SessionException");
+const EstablishSessionUseCase_1 = require("../application/auth/EstablishSessionUseCase");
+const serverSessionService_1 = require("../services/serverSessionService");
+const SessionException_1 = require("../application/errors/SessionException");
 const router = (0, express_1.Router)();
 router.post('/session', async (req, res) => {
     try {

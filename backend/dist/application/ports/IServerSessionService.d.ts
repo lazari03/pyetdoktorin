@@ -1,4 +1,4 @@
-import { UserRole } from '@/domain/entities/UserRole';
+import { UserRole } from '../../domain/entities/UserRole';
 export type SessionCookiesResult = {
     role: UserRole;
     cookies: string[];

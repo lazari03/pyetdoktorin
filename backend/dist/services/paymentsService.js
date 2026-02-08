@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createPayPalOrder = createPayPalOrder;
 exports.capturePayPalOrder = capturePayPalOrder;
-const env_1 = require("@/config/env");
-const firebaseAdmin_1 = require("@/config/firebaseAdmin");
-const appointmentsService_1 = require("@/services/appointmentsService");
+const env_1 = require("../config/env");
+const firebaseAdmin_1 = require("../config/firebaseAdmin");
+const appointmentsService_1 = require("../services/appointmentsService");
 async function getPayPalAccessToken() {
     const credentials = Buffer.from(`${env_1.env.paypalClientId}:${env_1.env.paypalClientSecret}`).toString('base64');
     const response = await fetch(`${env_1.env.paypalApiBase}/v1/oauth2/token`, {
