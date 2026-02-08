@@ -38,7 +38,9 @@ export const login = async (email: string, password: string) => {
 
         // Get ID token and send to server to create an HttpOnly session cookie
         const idToken = await user.getIdToken(true);
-        const res = await fetch('/api/auth/session', {
+        const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+        const sessionUrl = backendBaseUrl ? `${backendBaseUrl}/api/auth/session` : '/api/auth/session';
+        const res = await fetch(sessionUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken }),
