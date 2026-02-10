@@ -82,7 +82,7 @@ export default function NavBar() {
     <header className={`navbar-wrapper w-full sticky top-0 ${z.navbar}`}>
       {isMenuOpen && (
         <div
-          className={`fixed inset-0 bg-black/40 transition-opacity duration-200 ease-in-out ${z.overlay}`}
+          className={`fixed inset-0 bg-black/40 transition-opacity duration-200 ease-in-out ${z.sidebar}`}
           style={{ pointerEvents: 'auto' }}
           onClick={() => setIsMenuOpen(false)}
         />
