@@ -1,5 +1,6 @@
 "use client";
 
+import "../styles.css";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
@@ -72,7 +73,7 @@ export default function AboutPage() {
             <div className="md:w-1/2 w-full flex justify-center order-1 md:order-2">
               <Image
                 src="/img/logo.png"
-                alt="Alo Doktor Logo"
+                alt={t("PyetDoktorinLogoAlt")}
                 width={224}
                 height={224}
                 className="w-56 h-56 object-contain rounded-2xl bg-white p-4"
@@ -86,7 +87,7 @@ export default function AboutPage() {
             <div className="md:w-1/2 w-full flex justify-center mb-6 md:mb-0">
               <Image
                 src="https://pyetdoktorin-storage.fra1.digitaloceanspaces.com/img/pexels-karolina-grabowska-7195123.jpg"
-                alt="Team"
+                alt={t("aboutTeamImageAlt")}
                 width={448}
                 height={224}
                 className="w-full max-w-md h-56 object-cover rounded-2xl"

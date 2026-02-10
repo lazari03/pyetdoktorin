@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { createAppointment } from '@/network/appointments';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 
 export default function useNewAppointment() {
   const {
@@ -74,16 +75,24 @@ export default function useNewAppointment() {
     }
 
     if (!selectedDoctor) {
+      trackAnalyticsEvent('appointment_booking_failed', { reason: 'missing_doctor' });
       setSubmitError(t('selectDoctorError') || 'Please select a doctor before continuing.');
       return;
     }
 
     if (!user || !user.uid || !user.name) {
+      trackAnalyticsEvent('appointment_booking_failed', { reason: 'unauthenticated' });
       setSubmitError(t('signInToBookError') || 'Please sign in to book an appointment.');
       return;
     }
 
     setIsSubmitting(true);
+    trackAnalyticsEvent('appointment_booking_attempt', {
+      doctorId: selectedDoctor.id,
+      appointmentType,
+      preferredDate,
+      preferredTime,
+    });
     const appointmentData: Omit<Appointment, 'id'> = {
       doctorId: selectedDoctor.id,
       doctorName: selectedDoctor.name,
@@ -106,6 +115,12 @@ export default function useNewAppointment() {
         preferredTime: appointmentData.preferredTime,
         note: notes,
       });
+      trackAnalyticsEvent('appointment_booking_success', {
+        doctorId: appointmentData.doctorId,
+        appointmentType,
+        preferredDate,
+        preferredTime,
+      });
       resetAppointment();
       setShowModal(true);
       let progressValue = 100;
@@ -118,6 +133,13 @@ export default function useNewAppointment() {
       }, 300);
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
+      trackAnalyticsEvent('appointment_booking_failed', {
+        doctorId: selectedDoctor.id,
+        appointmentType,
+        preferredDate,
+        preferredTime,
+        reason: message ? message.slice(0, 120) : 'unknown_error',
+      });
       setSubmitError(message || (t('appointmentBookingFailed') || 'Failed to book appointment.'));
     } finally {
       setIsSubmitting(false);

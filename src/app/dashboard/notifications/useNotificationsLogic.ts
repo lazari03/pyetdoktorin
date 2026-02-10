@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { backendFetch } from '@/network/backendClient';
+import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 
 interface AppointmentDetail {
   id: string;
@@ -83,10 +84,15 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
   const handleDismissNotification = useCallback(async (id: string) => {
     setPendingAppointments((prev) => prev.filter((appt) => appt.id !== id));
     if (!user?.uid) return;
-    await backendFetch(`/api/notifications/dismiss/${id}`, {
-      method: 'POST',
-      body: JSON.stringify({ userId: user.uid }),
-    });
+    try {
+      await backendFetch(`/api/notifications/dismiss/${id}`, {
+        method: 'POST',
+        body: JSON.stringify({ userId: user.uid }),
+      });
+      trackAnalyticsEvent('notification_dismissed', { appointmentId: id });
+    } catch {
+      trackAnalyticsEvent('notification_dismiss_failed', { appointmentId: id });
+    }
   }, [user]);
 
   const handleAppointmentAction = useCallback(async (appointmentId: string, action: 'accepted' | 'rejected') => {
@@ -98,7 +104,10 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
       setPendingAppointments((prev) =>
         prev.filter((appointment) => appointment.id !== appointmentId)
       );
-    } catch {}
+      trackAnalyticsEvent('appointment_decision', { appointmentId, action });
+    } catch {
+      trackAnalyticsEvent('appointment_decision_failed', { appointmentId, action });
+    }
   }, []);
 
   return {

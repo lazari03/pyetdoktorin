@@ -30,6 +30,7 @@ export function AppointmentSummaryCard({
   const status = getAppointmentStatusPresentation(appointment.status);
   const action = getAppointmentAction(appointment, isAppointmentPast, toUserRole(role));
   const actionPresentation = getAppointmentActionPresentation(appointment, role, action);
+  const waitingForAcceptance = action.label === "waitingForAcceptance";
 
   const handlePrimary = () => {
     if (actionPresentation.type === "join") return onJoinCall(appointment.id);
@@ -47,6 +48,7 @@ export function AppointmentSummaryCard({
         return t(actionPresentation.label);
       case "waiting":
       case "disabled":
+        if (waitingForAcceptance) return t("waitingForAcceptance");
         return role === UserRole.Patient ? t("reschedule") : t("waitingForPayment");
       default:
         return t("seeDetails");
@@ -69,6 +71,7 @@ export function AppointmentSummaryCard({
 
   const isPrimaryDisabled =
     actionPresentation.type === "waiting" ||
+    waitingForAcceptance ||
     (actionPresentation.type === "disabled" && role !== UserRole.Patient);
 
   return (

@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import { fetchPrescriptions, updatePrescriptionStatus } from '@/network/prescriptions';
 import { UserRole } from "@/domain/entities/UserRole";
+import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 
 type PharmacyNotification = {
   id: string;
@@ -78,8 +79,17 @@ export default function PharmacyDashboardPage() {
   const processedCount = reciepes.filter((r) => r.status !== "pending").length;
 
   const markReciepe = async (id: string, status: "accepted" | "rejected") => {
-    await updatePrescriptionStatus(id, status);
-    setReciepes((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    try {
+      await updatePrescriptionStatus(id, status);
+      setReciepes((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      trackAnalyticsEvent('prescription_status_updated', { prescriptionId: id, status });
+    } catch (error) {
+      trackAnalyticsEvent('prescription_status_failed', {
+        prescriptionId: id,
+        status,
+        reason: error instanceof Error ? error.message.slice(0, 120) : 'unknown_error',
+      });
+    }
   };
 
   return (

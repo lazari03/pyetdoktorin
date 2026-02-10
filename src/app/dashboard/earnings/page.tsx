@@ -8,6 +8,7 @@ import { ArrowLeftIcon, BanknotesIcon, CalendarIcon } from "@heroicons/react/24/
 import Link from "next/link";
 import { useMemo } from "react";
 import { UserRole } from "@/domain/entities/UserRole";
+import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
 
 
 // Helper function to calculate earnings data
@@ -16,9 +17,9 @@ function calculateEarningsData(appointments: Array<{ doctorId: string; status?: 
   const appointmentAmount = 13; // $13 per appointment
   
   // Filter completed/paid appointments for this doctor
-  const doctorAppointments = appointments.filter(a => 
-    a.doctorId === userId && 
-    a.status?.toLowerCase() === "completed" && 
+  const doctorAppointments = appointments.filter(a =>
+    a.doctorId === userId &&
+    isCompletedStatus(a.status) &&
     a.isPaid
   );
   

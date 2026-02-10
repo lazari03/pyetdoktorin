@@ -1,4 +1,4 @@
-# Alo Doktor Backend
+# Pyet Doktorin Backend
 
 Node.js + Express service that centralizes authentication, user management, appointments, prescriptions, clinics, and payments. Uses Firebase Admin SDK for data access and Paddle Billing for payment processing.
 

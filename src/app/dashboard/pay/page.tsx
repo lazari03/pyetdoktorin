@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import { useAuth } from '@/context/AuthContext';
 import { openPaddleCheckout, preparePaddleCheckout } from '@/infrastructure/services/paddleCheckout';
+import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 
 export default function PayPage() {
   const { t } = useTranslation();
@@ -21,6 +22,7 @@ export default function PayPage() {
 
   useEffect(() => {
     let cancelled = false;
+    trackAnalyticsEvent('payment_page_loaded', { appointmentId });
     preparePaddleCheckout()
       .then(() => {
         if (!cancelled) setPaddleReady(true);
@@ -34,23 +36,29 @@ export default function PayPage() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [appointmentId, t]);
 
   const openCheckout = useCallback(() => {
     if (!appointmentId) {
       setErrorMessage(t('missingAppointmentId'));
       setStatus('error');
+      trackAnalyticsEvent('payment_checkout_failed', { reason: 'missing_appointment_id' });
       return;
     }
     setStatus('loading');
     setErrorMessage(null);
+    trackAnalyticsEvent('payment_checkout_opened', { appointmentId });
     openPaddleCheckout({
       appointmentId,
       userId: user?.uid ?? null,
-      onClose: () => setStatus('idle'),
+      onClose: () => {
+        setStatus('idle');
+        trackAnalyticsEvent('payment_checkout_closed', { appointmentId });
+      },
     }).catch(() => {
       setStatus('error');
       setErrorMessage(t('paymentFailed'));
+      trackAnalyticsEvent('payment_checkout_failed', { appointmentId, reason: 'open_failed' });
     });
   }, [appointmentId, t, user?.uid]);
 

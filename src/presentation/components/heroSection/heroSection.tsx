@@ -30,7 +30,7 @@ export default function HeroSection() {
             {t('hero.title.suffix')}
           </h1>
           <p className="text-lg sm:text-2xl font-light text-violet-100/80 mb-8 max-w-xl">
-            {t('hero.subtitle', 'Experience why more than 1 million providers trust us already.')}
+            {t('hero.subtitle')}
           </p>
           <div className="flex gap-4 mt-2">
             <button
@@ -41,13 +41,13 @@ export default function HeroSection() {
               onMouseLeave={() => setHovered(false)}
               onClick={() => nav.toRegister()}
             >
-              {t('hero.cta.primary', 'Get started for free')}
+              {t('hero.cta.primary')}
             </button>
             <button
               className="px-8 py-3 rounded-full font-semibold text-lg border-2 border-violet-300 text-violet-100 bg-white/5 hover:bg-violet-800/30 transition-all duration-300 shadow focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2"
               onClick={() => nav.pushPath('/clinics')}
             >
-              {t('hero.cta.secondary', 'Explore Clinic solutions')}
+              {t('hero.cta.secondary')}
             </button>
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function HeroSection() {
             {/* Main portrait image */}
             <Image
               src={MAIN_IMAGE}
-              alt="Video call main"
+              alt={t('heroImageAlt')}
               fill
               sizes="(max-width: 640px) 340px, (max-width: 1024px) 400px, 400px"
               className="object-cover rounded-2xl md:rounded-3xl"
@@ -68,19 +68,19 @@ export default function HeroSection() {
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 bg-white/30 rounded-xl px-4 py-2 shadow-lg backdrop-blur-md border border-white/40">
               <button
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-violet-500 text-white hover:bg-violet-600 transition"
-                aria-label="Microphone"
+                aria-label={t('heroMic')}
               >
                 <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v14m0 0a5 5 0 0 0 5-5V6a5 5 0 0 0-10 0v4a5 5 0 0 0 5 5zm0 0v4m-7 0h14"/></svg>
               </button>
               <button
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-violet-500 text-white hover:bg-violet-600 transition"
-                aria-label="Camera"
+                aria-label={t('heroCamera')}
               >
                 <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2H10a2 2 0 0 0-2 2v2"/></svg>
               </button>
               <button
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition"
-                aria-label="End call"
+                aria-label={t('heroEndCall')}
               >
                 <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><path d="M15 10V5a3 3 0 0 0-6 0v5"/></svg>
               </button>

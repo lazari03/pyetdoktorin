@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eef2ff"/>
+      <stop offset="55%" stop-color="#ddd6fe"/>
+      <stop offset="100%" stop-color="#bfdbfe"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="90" y="120" width="1020" height="390" rx="48" fill="#ffffff" opacity="0.9"/>
+  <rect x="140" y="170" width="260" height="36" rx="18" fill="url(#accent)" opacity="0.12"/>
+  <rect x="140" y="230" width="740" height="18" rx="9" fill="#e5e7eb"/>
+  <rect x="140" y="262" width="560" height="18" rx="9" fill="#e5e7eb"/>
+  <rect x="140" y="294" width="640" height="18" rx="9" fill="#e5e7eb"/>
+  <text x="140" y="210" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="700" fill="#1f2937">
+    Pyet Doktorin
+  </text>
+  <text x="140" y="360" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#4b5563">
+    Telemedicine platform for patients, doctors, and clinics
+  </text>
+  <circle cx="980" cy="270" r="70" fill="url(#accent)" opacity="0.15"/>
+  <circle cx="1040" cy="340" r="48" fill="url(#accent)" opacity="0.2"/>
+  <circle cx="930" cy="360" r="28" fill="url(#accent)" opacity="0.25"/>
+</svg>

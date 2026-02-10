@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import { fetchPrescriptions, updatePrescriptionStatus } from '@/network/prescriptions';
+import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 
 type Reciepe = {
   id: string;
@@ -56,8 +57,17 @@ export default function PharmacyReciepesPage() {
 
   const active = reciepes.find((r) => r.id === activeId) || reciepes[0];
   const handleStatus = async (id: string, status: "accepted" | "rejected") => {
-    await updatePrescriptionStatus(id, status);
-    setReciepes((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    try {
+      await updatePrescriptionStatus(id, status);
+      setReciepes((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      trackAnalyticsEvent('prescription_status_updated', { prescriptionId: id, status });
+    } catch (error) {
+      trackAnalyticsEvent('prescription_status_failed', {
+        prescriptionId: id,
+        status,
+        reason: error instanceof Error ? error.message.slice(0, 120) : 'unknown_error',
+      });
+    }
   };
 
   return (

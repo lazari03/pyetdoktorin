@@ -10,7 +10,7 @@ export class GA4AnalyticsService implements IAnalyticsService {
 
   constructor() {
     this.isClient = typeof window !== 'undefined';
-    this.measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+    this.measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID;
   }
 
   private get gtag(): ((...args: unknown[]) => void) | null {

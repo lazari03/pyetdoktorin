@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { getAuth } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
+import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 
 export const useMyProfile = () => {
   const { user, role, loading: authLoading } = useAuth(); // Access user, role, and loading from AuthContext
@@ -27,14 +29,33 @@ export const useMyProfile = () => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isFetching, setIsFetching] = useState(true); // To handle data fetching state
   const [uploading, setUploading] = useState(false);
+
+  const recentLoginAt = useMemo(() => {
+    if (!user?.uid) return undefined;
+    const authUser = getAuth().currentUser;
+    const lastSignInTime = authUser?.metadata?.lastSignInTime;
+    if (!lastSignInTime) return undefined;
+    const date = new Date(lastSignInTime);
+    if (Number.isNaN(date.getTime())) return undefined;
+    return new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  }, [user?.uid]);
   // Handle profile picture upload
   const handleProfilePictureChange = async (file: File) => {
     if (!user?.uid) return;
     setUploading(true);
+    trackAnalyticsEvent("profile_picture_upload_attempt");
     try {
       const publicUrl = await uploadProfilePictureUseCase.execute(user.uid, file);
       setFormData((prev) => ({ ...prev, profilePicture: publicUrl }));
+      trackAnalyticsEvent("profile_picture_upload_success");
     } catch {
+      trackAnalyticsEvent("profile_picture_upload_failed");
       alert("Failed to upload profile picture.");
     } finally {
       setUploading(false);
@@ -107,10 +128,13 @@ export const useMyProfile = () => {
   const handlePasswordReset = async () => {
     try {
       const email = formData.email;
+      trackAnalyticsEvent("password_reset_requested");
       await resetUserPasswordUseCase.execute(email);
       setResetEmailSent(true);
+      trackAnalyticsEvent("password_reset_success");
       alert("Password reset email sent. Please check your inbox.");
     } catch {
+      trackAnalyticsEvent("password_reset_failed");
       alert("Failed to send password reset email. Please try again.");
     }
   };
@@ -122,9 +146,12 @@ export const useMyProfile = () => {
       const userId = user?.uid;
       if (!userId) throw new Error("User not authenticated");
 
+      trackAnalyticsEvent("profile_update_attempt");
       await updateUserProfileUseCase.execute(userId, formData);
+      trackAnalyticsEvent("profile_update_success");
       alert("Profile updated successfully!");
     } catch {
+      trackAnalyticsEvent("profile_update_failed");
       alert("Failed to update profile!");
     }
   };
@@ -136,6 +163,7 @@ export const useMyProfile = () => {
     isFetching,
     authLoading,
     uploading,
+    recentLoginAt,
     handleInputChange,
     handleAddField,
     handleRemoveField,

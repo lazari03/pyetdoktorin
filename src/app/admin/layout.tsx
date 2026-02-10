@@ -9,7 +9,6 @@ import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   BellIcon,
-  UsersIcon,
   HomeModernIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
@@ -22,12 +21,6 @@ import { UserRole } from '@/domain/entities/UserRole';
 
 type NavItem = { name: string; href: string };
 
-const adminNav: NavItem[] = [
-  { name: 'Dashboard', href: '/admin' },
-  { name: 'Users', href: '/admin/users' },
-  { name: 'Notifications', href: '/admin/notifications' },
-];
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -39,6 +32,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { logoutSessionUseCase, logoutServerUseCase } = useDI();
   const nav = useNavigationCoordinator();
   const logout = useSessionStore((s) => s.logout);
+  const adminNav: NavItem[] = [
+    { name: t('adminDashboard') || 'Dashboard', href: '/admin' },
+    { name: t('users') || 'Users', href: '/admin/users' },
+    { name: t('notifications') || 'Notifications', href: '/admin/notifications' },
+    { name: t('reports') || 'Reports', href: '/admin/reports' },
+  ];
 
   useEffect(() => {
     if (!loading && !isAuthenticated) nav.toLogin(pathname ?? undefined);
@@ -95,7 +94,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         initials={initials}
         profileMenuOpen={profileMenuOpen}
         onToggleProfile={() => setProfileMenuOpen((o) => !o)}
-        onProfileSettings={() => handleNavClick('/dashboard/myprofile')}
+        onProfileSettings={() => handleNavClick('/admin/profile')}
         onLogout={handleLogout}
         profileMenuRef={profileMenuRef}
         t={t}
@@ -240,13 +239,6 @@ function DesktopTopBar({
               >
                 <HomeModernIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t('adminDashboard') || 'Dashboard'}</span>
-              </button>
-              <button
-                onClick={() => onNavigate('/admin/users')}
-                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-              >
-                <UsersIcon className="h-5 w-5 text-gray-500" />
-                <span className="font-medium">{t('users') || 'Users'}</span>
               </button>
               <button
                 onClick={() => onNavigate('/admin/notifications')}

@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 
 export default function ContentSection() {
@@ -29,10 +30,10 @@ export default function ContentSection() {
           </div>
           <h2 className="text-3xl sm:text-5xl font-bold text-[#0a2e2e] mb-4">{t('securityTitle')}</h2>
           <p className="text-lg text-[#0a2e2e] mb-6 max-w-lg">{t('securityBody')}</p>
-          <a href="#" className="inline-flex items-center text-[#0a2e2e] font-semibold hover:underline text-lg group">
+          <Link href="/privacy-policy" className="inline-flex items-center text-[#0a2e2e] font-semibold hover:underline text-lg group">
             {t('securityCta')}
             <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="#0a2e2e" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </a>
+          </Link>
         </div>
       </div>
     </section>

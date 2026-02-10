@@ -17,6 +17,7 @@ import { DoctorEarningsCard, MonthlyEarning } from "@/presentation/components/da
 import { NotificationCard } from "@/presentation/components/dashboard/NotificationCard";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
+import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
 
 // Helper function to calculate monthly earnings
 function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: UserRole) {
@@ -28,9 +29,9 @@ function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patien
   const appointmentAmount = 13; // $13 per appointment
   
   // Filter completed/paid appointments for this doctor
-  const doctorAppointments = appointments.filter(a => 
-    a.doctorId === userId && 
-    a.status?.toLowerCase() === "completed" && 
+  const doctorAppointments = appointments.filter(a =>
+    a.doctorId === userId &&
+    isCompletedStatus(a.status) &&
     a.isPaid
   );
   
@@ -216,7 +217,7 @@ export default function Dashboard() {
                     ? t("noUpcomingDoctorSubtitle") || "Your schedule is clear for now."
                     : t("noUpcomingSubtitle") || "Stay on top of your health—book a quick consultation now."
                 }
-                helper={t("noUpcomingHelper") || "Secure telemedicine on alodoktor.al"}
+                helper={t("noUpcomingHelper") || "Secure telemedicine on pyetdoktorin.al"}
                 onJoin={role === UserRole.Doctor ? undefined : () => nav.pushPath("/dashboard/new-appointment")}
                 ctaLabel={role === UserRole.Doctor ? undefined : (t("bookNow") || "Book now")}
               />

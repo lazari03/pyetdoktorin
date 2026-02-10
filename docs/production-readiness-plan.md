@@ -1,6 +1,6 @@
 # Production Readiness Plan
 
-This document outlines how to evolve the Alo Doktor web application into a production-ready platform with a dedicated backend layer. It serves as the foundation for subsequent implementation work.
+This document outlines how to evolve the Pyet Doktorin web application into a production-ready platform with a dedicated backend layer. It serves as the foundation for subsequent implementation work.
 
 ## 1. Current Architecture Snapshot
 

@@ -26,30 +26,17 @@ function ContactPageInner() {
       token = await executeRecaptcha("contact");
     }
     if (!token && !allowRecaptchaBypass) {
-      alert(t("recaptchaUnavailable") || "reCAPTCHA unavailable. Please refresh the page.");
+      alert(t("recaptchaUnavailable"));
       return;
     }
     const name = nameRef.current?.value || "";
     const email = emailRef.current?.value || "";
     const message = messageRef.current?.value || "";
-    // Verify token with backend
-    if (token) {
-      const recaptchaRes = await fetch("/api/verify-recaptcha", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-      const recaptchaData = await recaptchaRes.json();
-      if (!recaptchaData.success) {
-        alert(t('recaptchaFailed'));
-        return;
-      }
-    }
     // Only proceed with sending email if reCAPTCHA passes
     const res = await fetch("/api/contact/send-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, message }),
+      body: JSON.stringify({ name, email, message, source: "contact_page", token }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -80,7 +67,12 @@ function ContactPageInner() {
               <h2 className="website-section-title">{t('sendUsMessage')}</h2>
               <p className="website-section-body">{t('getInTouchDescription')}</p>
               <div className="mt-6 space-y-2 text-sm text-slate-600">
-                <div>{t('email')}: <a className="text-purple-600" href="mailto:support@pyetDoktorin.com">support@pyetDoktorin.com</a></div>
+                <div>
+                  {t('email')}:{' '}
+                  <a className="text-purple-600" href="mailto:atelemedicine30@gmail.com">
+                    atelemedicine30@gmail.com
+                  </a>
+                </div>
                 <div>{t('supportHours')}</div>
               </div>
             </div>

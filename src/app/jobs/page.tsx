@@ -1,38 +1,46 @@
 "use client";
 
-import React from "react";
+import "../styles.css";
 import { useTranslation } from "react-i18next";
-import Link from "next/link";
-import FooterSection from "@/presentation/components/footerSection/footerSection";
-import NavBar from "@/presentation/components/navBar/navBar";
+import WebsiteShell from "@/presentation/components/website/WebsiteShell";
+import WebsiteHero from "@/presentation/components/website/WebsiteHero";
+import WebsiteSection from "@/presentation/components/website/WebsiteSection";
+import WebsiteCta from "@/presentation/components/website/WebsiteCta";
 
 export default function JobsPage() {
   const { t } = useTranslation();
-  
+
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black">
-      <NavBar />
-      <section className="relative w-full bg-gradient-to-b from-purple-500 to-purple-100 pb-20 pt-16 md:pt-24 text-black overflow-hidden">
-        <div className="max-w-5xl mx-auto px-4 flex flex-col items-center pt-10 md:pt-20">
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{t('jobs')}</h1>
-          <p className="text-lg md:text-xl mb-2 text-gray-700 text-center max-w-2xl">{t('jobsDescription')}</p>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
-            <span className="hover:underline cursor-pointer"><Link href="/">{t('home')}</Link></span>
-            <span>/</span>
-            <span className="font-semibold text-purple-500">{t('jobs')}</span>
+    <WebsiteShell>
+      <WebsiteHero
+        className="website-hero--clinics"
+        variant="centered"
+        eyebrow={t("careers")}
+        title={t("jobs")}
+        subtitle={t("jobsDescription")}
+        primaryCta={{ label: t("contact"), href: "/contact" }}
+        secondaryCta={{ label: t("home"), href: "/" }}
+      />
+
+      <WebsiteSection>
+        <div className="website-container">
+          <div className="website-card text-center">
+            <h2 className="website-section-title">{t("jobsWillBePostedHere")}</h2>
+            <p className="website-section-body mx-auto">{t("noVacantPosition")}</p>
           </div>
         </div>
-        <svg className="absolute bottom-0 left-0 w-full" height="60" viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M0,0 C480,60 960,0 1440,60 L1440,60 L0,60 Z"/></svg>
-      </section>
-      <main className="flex-1 flex flex-col items-center justify-center px-2 py-8 bg-white">
-        <div className="max-w-3xl w-full flex flex-col gap-10 animate-fade-in">
-          <section className="bg-white rounded-2xl p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">{t('jobsWillBePostedHere')}</h2>
-            <p className="text-gray-700">{t('noVacantPosition')}</p>
-          </section>
+      </WebsiteSection>
+
+      <WebsiteSection variant="alt">
+        <div className="website-container">
+          <WebsiteCta
+            title={t("jobsCtaTitle")}
+            subtitle={t("jobsCtaSubtitle")}
+            primary={{ label: t("jobsCtaPrimary"), href: "/contact" }}
+            secondary={{ label: t("jobsCtaSecondary"), href: "/register" }}
+          />
         </div>
-      </main>
-      <FooterSection />
-    </div>
+      </WebsiteSection>
+    </WebsiteShell>
   );
 }

@@ -24,6 +24,16 @@ export interface Appointment extends AppointmentInput {
 
 const COLLECTION = 'appointments';
 
+const normalizeStatus = (status?: string): AppointmentStatus => {
+  const normalized = (status || '').toLowerCase();
+  if (normalized === 'finished') return 'completed';
+  if (normalized === 'declined') return 'rejected';
+  if (normalized === 'completed' || normalized === 'accepted' || normalized === 'rejected' || normalized === 'pending') {
+    return normalized as AppointmentStatus;
+  }
+  return 'pending';
+};
+
 export async function listAppointmentsForUser(uid: string, role: UserRole): Promise<Appointment[]> {
   const admin = getFirebaseAdmin();
   const db = admin.firestore();
@@ -38,9 +48,9 @@ export async function listAppointmentsForUser(uid: string, role: UserRole): Prom
   }
   const mapDocs = (docs: FirebaseFirestore.QueryDocumentSnapshot[]) =>
     docs.map((doc) => {
-      const data = doc.data() as Appointment & { note?: string; notes?: string };
+      const data = doc.data() as Appointment & { note?: string; notes?: string; status?: string };
       const normalizedNotes = data.notes ?? data.note;
-      const base = { ...data, id: doc.id } as Appointment;
+      const base = { ...data, id: doc.id, status: normalizeStatus(data.status) } as Appointment;
       if (normalizedNotes !== undefined) {
         base.notes = normalizedNotes;
       }
@@ -85,9 +95,9 @@ export async function getAppointmentById(id: string): Promise<Appointment | null
   const admin = getFirebaseAdmin();
   const doc = await admin.firestore().collection(COLLECTION).doc(id).get();
   if (!doc.exists) return null;
-  const data = doc.data() as Appointment & { note?: string; notes?: string };
+  const data = doc.data() as Appointment & { note?: string; notes?: string; status?: string };
   const normalizedNotes = data.notes ?? data.note;
-  const base = { ...data, id: doc.id } as Appointment;
+  const base = { ...data, id: doc.id, status: normalizeStatus(data.status) } as Appointment;
   if (normalizedNotes !== undefined) {
     base.notes = normalizedNotes;
   }
@@ -95,12 +105,13 @@ export async function getAppointmentById(id: string): Promise<Appointment | null
 }
 
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus, actor: UserRole): Promise<void> {
-  if (!['pending', 'accepted', 'rejected', 'completed'].includes(status)) {
+  const normalizedStatus = normalizeStatus(status);
+  if (!['pending', 'accepted', 'rejected', 'completed'].includes(normalizedStatus)) {
     throw new Error('Invalid status');
   }
   const admin = getFirebaseAdmin();
-  const updates: Record<string, unknown> = { status };
-  if (status === 'accepted' && actor === UserRole.Doctor) {
+  const updates: Record<string, unknown> = { status: normalizedStatus };
+  if (normalizedStatus === 'accepted' && actor === UserRole.Doctor) {
     updates.confirmedAt = Date.now();
   }
   await admin.firestore().collection(COLLECTION).doc(id).set(updates, { merge: true });

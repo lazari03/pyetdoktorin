@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ClinicBooking, ClinicBookingStatus } from '@/domain/entities/ClinicBooking';
 import { backendFetch } from '@/network/backendClient';
+import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 
 interface Options {
   clinicId?: string;
@@ -36,11 +37,21 @@ export function useClinicBookings({ clinicId, patientId }: Options) {
 
   const updateStatus = useCallback(
     async (bookingId: string, status: ClinicBookingStatus) => {
-      await backendFetch(`/api/clinics/bookings/${bookingId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status }),
-      });
-      setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status } : b)));
+      try {
+        await backendFetch(`/api/clinics/bookings/${bookingId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        });
+        setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status } : b)));
+        trackAnalyticsEvent('clinic_booking_status_updated', { bookingId, status });
+      } catch (error) {
+        trackAnalyticsEvent('clinic_booking_status_failed', {
+          bookingId,
+          status,
+          reason: error instanceof Error ? error.message.slice(0, 120) : 'unknown_error',
+        });
+        throw error;
+      }
     },
     [],
   );

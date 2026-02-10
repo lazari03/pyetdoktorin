@@ -158,7 +158,7 @@ export default function DoctorReciepePage() {
     const content = `
       <div style="font-family: Arial, sans-serif; padding: 24px; max-width: 700px; margin: 0 auto; color: #1f2937;">
         <h2 style="margin: 0 0 12px; color: #4c1d95;">Reciepe • ${serial}</h2>
-        <p style="margin: 4px 0; font-size: 13px;">Issued by alodoktor.al</p>
+        <p style="margin: 4px 0; font-size: 13px;">Issued by pyetdoktorin.al</p>
         <p style="margin: 4px 0; font-size: 13px;">Status: ${r.status ?? "pending"}</p>
         <p style="margin: 4px 0; font-size: 13px;">Date: ${r.date}</p>
         <hr style="margin: 16px 0;" />
@@ -173,7 +173,7 @@ export default function DoctorReciepePage() {
             ? `<div style="margin-top:16px;"><p style="margin:0 0 6px; font-size: 14px;">Doctor signature</p><img src="${r.signatureDataUrl}" style="max-width:300px;border:1px solid #e5e7eb;"/></div>`
             : ""
         }
-        <p style="margin-top:24px; font-size:12px; color:#6b7280;">alodoktor.al • Secure prescription</p>
+        <p style="margin-top:24px; font-size:12px; color:#6b7280;">pyetdoktorin.al • Secure prescription</p>
       </div>
     `;
     const w = window.open("", "_blank", "width=800,height=900");

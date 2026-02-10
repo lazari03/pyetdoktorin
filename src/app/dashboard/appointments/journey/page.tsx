@@ -11,6 +11,12 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { UserRole } from "@/domain/entities/UserRole";
+import {
+  isCanceledStatus,
+  isRejectedStatus,
+  isCompletedStatus,
+  normalizeAppointmentStatus,
+} from "@/presentation/utils/appointmentStatus";
 
 function JourneyPage() {
   const vm = useAppointmentsViewModel();
@@ -22,7 +28,8 @@ function JourneyPage() {
     [vm.appointments]
   );
 
-  const isCanceled = (apptStatus: string) => apptStatus?.toLowerCase?.() === "cancelled";
+  const isCanceled = (apptStatus: string) =>
+    isCanceledStatus(apptStatus) || isRejectedStatus(apptStatus);
 
   const heroAppointment = useMemo(() => {
     const upcoming = sorted.find((a) => !isCanceled(a.status) && !vm.isAppointmentPast(a));
@@ -52,8 +59,13 @@ function JourneyPage() {
     }).length;
   }, [sorted]);
 
-  const completedCount = sorted.filter((a) => a.status?.toLowerCase?.() === "accepted").length;
-  const pendingCount = sorted.filter((a) => a.status?.toLowerCase?.() === "pending").length;
+  const completedCount = sorted.filter((a) => {
+    const normalized = normalizeAppointmentStatus(a.status);
+    return normalized === "accepted" || isCompletedStatus(a.status);
+  }).length;
+  const pendingCount = sorted.filter(
+    (a) => normalizeAppointmentStatus(a.status) === "pending"
+  ).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-b">

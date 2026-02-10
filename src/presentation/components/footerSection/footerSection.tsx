@@ -1,14 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
 export default function FooterSection() {
   const { t, i18n } = useTranslation();
   const year = new Date().getFullYear();
   const languages = [
-    { code: 'en', label: 'English' },
-    { code: 'sq', label: 'Shqip' },
-    // Add more as needed
+    { code: 'en', label: t('english') },
+    { code: 'al', label: t('albanian') },
   ];
 
   return (
@@ -16,9 +16,9 @@ export default function FooterSection() {
       <div className="website-container">
         <div className="grid gap-10 md:grid-cols-[1.2fr_2fr]">
           <div className="space-y-6">
-            <div className="text-xl font-semibold text-white">ALO DOKTOR</div>
+            <div className="text-xl font-semibold text-white">PYET DOKTORIN</div>
             <p className="text-sm text-slate-300 max-w-xs">
-              {t('footerTagline') || 'Modern care delivery for clinics, clinicians, and patients worldwide.'}
+              {t('footerTagline')}
             </p>
             <div>
               <label htmlFor="footer-lang" className="sr-only">
@@ -42,34 +42,33 @@ export default function FooterSection() {
             <div>
               <div className="font-semibold text-white mb-3">{t('platform')}</div>
               <ul className="space-y-2 text-sm text-slate-300">
-                <li><a href="#" className="hover:text-white">{t('forProviders')}</a></li>
-                <li><a href="#" className="hover:text-white">{t('forClinics')}</a></li>
-                <li><a href="#" className="hover:text-white">{t('forPatients')}</a></li>
-                <li><a href="#" className="hover:text-white">{t('pricing')}</a></li>
+                <li><Link href="/doctors" className="hover:text-white">{t('forProviders')}</Link></li>
+                <li><Link href="/clinicians" className="hover:text-white">{t('forClinics')}</Link></li>
+                <li><Link href="/individuals" className="hover:text-white">{t('forPatients')}</Link></li>
+                <li><Link href="/pricing" className="hover:text-white">{t('pricing')}</Link></li>
               </ul>
             </div>
             <div>
               <div className="font-semibold text-white mb-3">{t('company')}</div>
               <ul className="space-y-2 text-sm text-slate-300">
-                <li><a href="#" className="hover:text-white">{t('aboutUs')}</a></li>
-                <li><a href="#" className="hover:text-white">{t('careers')}</a></li>
-                <li><a href="#" className="hover:text-white">{t('contact')}</a></li>
-                <li><a href="#" className="hover:text-white">{t('privacySecurity')}</a></li>
+                <li><Link href="/about" className="hover:text-white">{t('aboutUs')}</Link></li>
+                <li><Link href="/jobs" className="hover:text-white">{t('careers')}</Link></li>
+                <li><Link href="/contact" className="hover:text-white">{t('contact')}</Link></li>
+                <li><Link href="/privacy-policy" className="hover:text-white">{t('privacySecurity')}</Link></li>
               </ul>
             </div>
             <div>
               <div className="font-semibold text-white mb-3">{t('resources')}</div>
               <ul className="space-y-2 text-sm text-slate-300">
-                <li><a href="#" className="hover:text-white">{t('blog')}</a></li>
+                <li><Link href="/blog" className="hover:text-white">{t('blog')}</Link></li>
               </ul>
             </div>
             <div>
               <div className="font-semibold text-white mb-3">{t('support')}</div>
               <ul className="space-y-2 text-sm text-slate-300">
-                <li><a href="#" className="hover:text-white">{t('helpCenter')}</a></li>
-                <li><a href="#" className="hover:text-white">{t('termsOfService')}</a></li>
-                <li><a href="#" className="hover:text-white">{t('privacyPolicy')}</a></li>
-                <li><a href="#" className="hover:text-white">{t('status')}</a></li>
+                <li><Link href="/help-center" className="hover:text-white">{t('helpCenter')}</Link></li>
+                <li><Link href="/terms-of-service" className="hover:text-white">{t('termsOfService')}</Link></li>
+                <li><Link href="/privacy-policy" className="hover:text-white">{t('privacyPolicy')}</Link></li>
               </ul>
             </div>
           </div>

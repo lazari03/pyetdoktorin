@@ -9,6 +9,7 @@ type Props = {
   role: UserRole;
   uploading: boolean;
   resetEmailSent: boolean;
+  recentLoginAt?: string;
   handleInputChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     field: FormField,
@@ -28,6 +29,7 @@ export function ProfileLayout(props: Props) {
     role,
     uploading,
     resetEmailSent,
+    recentLoginAt,
     handleInputChange,
     handleAddField,
     handleRemoveField,
@@ -96,7 +98,7 @@ export function ProfileLayout(props: Props) {
                   {t("recentLogin") ?? "Recent login"}
                 </p>
                 <p className="text-sm text-gray-900">
-                  {t("recentLoginInfo") ?? new Date().toISOString()}
+                  {recentLoginAt || t("recentLoginInfo") || new Date().toISOString()}
                 </p>
               </div>
             </div>

@@ -10,6 +10,7 @@ import { Appointment } from "@/domain/entities/Appointment";
 import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 import { useTranslation } from "react-i18next";
 import { auth } from "@/config/firebaseconfig";
+import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 
 /**
  * View model result interface for appointments page
@@ -48,6 +49,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
     isAppointmentPast,
     fetchAppointments,
     optimisticMarkPaid,
+    optimisticPaidIds,
     handlePayNow: storeHandlePayNow,
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
@@ -148,25 +150,57 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   const handleJoinCall = useCallback(
     async (appointmentId: string) => {
       try {
+        trackAnalyticsEvent("appointment_join_attempt", {
+          appointmentId,
+          role: isDoctor ? "doctor" : "patient",
+        });
         setShowRedirecting(true);
         setAuthStatus(!!user, user?.uid || null, user?.name || null);
 
         if (!user?.uid) {
           setShowRedirecting(false);
+          trackAnalyticsEvent("appointment_join_blocked", {
+            appointmentId,
+            reason: "unauthenticated",
+          });
           alert("You must be logged in to join a call. Please log in and try again.");
           return;
         }
 
-        const appointment = appointments.find((a) => a.id === appointmentId);
+        if (role) {
+          await fetchAppointments(role);
+        }
+        const freshAppointment = appointmentsRef.current.find((a) => a.id === appointmentId);
+        const appointment = freshAppointment ?? appointments.find((a) => a.id === appointmentId);
         if (!appointment) throw new Error("Appointment not found");
 
         if (!isDoctor && !appointment.isPaid) {
           setShowRedirecting(false);
-          alert(t("paymentRequired"));
+          const pendingFromStorage =
+            typeof window !== "undefined" &&
+            window.sessionStorage.getItem("pendingPaidAppointmentId") === appointmentId;
+          const isPending = Boolean(optimisticPaidIds?.[appointmentId]) || pendingFromStorage;
+          trackAnalyticsEvent("appointment_join_blocked", {
+            appointmentId,
+            reason: isPending ? "payment_processing" : "payment_required",
+          });
+          alert(isPending ? t("paymentProcessing") : t("paymentRequired"));
           return;
         }
+        if (!isDoctor) {
+          const status = (appointment.status || "").toString().toLowerCase();
+          if (status !== "accepted") {
+            setShowRedirecting(false);
+            trackAnalyticsEvent("appointment_join_blocked", {
+              appointmentId,
+              reason: "waiting_for_acceptance",
+            });
+            alert(t("waitingForAcceptance"));
+            return;
+          }
+        }
 
-        const role = isDoctor ? "doctor" : "patient";
+        const sessionRole = isDoctor ? "doctor" : "patient";
         const currentUser = auth.currentUser;
         if (!currentUser) {
           setShowRedirecting(false);
@@ -178,7 +212,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         const data = await generateRoomCodeUseCase.execute({
           user_id: user.uid,
           room_id: appointmentId,
-          role,
+          role: sessionRole,
           idToken,
         });
 
@@ -195,13 +229,33 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         }
 
         const joinUrl = `/dashboard/appointments/video-session?session=${encodeURIComponent(sessionToken)}`;
+        trackAnalyticsEvent("appointment_join_success", {
+          appointmentId,
+          role: sessionRole,
+        });
         window.location.href = joinUrl;
-      } catch {
+      } catch (error) {
         setShowRedirecting(false);
-        alert("An error occurred. Please try again.");
+        const message = error instanceof Error ? error.message : "An error occurred. Please try again.";
+        trackAnalyticsEvent("appointment_join_failed", {
+          appointmentId,
+          reason: message.slice(0, 120),
+        });
+        alert(message);
       }
     },
-    [appointments, generateRoomCodeUseCase, isDoctor, setAuthStatus, t, updateAppointmentUseCase, user]
+    [
+      appointments,
+      fetchAppointments,
+      generateRoomCodeUseCase,
+      isDoctor,
+      optimisticPaidIds,
+      role,
+      setAuthStatus,
+      t,
+      updateAppointmentUseCase,
+      user,
+    ]
   );
 
   // Derive user role for table component
@@ -220,7 +274,12 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
     // Actions
     handleJoinCall,
-    handlePayNow: (appointmentId, amount) =>
-      storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase)),
+    handlePayNow: (appointmentId, amount) => {
+      trackAnalyticsEvent("payment_initiated", {
+        appointmentId,
+        amount,
+      });
+      return storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase));
+    },
   };
 }

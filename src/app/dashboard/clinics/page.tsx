@@ -10,6 +10,7 @@ import { z } from '@/config/zIndex';
 import { backendFetch } from '@/network/backendClient';
 import { UserRole } from '@/domain/entities/UserRole';
 import AppointmentConfirmation from '@/presentation/components/appointment/AppointmentConfirmation';
+import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 
 export default function ClinicsPage() {
   const { t } = useTranslation();
@@ -47,10 +48,15 @@ export default function ClinicsPage() {
   const handleBooking = async () => {
     if (!selectedClinic || !user) return;
     if (!note.trim()) {
+      trackAnalyticsEvent('clinic_booking_failed', { reason: 'missing_note' });
       setFeedback({ type: 'error', text: t('noteRequired') || 'Please add a short note' });
       return;
     }
     setSubmitting(true);
+    trackAnalyticsEvent('clinic_booking_attempt', {
+      clinicId: selectedClinic.id,
+      preferredDate,
+    });
     try {
       await backendFetch('/api/clinics/bookings', {
         method: 'POST',
@@ -69,8 +75,17 @@ export default function ClinicsPage() {
       setNote('');
       setPreferredDate('');
       setSelectedClinic(null);
+      trackAnalyticsEvent('clinic_booking_success', {
+        clinicId: selectedClinic.id,
+        preferredDate,
+      });
     } catch (error) {
       console.error(error);
+      trackAnalyticsEvent('clinic_booking_failed', {
+        clinicId: selectedClinic.id,
+        preferredDate,
+        reason: error instanceof Error ? error.message.slice(0, 120) : 'unknown_error',
+      });
       setFeedback({ type: 'error', text: t('bookingFailed') || 'Failed to submit booking' });
     } finally {
       setSubmitting(false);

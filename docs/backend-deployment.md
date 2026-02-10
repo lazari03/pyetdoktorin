@@ -1,4 +1,4 @@
-## Alo Doktor Backend Deployment Guide
+## Pyet Doktorin Backend Deployment Guide
 
 This walk-through covers standing up the Express backend locally, in staging, and in production. It assumes the frontend lives in the repo root (`/`), while the backend is under `/backend`.
 
@@ -41,7 +41,7 @@ Systemd sample service (drop into `/etc/systemd/system/alo-backend.service`):
 
 ```
 [Unit]
-Description=Alo Doktor Backend
+Description=Pyet Doktorin Backend
 After=network.target
 
 [Service]

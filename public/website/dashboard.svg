@@ -1,0 +1,25 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dash-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0e7ff"/>
+      <stop offset="1" stop-color="#f1f5f9"/>
+    </linearGradient>
+    <linearGradient id="dash-panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#dash-bg)"/>
+  <rect x="140" y="140" width="920" height="620" rx="36" fill="url(#dash-panel)" stroke="#e2e8f0"/>
+  <rect x="190" y="200" width="220" height="24" rx="12" fill="#c7d2fe"/>
+  <rect x="190" y="250" width="160" height="12" rx="6" fill="#e2e8f0"/>
+  <rect x="190" y="300" width="820" height="12" rx="6" fill="#e2e8f0"/>
+  <rect x="190" y="330" width="740" height="12" rx="6" fill="#cbd5f5"/>
+  <rect x="190" y="380" width="240" height="160" rx="20" fill="#bfdbfe"/>
+  <rect x="460" y="380" width="240" height="160" rx="20" fill="#ddd6fe"/>
+  <rect x="730" y="380" width="240" height="160" rx="20" fill="#bae6fd"/>
+  <rect x="190" y="580" width="520" height="18" rx="9" fill="#c7d2fe"/>
+  <rect x="190" y="620" width="380" height="12" rx="6" fill="#e2e8f0"/>
+  <rect x="190" y="650" width="300" height="12" rx="6" fill="#cbd5f5"/>
+  <circle cx="980" cy="240" r="38" fill="#a5b4fc"/>
+</svg>

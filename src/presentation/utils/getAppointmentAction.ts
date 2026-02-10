@@ -9,6 +9,7 @@ export function getAppointmentAction(
   if (isAppointmentPast(appointment)) {
     return { label: 'past', disabled: true };
   }
+  const status = (appointment.status || '').toString().toLowerCase();
   if (role === UserRole.Doctor) {
     if (appointment.isPaid) {
       return { label: 'joinNow', disabled: false };
@@ -18,6 +19,9 @@ export function getAppointmentAction(
   // Patient
   if (!appointment.isPaid) {
     return { label: 'payNow', disabled: false };
+  }
+  if (status !== 'accepted') {
+    return { label: 'waitingForAcceptance', disabled: true };
   }
   return { label: 'joinNow', disabled: false };
 }

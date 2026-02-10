@@ -1,5 +1,6 @@
 "use client";
 
+import "../styles.css";
 import React from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
@@ -34,7 +35,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-xl font-bold mt-8 mb-2">{t('howYourDataIsStored')}</h2>
             <p className="text-gray-700 mb-2">{t('howYourDataIsStoredText')}</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('yourRights')}</h2>
-            <p className="text-gray-700 mb-2">{t('yourRightsText')} <a href="mailto:info@alodoktor.al" className="text-purple-500 hover:underline">info@alodoktor.al</a>.</p>
+            <p className="text-gray-700 mb-2">{t('yourRightsText')} <a href="mailto:info@pyetdoktorin.al" className="text-purple-500 hover:underline">info@pyetdoktorin.al</a>.</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('dataProtectionStandards')}</h2>
             <p className="text-gray-700 mb-2">{t('dataProtectionStandardsText')}</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('security')}</h2>

@@ -16,7 +16,7 @@ type NavItem = { name: string; href: string };
 const pharmacyNav: NavItem[] = [
   { name: 'Dashboard', href: '/pharmacy' },
   { name: 'Reciepes', href: '/pharmacy/reciepes' },
-  { name: 'Profile', href: '/dashboard/myprofile' },
+  { name: 'Profile', href: '/pharmacy/profile' },
 ];
 
 export default function PharmacyLayout({ children }: { children: React.ReactNode }) {
@@ -85,7 +85,7 @@ export default function PharmacyLayout({ children }: { children: React.ReactNode
         initials={initials}
         profileMenuOpen={profileMenuOpen}
         onToggleProfile={() => setProfileMenuOpen((o) => !o)}
-        onProfileSettings={() => handleNavClick('/dashboard/myprofile')}
+        onProfileSettings={() => handleNavClick('/pharmacy/profile')}
         onLogout={handleLogout}
         profileMenuRef={profileMenuRef}
       />

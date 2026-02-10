@@ -8,6 +8,7 @@ import '@i18n';
 import { useState } from 'react';
 import { useAdminStore } from '@/store/adminStore';
 import { UserRole } from '@/domain/entities/UserRole';
+import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 
 const DEFAULT_FORM = {
   name: '',
@@ -40,6 +41,7 @@ function AdminUsersContent() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    trackAnalyticsEvent('admin_user_create_attempt', { role: form.role });
     try {
       await createManagedUser({
         name: form.name.trim(),
@@ -51,9 +53,14 @@ function AdminUsersContent() {
       });
       showToast(t('userCreated') || 'User created', 'success');
       setForm(DEFAULT_FORM);
+      trackAnalyticsEvent('admin_user_create_success', { role: form.role });
     } catch (error) {
       const message = error instanceof Error ? error.message : t('createUserFailed') || 'Failed to create user';
       showToast(message, 'error');
+      trackAnalyticsEvent('admin_user_create_failed', {
+        role: form.role,
+        reason: message.slice(0, 120),
+      });
     } finally {
       setSubmitting(false);
     }

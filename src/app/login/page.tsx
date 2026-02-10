@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { useDI } from '@/context/DIContext';
 import { useGoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
+import { useAuth } from '@/context/AuthContext';
+import { getRoleLandingPath } from '@/navigation/roleRoutes';
 
 interface LoginPageContentProps {
   onRetryRecaptcha: () => void;
@@ -22,7 +23,7 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [privateDevice, setPrivateDevice] = useState(false);
-  const searchParams = useSearchParams();
+  const [pendingRedirect, setPendingRedirect] = useState(false);
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isRecaptchaReady = !!executeRecaptcha;
   const [recaptchaState, setRecaptchaState] = useState<'loading' | 'ready' | 'failed'>('loading');
@@ -45,8 +46,23 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
     return () => clearTimeout(timer);
   }, [isRecaptchaReady, retryCount, recaptchaTimeoutMs]);
 
-  // Get the 'from' parameter to redirect after login
-  const fromPath = searchParams?.get('from') || '/dashboard';
+  const { isAuthenticated, role, loading: authLoading } = useAuth();
+
+  const initialAuthRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (initialAuthRef.current === null) {
+      initialAuthRef.current = isAuthenticated;
+    }
+  }, [authLoading, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || authLoading) return;
+    if (!pendingRedirect && !initialAuthRef.current) return;
+    const target = getRoleLandingPath(role);
+    window.location.href = target;
+  }, [isAuthenticated, authLoading, role, pendingRedirect]);
 
   // Test Firebase connectivity on component mount, but don't block login if it fails
   useEffect(() => {
@@ -96,7 +112,7 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
         setLoading(false);
         return;
       }
-      window.location.href = fromPath;
+      setPendingRedirect(true);
     } catch (err) {
       setErrorMsg(t('unknownError'));
       console.error('Login error:', err);

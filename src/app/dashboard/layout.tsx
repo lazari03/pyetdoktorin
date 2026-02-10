@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Bars3Icon, XMarkIcon, BanknotesIcon, UserCircleIcon, ArrowRightOnRectangleIcon, BellIcon, CreditCardIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, BanknotesIcon, UserCircleIcon, ArrowRightOnRectangleIcon, BellIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { useInitializeAppointments } from '../../store/appointmentStore';
 import { useDI } from '@/context/DIContext';
 import { useAuth } from '@/context/AuthContext';
@@ -338,17 +338,6 @@ function DesktopTopBar({
                 >
                   <BanknotesIcon className="h-5 w-5 text-gray-500" />
                   <span className="font-medium">{t("earnings") || "Earnings"}</span>
-                </button>
-              )}
-              
-              {/* Payment Methods - Patient only */}
-              {role === UserRole.Patient && (
-                <button
-                  onClick={() => onNavigate('/dashboard/payments')}
-                  className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-                >
-                  <CreditCardIcon className="h-5 w-5 text-gray-500" />
-                  <span className="font-medium">{t("paymentMethods") || "Payment methods"}</span>
                 </button>
               )}
               

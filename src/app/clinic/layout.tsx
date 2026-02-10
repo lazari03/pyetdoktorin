@@ -18,7 +18,7 @@ const clinicNav: NavItem[] = [
   { name: 'Dashboard', href: '/clinic' },
   { name: 'Calendar', href: '/clinic/calendar' },
   { name: 'Bookings', href: '/clinic/bookings' },
-  { name: 'Profile', href: '/dashboard/myprofile' },
+  { name: 'Profile', href: '/clinic/profile' },
 ];
 
 export default function ClinicLayout({ children }: { children: React.ReactNode }) {
@@ -86,7 +86,7 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
         initials={initials}
         profileMenuOpen={profileMenuOpen}
         onToggleProfile={() => setProfileMenuOpen((o) => !o)}
-        onProfileSettings={() => handleNavClick('/dashboard/myprofile')}
+        onProfileSettings={() => handleNavClick('/clinic/profile')}
         onEarnings={() => handleNavClick('/clinic/earnings')}
         onLogout={handleLogout}
         profileMenuRef={profileMenuRef}

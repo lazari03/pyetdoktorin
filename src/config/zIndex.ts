@@ -1,5 +1,5 @@
 /**
- * Z-Index Scale for Alo Doktor Platform
+ * Z-Index Scale for Pyet Doktorin Platform
  * 
  * Usage: Import these constants and use with Tailwind's z-[value] syntax
  * or standard z-{value} classes where applicable.

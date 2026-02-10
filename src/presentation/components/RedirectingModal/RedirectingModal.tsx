@@ -15,7 +15,7 @@ const RedirectingModal: React.FC<{ show: boolean }> = ({ show }) => {
           <div className="space-y-1">
             <p className="text-sm font-semibold text-purple-700">Redirecting</p>
             <p className="text-base font-bold text-gray-900">We&apos;re taking you to the secure page…</p>
-            <p className="text-xs text-gray-500">Please hold on. Your session stays protected by alodoktor.al.</p>
+            <p className="text-xs text-gray-500">Please hold on. Your session stays protected by pyetdoktorin.al.</p>
           </div>
         </div>
       </div>

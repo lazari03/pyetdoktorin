@@ -7,11 +7,19 @@ export interface AppointmentStatusPresentation {
 }
 
 export function getAppointmentStatusPresentation(status: string): AppointmentStatusPresentation {
-  switch (status) {
+  const normalized = (status || "").toString().trim().toLowerCase();
+  switch (normalized) {
     case 'accepted':
       return { color: 'text-emerald-500', label: 'accepted' };
     case 'rejected':
-      return { color: 'text-red-500', label: 'declined' };
+    case 'declined':
+      return { color: 'text-red-500', label: 'rejected' };
+    case 'canceled':
+    case 'cancelled':
+      return { color: 'text-rose-500', label: 'canceled' };
+    case 'completed':
+    case 'finished':
+      return { color: 'text-indigo-500', label: 'completed' };
     case 'pending':
       return { color: 'text-gray-500', label: 'pending' };
     default:

@@ -1,5 +1,36 @@
 
 import { NextRequest } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
+
+type LocalImage = {
+    buffer: Buffer;
+    contentType: string;
+};
+
+async function loadLocalImage(key: string): Promise<LocalImage | null> {
+    const publicDir = path.join(process.cwd(), "public", "website");
+    const candidates = key.includes(".")
+        ? [key]
+        : [`${key}.svg`, `${key}.png`, `${key}.jpg`, `${key}.jpeg`];
+
+    for (const filename of candidates) {
+        const filePath = path.join(publicDir, filename);
+        try {
+            const buffer = await fs.readFile(filePath);
+            const ext = path.extname(filename).toLowerCase();
+            const contentType =
+                ext === ".svg" ? "image/svg+xml" :
+                ext === ".png" ? "image/png" :
+                "image/jpeg";
+            return { buffer, contentType };
+        } catch {
+            continue;
+        }
+    }
+
+    return null;
+}
 
 export async function GET(req: NextRequest) {
 
@@ -11,21 +42,38 @@ export async function GET(req: NextRequest) {
 
 
     const bucketUrl = process.env.NEXT_PUBLIC_STORAGE_BUCKET;
-    const imageUrl = `${bucketUrl}/website-images/${key}`;
 
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse || !imageResponse.ok) {
-        return new Response('Image not found', { status: 404 });
-    }
-    const contentType = imageResponse.headers.get("Content-Type") || "image/jpeg";
-    const imageBuffer = await imageResponse.arrayBuffer();
-
-    return new Response(imageBuffer, {
-        headers: {
-            "Content-Type": contentType,
-            // Security headers
-            "X-Content-Type-Options": "nosniff",
-            "Cache-Control": "public, max-age=86400, immutable"
+    if (bucketUrl) {
+        const imageUrl = `${bucketUrl}/website-images/${key}`;
+        try {
+            const imageResponse = await fetch(imageUrl);
+            if (imageResponse && imageResponse.ok) {
+                const contentType = imageResponse.headers.get("Content-Type") || "image/jpeg";
+                const imageBuffer = await imageResponse.arrayBuffer();
+                return new Response(imageBuffer, {
+                    headers: {
+                        "Content-Type": contentType,
+                        "X-Content-Type-Options": "nosniff",
+                        "Cache-Control": "public, max-age=86400, immutable"
+                    }
+                });
+            }
+        } catch {
+            // Fall back to local assets below.
         }
-    });
+    }
+
+    const localImage = await loadLocalImage(key);
+    if (localImage) {
+        const body = new Uint8Array(localImage.buffer);
+        return new Response(body, {
+            headers: {
+                "Content-Type": localImage.contentType,
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "public, max-age=86400, immutable"
+            }
+        });
+    }
+
+    return new Response('Image not found', { status: 404 });
 }

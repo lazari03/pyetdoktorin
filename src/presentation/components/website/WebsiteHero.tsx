@@ -47,7 +47,8 @@ export default function WebsiteHero({
           <div className="website-hero-copy">
             <div className="website-pill">{eyebrow}</div>
             <h1 className="website-hero-title">
-              {title} {highlight && <span className="website-hero-highlight">{highlight}</span>}
+              <span className="website-hero-title-main">{title}</span>
+              {highlight && <span className="website-hero-highlight">{highlight}</span>}
             </h1>
             <p className="website-hero-subtitle">{subtitle}</p>
             <div className="website-hero-actions">
@@ -63,9 +64,9 @@ export default function WebsiteHero({
             {metaText && (
               <div className="website-hero-meta">
                 <div className="website-avatars">
-                  <span />
-                  <span />
-                  <span />
+                  <Image src="/api/images?key=avatar1" alt="" width={28} height={28} className="website-avatar" />
+                  <Image src="/api/images?key=avatar2" alt="" width={28} height={28} className="website-avatar" />
+                  <Image src="/api/images?key=avatar3" alt="" width={28} height={28} className="website-avatar" />
                 </div>
                 <span className="website-hero-meta-text">{metaText}</span>
               </div>
@@ -76,7 +77,7 @@ export default function WebsiteHero({
               <div className={`website-hero-card ${cardClassName}`.trim()}>
                 <Image
                   src={imageSrc}
-                  alt={imageAlt || 'Hero visual'}
+                  alt={imageAlt || ''}
                   fill
                   sizes="(max-width: 768px) 320px, 420px"
                   className="website-hero-image"
