@@ -9,7 +9,6 @@ type ContactPayload = {
   message?: string;
   subject?: string;
   source?: string;
-  token?: string;
 };
 
 const RATE_WINDOW_MS = 10 * 60 * 1000;
@@ -49,33 +48,8 @@ export async function POST(req: Request) {
   const message = (payload.message || "").trim().slice(0, 5000);
   const subject = (payload.subject || "").trim().slice(0, 140);
   const source = (payload.source || "").trim().slice(0, 120);
-  const token = (payload.token || "").trim();
-
   if (!name || !email || !message) {
     return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
-  }
-
-  const allowRecaptchaBypass =
-    process.env.RECAPTCHA_OPTIONAL === "true" ||
-    process.env.NEXT_PUBLIC_RECAPTCHA_OPTIONAL === "true";
-  const secretKey = process.env.RECAPTCHA_SECRET_KEY || "";
-
-  if (!allowRecaptchaBypass) {
-    if (!token || !secretKey) {
-      return NextResponse.json({ message: "reCAPTCHA verification failed" }, { status: 400 });
-    }
-    try {
-      const verifyRes = await fetch(
-        `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`,
-        { method: "POST" }
-      );
-      const verifyData = await verifyRes.json();
-      if (!verifyData?.success || (typeof verifyData?.score === "number" && verifyData.score < 0.5)) {
-        return NextResponse.json({ message: "reCAPTCHA verification failed" }, { status: 400 });
-      }
-    } catch {
-      return NextResponse.json({ message: "reCAPTCHA verification failed" }, { status: 400 });
-    }
   }
 
   const toEmail = process.env.CONTACT_EMAIL_TO || "atelemedicine30@gmail.com";

@@ -7,28 +7,15 @@ import WebsiteShell from "@/presentation/components/website/WebsiteShell";
 import WebsiteHero from "@/presentation/components/website/WebsiteHero";
 import WebsiteSection from "@/presentation/components/website/WebsiteSection";
 import WebsiteStatsStrip from "@/presentation/components/website/WebsiteStatsStrip";
-import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 function ContactPageInner() {
   const { t } = useTranslation();
-  const { executeRecaptcha } = useGoogleReCaptcha();
-  const allowRecaptchaBypass =
-    process.env.NODE_ENV !== "production" ||
-    process.env.NEXT_PUBLIC_RECAPTCHA_OPTIONAL === "true";
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let token: string | null = null;
-    if (executeRecaptcha) {
-      token = await executeRecaptcha("contact");
-    }
-    if (!token && !allowRecaptchaBypass) {
-      alert(t("recaptchaUnavailable"));
-      return;
-    }
     const name = nameRef.current?.value || "";
     const email = emailRef.current?.value || "";
     const message = messageRef.current?.value || "";
@@ -36,7 +23,7 @@ function ContactPageInner() {
     const res = await fetch("/api/contact/send-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, message, source: "contact_page", token }),
+      body: JSON.stringify({ name, email, message, source: "contact_page" }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -128,12 +115,5 @@ function ContactPageInner() {
 }
 
 export default function ContactPage() {
-  return (
-    <GoogleReCaptchaProvider
-      reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-      scriptProps={{ async: true, appendTo: "head" }}
-    >
-      <ContactPageInner />
-    </GoogleReCaptchaProvider>
-  );
+  return <ContactPageInner />;
 }

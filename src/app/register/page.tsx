@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
-import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useTranslation } from 'react-i18next';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
@@ -24,10 +23,6 @@ function RegisterPageInner() {
     const [error, setError] = useState('');
     const [showModal, setShowModal] = useState(false); // State to control modal visibility
     const nav = useNavigationCoordinator();
-    const { executeRecaptcha } = useGoogleReCaptcha();
-    const allowRecaptchaBypass =
-        process.env.NODE_ENV !== 'production' ||
-        process.env.NEXT_PUBLIC_RECAPTCHA_OPTIONAL === 'true';
     const { registerUserUseCase } = useDI();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -45,27 +40,6 @@ function RegisterPageInner() {
 
         setLoading(true);
         try {
-            let token: string | null = null;
-            if (executeRecaptcha) {
-                token = await executeRecaptcha("register");
-            }
-            if (token) {
-                const recaptchaRes = await fetch("/api/verify-recaptcha", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ token }),
-                });
-                const recaptchaData = await recaptchaRes.json();
-                if (!recaptchaData.success) {
-                    setError(t('recaptchaFailed'));
-                    setLoading(false);
-                    return;
-                }
-            } else if (!allowRecaptchaBypass) {
-                setError(t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.');
-                setLoading(false);
-                return;
-            }
             await registerUserUseCase.execute({
                 name: formData.name,
                 surname: formData.surname,
@@ -248,12 +222,5 @@ function RegisterPageInner() {
 }
 
 export default function RegisterPage() {
-    return (
-        <GoogleReCaptchaProvider
-            reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-            scriptProps={{ async: true, appendTo: "head" }}
-        >
-            <RegisterPageInner />
-        </GoogleReCaptchaProvider>
-    );
+    return <RegisterPageInner />;
 }

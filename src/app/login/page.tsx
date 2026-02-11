@@ -1,22 +1,15 @@
 'use client';
 
-import { useState, useEffect, Suspense, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import Link from 'next/link';
 import { useDI } from '@/context/DIContext';
-import { useGoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { useAuth } from '@/context/AuthContext';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
 
-interface LoginPageContentProps {
-  onRetryRecaptcha: () => void;
-  retryCount: number;
-  maxRetries: number;
-}
-
-function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPageContentProps) {
+function LoginPageContent() {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,27 +18,7 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
   const [privateDevice, setPrivateDevice] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
   const [hasSessionCookie, setHasSessionCookie] = useState(false);
-  const { executeRecaptcha } = useGoogleReCaptcha();
-  const isRecaptchaReady = !!executeRecaptcha;
-  const [recaptchaState, setRecaptchaState] = useState<'loading' | 'ready' | 'failed'>('loading');
-  const allowRecaptchaBypass =
-    process.env.NODE_ENV !== 'production' ||
-    process.env.NEXT_PUBLIC_RECAPTCHA_OPTIONAL === 'true';
   const { loginUseCase, testAuthConnectionUseCase } = useDI();
-  const recaptchaTimeoutMs = 5000;
-
-  // Track reCAPTCHA readiness with a hard timeout so UI never gets stuck
-  useEffect(() => {
-    if (isRecaptchaReady) {
-      setRecaptchaState('ready');
-      return;
-    }
-    setRecaptchaState('loading');
-    const timer = setTimeout(() => {
-      setRecaptchaState('failed');
-    }, recaptchaTimeoutMs);
-    return () => clearTimeout(timer);
-  }, [isRecaptchaReady, retryCount, recaptchaTimeoutMs]);
 
   const { isAuthenticated, role, loading: authLoading } = useAuth();
 
@@ -90,28 +63,6 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
       if (!navigator.onLine) {
         throw new Error(t('offlineError'));
       }
-      let token: string | null = null;
-      if (executeRecaptcha) {
-        token = await executeRecaptcha('login');
-      }
-      if (token) {
-        const recaptchaRes = await fetch('/api/verify-recaptcha', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token }),
-        });
-        const recaptchaData = await recaptchaRes.json();
-        if (!recaptchaData.success) {
-          setErrorMsg(t('recaptchaFailed'));
-          setLoading(false);
-          return;
-        }
-      } else if (!allowRecaptchaBypass) {
-        setErrorMsg(t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.');
-        setLoading(false);
-        return;
-      }
-      // Only proceed with login if reCAPTCHA passes
       await loginUseCase.execute(email, password);
       const waitForSessionCookie = async () => {
         const maxAttempts = 10;
@@ -217,41 +168,10 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
         <button
           type="submit"
           className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
-          disabled={loading || (!allowRecaptchaBypass && recaptchaState === 'loading' && !isRecaptchaReady)}
+          disabled={loading}
         >
           {loading ? t('loggingIn') : t('loginButton')}
         </button>
-
-        {!isRecaptchaReady && (
-          <div className="text-xs text-gray-500 mt-2">
-            {recaptchaState === 'loading' ? (
-              <div className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                </svg>
-                <span>{t('recaptchaLoading')}</span>
-              </div>
-            ) : retryCount < maxRetries ? (
-              <div className="flex items-center gap-2">
-                <span className="text-amber-600">{t('recaptchaFailed') || 'reCAPTCHA failed to load.'}</span>
-                <button
-                  type="button"
-                  onClick={onRetryRecaptcha}
-                  className="text-purple-600 hover:text-purple-700 underline"
-                >
-                  {t('retry') || 'Retry'} ({retryCount + 1}/{maxRetries})
-                </button>
-              </div>
-            ) : (
-              <span className={`text-${allowRecaptchaBypass ? 'amber' : 'red'}-600`}>
-                {allowRecaptchaBypass
-                  ? (t('recaptchaUnavailable') || 'reCAPTCHA unavailable. You can continue without it.')
-                  : (t('recaptchaUnavailable') || 'reCAPTCHA unavailable. Please refresh the page.')}
-              </span>
-            )}
-          </div>
-        )}
       </form>
 
       <div className="text-xs text-gray-500 text-center">
@@ -262,39 +182,5 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
 }
 
 export default function LoginPage() {
-  // Key to force reCAPTCHA provider remount
-  const [providerKey, setProviderKey] = useState(() => Date.now());
-  const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
-  
-  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-  
-  // Function to retry loading reCAPTCHA
-  const handleRetry = () => {
-    if (retryCount < maxRetries) {
-      setRetryCount((r) => r + 1);
-      setProviderKey(Date.now()); // Force provider remount
-    }
-  };
-  
-  if (!siteKey) {
-    console.error('NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not configured');
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-        <div className="text-red-600">reCAPTCHA configuration error. Please contact support.</div>
-      </div>
-    );
-  }
-  
-  return (
-    <GoogleReCaptchaProvider
-      reCaptchaKey={siteKey}
-      scriptProps={{ async: true, defer: true, appendTo: 'head' }}
-      key={providerKey}
-    >
-      <Suspense fallback={<div className="min-h-screen bg-gray-100 flex items-center justify-center">Loading...</div>}>
-        <LoginPageContent onRetryRecaptcha={handleRetry} retryCount={retryCount} maxRetries={maxRetries} />
-      </Suspense>
-    </GoogleReCaptchaProvider>
-  );
+  return <LoginPageContent />;
 }

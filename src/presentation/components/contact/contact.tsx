@@ -5,42 +5,17 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import 'react-phone-input-2/lib/style.css';
 import { PaperAirplaneIcon, UserIcon, EnvelopeIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
-import { GoogleReCaptchaProvider, useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 export default function ContactForm() {
-  return (
-    <GoogleReCaptchaProvider
-      reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
-      scriptProps={{ async: true, appendTo: 'head' }}
-    >
-      <ContactFormInner />
-    </GoogleReCaptchaProvider>
-  );
-}
-
-function ContactFormInner() {
   const { handleSubmit, register } = useForm();
   const { t } = useTranslation();
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
-  const { executeRecaptcha } = useGoogleReCaptcha();
-  const allowRecaptchaBypass =
-    process.env.NODE_ENV !== 'production' ||
-    process.env.NEXT_PUBLIC_RECAPTCHA_OPTIONAL === 'true';
 
   const onSubmit = handleSubmit(async (values) => {
     setStatus('sending');
     setErrorMsg('');
     try {
-      let token: string | null = null;
-      if (executeRecaptcha) {
-        token = await executeRecaptcha('contact');
-      }
-      if (!token && !allowRecaptchaBypass) {
-        setStatus('error');
-        setErrorMsg(t('recaptchaUnavailable'));
-        return;
-      }
       const res = await fetch('/api/contact/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,7 +25,6 @@ function ContactFormInner() {
           subject: values.subject,
           message: values.message,
           source: 'contact_component',
-          token,
         }),
       });
       const data = await res.json();
