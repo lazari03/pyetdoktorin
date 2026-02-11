@@ -24,6 +24,7 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
   const [errorMsg, setErrorMsg] = useState('');
   const [privateDevice, setPrivateDevice] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
+  const [hasSessionCookie, setHasSessionCookie] = useState(false);
   const { executeRecaptcha } = useGoogleReCaptcha();
   const isRecaptchaReady = !!executeRecaptcha;
   const [recaptchaState, setRecaptchaState] = useState<'loading' | 'ready' | 'failed'>('loading');
@@ -57,12 +58,22 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
     }
   }, [authLoading, isAuthenticated]);
 
+  const readSessionCookie = () => {
+    if (typeof document === 'undefined') return false;
+    return /(?:^|; )loggedIn=/.test(document.cookie);
+  };
+
+  useEffect(() => {
+    setHasSessionCookie(readSessionCookie());
+  }, [isAuthenticated, pendingRedirect, authLoading]);
+
   useEffect(() => {
     if (!isAuthenticated || authLoading) return;
     if (!pendingRedirect && !initialAuthRef.current) return;
+    if (!hasSessionCookie) return;
     const target = getRoleLandingPath(role);
     window.location.href = target;
-  }, [isAuthenticated, authLoading, role, pendingRedirect]);
+  }, [isAuthenticated, authLoading, role, pendingRedirect, hasSessionCookie]);
 
   // Test Firebase connectivity on component mount, but don't block login if it fails
   useEffect(() => {
@@ -102,16 +113,21 @@ function LoginPageContent({ onRetryRecaptcha, retryCount, maxRetries }: LoginPag
       }
       // Only proceed with login if reCAPTCHA passes
       await loginUseCase.execute(email, password);
-      // Only enforce cookie check when using same-origin session endpoint.
-      const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
-      const isSameOrigin =
-        !backendBaseUrl ||
-        (typeof window !== 'undefined' && backendBaseUrl.startsWith(window.location.origin));
-      if (isSameOrigin && !document.cookie.includes('loggedIn=')) {
+      const waitForSessionCookie = async () => {
+        const maxAttempts = 10;
+        for (let i = 0; i < maxAttempts; i += 1) {
+          if (readSessionCookie()) return true;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        return false;
+      };
+      const cookieReady = await waitForSessionCookie();
+      if (!cookieReady) {
         setErrorMsg(t('authTokenWarning'));
         setLoading(false);
         return;
       }
+      setHasSessionCookie(true);
       setPendingRedirect(true);
     } catch (err) {
       setErrorMsg(t('unknownError'));

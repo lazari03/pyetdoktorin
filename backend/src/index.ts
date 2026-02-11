@@ -17,7 +17,13 @@ const app = express();
 
 app.use(helmet());
 const isProd = process.env.NODE_ENV === 'production';
-const allowAllOrigins = !isProd && env.corsOrigins.length === 0;
+const allowedOrigins = [
+  ...env.corsOrigins,
+  env.frontendUrl,
+]
+  .filter(Boolean)
+  .map((origin) => origin.replace(/\/$/, ''));
+const allowAllOrigins = !isProd && allowedOrigins.length === 0;
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -27,7 +33,8 @@ app.use(cors({
     if (allowAllOrigins) {
       return callback(null, true);
     }
-    if (env.corsOrigins.includes(origin)) {
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    if (allowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
     return callback(new Error('Not allowed by CORS'));

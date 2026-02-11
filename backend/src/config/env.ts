@@ -37,4 +37,5 @@ export const env = {
   paddleWebhookSecret: process.env.PADDLE_WEBHOOK_SECRET ?? '',
   paywallAmountUsd: parseNumberEnv('PAYWALL_AMOUNT_USD', parseNumberEnv('NEXT_PUBLIC_PAYWALL_AMOUNT_USD', 13)),
   corsOrigins: parseCsvEnv('CORS_ORIGINS', []),
+  frontendUrl: process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_BASE_URL || '',
 };
