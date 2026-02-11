@@ -80,13 +80,53 @@ export default function NavBar() {
 
   return (
     <header className={`navbar-wrapper w-full sticky top-0 ${z.navbar}`}>
-      {isMenuOpen && (
+      <div className="md:hidden">
         <div
-          className={`fixed inset-0 bg-black/40 transition-opacity duration-200 ease-in-out ${z.sidebar}`}
-          style={{ pointerEvents: 'auto' }}
+          className={`fixed inset-0 bg-slate-900/45 backdrop-blur-sm transition-opacity duration-200 ${
+            isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          } ${z.backdrop}`}
           onClick={() => setIsMenuOpen(false)}
         />
-      )}
+        <div
+          className={`fixed top-0 right-0 h-full w-[86%] max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out ${
+            isMenuOpen ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
+          } ${z.drawer}`}
+        >
+          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+            <div className="flex flex-col">
+              <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Menu</span>
+              <span className="text-lg font-bold text-slate-900">Pyet Doktorin</span>
+            </div>
+            <button
+              className="h-10 w-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center"
+              onClick={() => setIsMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+          <nav className="flex flex-col px-6 pt-4" aria-label="Mobile navigation">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                href={item.path}
+                className="text-slate-900 text-base font-semibold py-4 border-b border-slate-100 transition-colors hover:text-purple-600"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                }}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="mt-auto px-6 py-6 space-y-3">
+            <AuthButtons />
+            <p className="text-xs text-slate-500">
+              Kujdes i shpejtë, konsultë e sigurt dhe klinika të verifikuara.
+            </p>
+          </div>
+        </div>
+      </div>
       <div
         className={`w-full px-4 md:px-10 py-5 flex items-center justify-between transition-all duration-300 ${
           scrolled ? 'bg-white/90 backdrop-blur shadow-md' : 'bg-transparent'
@@ -123,27 +163,6 @@ export default function NavBar() {
           <AuthButtons />
         </div>
       </div>
-      {isMenuOpen && (
-        <div className={`absolute top-full left-0 w-full bg-white shadow-lg flex flex-col overflow-hidden border-t border-gray-100 ${z.dropdown}`}>
-          <nav className="flex flex-col">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                className="text-slate-800 py-4 px-6 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="p-4 flex flex-col gap-3">
-            <AuthButtons />
-          </div>
-        </div>
-      )}
     </header>
   );
 }
