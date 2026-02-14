@@ -13,7 +13,6 @@ export default function NavBar() {
   const { isAuthenticated, loading } = useAuth();
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hasAuthCookie, setHasAuthCookie] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -27,13 +26,6 @@ export default function NavBar() {
     return () => { document.body.style.overflow = ''; };
   }, [isMenuOpen]);
 
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const cookieStr = document.cookie || '';
-      setHasAuthCookie(/(?:^|; )loggedIn=/.test(cookieStr) && /(?:^|; )userRole=/.test(cookieStr));
-    }
-  }, [isAuthenticated, loading]);
-
   const navItems = [
     { path: '/pricing', label: t('pricing') },
     { path: '/about', label: t('about') || t('aboutUs') },
@@ -42,7 +34,7 @@ export default function NavBar() {
 
   const AuthButtons = () =>
     !loading &&
-    ((isAuthenticated && hasAuthCookie) ? (
+    (isAuthenticated ? (
       <button
         className="rounded-full bg-slate-900 px-5 py-2 text-white text-sm font-semibold hover:bg-slate-800 transition"
         onClick={() => {
