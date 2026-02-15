@@ -208,7 +208,6 @@ function MobileTopBar({
   onEarnings,
   onLogout,
   onNavigate,
-  onCloseMenu,
   role,
 }: {
   mobileMenuOpen: boolean;
