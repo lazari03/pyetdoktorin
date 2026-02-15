@@ -143,7 +143,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         mobileMenuOpen={mobileMenuOpen}
         onToggleMenu={() => setMobileMenuOpen((open) => !open)}
         initials={initials}
+        profileMenuOpen={profileMenuOpen}
         onToggleProfile={() => setProfileMenuOpen((open) => !open)}
+        profileMenuRef={profileMenuRef}
+        onProfileSettings={() => {
+          setProfileMenuOpen(false);
+          nav.pushPath('/dashboard/myprofile');
+        }}
+        onEarnings={() => {
+          setProfileMenuOpen(false);
+          nav.pushPath('/dashboard/earnings');
+        }}
+        onLogout={handleLogoutClick}
+        onNavigate={handleNavClick}
+        role={role}
       />
       <MobileMenu
         open={mobileMenuOpen}
@@ -181,13 +194,28 @@ function MobileTopBar({
   mobileMenuOpen,
   onToggleMenu,
   initials,
+  profileMenuOpen,
   onToggleProfile,
+  profileMenuRef,
+  onProfileSettings,
+  onEarnings,
+  onLogout,
+  onNavigate,
+  role,
 }: {
   mobileMenuOpen: boolean;
   onToggleMenu: () => void;
   initials: string;
+  profileMenuOpen: boolean;
   onToggleProfile: () => void;
+  profileMenuRef: React.RefObject<HTMLDivElement | null>;
+  onProfileSettings: () => void;
+  onEarnings: () => void;
+  onLogout: () => void;
+  onNavigate: (href: string) => void;
+  role: string | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div className={`md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4 ${z.navbar}`}>
       <button
@@ -197,13 +225,57 @@ function MobileTopBar({
       >
         {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
       </button>
-      <button
-        onClick={onToggleProfile}
-        className="ml-3 h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
-        aria-label="Open profile menu"
-      >
-        {initials}
-      </button>
+      <div className="relative" ref={profileMenuRef}>
+        <button
+          onClick={onToggleProfile}
+          className="h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
+          aria-label="Open profile menu"
+        >
+          {initials}
+        </button>
+        {profileMenuOpen && (
+          <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
+            <button
+              onClick={onProfileSettings}
+              className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+            >
+              <UserCircleIcon className="h-5 w-5 text-gray-500" />
+              <span className="font-medium">{t("profileSettings") || "Profile settings"}</span>
+            </button>
+            <button
+              onClick={() => onNavigate('/dashboard/appointments')}
+              className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+            >
+              <CalendarIcon className="h-5 w-5 text-gray-500" />
+              <span className="font-medium">{t("myAppointments") || "My appointments"}</span>
+            </button>
+            <button
+              onClick={() => onNavigate('/dashboard/notifications')}
+              className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+            >
+              <BellIcon className="h-5 w-5 text-gray-500" />
+              <span className="font-medium">{t("notifications") || "Notifications"}</span>
+            </button>
+            {role === UserRole.Doctor && (
+              <button
+                onClick={onEarnings}
+                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              >
+                <BanknotesIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{t("earnings") || "Earnings"}</span>
+              </button>
+            )}
+            <div className="my-2 border-t border-gray-100" />
+            <button
+              onClick={onLogout}
+              className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+            >
+              <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-500" />
+              <span className="font-medium">{t("logOut") || "Log out"}</span>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
