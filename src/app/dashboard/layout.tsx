@@ -141,10 +141,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex flex-col">
       <MobileTopBar
         mobileMenuOpen={mobileMenuOpen}
-        onToggleMenu={() => setMobileMenuOpen((open) => !open)}
+        onToggleMenu={() => {
+          setProfileMenuOpen(false);
+          setMobileMenuOpen((open) => !open);
+        }}
         initials={initials}
         profileMenuOpen={profileMenuOpen}
-        onToggleProfile={() => setProfileMenuOpen((open) => !open)}
+        onToggleProfile={() => {
+          setMobileMenuOpen(false);
+          setProfileMenuOpen((open) => !open);
+        }}
         profileMenuRef={profileMenuRef}
         onProfileSettings={() => {
           setProfileMenuOpen(false);
@@ -156,6 +162,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }}
         onLogout={handleLogoutClick}
         onNavigate={handleNavClick}
+        onCloseMenu={() => setMobileMenuOpen(false)}
         role={role}
       />
       <MobileMenu
@@ -201,6 +208,7 @@ function MobileTopBar({
   onEarnings,
   onLogout,
   onNavigate,
+  onCloseMenu,
   role,
 }: {
   mobileMenuOpen: boolean;
@@ -213,6 +221,7 @@ function MobileTopBar({
   onEarnings: () => void;
   onLogout: () => void;
   onNavigate: (href: string) => void;
+  onCloseMenu: () => void;
   role: string | null;
 }) {
   const { t } = useTranslation();
@@ -234,7 +243,7 @@ function MobileTopBar({
           {initials}
         </button>
         {profileMenuOpen && (
-          <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
+          <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm">
             <button
               onClick={onProfileSettings}
               className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
@@ -293,7 +302,7 @@ function MobileMenu({
 }) {
   if (!open) return null;
   return (
-    <div className={`md:hidden fixed inset-0 top-14 left-0 right-0 bg-white ${z.dropdown}`}>
+    <div className={`md:hidden fixed inset-0 top-14 left-0 right-0 bg-white ${z.navbar}`}>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] px-6">
         <nav className="flex flex-col items-center w-full max-w-sm space-y-2">
           {items.map((item) => {
