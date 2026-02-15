@@ -33,17 +33,24 @@ function JourneyPage() {
 
   const heroAppointment = useMemo(() => {
     const upcoming = sorted.find((a) => !isCanceled(a.status) && !vm.isAppointmentPast(a));
-    return upcoming ?? sorted[0];
+    return upcoming ?? null;
   }, [sorted, vm]);
 
   const filtered = useMemo(() => {
     switch (filter) {
       case "past":
-        return sorted.filter((a) => vm.isAppointmentPast(a));
+        // Past or completed, but NOT canceled
+        return sorted.filter(
+          (a) => (vm.isAppointmentPast(a) || isCompletedStatus(a.status)) && !isCanceled(a.status)
+        );
       case "canceled":
+        // Canceled / rejected regardless of date
         return sorted.filter((a) => isCanceled(a.status));
       case "upcoming":
-        return sorted.filter((a) => !vm.isAppointmentPast(a) && !isCanceled(a.status));
+        // Future appointments that are not canceled and not completed
+        return sorted.filter(
+          (a) => !vm.isAppointmentPast(a) && !isCanceled(a.status) && !isCompletedStatus(a.status)
+        );
       default:
         return sorted;
     }

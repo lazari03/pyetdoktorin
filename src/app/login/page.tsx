@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import Link from 'next/link';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
-import { useAuth } from '@/context/AuthContext';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
 
 function LoginPageContent() {
@@ -16,37 +15,7 @@ function LoginPageContent() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [privateDevice, setPrivateDevice] = useState(false);
-  const [pendingRedirect, setPendingRedirect] = useState(false);
-  const [hasSessionCookie, setHasSessionCookie] = useState(false);
   const { loginUseCase, testAuthConnectionUseCase } = useDI();
-
-  const { isAuthenticated, role, loading: authLoading } = useAuth();
-
-  const initialAuthRef = useRef<boolean | null>(null);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (initialAuthRef.current === null) {
-      initialAuthRef.current = isAuthenticated;
-    }
-  }, [authLoading, isAuthenticated]);
-
-  const readSessionCookie = () => {
-    if (typeof document === 'undefined') return false;
-    return /(?:^|; )loggedIn=/.test(document.cookie);
-  };
-
-  useEffect(() => {
-    setHasSessionCookie(readSessionCookie());
-  }, [isAuthenticated, pendingRedirect, authLoading]);
-
-  useEffect(() => {
-    if (!isAuthenticated || authLoading) return;
-    if (!pendingRedirect && !initialAuthRef.current) return;
-    if (!hasSessionCookie) return;
-    const target = getRoleLandingPath(role);
-    window.location.href = target;
-  }, [isAuthenticated, authLoading, role, pendingRedirect, hasSessionCookie]);
 
   // Test Firebase connectivity on component mount, but don't block login if it fails
   useEffect(() => {
@@ -64,10 +33,11 @@ function LoginPageContent() {
         throw new Error(t('offlineError'));
       }
       await loginUseCase.execute(email, password);
+      // Poll for the loggedIn cookie the session API sets
       const waitForSessionCookie = async () => {
         const maxAttempts = 10;
         for (let i = 0; i < maxAttempts; i += 1) {
-          if (readSessionCookie()) return true;
+          if (/(?:^|; )loggedIn=/.test(document.cookie)) return true;
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
         return false;
@@ -78,8 +48,12 @@ function LoginPageContent() {
         setLoading(false);
         return;
       }
-      setHasSessionCookie(true);
-      setPendingRedirect(true);
+      // Redirect to the role-appropriate landing page.
+      // Read the role from the cookie the session API just set.
+      const roleMatch = document.cookie.match(/(?:^|; )userRole=([^;]*)/);
+      const roleValue = roleMatch ? decodeURIComponent(roleMatch[1]) : null;
+      const target = getRoleLandingPath(roleValue as Parameters<typeof getRoleLandingPath>[0]);
+      window.location.replace(target);
     } catch (err) {
       setErrorMsg(t('unknownError'));
       console.error('Login error:', err);

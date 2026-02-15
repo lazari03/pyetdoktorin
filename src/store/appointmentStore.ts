@@ -5,6 +5,23 @@ import { APPOINTMENT_DURATION_MINUTES } from '../config/appointmentConfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { listAppointments } from '@/network/appointments';
 
+/**
+ * Convert a time string (either "HH:mm" or "hh:mm AM/PM") into "HH:mm" 24-hour format
+ * so it can be used in `new Date("YYYY-MM-DDThh:mm")`.
+ */
+function normalizeTo24h(time: string): string {
+  const ampmMatch = time.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
+  if (ampmMatch) {
+    let hours = parseInt(ampmMatch[1], 10);
+    const minutes = ampmMatch[2];
+    const period = ampmMatch[3].toUpperCase();
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  }
+  return time; // already in HH:mm
+}
+
 interface AppointmentState {
   appointments: Appointment[];
   isDoctor: boolean | null;
@@ -69,12 +86,12 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   handlePayNow: async (appointmentId, amount, handlePayNowUseCase) => handlePayNowUseCase(appointmentId, amount),
   checkIfPastAppointment: async (appointmentId, checkIfPastAppointmentUseCase) => checkIfPastAppointmentUseCase(appointmentId),
   isPastAppointment: (date, time) => {
-    const appointmentDateTime = new Date(`${date}T${time}`);
+    const appointmentDateTime = new Date(`${date}T${normalizeTo24h(time)}`);
     const appointmentEndTime = new Date(appointmentDateTime.getTime() + 30 * 60000);
     return appointmentEndTime < new Date();
   },
   isAppointmentPast: (appointment) => {
-    const appointmentDateTime = new Date(`${appointment.preferredDate}T${appointment.preferredTime}`);
+    const appointmentDateTime = new Date(`${appointment.preferredDate}T${normalizeTo24h(appointment.preferredTime)}`);
     const appointmentEndTime = new Date(appointmentDateTime.getTime() + APPOINTMENT_DURATION_MINUTES * 60000);
     return appointmentEndTime < new Date();
   },

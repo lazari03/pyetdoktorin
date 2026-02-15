@@ -58,7 +58,17 @@ app.use('/api/clinics', clinicsRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/notifications', notificationsRouter);
 
-app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  // Ensure CORS headers are present on error responses so the browser
+  // can read the error instead of reporting a missing CORS header.
+  const origin = req.headers.origin;
+  if (origin) {
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    if (allowAllOrigins || allowedOrigins.includes(normalizedOrigin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+  }
   console.error('Unhandled error', err);
   res.status(500).json({ error: 'Internal server error' });
 });

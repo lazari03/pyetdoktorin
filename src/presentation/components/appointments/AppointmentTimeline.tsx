@@ -5,7 +5,7 @@ import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppoin
 import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { toUserRole } from "@/presentation/utils/toUserRole";
-import { PhoneIcon, CreditCardIcon } from "@heroicons/react/24/outline";
+import { PhoneIcon, CreditCardIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { PAYWALL_AMOUNT_USD } from "@/config/paywallConfig";
 import { UserRole } from "@/domain/entities/UserRole";
 import { AppointmentDetailsModal } from "@/presentation/components/appointments/AppointmentDetailsModal";
