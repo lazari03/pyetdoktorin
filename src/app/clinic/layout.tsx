@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowRightOnRectangleIcon, BellIcon, CalendarIcon, BuildingOfficeIcon, ClockIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
@@ -65,6 +66,10 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
     nav.pushPath(href);
   };
 
+  const closeProfileMenu = () => {
+    setProfileMenuOpen(false);
+  };
+
   const handleLogout = () => {
     logout('manual', logoutSessionUseCase, logoutServerUseCase);
     setProfileMenuOpen(false);
@@ -86,8 +91,7 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
         initials={initials}
         profileMenuOpen={profileMenuOpen}
         onToggleProfile={() => setProfileMenuOpen((o) => !o)}
-        onProfileSettings={() => handleNavClick('/clinic/profile')}
-        onEarnings={() => handleNavClick('/clinic/earnings')}
+        onCloseProfileMenu={closeProfileMenu}
         onLogout={handleLogout}
         profileMenuRef={profileMenuRef}
       />
@@ -171,10 +175,9 @@ function DesktopTopBar({
   initials,
   profileMenuOpen,
   onToggleProfile,
-  onProfileSettings,
-  onEarnings,
   onLogout,
   profileMenuRef,
+  onCloseProfileMenu,
 }: {
   items: NavItem[];
   activePath: string;
@@ -182,10 +185,9 @@ function DesktopTopBar({
   initials: string;
   profileMenuOpen: boolean;
   onToggleProfile: () => void;
-  onProfileSettings: () => void;
-  onEarnings: () => void;
   onLogout: () => void;
   profileMenuRef: React.RefObject<HTMLDivElement | null>;
+  onCloseProfileMenu: () => void;
 }) {
   const { t } = useTranslation();
   
@@ -221,58 +223,64 @@ function DesktopTopBar({
           {profileMenuOpen && (
             <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
               {/* Profile Settings */}
-              <button
-                onClick={onProfileSettings}
+              <Link
+                href="/clinic/profile"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <UserCircleIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("profileSettings") || "Profile settings"}</span>
-              </button>
+              </Link>
               
               {/* Clinic Dashboard */}
-              <button
-                onClick={() => onNavigate('/clinic')}
+              <Link
+                href="/clinic"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <BuildingOfficeIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("clinicDashboard") || "Clinic dashboard"}</span>
-              </button>
+              </Link>
               
               {/* Calendar */}
-              <button
-                onClick={() => onNavigate('/clinic/calendar')}
+              <Link
+                href="/clinic/calendar"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <CalendarIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("calendar") || "Calendar"}</span>
-              </button>
+              </Link>
               
               {/* Bookings */}
-              <button
-                onClick={() => onNavigate('/clinic/bookings')}
+              <Link
+                href="/clinic/bookings"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <ClockIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("bookings") || "Bookings"}</span>
-              </button>
+              </Link>
               
               {/* Notifications */}
-              <button
-                onClick={() => onNavigate('/dashboard/notifications')}
+              <Link
+                href="/dashboard/notifications"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <BellIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("notifications") || "Notifications"}</span>
-              </button>
+              </Link>
               
               {/* Earnings */}
-              <button
-                onClick={onEarnings}
+              <Link
+                href="/clinic/earnings"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <BanknotesIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("earnings") || "Earnings"}</span>
-              </button>
+              </Link>
               
               <div className="my-2 border-t border-gray-100" />
               

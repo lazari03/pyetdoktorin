@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowRightOnRectangleIcon, BellIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
@@ -64,6 +65,10 @@ export default function PharmacyLayout({ children }: { children: React.ReactNode
     nav.pushPath(href);
   };
 
+  const closeProfileMenu = () => {
+    setProfileMenuOpen(false);
+  };
+
   const handleLogout = () => {
     logout('manual', logoutSessionUseCase, logoutServerUseCase);
     setProfileMenuOpen(false);
@@ -85,7 +90,7 @@ export default function PharmacyLayout({ children }: { children: React.ReactNode
         initials={initials}
         profileMenuOpen={profileMenuOpen}
         onToggleProfile={() => setProfileMenuOpen((o) => !o)}
-        onProfileSettings={() => handleNavClick('/pharmacy/profile')}
+        onCloseProfileMenu={closeProfileMenu}
         onLogout={handleLogout}
         profileMenuRef={profileMenuRef}
       />
@@ -172,9 +177,9 @@ function DesktopTopBar({
   initials,
   profileMenuOpen,
   onToggleProfile,
-  onProfileSettings,
   onLogout,
   profileMenuRef,
+  onCloseProfileMenu,
 }: {
   items: NavItem[];
   activePath: string;
@@ -182,9 +187,9 @@ function DesktopTopBar({
   initials: string;
   profileMenuOpen: boolean;
   onToggleProfile: () => void;
-  onProfileSettings: () => void;
   onLogout: () => void;
   profileMenuRef: React.RefObject<HTMLDivElement | null>;
+  onCloseProfileMenu: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -219,31 +224,34 @@ function DesktopTopBar({
           {profileMenuOpen && (
             <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
               {/* Profile Settings */}
-              <button
-                onClick={onProfileSettings}
+              <Link
+                href="/pharmacy/profile"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <UserCircleIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("profileSettings") || "Profile settings"}</span>
-              </button>
+              </Link>
               
               {/* Pharmacy Dashboard */}
-              <button
-                onClick={() => onNavigate('/pharmacy')}
+              <Link
+                href="/pharmacy"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <BuildingStorefrontIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("pharmacyDashboard") || "Pharmacy dashboard"}</span>
-              </button>
+              </Link>
               
               {/* Notifications */}
-              <button
-                onClick={() => onNavigate('/dashboard/notifications')}
+              <Link
+                href="/dashboard/notifications"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <BellIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("notifications") || "Notifications"}</span>
-              </button>
+              </Link>
               
               <div className="my-2 border-t border-gray-100" />
               
