@@ -11,23 +11,61 @@ import { getSiteUrl } from "./seo";
 
 const SITE_URL = getSiteUrl();
 const DEFAULT_TITLE = "Pyet Doktorin";
-const DEFAULT_DESCRIPTION = "Telemedicine Platform";
+const DEFAULT_DESCRIPTION = "All-in-one telemedicine app for clinics, doctors, and patients with secure video, smart scheduling, and integrated payments.";
 
 export const metadata: Metadata = {
-  title: DEFAULT_TITLE,
+  title: {
+    default: DEFAULT_TITLE,
+    template: "%s | Pyet Doktorin",
+  },
   description: DEFAULT_DESCRIPTION,
+  applicationName: DEFAULT_TITLE,
+  keywords: [
+    "telemedicine app",
+    "online doctor",
+    "virtual care",
+    "clinic management software",
+    "patient portal",
+    "secure video consultation",
+    "digital health platform",
+  ],
   metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: SITE_URL,
+  },
   openGraph: {
     type: "website",
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
     url: SITE_URL,
     siteName: DEFAULT_TITLE,
+    locale: "en_US",
+    alternateLocale: ["sq_AL"],
+    images: [
+      {
+        url: "/og/pyet-doktorin.svg",
+        width: 1200,
+        height: 630,
+        alt: "Pyet Doktorin",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
+    images: ["/og/pyet-doktorin.svg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || process.env.GOOGLE_SITE_VERIFICATION,
@@ -35,6 +73,20 @@ export const metadata: Metadata = {
 };
 
 const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    operatingSystem: "Web",
+    applicationCategory: "HealthApplication",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+    },
+  },
   {
     "@context": "https://schema.org",
     "@type": "Organization",

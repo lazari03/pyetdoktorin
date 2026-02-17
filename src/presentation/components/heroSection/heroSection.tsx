@@ -45,7 +45,7 @@ export default function HeroSection() {
             </button>
             <button
               className="px-8 py-3 rounded-full font-semibold text-lg border-2 border-violet-300 text-violet-100 bg-white/5 hover:bg-violet-800/30 transition-all duration-300 shadow focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2"
-              onClick={() => nav.pushPath('/clinics')}
+              onClick={() => nav.pushPath('/clinicians')}
             >
               {t('hero.cta.secondary')}
             </button>

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { buildMetadata } from "../seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Pricing | Pyet Doktorin",
-  description: "Explore Pyet Doktorin pricing and choose the right plan for your needs.",
+  title: "Pricing & Plans | Pyet Doktorin",
+  description: "Transparent pricing for clinics, doctors, and enterprise telemedicine teams.",
   path: "/pricing",
 });
 

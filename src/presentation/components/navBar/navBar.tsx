@@ -35,9 +35,8 @@ export default function NavBar() {
   }, [isAuthenticated, loading]);
 
   const navItems = [
-    { path: '/individuals', label: t('individuals') },
-    { path: '/doctors', label: t('doctors') },
-    { path: '/clinicians', label: t('clinicians') },
+    { path: '/pricing', label: t('pricing') },
+    { path: '/about', label: t('about') || t('aboutUs') },
     { path: '/contact', label: t('contact') },
   ].filter(item => item.label);
 
@@ -122,7 +121,7 @@ export default function NavBar() {
           <div className="mt-auto px-6 py-6 space-y-3">
             <AuthButtons />
             <p className="text-xs text-slate-500">
-              Kujdes i shpejtë, konsultë e sigurt dhe klinika të verifikuara.
+              {t('homeHeroSubtitle')}
             </p>
           </div>
         </div>

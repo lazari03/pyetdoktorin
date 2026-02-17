@@ -3,7 +3,7 @@ import { buildMetadata } from "../seo";
 
 export const metadata: Metadata = buildMetadata({
   title: "Contact Pyet Doktorin",
-  description: "Get in touch with Pyet Doktorin for support, partnerships, or questions.",
+  description: "Talk to sales or support to launch Pyet Doktorin for your clinic or practice.",
   path: "/contact",
 });
 

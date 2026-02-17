@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { PhoneIcon, CreditCardIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 import { PAYWALL_AMOUNT_USD } from "@/config/paywallConfig";
 import { UserRole } from "@/domain/entities/UserRole";
+import { AppointmentDetailsModal } from "@/presentation/components/appointments/AppointmentDetailsModal";
 
 type Props = {
   appointment: Appointment;
@@ -27,6 +28,7 @@ export function AppointmentSummaryCard({
   onReschedule,
 }: Props) {
   const { t } = useTranslation();
+  const [showDetails, setShowDetails] = useState(false);
   const status = getAppointmentStatusPresentation(appointment.status);
   const action = getAppointmentAction(appointment, isAppointmentPast, toUserRole(role));
   const actionPresentation = getAppointmentActionPresentation(appointment, role, action);
@@ -121,8 +123,19 @@ export function AppointmentSummaryCard({
             {t("reschedule")}
           </button>
         )}
-        <span className="text-xs text-gray-500 ml-auto">{t("seeDetails")}</span>
+        <button
+          type="button"
+          onClick={() => setShowDetails(true)}
+          className="text-xs text-purple-600 font-semibold ml-auto hover:text-purple-700"
+        >
+          {t("seeDetails")}
+        </button>
       </div>
+      <AppointmentDetailsModal
+        open={showDetails}
+        appointment={appointment}
+        onClose={() => setShowDetails(false)}
+      />
     </div>
   );
 }

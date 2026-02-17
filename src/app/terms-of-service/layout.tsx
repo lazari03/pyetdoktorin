@@ -3,7 +3,7 @@ import { buildMetadata } from "../seo";
 
 export const metadata: Metadata = buildMetadata({
   title: "Terms of Service | Pyet Doktorin",
-  description: "Review the terms for using Pyet Doktorin and our services.",
+  description: "Terms and conditions for using Pyet Doktorin.",
   path: "/terms-of-service",
 });
 

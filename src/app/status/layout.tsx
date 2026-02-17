@@ -3,7 +3,7 @@ import { buildMetadata } from "../seo";
 
 export const metadata: Metadata = buildMetadata({
   title: "Status | Pyet Doktorin",
-  description: "View system status and platform updates for Pyet Doktorin.",
+  description: "Live uptime, incidents, and platform status for Pyet Doktorin.",
   path: "/status",
 });
 

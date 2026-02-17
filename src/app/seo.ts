@@ -24,6 +24,8 @@ export function buildMetadata({ title, description, path }: BuildMetadataOptions
       description,
       url,
       siteName: "Pyet Doktorin",
+      locale: "en_US",
+      alternateLocale: ["sq_AL"],
       images: [
         {
           url: DEFAULT_IMAGE,

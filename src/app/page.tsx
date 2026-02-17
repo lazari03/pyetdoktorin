@@ -21,7 +21,7 @@ export default function Home() {
         highlight={t("homeHeroHighlight")}
         subtitle={t("homeHeroSubtitle")}
         primaryCta={{ label: t("homeHeroPrimaryCta"), href: "/register" }}
-        secondaryCta={{ label: t("homeHeroSecondaryCta"), href: "/clinicians" }}
+        secondaryCta={{ label: t("homeHeroSecondaryCta"), href: "/contact" }}
         imageSrc="/api/images?key=hero1"
         imageAlt={t("homeHeroImageAlt")}
         chip={t("homeHeroChip")}
