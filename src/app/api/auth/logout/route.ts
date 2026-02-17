@@ -9,11 +9,30 @@ export async function POST() {
   const isProd = process.env.NODE_ENV === 'production';
   const secure = isProd;
 
+
+  async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, delay = 500): Promise<Response | undefined> {
+    let lastError: any;
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        return await fetch(url, options);
+      } catch (err) {
+        lastError = err;
+        console.error(`Logout fetch attempt ${attempt + 1} failed:`, err);
+        if (attempt < retries - 1) {
+          await new Promise((res) => setTimeout(res, delay));
+        }
+      }
+    }
+    console.error('Logout fetch failed after retries:', lastError);
+    return undefined;
+  }
+
   try {
     const backendUrl = `${getBackendBaseUrl()}/api/auth/logout`;
-    await fetch(backendUrl, { method: 'POST' }).catch(() => undefined);
-  } catch {
+    await fetchWithRetry(backendUrl, { method: 'POST' });
+  } catch (err) {
     // best-effort backend logout; still clear frontend cookies
+    console.error('Logout fetch network error:', err);
   }
 
   const response = NextResponse.json({ ok: true });

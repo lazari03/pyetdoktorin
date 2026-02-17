@@ -23,8 +23,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { getAdmin } from '@/app/api/_lib/admin';
+
 import { SecurityAuditService } from '@/infrastructure/services/securityAuditService';
-const HMS_BASE_URL = 'https://api.100ms.live/v2';
+import { API_ENDPOINTS } from '@/config/routes';
+const HMS_BASE_URL = API_ENDPOINTS.HMS_BASE_URL;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

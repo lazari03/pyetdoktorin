@@ -1,17 +1,18 @@
 import { UserRole } from "@/domain/entities/UserRole";
+import { ROUTES } from "@/config/routes";
 
 export function getRoleLandingPath(role?: UserRole | null): string {
   switch (role) {
     case UserRole.Admin:
-      return "/admin";
+      return ROUTES.ADMIN;
     case UserRole.Pharmacy:
-      return "/pharmacy";
+      return ROUTES.PHARMACY;
     case UserRole.Clinic:
-      return "/clinic";
+      return ROUTES.CLINIC;
     case UserRole.Doctor:
     case UserRole.Patient:
-      return "/dashboard";
+      return ROUTES.DASHBOARD;
     default:
-      return "/dashboard";
+      return ROUTES.DASHBOARD;
   }
 }
