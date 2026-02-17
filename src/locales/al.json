@@ -316,6 +316,8 @@
   "payNow": "Paguaj tani",
   "joinNow": "Bashkohu tani",
   "past": "Të kaluara",
+  "passedAppointment": "Takim i kaluar",
+  "pastAppointment": "Takim i kaluar",
   "waitingForPayment": "Në pritje të pagesës",
   "waitingForAcceptance": "Në pritje të konfirmimit nga mjeku",
   "paymentRequired": "Ju lutemi përfundoni pagesën për t'u lidhur.",
@@ -909,5 +911,18 @@
   "reportPaid": "Paguar",
   "reportUnpaid": "E papaguar",
   "totalUsers": "Përdorues gjithsej",
-  "registeredAccounts": "Llogari të regjistruara"
+  "registeredAccounts": "Llogari të regjistruara",
+  "emergencyServices": "Emergjencë",
+  "ambulanceAlbania": "Ambulanca Shqipëri",
+  "emergencyAvailable": "E disponueshme 24/7 — pa pagesë",
+  "callNow": "Thirr tani",
+  "bmiCalculator": "Llogaritësi i BMI",
+  "heightCm": "Gjatësia (cm)",
+  "weightKg": "Pesha (kg)",
+  "yourBmi": "BMI juaj",
+  "bmiEnterValues": "Vendosni gjatësinë dhe peshën për të llogaritur BMI",
+  "bmi_underweight": "Nënpeshë",
+  "bmi_normal": "Normale",
+  "bmi_overweight": "Mbipeshë",
+  "bmi_obese": "Obezitet"
 }

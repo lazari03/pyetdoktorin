@@ -15,6 +15,8 @@ import { RecentPatientsList, RecentPatient } from "@/presentation/components/das
 import { CheckupReminderCard } from "@/presentation/components/dashboard/CheckupReminderCard";
 import { DoctorEarningsCard, MonthlyEarning } from "@/presentation/components/dashboard/DoctorEarningsCard";
 import { NotificationCard } from "@/presentation/components/dashboard/NotificationCard";
+import { EmergencyCard } from "@/presentation/components/dashboard/EmergencyCard";
+import { BmiCalculatorCard } from "@/presentation/components/dashboard/BmiCalculatorCard";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
 import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
@@ -175,7 +177,8 @@ export default function Dashboard() {
       <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10 space-y-6">
         <ProfileWarning show={vm.profileIncomplete} />
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          {/* Left column: Hero + Emergency/BMI stacked */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
             {heroAppointment ? (
               <HeroCard
                 title={
@@ -222,7 +225,17 @@ export default function Dashboard() {
                 ctaLabel={role === UserRole.Doctor ? undefined : (t("bookNow") || "Book now")}
               />
             )}
+
+            {/* Emergency & BMI directly under the hero card */}
+            {role === UserRole.Patient && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <EmergencyCard />
+                <BmiCalculatorCard />
+              </div>
+            )}
           </div>
+
+          {/* Right column: Notifications */}
           <div className="lg:col-span-1">
             <NotificationCard appointments={vm.filteredAppointments} />
           </div>
@@ -284,9 +297,6 @@ export default function Dashboard() {
                 </p>
                 <p className="text-[11px] text-gray-600">{t("upcomingCopy") ?? "Including today and future visits."}</p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-sm">
             </div>
           </section>
         </div>

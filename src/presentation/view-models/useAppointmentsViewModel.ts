@@ -150,6 +150,17 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   const handleJoinCall = useCallback(
     async (appointmentId: string) => {
       try {
+        // Block joining past appointments
+        const targetAppointment = appointments.find((a) => a.id === appointmentId);
+        if (targetAppointment && isAppointmentPast(targetAppointment)) {
+          trackAnalyticsEvent("appointment_join_blocked", {
+            appointmentId,
+            reason: "appointment_past",
+          });
+          alert(t("appointmentPast") || "This appointment has already passed.");
+          return;
+        }
+
         trackAnalyticsEvent("appointment_join_attempt", {
           appointmentId,
           role: isDoctor ? "doctor" : "patient",
@@ -249,6 +260,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
       fetchAppointments,
       generateRoomCodeUseCase,
       isDoctor,
+      isAppointmentPast,
       optimisticPaidIds,
       role,
       setAuthStatus,

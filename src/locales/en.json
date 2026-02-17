@@ -190,6 +190,8 @@
   "payNow": "Pay Now",
   "joinNow": "Join Now",
   "past": "Past",
+  "passedAppointment": "Passed Appointment",
+  "pastAppointment": "Past Appointment",
   "waitingForPayment": "Waiting for payment",
   "waitingForAcceptance": "Waiting for doctor approval",
   "paymentRequired": "Please complete payment to join the call.",
@@ -909,5 +911,18 @@
   "reportPaid": "Paid",
   "reportUnpaid": "Unpaid",
   "totalUsers": "Total users",
-  "registeredAccounts": "Registered accounts"
+  "registeredAccounts": "Registered accounts",
+  "emergencyServices": "Emergency",
+  "ambulanceAlbania": "Ambulance Albania",
+  "emergencyAvailable": "Available 24/7 — free of charge",
+  "callNow": "Call now",
+  "bmiCalculator": "BMI Calculator",
+  "heightCm": "Height (cm)",
+  "weightKg": "Weight (kg)",
+  "yourBmi": "Your BMI",
+  "bmiEnterValues": "Enter your height and weight to calculate BMI",
+  "bmi_underweight": "Underweight",
+  "bmi_normal": "Normal",
+  "bmi_overweight": "Overweight",
+  "bmi_obese": "Obese"
 }

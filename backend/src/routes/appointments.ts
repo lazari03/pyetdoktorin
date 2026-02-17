@@ -7,9 +7,14 @@ import { buildDisplayName, getUserProfile } from '@/services/userProfileService'
 const router = Router();
 
 router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
-  const user = req.user!;
-  const appointments = await listAppointmentsForUser(user.uid, user.role);
-  res.json({ items: appointments });
+  try {
+    const user = req.user!;
+    const appointments = await listAppointmentsForUser(user.uid, user.role);
+    res.json({ items: appointments });
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    res.status(500).json({ error: 'Failed to fetch appointments' });
+  }
 });
 
 router.post('/', requireAuth([UserRole.Patient]), async (req: AuthenticatedRequest, res) => {

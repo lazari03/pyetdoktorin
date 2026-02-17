@@ -24,6 +24,7 @@
 # misc
 .DS_Store
 *.pem
+.eslintcache
 
 # debug
 npm-debug.log*
@@ -31,8 +32,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
 .env*
+!.env.example
+.env.local
+.env.production
 
 # vercel
 .vercel
@@ -41,5 +45,21 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-pyetdoktorin-b76b9-firebase-adminsdk-fbsvc-801b17ac0b.json
+# firebase service accounts
 config/medivio-3273a-firebase-adminsdk-fbsvc-6f1e5e6643.json
+pyetdoktorin-b76b9-firebase-adminsdk-fbsvc-801b17ac0b.json
+
+# generated/compiled files
+dist/
+*.js.map
+.turbo/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.idea

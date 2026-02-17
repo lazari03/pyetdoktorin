@@ -1,11 +1,12 @@
 import React, { useState } from "react";
+import Link from "next/link";
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
 import { toUserRole } from "@/presentation/utils/toUserRole";
 import { useTranslation } from "react-i18next";
-import { PhoneIcon, CreditCardIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
+import { PhoneIcon, CreditCardIcon, ArrowsRightLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { PAYWALL_AMOUNT_USD } from "@/config/paywallConfig";
 import { UserRole } from "@/domain/entities/UserRole";
 import { AppointmentDetailsModal } from "@/presentation/components/appointments/AppointmentDetailsModal";
@@ -29,12 +30,14 @@ export function AppointmentSummaryCard({
 }: Props) {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
+  const isPast = isAppointmentPast(appointment);
   const status = getAppointmentStatusPresentation(appointment.status);
   const action = getAppointmentAction(appointment, isAppointmentPast, toUserRole(role));
   const actionPresentation = getAppointmentActionPresentation(appointment, role, action);
   const waitingForAcceptance = action.label === "waitingForAcceptance";
 
   const handlePrimary = () => {
+    if (isPast) return;
     if (actionPresentation.type === "join") return onJoinCall(appointment.id);
     if (actionPresentation.type === "pay") return onPayNow(appointment.id, PAYWALL_AMOUNT_USD);
     if (actionPresentation.type === "disabled" && onReschedule && role === UserRole.Patient) {
@@ -43,6 +46,7 @@ export function AppointmentSummaryCard({
   };
 
   const primaryLabel = (() => {
+    if (isPast) return t("completed");
     switch (actionPresentation.type) {
       case "join":
         return t(actionPresentation.label);
@@ -58,6 +62,7 @@ export function AppointmentSummaryCard({
   })();
 
   const primaryIcon = (() => {
+    if (isPast) return <CheckCircleIcon className="h-4 w-4" />;
     switch (actionPresentation.type) {
       case "join":
         return <PhoneIcon className="h-4 w-4" />;
@@ -72,20 +77,32 @@ export function AppointmentSummaryCard({
   })();
 
   const isPrimaryDisabled =
+    isPast ||
     actionPresentation.type === "waiting" ||
     waitingForAcceptance ||
     (actionPresentation.type === "disabled" && role !== UserRole.Patient);
 
   return (
-    <div className="rounded-3xl bg-white shadow-lg border border-purple-50 p-5 flex flex-col gap-4">
+    <div className={`rounded-3xl shadow-lg border p-5 flex flex-col gap-4 transition-opacity ${
+      isPast
+        ? "bg-gray-50/60 border-gray-100 opacity-75"
+        : "bg-white border-purple-50"
+    }`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.14em] text-purple-600 font-semibold">
-            {t("nextAppointment")}
+          <p className={`text-xs uppercase tracking-[0.14em] font-semibold ${
+            isPast ? "text-gray-400" : "text-purple-600"
+          }`}>
+            {isPast ? t("pastAppointment") : t("nextAppointment")}
           </p>
-          <h3 className="text-xl font-semibold text-gray-900 mt-1 line-clamp-1">
+          <Link
+            href={`/dashboard/doctor/${appointment.doctorId}`}
+            className={`text-xl font-semibold mt-1 line-clamp-1 block hover:underline ${
+              isPast ? "text-gray-500" : "text-gray-900"
+            }`}
+          >
             {appointment.doctorName || t("doctor")}
-          </h3>
+          </Link>
           <p className="text-sm text-gray-600">
             {appointment.appointmentType} • {appointment.preferredDate} • {appointment.preferredTime}
           </p>
@@ -114,7 +131,7 @@ export function AppointmentSummaryCard({
           {primaryIcon}
           {primaryLabel}
         </button>
-        {onReschedule && role === UserRole.Patient && (
+        {!isPast && onReschedule && role === UserRole.Patient && (
           <button
             onClick={() => onReschedule(appointment.id)}
             className="inline-flex items-center gap-2 rounded-full border border-purple-200 px-4 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-50 transition-colors"

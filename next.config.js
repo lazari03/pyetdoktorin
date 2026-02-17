@@ -1,5 +1,11 @@
 // next.config.js
-const WebpackObfuscator = require('webpack-obfuscator');
+let WebpackObfuscator = null;
+try {
+  // Optional dependency in some deploy environments
+  WebpackObfuscator = require('webpack-obfuscator');
+} catch (error) {
+  WebpackObfuscator = null;
+}
 
 module.exports = {
   images: {
@@ -11,7 +17,7 @@ module.exports = {
   },
   productionBrowserSourceMaps: false,
   webpack: (config, { isServer, dev }) => {
-    if (!dev && !isServer) {
+    if (!dev && !isServer && WebpackObfuscator) {
       config.plugins.push(
         new WebpackObfuscator(
           {

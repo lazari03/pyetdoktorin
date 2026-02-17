@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Bars3Icon, XMarkIcon, BanknotesIcon, UserCircleIcon, ArrowRightOnRectangleIcon, BellIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { useInitializeAppointments } from '../../store/appointmentStore';
@@ -63,25 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setProfileMenuOpen(false);
   };
 
-  // Close profile menu on outside click
-  useEffect(() => {
-    if (!profileMenuOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileMenuRef.current &&
-        event.target instanceof Node &&
-        !profileMenuRef.current.contains(event.target)
-      ) {
-        setProfileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [profileMenuOpen]);
+  // Outside click is handled by the fixed backdrop overlay.
 
   // Also close profile menu when route changes
   useEffect(() => {
@@ -141,9 +124,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex flex-col">
       <MobileTopBar
         mobileMenuOpen={mobileMenuOpen}
-        onToggleMenu={() => setMobileMenuOpen((open) => !open)}
+        onToggleMenu={() => {
+          setProfileMenuOpen(false);
+          setMobileMenuOpen((open) => !open);
+        }}
         initials={initials}
-        onToggleProfile={() => setProfileMenuOpen((open) => !open)}
+        profileMenuOpen={profileMenuOpen}
+        onToggleProfile={() => {
+          setMobileMenuOpen(false);
+          setProfileMenuOpen((open) => !open);
+        }}
+        profileMenuRef={profileMenuRef}
+        onCloseProfileMenu={() => setProfileMenuOpen(false)}
+        onLogout={handleLogoutClick}
+        onCloseMenu={() => setMobileMenuOpen(false)}
+        role={role}
       />
       <MobileMenu
         open={mobileMenuOpen}
@@ -158,14 +153,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         initials={initials}
         profileMenuOpen={profileMenuOpen}
         onToggleProfile={() => setProfileMenuOpen((open) => !open)}
-        onProfileSettings={() => {
-          setProfileMenuOpen(false);
-          nav.pushPath('/dashboard/myprofile');
-        }}
-        onEarnings={() => {
-          setProfileMenuOpen(false);
-          nav.pushPath('/dashboard/earnings');
-        }}
+        onCloseProfileMenu={() => setProfileMenuOpen(false)}
         onLogout={handleLogoutClick}
         profileMenuRef={profileMenuRef}
         role={role}
@@ -181,13 +169,25 @@ function MobileTopBar({
   mobileMenuOpen,
   onToggleMenu,
   initials,
+  profileMenuOpen,
   onToggleProfile,
+  profileMenuRef,
+  onLogout,
+  role,
+  onCloseProfileMenu,
 }: {
   mobileMenuOpen: boolean;
   onToggleMenu: () => void;
   initials: string;
+  profileMenuOpen: boolean;
   onToggleProfile: () => void;
+  profileMenuRef: React.RefObject<HTMLDivElement | null>;
+  onLogout: () => void;
+  onCloseMenu: () => void;
+  role: string | null;
+  onCloseProfileMenu: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className={`md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4 ${z.navbar}`}>
       <button
@@ -197,13 +197,68 @@ function MobileTopBar({
       >
         {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
       </button>
-      <button
-        onClick={onToggleProfile}
-        className="ml-3 h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
-        aria-label="Open profile menu"
-      >
-        {initials}
-      </button>
+      <div className="relative z-[200]" ref={profileMenuRef}>
+        <button
+          onClick={onToggleProfile}
+          className="h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
+          aria-label="Open profile menu"
+        >
+          {initials}
+        </button>
+        {profileMenuOpen && (
+          <>
+            <div
+              className={`fixed inset-0 ${z.backdrop}`}
+              onClick={onCloseProfileMenu}
+              aria-hidden="true"
+            />
+            <div className={`fixed right-4 top-16 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm pointer-events-auto ${z.maximum}`}>
+              <Link
+                href="/dashboard/myprofile"
+                onClick={onCloseProfileMenu}
+                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              >
+                <UserCircleIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{t("profileSettings") || "Profile settings"}</span>
+              </Link>
+              <Link
+                href="/dashboard/appointments"
+                onClick={onCloseProfileMenu}
+                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              >
+                <CalendarIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{t("myAppointments") || "My appointments"}</span>
+              </Link>
+              <Link
+                href="/dashboard/notifications"
+                onClick={onCloseProfileMenu}
+                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              >
+                <BellIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{t("notifications") || "Notifications"}</span>
+              </Link>
+              {role === UserRole.Doctor && (
+                <Link
+                  href="/dashboard/earnings"
+                  onClick={onCloseProfileMenu}
+                  className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                >
+                  <BanknotesIcon className="h-5 w-5 text-gray-500" />
+                  <span className="font-medium">{t("earnings") || "Earnings"}</span>
+                </Link>
+              )}
+              <div className="my-2 border-t border-gray-100" />
+              <button
+                onClick={onLogout}
+                className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-500" />
+                <span className="font-medium">{t("logOut") || "Log out"}</span>
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -221,7 +276,7 @@ function MobileMenu({
 }) {
   if (!open) return null;
   return (
-    <div className={`md:hidden fixed inset-0 top-14 left-0 right-0 bg-white ${z.dropdown}`}>
+    <div className={`md:hidden fixed inset-0 top-14 left-0 right-0 bg-white ${z.navbar}`}>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] px-6">
         <nav className="flex flex-col items-center w-full max-w-sm space-y-2">
           {items.map((item) => {
@@ -253,10 +308,9 @@ function DesktopTopBar({
   initials,
   profileMenuOpen,
   onToggleProfile,
-  onProfileSettings,
-  onEarnings,
   onLogout,
   profileMenuRef,
+  onCloseProfileMenu,
   role,
 }: {
   items: NavItem[];
@@ -265,10 +319,9 @@ function DesktopTopBar({
   initials: string;
   profileMenuOpen: boolean;
   onToggleProfile: () => void;
-  onProfileSettings: () => void;
-  onEarnings: () => void;
   onLogout: () => void;
   profileMenuRef: React.RefObject<HTMLDivElement | null>;
+  onCloseProfileMenu: () => void;
   role: string | null;
 }) {
   const { t } = useTranslation();
@@ -304,41 +357,45 @@ function DesktopTopBar({
           {profileMenuOpen && (
             <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
               {/* Profile Settings - Available to all roles */}
-              <button
-                onClick={onProfileSettings}
+              <Link
+                href="/dashboard/myprofile"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <UserCircleIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("profileSettings") || "Profile settings"}</span>
-              </button>
+              </Link>
               
               {/* My Appointments - Available to all roles */}
-              <button
-                onClick={() => onNavigate('/dashboard/appointments')}
+              <Link
+                href="/dashboard/appointments"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <CalendarIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("myAppointments") || "My appointments"}</span>
-              </button>
+              </Link>
               
               {/* Notifications - Available to all roles */}
-              <button
-                onClick={() => onNavigate('/dashboard/notifications')}
+              <Link
+                href="/dashboard/notifications"
+                onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <BellIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("notifications") || "Notifications"}</span>
-              </button>
+              </Link>
               
               {/* Earnings - Doctor only */}
               {role === UserRole.Doctor && (
-                <button
-                  onClick={onEarnings}
+                <Link
+                  href="/dashboard/earnings"
+                  onClick={onCloseProfileMenu}
                   className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
                 >
                   <BanknotesIcon className="h-5 w-5 text-gray-500" />
                   <span className="font-medium">{t("earnings") || "Earnings"}</span>
-                </button>
+                </Link>
               )}
               
               <div className="my-2 border-t border-gray-100" />
