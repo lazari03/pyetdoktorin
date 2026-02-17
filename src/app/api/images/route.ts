@@ -1,7 +1,24 @@
 
+
 import { NextRequest } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+
+async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, delay = 500): Promise<Response> {
+    let lastError: any;
+    for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+            return await fetch(url, options);
+        } catch (err) {
+            lastError = err;
+            console.error(`Image fetch attempt ${attempt + 1} failed:`, err);
+            if (attempt < retries - 1) {
+                await new Promise((res) => setTimeout(res, delay));
+            }
+        }
+    }
+    throw lastError;
+}
 
 type LocalImage = {
     buffer: Buffer;
@@ -46,7 +63,7 @@ export async function GET(req: NextRequest) {
     if (bucketUrl) {
         const imageUrl = `${bucketUrl}/website-images/${key}`;
         try {
-            const imageResponse = await fetch(imageUrl);
+            const imageResponse = await fetchWithRetry(imageUrl);
             if (imageResponse && imageResponse.ok) {
                 const contentType = imageResponse.headers.get("Content-Type") || "image/jpeg";
                 const imageBuffer = await imageResponse.arrayBuffer();
@@ -57,8 +74,12 @@ export async function GET(req: NextRequest) {
                         "Cache-Control": "public, max-age=86400, immutable"
                     }
                 });
+            } else {
+                const errText = imageResponse ? await imageResponse.text() : 'No response';
+                console.error('Image fetch error response:', imageResponse?.status, errText);
             }
-        } catch {
+        } catch (err) {
+            console.error('Image fetch network error:', err);
             // Fall back to local assets below.
         }
     }

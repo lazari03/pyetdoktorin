@@ -14,17 +14,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
     }
 
+
     const backendUrl = `${getBackendBaseUrl()}/api/auth/session`;
-    const backendRes = await fetch(backendUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken }),
-    });
+
+    async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, delay = 500): Promise<Response> {
+      let lastError: any;
+      for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+          return await fetch(url, options);
+        } catch (err) {
+          lastError = err;
+          console.error(`Session fetch attempt ${attempt + 1} failed:`, err);
+          if (attempt < retries - 1) {
+            await new Promise((res) => setTimeout(res, delay));
+          }
+        }
+      }
+      throw lastError;
+    }
+
+    let backendRes: Response;
+    try {
+      backendRes = await fetchWithRetry(backendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+    } catch (err) {
+      console.error('Session fetch network error:', err);
+      return NextResponse.json({ error: 'Network error: ' + (err instanceof Error ? err.message : String(err)) }, { status: 502 });
+    }
 
     const text = await backendRes.text();
     const data = text ? (JSON.parse(text) as { ok?: boolean; role?: string; error?: string }) : {};
 
     if (!backendRes.ok) {
+      console.error('Session fetch error response:', backendRes.status, text);
       return NextResponse.json({ error: data?.error || 'Failed to establish session' }, { status: backendRes.status });
     }
 
