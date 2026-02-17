@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Link from "next/link";
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
@@ -29,6 +30,7 @@ export function AppointmentSummaryCard({
 }: Props) {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
+  const isPast = isAppointmentPast(appointment);
   const status = getAppointmentStatusPresentation(appointment.status);
   const action = getAppointmentAction(appointment, isAppointmentPast, toUserRole(role));
   const actionPresentation = getAppointmentActionPresentation(appointment, role, action);
