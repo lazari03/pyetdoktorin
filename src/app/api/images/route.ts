@@ -5,7 +5,7 @@ import { promises as fs } from "fs";
 import path from "path";
 
 async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, delay = 500): Promise<Response> {
-    let lastError: any;
+    let lastError: unknown;
     for (let attempt = 0; attempt < retries; attempt++) {
         try {
             return await fetch(url, options);
@@ -17,7 +17,7 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
             }
         }
     }
-    throw lastError;
+    throw lastError ?? new Error('Image fetch failed after retries');
 }
 
 type LocalImage = {
