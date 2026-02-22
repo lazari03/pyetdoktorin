@@ -55,8 +55,8 @@ export async function POST(req: Request) {
 
     const role = data?.role || 'patient';
     const now = Date.now();
-    const isProd = process.env.NODE_ENV === 'production';
-    const secure = isProd;
+    const forwardedProto = req.headers.get('x-forwarded-proto') || '';
+    const secure = forwardedProto.includes('https') || req.url.startsWith('https://');
 
     const response = NextResponse.json({ ok: true, role });
     response.cookies.set('session', '1', {

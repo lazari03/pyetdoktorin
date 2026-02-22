@@ -192,6 +192,7 @@
   "past": "Past",
   "passedAppointment": "Passed Appointment",
   "pastAppointment": "Past Appointment",
+  "appointmentPast": "This appointment has already passed.",
   "waitingForPayment": "Waiting for payment",
   "waitingForAcceptance": "Waiting for doctor approval",
   "paymentRequired": "Please complete payment to join the call.",
