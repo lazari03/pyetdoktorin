@@ -1,4 +1,4 @@
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, updateEmail } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/config/firebaseconfig';
 
@@ -78,4 +78,23 @@ export async function fetchUserDetails(userId: string) {
     } catch {
         return null;
     }
+}
+
+export async function updateUserEmail(userId: string, nextEmail: string) {
+    const authInstance = getAuth();
+    const currentUser = authInstance.currentUser;
+    if (!currentUser) {
+        throw new Error('User not authenticated');
+    }
+    if (currentUser.uid !== userId) {
+        throw new Error('User mismatch');
+    }
+    const trimmed = nextEmail.trim();
+    if (!trimmed) {
+        throw new Error('Email is required');
+    }
+    if (currentUser.email === trimmed) {
+        return;
+    }
+    await updateEmail(currentUser, trimmed);
 }

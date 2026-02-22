@@ -3,8 +3,10 @@ import { getAuth } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
+import { useTranslation } from "react-i18next";
 
 export const useMyProfile = () => {
+  const { t } = useTranslation();
   const { user, role, loading: authLoading } = useAuth(); // Access user, role, and loading from AuthContext
   const {
     getUserProfileUseCase,
@@ -150,9 +152,18 @@ export const useMyProfile = () => {
       await updateUserProfileUseCase.execute(userId, formData);
       trackAnalyticsEvent("profile_update_success");
       alert("Profile updated successfully!");
-    } catch {
+    } catch (error) {
+      const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
+      if (code === "auth/requires-recent-login") {
+        alert(t("reauthRequired") || "Please re-login to change your email.");
+      } else if (code === "auth/email-already-in-use") {
+        alert(t("emailInUse") || "This email is already in use.");
+      } else if (code === "auth/invalid-email") {
+        alert(t("invalidEmailAddress") || "Please enter a valid email address.");
+      } else {
+        alert("Failed to update profile!");
+      }
       trackAnalyticsEvent("profile_update_failed");
-      alert("Failed to update profile!");
     }
   };
 
