@@ -56,14 +56,6 @@ export function AppointmentTimeline({ items, role, isAppointmentPast, onJoinCall
             if (presentation.type === "waiting") {
               return <span className="text-xs font-semibold text-purple-600">{t(presentation.label)}</span>;
             }
-            if (presentation.type === "disabled" && presentation.label === "paymentProcessing") {
-              return (
-                <span className="inline-flex items-center gap-2 rounded-full border border-purple-200 px-3 py-1.5 text-xs font-semibold text-purple-600 opacity-70">
-                  <CreditCardIcon className="h-4 w-4" />
-                  {t(presentation.label)}
-                </span>
-              );
-            }
             return null;
           };
 
