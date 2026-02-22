@@ -289,8 +289,8 @@ export default function DoctorReciepePage() {
                   <p className="px-1 py-1 text-[11px] text-gray-500 mt-1">{t("typeMoreToSearch") || "Type at least 4 characters"}</p>
                 )}
                 {form.patient && (
-                  <div className="flex items-center gap-2 text-[11px] text-gray-600 mt-1">
-                    <span>{t("selected") || "Selected"}: {form.patient}</span>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-600 mt-1">
+                    <span className="break-words">{t("selected") || "Selected"}: {form.patient}</span>
                     <button
                       type="button"
                       className="text-purple-600 font-semibold hover:text-purple-700"
@@ -336,8 +336,8 @@ export default function DoctorReciepePage() {
                   <p className="px-1 py-1 text-[11px] text-gray-500 mt-1">{t("typeMoreToSearchShort") || "Type 2+ characters"}</p>
                 )}
                 {form.pharmacy && (
-                  <div className="flex items-center gap-2 text-[11px] text-gray-600 mt-1">
-                    <span>{t("selected") || "Selected"}: {form.pharmacy}</span>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-600 mt-1">
+                    <span className="break-words">{t("selected") || "Selected"}: {form.pharmacy}</span>
                     <button
                       type="button"
                       className="text-purple-600 font-semibold hover:text-purple-700"

@@ -143,17 +143,17 @@ const SpecializationField = React.memo<{
         {t('specializations') || 'Specializations'}
       </label>
       {specializations.map((spec, index) => (
-        <div key={index} className="flex items-center space-x-2 mb-2">
+        <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
           <input
             type="text"
             value={spec}
             onChange={(e) => onInputChange(e, 'specializations', index)}
-            className="input input-bordered w-full rounded"
+            className="input input-bordered w-full rounded flex-1"
           />
           <button
             type="button"
             onClick={() => onRemove('specializations', index)}
-            className="btn btn-error btn-xs rounded"
+            className="btn btn-error btn-xs rounded w-full sm:w-auto shrink-0"
           >
             {t('remove') || 'Remove'}
           </button>
@@ -263,17 +263,17 @@ const MyProfileForm = ({
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">{t('specializations') || 'Specializations'}</label>
                   {formData.specializations.map((spec: string, index: number) => (
-                    <div key={index} className="flex items-center space-x-2 mb-2">
+                    <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                       <input
                         type="text"
                         value={spec}
                         onChange={(e) => handleInputChange(e, 'specializations', index)}
-                        className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                        className="w-full flex-1 rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
                       />
                       <button
                         type="button"
                         onClick={() => handleRemoveField('specializations', index)}
-                        className="inline-flex items-center rounded-full border border-red-200 px-3 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 transition"
+                        className="inline-flex items-center justify-center rounded-full border border-red-200 px-3 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 transition w-full sm:w-auto shrink-0"
                       >
                         {t('remove') || 'Remove'}
                       </button>

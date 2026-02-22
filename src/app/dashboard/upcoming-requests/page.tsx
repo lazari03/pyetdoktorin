@@ -48,32 +48,56 @@ export default function UpcomingRequestsPage() {
   };
 
   if (loading) {
-    return <div>{t('loading')}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <span className="ml-2 text-sm text-gray-600">{t('loading')}</span>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">{t('upcomingRequests')}</h1>
-      {requests.length === 0 ? (
-        <p>{t('noUpcomingRequests')}</p>
-      ) : (
-        <div className="space-y-4">
-          {requests.map((request) => (
-            <div key={request.id} className="card bg-base-100 shadow-md">
-              <div className="card-body">
-                <h2 className="card-title">{t('appointmentWith', { doctorId: request.doctorId })}</h2>
-                <p>{t('appointmentType', { appointmentType: request.appointmentType })}</p>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handleJoin(request.id)}
-                >
-                  {t('join')}
-                </button>
-              </div>
-            </div>
-          ))}
+    <div className="min-h-screen">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:py-10 space-y-6">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+            {t('secureAccessEyebrow') ?? 'Secure access'}
+          </p>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('upcomingRequests')}</h1>
+          <p className="text-sm text-gray-600">
+            {t('manageUpcomingAppointments') ?? 'Manage your upcoming appointment requests.'}
+          </p>
         </div>
-      )}
+
+        {requests.length === 0 ? (
+          <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center text-sm text-gray-600">
+            {t('noUpcomingRequests')}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {requests.map((request) => (
+              <div key={request.id} className="rounded-3xl bg-white border border-purple-50 shadow p-5 space-y-3">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">
+                    {t('appointmentWith', { doctorId: request.doctorId })}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {t('appointmentTypeLabel', { appointmentType: request.appointmentType })}
+                  </p>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    className="inline-flex items-center rounded-full bg-purple-600 px-5 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
+                    onClick={() => handleJoin(request.id)}
+                  >
+                    {t('join')}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

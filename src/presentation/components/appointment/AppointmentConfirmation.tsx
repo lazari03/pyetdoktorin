@@ -6,7 +6,7 @@ export default function AppointmentConfirmation({ onClose }: { onClose: () => vo
 	const { t } = useTranslation();
 
 	return (
-	<div className={`fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm ${z.modal}`}>
+	<div className={`fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 ${z.modal}`}>
 			<div className={`relative w-full max-w-sm rounded-3xl bg-white border border-gray-100 shadow-xl overflow-hidden ${z.modalContent}`}>
 				{/* Close Button */}
 				<button
