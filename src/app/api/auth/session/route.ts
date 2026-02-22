@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const backendUrl = `${getBackendBaseUrl()}/api/auth/session`;
 
     async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, delay = 500): Promise<Response> {
-      let lastError: any;
+      let lastError: unknown;
       for (let attempt = 0; attempt < retries; attempt++) {
         try {
           return await fetch(url, options);
