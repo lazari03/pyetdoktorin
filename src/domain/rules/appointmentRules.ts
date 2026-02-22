@@ -15,3 +15,17 @@ export function isValidAppointment(appointment: Appointment): boolean {
 export function isAppointmentPaid(appointment: Appointment): boolean {
   return appointment.isPaid === true;
 }
+
+export function isAppointmentAccepted(appointment: Appointment): boolean {
+  return (appointment.status || '').toString().toLowerCase() === 'accepted';
+}
+
+export function canPatientPay(appointment: Appointment): boolean {
+  const paymentStatus = (appointment.paymentStatus || '').toString().toLowerCase();
+  const isProcessing = paymentStatus === 'processing';
+  return isAppointmentAccepted(appointment) && appointment.isPaid !== true && !isProcessing;
+}
+
+export function canJoinAppointment(appointment: Appointment, isPast: boolean): boolean {
+  return isAppointmentAccepted(appointment) && appointment.isPaid === true && !isPast;
+}

@@ -18,6 +18,10 @@ export function getAppointmentActionPresentation(
 ): AppointmentActionPresentation {
   const isPatient = role !== UserRole.Doctor;
 
+  if (action.label === 'paymentProcessing') {
+    return { type: 'disabled', label: 'paymentProcessing', disabled: true };
+  }
+
   // Past appointments are always disabled regardless of role
   if (action.label === 'past') {
     return { type: 'past', label: 'past', disabled: true };

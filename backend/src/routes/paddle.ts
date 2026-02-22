@@ -2,8 +2,12 @@ import { Router } from 'express';
 import type { Response } from 'express';
 import express from 'express';
 import crypto from 'crypto';
+import https from 'https';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { env } from '@/config/env';
+import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
+import { UserRole } from '@/domain/entities/UserRole';
+import { getAppointmentById } from '@/services/appointmentsService';
 
 const router = Router();
 
@@ -11,6 +15,17 @@ type PaddleEvent = {
   event_id?: string;
   event_type?: string;
   data?: Record<string, unknown>;
+};
+
+type PaddleTransaction = {
+  id?: string;
+  status?: string;
+  custom_data?: Record<string, unknown>;
+  customData?: Record<string, unknown>;
+};
+
+type PaddleListResponse = {
+  data?: PaddleTransaction[];
 };
 
 function parseSignature(header: string) {
@@ -82,6 +97,78 @@ function respond(res: Response, status: number, body: Record<string, unknown>) {
   return res.status(status).json(body);
 }
 
+async function fetchRecentTransactions(): Promise<PaddleTransaction[]> {
+  const apiKey = env.paddleApiKey?.trim();
+  if (!apiKey) {
+    throw new Error('Missing Paddle API key');
+  }
+  if (!apiKey.startsWith('paddle_') && !apiKey.startsWith('pdl_')) {
+    throw new Error('PADDLE_API_KEY must be a Paddle secret API key (starts with paddle_ or pdl_).');
+  }
+  const baseUrl = env.paddleEnv === 'sandbox'
+    ? 'https://sandbox-api.paddle.com'
+    : 'https://api.paddle.com';
+  const url = new URL('/transactions', baseUrl);
+  url.searchParams.set('status', 'completed');
+  url.searchParams.set('per_page', '30');
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  url.searchParams.set('updated_at[GT]', since);
+  const requestUrl = url.toString();
+  const headers = { Authorization: `Bearer ${apiKey}` };
+  if (typeof fetch === 'function') {
+    const response = await fetch(requestUrl, { headers });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || `Paddle API error ${response.status}`);
+    }
+    const body = (await response.json()) as PaddleListResponse;
+    return body.data ?? [];
+  }
+
+  return await new Promise<PaddleTransaction[]>((resolve, reject) => {
+    const req = https.request(requestUrl, { method: 'GET', headers }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.on('end', () => {
+        const status = res.statusCode ?? 0;
+        if (status < 200 || status >= 300) {
+          reject(new Error(data || `Paddle API error ${status}`));
+          return;
+        }
+        try {
+          const body = JSON.parse(data) as PaddleListResponse;
+          resolve(body.data ?? []);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function findTransactionForAppointment(transactions: PaddleTransaction[], appointmentId: string) {
+  return transactions.find((transaction) => {
+    const rawCustom = transaction.custom_data ?? transaction.customData ?? {};
+    const custom = typeof rawCustom === 'string'
+      ? (() => {
+        try {
+          return JSON.parse(rawCustom) as Record<string, unknown>;
+        } catch {
+          return {};
+        }
+      })()
+      : rawCustom;
+    const id =
+      (custom.appointmentId as string | undefined) ??
+      (custom.appointment_id as string | undefined);
+    return id === appointmentId;
+  });
+}
+
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const secret = env.paddleWebhookSecret;
   if (!secret) {
@@ -128,6 +215,43 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   }
 
   return respond(res, 200, { ok: true });
+});
+
+router.post('/sync', requireAuth([UserRole.Patient, UserRole.Admin]), express.json(), async (req: AuthenticatedRequest, res) => {
+  try {
+    const appointmentId = req.body?.appointmentId as string | undefined;
+    if (!appointmentId) {
+      return respond(res, 400, { error: 'Missing appointmentId' });
+    }
+    const appointment = await getAppointmentById(appointmentId);
+    if (!appointment) {
+      return respond(res, 404, { error: 'Appointment not found' });
+    }
+    if (req.user?.role !== UserRole.Admin && appointment.patientId !== req.user?.uid) {
+      return respond(res, 403, { error: 'Forbidden' });
+    }
+    const transactions = await fetchRecentTransactions();
+    const match = findTransactionForAppointment(transactions, appointmentId);
+    if (!match || !match.id) {
+      return respond(res, 200, { ok: true, matched: false });
+    }
+    await markAppointmentPaid(appointmentId, match.id, match.status);
+    return respond(res, 200, { ok: true, matched: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Paddle sync error', error);
+    const host = req.headers.host || '';
+    const origin = req.headers.origin || '';
+    const isLocal =
+      host.includes('localhost') ||
+      host.startsWith('127.0.0.1') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1');
+    if (process.env.NODE_ENV !== 'production' || isLocal) {
+      return respond(res, 500, { error: 'Failed to sync payment', detail: message });
+    }
+    return respond(res, 500, { error: 'Failed to sync payment' });
+  }
 });
 
 export default router;

@@ -321,6 +321,7 @@
   "past": "Të kaluara",
   "passedAppointment": "Takim i kaluar",
   "pastAppointment": "Takim i kaluar",
+  "appointmentPast": "Ky takim ka kaluar.",
   "waitingForPayment": "Në pritje të pagesës",
   "waitingForAcceptance": "Në pritje të konfirmimit nga mjeku",
   "paymentRequired": "Ju lutemi përfundoni pagesën për t'u lidhur.",

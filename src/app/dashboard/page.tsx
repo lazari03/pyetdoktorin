@@ -1,7 +1,6 @@
 
 "use client";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardViewModel, DashboardUserContext } from "@/presentation/view-models/userDashboardViewModel";
 import Loader from "@/presentation/components/Loader/Loader";
@@ -19,7 +18,7 @@ import { EmergencyCard } from "@/presentation/components/dashboard/EmergencyCard
 import { BmiCalculatorCard } from "@/presentation/components/dashboard/BmiCalculatorCard";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
-import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
+import { isCompletedStatus, normalizeAppointmentStatus } from "@/presentation/utils/appointmentStatus";
 
 // Helper function to calculate monthly earnings
 function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: UserRole) {
@@ -97,19 +96,6 @@ export default function Dashboard() {
   authLoading,
   };
   const vm = useDashboardViewModel(authContext);
-  const [pendingPaidId, setPendingPaidId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const startedAt = Number(window.sessionStorage.getItem("pendingPaidStartedAt") || "0");
-      const isFresh = startedAt > 0 && Date.now() - startedAt < 10 * 60 * 1000;
-      const storedId = window.sessionStorage.getItem("pendingPaidAppointmentId");
-      setPendingPaidId(isFresh && storedId ? storedId : null);
-    } catch {
-      setPendingPaidId(null);
-    }
-  }, []);
 
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
@@ -125,10 +111,10 @@ export default function Dashboard() {
 
   const upcoming = vm.filteredAppointments.filter((a) => !vm.isAppointmentPast(a)).slice(0, 3);
   const heroAppointment = upcoming[0];
-  const heroIsPaid = Boolean(
-    heroAppointment &&
-    (heroAppointment.isPaid || (pendingPaidId && heroAppointment.id === pendingPaidId))
-  );
+  const heroIsPaid = Boolean(heroAppointment?.isPaid);
+  const heroPaymentProcessing = heroAppointment?.paymentStatus === "processing";
+  const heroStatus = heroAppointment ? normalizeAppointmentStatus(heroAppointment.status) : "unknown";
+  const heroAccepted = heroStatus === "accepted";
   
   // Recent Doctors (for patients)
   const recentDoctorsMap = vm.filteredAppointments
@@ -188,9 +174,9 @@ export default function Dashboard() {
                 }
                 subtitle={heroAppointment.appointmentType || t("stayPrepared") || "Stay prepared for your upcoming session"}
                 helper={`${t("consultation") || "Consultation"} • ${heroAppointment.preferredDate ?? (t("today") || "Today")}`}
-                onJoin={heroAppointment && heroIsPaid ? () => handleJoinCall(heroAppointment.id) : undefined}
+                onJoin={heroAppointment && heroIsPaid && heroAccepted ? () => handleJoinCall(heroAppointment.id) : undefined}
                 onPay={
-                  role === UserRole.Patient && heroAppointment && !heroIsPaid
+                  role === UserRole.Patient && heroAppointment && !heroIsPaid && !heroPaymentProcessing
                     ? () => {
                         const amount = Number.parseFloat(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || "");
                         const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 13;
@@ -199,6 +185,7 @@ export default function Dashboard() {
                     : undefined
                 }
                 isPaid={heroIsPaid}
+                isPaymentProcessing={heroPaymentProcessing}
                 onViewProfile={
                   role === UserRole.Patient && heroAppointment.doctorId
                     ? () => nav.pushPath(`/doctor/${heroAppointment.doctorId}`)
@@ -206,6 +193,7 @@ export default function Dashboard() {
                 }
                 ctaLabel={t("joinNow") || "Join now"}
                 payLabel={t("payNow") || "Pay now"}
+                processingLabel={t("paymentProcessing") || "Processing payment..."}
                 profileLabel={t("viewDoctor") || "View doctor"}
               />
             ) : (
