@@ -1,0 +1,31 @@
+export const APPOINTMENT_ERROR_CODES = {
+  RequiredFields: 'APPOINTMENT_REQUIRED_FIELDS',
+  PreferredTimeRequired: 'APPOINTMENT_PREFERRED_TIME_REQUIRED',
+  SlotTaken: 'APPOINTMENT_SLOT_TAKEN',
+  NotFound: 'APPOINTMENT_NOT_FOUND',
+  StatusInvalid: 'APPOINTMENT_STATUS_INVALID',
+  StatusMissing: 'APPOINTMENT_STATUS_MISSING',
+  Forbidden: 'APPOINTMENT_FORBIDDEN',
+  CreateFailed: 'APPOINTMENT_CREATE_FAILED',
+  UpdateFailed: 'APPOINTMENT_UPDATE_FAILED',
+  FetchFailed: 'APPOINTMENT_FETCH_FAILED',
+} as const;
+
+export const VIDEO_ERROR_CODES = {
+  MethodNotAllowed: 'VIDEO_METHOD_NOT_ALLOWED',
+  SessionSecretMissing: 'VIDEO_SESSION_SECRET_MISSING',
+  AuthMissing: 'VIDEO_AUTH_MISSING',
+  AuthInvalid: 'VIDEO_AUTH_INVALID',
+  MissingParams: 'VIDEO_MISSING_PARAMS',
+  UserMismatch: 'VIDEO_USER_MISMATCH',
+  AppointmentNotFound: 'VIDEO_APPOINTMENT_NOT_FOUND',
+  AppointmentForbidden: 'VIDEO_APPOINTMENT_FORBIDDEN',
+  AppointmentCancelled: 'VIDEO_APPOINTMENT_CANCELLED',
+  AppointmentFinished: 'VIDEO_APPOINTMENT_FINISHED',
+  PaymentRequired: 'VIDEO_PAYMENT_REQUIRED',
+  AppointmentNotAccepted: 'VIDEO_APPOINTMENT_NOT_ACCEPTED',
+  RoleNotAllowed: 'VIDEO_ROLE_NOT_ALLOWED',
+  HmsConfigMissing: 'VIDEO_HMS_CONFIG_MISSING',
+  TemplateMissing: 'VIDEO_TEMPLATE_MISSING',
+  GenericFailed: 'VIDEO_SESSION_FAILED',
+} as const;

@@ -104,7 +104,11 @@ export default function NewAppointmentStepper() {
 										{t('selectDoctorDescription') ||
 											'Search for the clinician you trust. We highlight availability for you.'}
 									</p>
-									<DoctorSearch onDoctorSelect={vm.handleDoctorSelect} />
+									<DoctorSearch
+										onDoctorSelect={vm.handleDoctorSelect}
+										selectedDoctor={vm.selectedDoctor ?? undefined}
+										onClearSelection={vm.clearSelectedDoctor}
+									/>
 								</div>
 							)}
 

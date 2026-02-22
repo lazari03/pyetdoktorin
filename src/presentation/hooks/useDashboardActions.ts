@@ -5,12 +5,15 @@ import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
 import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
+import { useTranslation } from 'react-i18next';
+import { getVideoErrorMessage } from '@/presentation/utils/errorMessages';
 
 export function useDashboardActions() {
   const { user, role } = useAuth();
   const { setAuthStatus, generateRoomCodeAndStore } = useVideoStore();
   const { handlePayNow: storeHandlePayNow } = useAppointmentStore();
   const { handlePayNowUseCase } = useDI();
+  const { t } = useTranslation();
 
   // Join call using Zustand store and localStorage hydration
   const handleJoinCall = useCallback(async (appointmentId: string) => {
@@ -22,7 +25,7 @@ export function useDashboardActions() {
       setAuthStatus(!!user, user?.uid || null, user?.name || null);
       if (!user?.uid) {
         trackAnalyticsEvent('appointment_join_blocked', { appointmentId, reason: 'unauthenticated' });
-        alert('You must be logged in to join a call. Please log in and try again.');
+        alert(t('joinCallLoginRequired'));
         return;
       }
       const effectiveRole = role === UserRole.Doctor ? UserRole.Doctor : UserRole.Patient;
@@ -39,9 +42,10 @@ export function useDashboardActions() {
         appointmentId,
         reason: error instanceof Error ? error.message.slice(0, 120) : 'unknown_error',
       });
-      alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const translatedMessage = getVideoErrorMessage(error, t);
+      alert(translatedMessage ?? t('genericError'));
     }
-  }, [user, role, setAuthStatus, generateRoomCodeAndStore]);
+  }, [user, role, setAuthStatus, generateRoomCodeAndStore, t]);
 
   const handlePayNow = useCallback((appointmentId: string, amount: number) => {
     trackAnalyticsEvent('payment_initiated', { appointmentId, amount });

@@ -3,6 +3,34 @@ import { getAuth } from 'firebase/auth';
 
 const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
 
+type BackendErrorPayload = {
+  error?: unknown;
+  message?: unknown;
+  detail?: unknown;
+};
+
+export class BackendError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly detail?: string;
+
+  constructor(message: string, status: number, code?: string, detail?: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.detail = detail;
+    this.name = 'BackendError';
+  }
+}
+
+const parseBackendError = (text: string): BackendErrorPayload | null => {
+  try {
+    return JSON.parse(text) as BackendErrorPayload;
+  } catch {
+    return null;
+  }
+};
+
 async function getIdToken(): Promise<string> {
   const auth = getAuth();
   const user = auth.currentUser;
@@ -51,7 +79,16 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
   if (!response.ok) {
     const text = await response.text();
     console.error('backendFetch error response:', response.status, text);
-    throw new Error(text || `Backend request failed with status ${response.status}`);
+    const payload = parseBackendError(text);
+    const code = typeof payload?.error === 'string' ? payload.error : undefined;
+    const message =
+      typeof payload?.message === 'string'
+        ? payload.message
+        : typeof payload?.error === 'string'
+          ? payload.error
+          : text || `Backend request failed with status ${response.status}`;
+    const detail = typeof payload?.detail === 'string' ? payload.detail : undefined;
+    throw new BackendError(message, response.status, code, detail);
   }
   const text = await response.text();
   return text ? (JSON.parse(text) as T) : ({} as T);

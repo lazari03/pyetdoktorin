@@ -11,6 +11,10 @@ import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 import { useTranslation } from "react-i18next";
 import { auth } from "@/config/firebaseconfig";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
+import { syncPaddlePayment } from "@/network/payments";
+import { listAppointments } from "@/network/appointments";
+import { getAppointmentErrorMessage, getVideoErrorMessage } from "@/presentation/utils/errorMessages";
+import { APPOINTMENT_ERROR_CODES, VIDEO_ERROR_CODES } from "@/config/errorCodes";
 
 /**
  * View model result interface for appointments page
@@ -157,7 +161,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
             appointmentId,
             reason: "appointment_past",
           });
-          alert(t("appointmentPast") || "This appointment has already passed.");
+          alert(t("appointmentPast"));
           return;
         }
 
@@ -174,7 +178,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
             appointmentId,
             reason: "unauthenticated",
           });
-          alert("You must be logged in to join a call. Please log in and try again.");
+          alert(t("joinCallLoginRequired"));
           return;
         }
 
@@ -182,8 +186,26 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
           await fetchAppointments(role);
         }
         const freshAppointment = appointmentsRef.current.find((a) => a.id === appointmentId);
-        const appointment = freshAppointment ?? appointments.find((a) => a.id === appointmentId);
-        if (!appointment) throw new Error("Appointment not found");
+        let appointment = freshAppointment ?? appointments.find((a) => a.id === appointmentId);
+        if (!appointment) throw new Error(APPOINTMENT_ERROR_CODES.NotFound);
+
+        if (!isDoctor && !appointment.isPaid) {
+          const pendingFromStorage =
+            typeof window !== "undefined" &&
+            window.sessionStorage.getItem("pendingPaidAppointmentId") === appointmentId;
+          const isPending = Boolean(optimisticPaidIds?.[appointmentId]) || pendingFromStorage;
+          if (!isPending) {
+            try {
+              await syncPaddlePayment(appointmentId);
+              const response = await listAppointments();
+              const refreshed = response.items.find((a) => a.id === appointmentId);
+              if (refreshed) appointment = refreshed;
+              if (role) await fetchAppointments(role);
+            } catch (syncError) {
+              console.warn("Payment sync failed", syncError);
+            }
+          }
+        }
 
         if (!isDoctor && !appointment.isPaid) {
           setShowRedirecting(false);
@@ -215,7 +237,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         const currentUser = auth.currentUser;
         if (!currentUser) {
           setShowRedirecting(false);
-          alert(t("sessionExpired") || "Your session has expired. Please log in again.");
+          alert(t("sessionExpired"));
           return;
         }
         const idToken = await currentUser.getIdToken();
@@ -232,7 +254,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         const sessionToken = data.sessionToken;
 
         if (!roomCode || !sessionToken) {
-          throw new Error("Missing room information from server");
+          throw new Error(VIDEO_ERROR_CODES.GenericFailed);
         }
 
         if ((!appointment.roomCode || !appointment.roomId) && roomCode && roomId) {
@@ -247,7 +269,9 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         window.location.href = joinUrl;
       } catch (error) {
         setShowRedirecting(false);
-        const message = error instanceof Error ? error.message : "An error occurred. Please try again.";
+        const translatedMessage =
+          getVideoErrorMessage(error, t) ?? getAppointmentErrorMessage(error, t);
+        const message = translatedMessage ?? t("genericError");
         trackAnalyticsEvent("appointment_join_failed", {
           appointmentId,
           reason: message.slice(0, 120),

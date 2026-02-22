@@ -1,4 +1,5 @@
 import type { GenerateRoomCodeAndTokenResponse } from '@/models/100msTypes';
+import { VIDEO_ERROR_CODES } from '@/config/errorCodes';
 
 export async function generateRoomCodeAndToken({ user_id, room_id, role, template_id, idToken }: {
   user_id: string;
@@ -18,6 +19,12 @@ export async function generateRoomCodeAndToken({ user_id, room_id, role, templat
   const text = await response.text();
   let data: GenerateRoomCodeAndTokenResponse = {};
   try { if (text) data = JSON.parse(text); } catch {}
-  if (!response.ok) throw new Error(data.error || 'Failed to generate 100ms room');
+  if (!response.ok) {
+    const errorCode =
+      typeof data.error === 'string' && data.error.length > 0
+        ? data.error
+        : VIDEO_ERROR_CODES.GenericFailed;
+    throw new Error(errorCode);
+  }
   return data;
 }

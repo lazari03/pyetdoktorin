@@ -4,6 +4,8 @@ import express from 'express';
 import crypto from 'crypto';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { env } from '@/config/env';
+import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
+import { UserRole } from '@/domain/entities/UserRole';
 
 const router = Router();
 
@@ -81,6 +83,84 @@ async function markAppointmentPaid(appointmentId: string, transactionId: string,
 function respond(res: Response, status: number, body: Record<string, unknown>) {
   return res.status(status).json(body);
 }
+
+async function fetchPaddleTransactions(apiKey: string) {
+  const envMode = (env.paddleEnv || 'sandbox').toLowerCase();
+  const baseUrl = envMode === 'sandbox' ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
+  const url = new URL(`${baseUrl}/transactions`);
+  url.searchParams.set('per_page', '50');
+  const response = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Paddle API error (${response.status})`);
+  }
+  const payload = (await response.json()) as Record<string, unknown>;
+  const data = (payload as { data?: unknown[] }).data;
+  const items = (payload as { items?: unknown[] }).items;
+  return (Array.isArray(data) ? data : Array.isArray(items) ? items : []) as Array<Record<string, unknown>>;
+}
+
+router.post('/sync', express.json(), requireAuth([UserRole.Patient, UserRole.Admin, UserRole.Doctor]), async (req: AuthenticatedRequest, res) => {
+  const appointmentId = (req.body as { appointmentId?: string })?.appointmentId;
+  if (!appointmentId) {
+    return respond(res, 400, { error: 'Missing appointmentId' });
+  }
+  const apiKey = env.paddleApiKey;
+  if (!apiKey) {
+    return respond(res, 500, { error: 'Missing Paddle API key' });
+  }
+
+  const admin = getFirebaseAdmin();
+  const db = admin.firestore();
+  const appointmentRef = db.collection('appointments').doc(appointmentId);
+  const appointmentSnap = await appointmentRef.get();
+  if (!appointmentSnap.exists) {
+    return respond(res, 404, { error: 'Appointment not found' });
+  }
+  const appointment = appointmentSnap.data() as { patientId?: string; doctorId?: string; isPaid?: boolean };
+  const requester = req.user;
+  if (requester?.role === UserRole.Patient && appointment.patientId !== requester.uid) {
+    return respond(res, 403, { error: 'Forbidden' });
+  }
+  if (requester?.role === UserRole.Doctor && appointment.doctorId !== requester.uid) {
+    return respond(res, 403, { error: 'Forbidden' });
+  }
+
+  if (appointment.isPaid) {
+    return respond(res, 200, { ok: true, updated: false, isPaid: true });
+  }
+
+  try {
+    const transactions = await fetchPaddleTransactions(apiKey);
+    const match = transactions.find((tx) => {
+      const customData = (tx.custom_data as Record<string, unknown> | undefined)
+        ?? (tx.customData as Record<string, unknown> | undefined);
+      const appointmentMatch =
+        (customData?.appointmentId as string | undefined) ??
+        (customData?.appointment_id as string | undefined);
+      return appointmentMatch === appointmentId;
+    });
+    if (!match) {
+      return respond(res, 200, { ok: true, updated: false, isPaid: false });
+    }
+    const transactionId =
+      (match.id as string | undefined) ??
+      (match.transaction_id as string | undefined) ??
+      (match.transactionId as string | undefined);
+    if (!transactionId) {
+      return respond(res, 200, { ok: true, updated: false, isPaid: false });
+    }
+    await markAppointmentPaid(appointmentId, transactionId, match.status as string | undefined);
+    return respond(res, 200, { ok: true, updated: true, isPaid: true });
+  } catch (error) {
+    console.error('Paddle sync error', error);
+    return respond(res, 500, { error: 'Failed to sync payment' });
+  }
+});
 
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const secret = env.paddleWebhookSecret;

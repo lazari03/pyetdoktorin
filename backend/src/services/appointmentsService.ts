@@ -1,5 +1,11 @@
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { UserRole } from '@/domain/entities/UserRole';
+import {
+  AppointmentNotFoundError,
+  InvalidAppointmentStatusError,
+  PreferredTimeRequiredError,
+  SlotAlreadyBookedError,
+} from '@/errors/appointmentErrors';
 
 export type AppointmentStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
 
@@ -23,15 +29,22 @@ export interface Appointment extends AppointmentInput {
 }
 
 const COLLECTION = 'appointments';
+const SLOT_COLLECTION = 'appointmentSlots';
 
 const normalizeStatus = (status?: string): AppointmentStatus => {
   const normalized = (status || '').toLowerCase();
   if (normalized === 'finished') return 'completed';
   if (normalized === 'declined') return 'rejected';
+  if (normalized === 'canceled' || normalized === 'cancelled') return 'rejected';
   if (normalized === 'completed' || normalized === 'accepted' || normalized === 'rejected' || normalized === 'pending') {
     return normalized as AppointmentStatus;
   }
   return 'pending';
+};
+
+const buildSlotId = (doctorId: string, preferredDate: string, preferredTime: string) => {
+  const raw = `${doctorId}__${preferredDate}__${preferredTime}`;
+  return raw.replace(/[^a-zA-Z0-9_-]/g, '_');
 };
 
 export async function listAppointmentsForUser(uid: string, role: UserRole): Promise<Appointment[]> {
@@ -77,6 +90,9 @@ export async function createAppointment(input: AppointmentInput): Promise<Appoin
   const db = admin.firestore();
   const { note, notes, ...rest } = input;
   const normalizedNotes = notes ?? note;
+  if (!rest.preferredTime) {
+    throw new PreferredTimeRequiredError();
+  }
   const payload: Omit<Appointment, 'id'> = {
     ...rest,
     status: 'pending' as AppointmentStatus,
@@ -87,8 +103,24 @@ export async function createAppointment(input: AppointmentInput): Promise<Appoin
     payload.note = normalizedNotes;
     payload.notes = normalizedNotes;
   }
-  const ref = await db.collection(COLLECTION).add(payload);
-  return { id: ref.id, ...payload };
+  const slotId = buildSlotId(rest.doctorId, rest.preferredDate, rest.preferredTime);
+  const appointmentRef = db.collection(COLLECTION).doc();
+  const slotRef = db.collection(SLOT_COLLECTION).doc(slotId);
+  await db.runTransaction(async (tx) => {
+    const slotSnap = await tx.get(slotRef);
+    if (slotSnap.exists) {
+      throw new SlotAlreadyBookedError();
+    }
+    tx.set(slotRef, {
+      appointmentId: appointmentRef.id,
+      doctorId: rest.doctorId,
+      preferredDate: rest.preferredDate,
+      preferredTime: rest.preferredTime,
+      createdAt: Date.now(),
+    });
+    tx.set(appointmentRef, { ...payload, slotId });
+  });
+  return { id: appointmentRef.id, ...payload };
 }
 
 export async function getAppointmentById(id: string): Promise<Appointment | null> {
@@ -107,14 +139,30 @@ export async function getAppointmentById(id: string): Promise<Appointment | null
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus, actor: UserRole): Promise<void> {
   const normalizedStatus = normalizeStatus(status);
   if (!['pending', 'accepted', 'rejected', 'completed'].includes(normalizedStatus)) {
-    throw new Error('Invalid status');
+    throw new InvalidAppointmentStatusError();
   }
   const admin = getFirebaseAdmin();
-  const updates: Record<string, unknown> = { status: normalizedStatus };
-  if (normalizedStatus === 'accepted' && actor === UserRole.Doctor) {
-    updates.confirmedAt = Date.now();
-  }
-  await admin.firestore().collection(COLLECTION).doc(id).set(updates, { merge: true });
+  const db = admin.firestore();
+  await db.runTransaction(async (tx) => {
+    const appointmentRef = db.collection(COLLECTION).doc(id);
+    const appointmentSnap = await tx.get(appointmentRef);
+    if (!appointmentSnap.exists) {
+      throw new AppointmentNotFoundError();
+    }
+    const appointment = appointmentSnap.data() as Appointment & { slotId?: string };
+    const updates: Record<string, unknown> = { status: normalizedStatus };
+    if (normalizedStatus === 'accepted' && actor === UserRole.Doctor) {
+      updates.confirmedAt = Date.now();
+    }
+    tx.set(appointmentRef, updates, { merge: true });
+    if (['rejected', 'completed'].includes(normalizedStatus)) {
+      const slotId = appointment.slotId;
+      if (slotId) {
+        const slotRef = db.collection(SLOT_COLLECTION).doc(slotId);
+        tx.delete(slotRef);
+      }
+    }
+  });
 }
 
 export async function markAppointmentPaid(id: string, transactionId: string): Promise<void> {

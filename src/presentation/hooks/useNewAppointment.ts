@@ -8,6 +8,7 @@ import { createAppointment } from '@/network/appointments';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
+import { getAppointmentErrorMessage } from '@/presentation/utils/errorMessages';
 
 export default function useNewAppointment() {
   const {
@@ -76,13 +77,13 @@ export default function useNewAppointment() {
 
     if (!selectedDoctor) {
       trackAnalyticsEvent('appointment_booking_failed', { reason: 'missing_doctor' });
-      setSubmitError(t('selectDoctorError') || 'Please select a doctor before continuing.');
+      setSubmitError(t('selectDoctorError'));
       return;
     }
 
     if (!user || !user.uid || !user.name) {
       trackAnalyticsEvent('appointment_booking_failed', { reason: 'unauthenticated' });
-      setSubmitError(t('signInToBookError') || 'Please sign in to book an appointment.');
+      setSubmitError(t('signInToBookError'));
       return;
     }
 
@@ -132,7 +133,8 @@ export default function useNewAppointment() {
         }
       }, 300);
     } catch (error) {
-      const message = error instanceof Error ? error.message : '';
+      const translatedMessage = getAppointmentErrorMessage(error, t);
+      const message = translatedMessage ?? (error instanceof Error ? error.message : '');
       trackAnalyticsEvent('appointment_booking_failed', {
         doctorId: selectedDoctor.id,
         appointmentType,
@@ -140,7 +142,7 @@ export default function useNewAppointment() {
         preferredTime,
         reason: message ? message.slice(0, 120) : 'unknown_error',
       });
-      setSubmitError(message || (t('appointmentBookingFailed') || 'Failed to book appointment.'));
+      setSubmitError(message || t('appointmentBookingFailed'));
     } finally {
       setIsSubmitting(false);
     }

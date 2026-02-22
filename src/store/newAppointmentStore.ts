@@ -12,7 +12,7 @@ interface NewAppointmentState {
   preferredDate: string;
   preferredTime: string;
   notes: string;
-  setSelectedDoctor: (doctor: Doctor) => void;
+  setSelectedDoctor: (doctor: Doctor | null) => void;
   setAppointmentType: (type: string) => void;
   setPreferredDate: (date: string) => void;
   setPreferredTime: (time: string) => void;

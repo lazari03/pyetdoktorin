@@ -53,6 +53,7 @@ export interface NewAppointmentViewModelResult {
     name: string;
     specialization?: string | string[];
   }) => void;
+  clearSelectedDoctor: () => void;
 
   // Appointment form fields
   appointmentType: string;
@@ -157,6 +158,9 @@ export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
         : doctor.specialization || "General",
     });
   };
+  const clearSelectedDoctor = () => {
+    setSelectedDoctor(null);
+  };
 
   // Handle form submission
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -189,6 +193,7 @@ export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
     // Doctor
     selectedDoctor: selectedDoctor as SelectedDoctor | null,
     handleDoctorSelect,
+    clearSelectedDoctor,
 
     // Form fields
     appointmentType,

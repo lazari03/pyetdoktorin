@@ -26,20 +26,42 @@ import { getAdmin } from '@/app/api/_lib/admin';
 
 import { SecurityAuditService } from '@/infrastructure/services/securityAuditService';
 import { API_ENDPOINTS } from '@/config/routes';
+import { VIDEO_ERROR_CODES } from '@/config/errorCodes';
 const HMS_BASE_URL = API_ENDPOINTS.HMS_BASE_URL;
+
+async function syncPaymentIfPossible(appointmentId: string, idToken: string) {
+  const backendUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    process.env.BACKEND_URL ||
+    'http://localhost:4000';
+  try {
+    const res = await fetch(`${backendUrl}/api/paddle/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ appointmentId }),
+    });
+    return res.ok;
+  } catch (error) {
+    console.warn('Payment sync request failed', error);
+    return false;
+  }
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: VIDEO_ERROR_CODES.MethodNotAllowed });
   }
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret) {
-    return res.status(500).json({ error: 'SESSION_SECRET is not configured' });
+    return res.status(500).json({ error: VIDEO_ERROR_CODES.SessionSecretMissing });
   }
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authentication token missing' });
+    return res.status(401).json({ error: VIDEO_ERROR_CODES.AuthMissing });
   }
 
   const idToken = authHeader.substring(7);
@@ -50,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     decodedIdToken = await adminAuth.verifyIdToken(idToken);
   } catch (error) {
     console.error('Failed to verify Firebase ID token', error);
-    return res.status(401).json({ error: 'Invalid or expired authentication token' });
+    return res.status(401).json({ error: VIDEO_ERROR_CODES.AuthInvalid });
   }
 
   const authenticatedUserId = decodedIdToken.uid;
@@ -59,7 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Use template_id from request body, env var, or fallback
   const template_id = req.body.template_id || process.env.HMS_TEMPLATE_ID;
   if (!user_id || !room_id || !role) {
-    return res.status(400).json({ error: 'Missing user_id, room_id, or role' });
+    return res.status(400).json({ error: VIDEO_ERROR_CODES.MissingParams });
   }
 
   if (user_id !== authenticatedUserId) {
@@ -73,19 +95,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
       userAgent: req.headers['user-agent'],
     });
-    return res.status(403).json({ error: 'Authenticated user mismatch' });
+    return res.status(403).json({ error: VIDEO_ERROR_CODES.UserMismatch });
   }
 
   const appointmentSnap = await adminDb.collection('appointments').doc(room_id).get();
   if (!appointmentSnap.exists) {
-    return res.status(404).json({ error: 'Appointment not found' });
+    return res.status(404).json({ error: VIDEO_ERROR_CODES.AppointmentNotFound });
   }
 
-  const appointmentData = appointmentSnap.data() as AppointmentDoc;
+  let appointmentData = appointmentSnap.data() as AppointmentDoc;
   const appointmentStatus = (appointmentData?.status || '').toString().toLowerCase();
   const isDoctor = appointmentData?.doctorId === authenticatedUserId;
   const isPatient = appointmentData?.patientId === authenticatedUserId;
-  const isPaid = Boolean(appointmentData?.isPaid);
+  let isPaid = Boolean(appointmentData?.isPaid);
 
   if (!isDoctor && !isPatient) {
     const auditService = new SecurityAuditService();
@@ -98,7 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
       userAgent: req.headers['user-agent'],
     });
-    return res.status(403).json({ error: 'You are not assigned to this appointment' });
+    return res.status(403).json({ error: VIDEO_ERROR_CODES.AppointmentForbidden });
   }
 
   const isCancelled = ['cancelled', 'canceled', 'rejected'].includes(appointmentStatus);
@@ -106,10 +128,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const isAccepted = appointmentStatus === 'accepted';
 
   if (isCancelled) {
-    return res.status(403).json({ error: 'Cancelled appointments cannot start video sessions' });
+    return res.status(403).json({ error: VIDEO_ERROR_CODES.AppointmentCancelled });
   }
   if (isFinished) {
-    return res.status(403).json({ error: 'Finished appointments cannot start video sessions' });
+    return res.status(403).json({ error: VIDEO_ERROR_CODES.AppointmentFinished });
+  }
+
+  if ((isPatient || isDoctor) && !isPaid) {
+    await syncPaymentIfPossible(room_id, idToken);
+    const refreshedSnap = await adminDb.collection('appointments').doc(room_id).get();
+    if (refreshedSnap.exists) {
+      appointmentData = refreshedSnap.data() as AppointmentDoc;
+      isPaid = Boolean(appointmentData?.isPaid);
+    }
   }
 
   if (isPatient) {
@@ -124,7 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
         userAgent: req.headers['user-agent'],
       });
-      return res.status(402).json({ error: 'Payment required before joining' });
+      return res.status(402).json({ error: VIDEO_ERROR_CODES.PaymentRequired });
     }
     if (!isAccepted) {
       const auditService = new SecurityAuditService();
@@ -137,27 +168,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
         userAgent: req.headers['user-agent'],
       });
-      return res.status(403).json({ error: 'Appointment must be accepted before joining' });
+      return res.status(403).json({ error: VIDEO_ERROR_CODES.AppointmentNotAccepted });
     }
   }
 
   if (isDoctor && !isPaid) {
-    return res.status(402).json({ error: 'Payment required before joining' });
+    return res.status(402).json({ error: VIDEO_ERROR_CODES.PaymentRequired });
   }
 
   const expectedRole = isDoctor ? 'doctor' : 'patient';
   if (role !== expectedRole) {
-    return res.status(403).json({ error: 'Role is not allowed for this appointment' });
+    return res.status(403).json({ error: VIDEO_ERROR_CODES.RoleNotAllowed });
   }
 
   const accessKey = process.env.HMS_ACCESS_KEY;
   const accessSecret = process.env.HMS_SECRET;
   const hmsTemplateId = process.env.HMS_TEMPLATE_ID;
   if (!accessKey || !accessSecret) {
-    return res.status(500).json({ error: '100ms access key/secret not set in environment' });
+    return res.status(500).json({ error: VIDEO_ERROR_CODES.HmsConfigMissing });
   }
   if (!hmsTemplateId && !template_id) {
-    return res.status(500).json({ error: 'HMS_TEMPLATE_ID not set in environment and no template_id provided' });
+    return res.status(500).json({ error: VIDEO_ERROR_CODES.TemplateMissing });
   }
   // Always generate management token on the fly
   const now = Math.floor(Date.now() / 1000);
@@ -200,7 +231,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         createRoomData = createRoomRaw ? JSON.parse(createRoomRaw) : {};
       } catch {
   // Error parsing 100ms create room response as JSON
-        return res.status(500).json({ error: 'Invalid response from 100ms (create room)', raw: createRoomRaw });
+        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: createRoomRaw });
       }
       if (!createRoomRes.ok || !createRoomData.id) {
         return res.status(createRoomRes.status).json({ error: createRoomData.error || 'Failed to create 100ms room', raw: createRoomRaw });
@@ -220,10 +251,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         createCodesData = createCodesRaw ? JSON.parse(createCodesRaw) : {};
       } catch {
   // Error parsing 100ms create room codes response as JSON
-        return res.status(500).json({ error: 'Invalid response from 100ms (create room codes)', raw: createCodesRaw });
+        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: createCodesRaw });
       }
       if (!createCodesRes.ok || !Array.isArray(createCodesData.data)) {
-        return res.status(createCodesRes.status).json({ error: 'Failed to create 100ms room codes', raw: createCodesRaw });
+        return res.status(createCodesRes.status).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: createCodesRaw });
       }
       // Wait a moment for codes to be available
       await new Promise((r) => setTimeout(r, 2000));
@@ -297,7 +328,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       getRoomCodesData = getRoomCodesRaw ? JSON.parse(getRoomCodesRaw) : {};
     } catch {
   // Error parsing 100ms get room codes response as JSON
-      return res.status(500).json({ error: 'Invalid response from 100ms (get room codes)', raw: getRoomCodesRaw });
+      return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: getRoomCodesRaw });
     }
     const roomCodesArr = getRoomCodesData.data;
     roomCode = Array.isArray(roomCodesArr) && roomCodesArr.length > 0 ? roomCodesArr[0].code : null;
@@ -315,7 +346,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         getAllRoomCodesData = getAllRoomCodesRaw ? JSON.parse(getAllRoomCodesRaw) : {};
       } catch {
   // Error parsing 100ms get all room codes response as JSON
-        return res.status(500).json({ error: 'Invalid response from 100ms (get all room codes)', raw: getAllRoomCodesRaw });
+        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: getAllRoomCodesRaw });
       }
       const allRoomCodesArr = getAllRoomCodesData.data;
       // Find the first enabled room code that matches the prebuilt format (3 groups of 3 lowercase letters)
@@ -345,7 +376,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           createRoomCodeData = createRoomCodeRaw ? JSON.parse(createRoomCodeRaw) : {};
         } catch {
           // Error parsing 100ms create room code response as JSON
-          return res.status(500).json({ error: 'Invalid response from 100ms (create room code)', raw: createRoomCodeRaw });
+          return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: createRoomCodeRaw });
         }
         if (!createRoomCodeRes.ok || !createRoomCodeData.code) {
           // Log a clear message if Prebuilt is blocking room code creation
