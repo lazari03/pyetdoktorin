@@ -3,7 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { XMarkIcon, CalendarIcon, ClockIcon, UserIcon, DocumentTextIcon, VideoCameraIcon } from "@heroicons/react/24/outline";
 import { Appointment } from "@/domain/entities/Appointment";
-import { isCanceledStatus, isRejectedStatus, isCompletedStatus, normalizeAppointmentStatus } from "@/presentation/utils/appointmentStatus";
+import { isCanceledStatus, isRejectedStatus, isCompletedStatus } from "@/presentation/utils/appointmentStatus";
 
 interface AppointmentDetailModalProps {
   appointment: Appointment;
@@ -35,12 +35,7 @@ export default function AppointmentDetailModal({
 }: AppointmentDetailModalProps) {
   const { t } = useTranslation();
   const badge = statusBadge(appointment.status, t);
-  const canJoin =
-    !isPast &&
-    appointment.isPaid &&
-    normalizeAppointmentStatus(appointment.status) === "accepted" &&
-    !isCanceledStatus(appointment.status) &&
-    !isRejectedStatus(appointment.status);
+  const canJoin = !isPast && appointment.isPaid && !isCanceledStatus(appointment.status) && !isRejectedStatus(appointment.status);
 
   return (
     <div

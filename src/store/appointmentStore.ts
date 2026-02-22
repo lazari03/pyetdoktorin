@@ -49,9 +49,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   optimisticMarkPaid: (appointmentId) =>
     set((state) => ({
       appointments: state.appointments.map((appointment) =>
-        appointment.id === appointmentId
-          ? { ...appointment, paymentStatus: "processing" as const }
-          : appointment
+        appointment.id === appointmentId ? { ...appointment, isPaid: true } : appointment
       ),
       optimisticPaidIds: { ...state.optimisticPaidIds, [appointmentId]: true },
     })),
@@ -63,16 +61,16 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       const response = await listAppointments();
       set((state) => {
         const optimisticPaidIds = { ...state.optimisticPaidIds };
-      const items = response.items.map((appointment) => {
-        if (optimisticPaidIds[appointment.id]) {
-          if (appointment.isPaid) {
-            delete optimisticPaidIds[appointment.id];
-            return appointment;
+        const items = response.items.map((appointment) => {
+          if (optimisticPaidIds[appointment.id]) {
+            if (appointment.isPaid) {
+              delete optimisticPaidIds[appointment.id];
+              return appointment;
+            }
+            return { ...appointment, isPaid: true };
           }
-          return { ...appointment, paymentStatus: "processing" as const };
-        }
-        return appointment;
-      });
+          return appointment;
+        });
         return {
           appointments: items,
           optimisticPaidIds,

@@ -11,8 +11,6 @@ import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 import { useTranslation } from "react-i18next";
 import { auth } from "@/config/firebaseconfig";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
-import { normalizeAppointmentStatus } from "@/presentation/utils/appointmentStatus";
-import { syncPaddlePayment } from "@/network/payments";
 
 /**
  * View model result interface for appointments page
@@ -113,9 +111,6 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
       }
     }
     if (!paidId) return;
-    syncPaddlePayment(paidId).catch(() => {
-      // ignore sync failures; polling will handle webhook updates
-    });
     optimisticMarkPaid(paidId);
     let cancelled = false;
     let attempts = 0;
@@ -190,8 +185,21 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         const appointment = freshAppointment ?? appointments.find((a) => a.id === appointmentId);
         if (!appointment) throw new Error("Appointment not found");
 
+        if (!isDoctor && !appointment.isPaid) {
+          setShowRedirecting(false);
+          const pendingFromStorage =
+            typeof window !== "undefined" &&
+            window.sessionStorage.getItem("pendingPaidAppointmentId") === appointmentId;
+          const isPending = Boolean(optimisticPaidIds?.[appointmentId]) || pendingFromStorage;
+          trackAnalyticsEvent("appointment_join_blocked", {
+            appointmentId,
+            reason: isPending ? "payment_processing" : "payment_required",
+          });
+          alert(isPending ? t("paymentProcessing") : t("paymentRequired"));
+          return;
+        }
         if (!isDoctor) {
-          const status = normalizeAppointmentStatus(appointment.status);
+          const status = (appointment.status || "").toString().toLowerCase();
           if (status !== "accepted") {
             setShowRedirecting(false);
             trackAnalyticsEvent("appointment_join_blocked", {
@@ -199,19 +207,6 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
               reason: "waiting_for_acceptance",
             });
             alert(t("waitingForAcceptance"));
-            return;
-          }
-          if (!appointment.isPaid) {
-            setShowRedirecting(false);
-            const pendingFromStorage =
-              typeof window !== "undefined" &&
-              window.sessionStorage.getItem("pendingPaidAppointmentId") === appointmentId;
-            const isPending = Boolean(optimisticPaidIds?.[appointmentId]) || pendingFromStorage;
-            trackAnalyticsEvent("appointment_join_blocked", {
-              appointmentId,
-              reason: isPending ? "payment_processing" : "payment_required",
-            });
-            alert(isPending ? t("paymentProcessing") : t("paymentRequired"));
             return;
           }
         }

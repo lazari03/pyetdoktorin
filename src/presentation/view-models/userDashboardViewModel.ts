@@ -11,7 +11,6 @@ import { isProfileIncomplete } from "@/store/generalStore";
 import { useDashboardActions } from "@/presentation/hooks/useDashboardActions";
 import { UserRole } from "@/domain/entities/UserRole";
 import { useDI } from "@/context/DIContext";
-import { syncPaddlePayment } from "@/network/payments";
 
 export type DashboardUserContext = {
   userId: string | null;
@@ -98,9 +97,6 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
       }
     }
     if (!paidId) return;
-    syncPaddlePayment(paidId).catch(() => {
-      // ignore sync failures; polling will handle webhook updates
-    });
     optimisticMarkPaid(paidId);
     let cancelled = false;
     let attempts = 0;

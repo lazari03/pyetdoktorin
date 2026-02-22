@@ -7,51 +7,18 @@ import '@/i18n/i18n';
 import { useAuth } from '@/context/AuthContext';
 import { openPaddleCheckout, preparePaddleCheckout } from '@/infrastructure/services/paddleCheckout';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
-import { getAppointment } from '@/network/appointments';
-import { normalizeAppointmentStatus } from '@/presentation/utils/appointmentStatus';
 
 export default function PayPage() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
 
   const appointmentId = searchParams?.get('appointmentId') || '';
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paddleReady, setPaddleReady] = useState(false);
-  const [canPay, setCanPay] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!appointmentId || authLoading) return () => {
-      cancelled = true;
-    };
-
-    getAppointment(appointmentId)
-      .then((appointment) => {
-        if (cancelled) return;
-        const status = normalizeAppointmentStatus(appointment.status);
-        if (status !== 'accepted') {
-          setCanPay(false);
-          setStatus('error');
-          setErrorMessage(t('waitingForAcceptance'));
-          return;
-        }
-        setCanPay(true);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setCanPay(false);
-        setStatus('error');
-        setErrorMessage(t('unknownError'));
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [appointmentId, authLoading, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,11 +45,6 @@ export default function PayPage() {
       trackAnalyticsEvent('payment_checkout_failed', { reason: 'missing_appointment_id' });
       return;
     }
-    if (canPay !== true) {
-      setStatus('error');
-      setErrorMessage((current) => current || t('waitingForAcceptance'));
-      return;
-    }
     setStatus('loading');
     setErrorMessage(null);
     trackAnalyticsEvent('payment_checkout_opened', { appointmentId });
@@ -98,7 +60,7 @@ export default function PayPage() {
       setErrorMessage(t('paymentFailed'));
       trackAnalyticsEvent('payment_checkout_failed', { appointmentId, reason: 'open_failed' });
     });
-  }, [appointmentId, canPay, t, user?.uid]);
+  }, [appointmentId, t, user?.uid]);
 
   if (!appointmentId) {
     return (
@@ -119,7 +81,7 @@ export default function PayPage() {
             <p className="text-xs font-semibold text-gray-700 mb-2">{t('payWithCard')}</p>
             <button
               onClick={openCheckout}
-              disabled={!paddleReady || status === 'loading' || canPay !== true}
+              disabled={!paddleReady || status === 'loading'}
               className="w-full inline-flex items-center justify-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {t('payNow')}

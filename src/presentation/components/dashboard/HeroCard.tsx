@@ -10,10 +10,8 @@ type HeroCardProps = {
   onPay?: () => void;
   onViewProfile?: () => void;
   isPaid?: boolean;
-  isPaymentProcessing?: boolean;
   ctaLabel?: string;
   payLabel?: string;
-  processingLabel?: string;
   profileLabel?: string;
 };
 
@@ -25,15 +23,12 @@ export function HeroCard({
   onPay,
   onViewProfile,
   isPaid,
-  isPaymentProcessing,
   ctaLabel = "Join now",
   payLabel = "Pay now",
-  processingLabel = "Processing payment...",
   profileLabel = "View doctor",
 }: HeroCardProps) {
-  const showProcessing = Boolean(isPaymentProcessing);
-  const showPay = Boolean(onPay && isPaid === false && !showProcessing);
-  const showJoin = Boolean(onJoin && !showPay && !showProcessing);
+  const showPay = Boolean(onPay && isPaid === false);
+  const showJoin = Boolean(onJoin && !showPay);
 
   return (
     <section className="bg-white rounded-3xl shadow-lg overflow-hidden border border-purple-50">
@@ -63,15 +58,6 @@ export function HeroCard({
               >
                 <CreditCardIcon className="h-4 w-4" />
                 {payLabel}
-              </button>
-            )}
-            {showProcessing && (
-              <button
-                disabled
-                className="inline-flex items-center gap-2 rounded-full border border-white/40 text-white/80 px-4 py-2 text-sm font-semibold cursor-not-allowed"
-              >
-                <CreditCardIcon className="h-4 w-4" />
-                {processingLabel}
               </button>
             )}
             {onViewProfile && (
