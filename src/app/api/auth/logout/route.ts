@@ -11,7 +11,7 @@ export async function POST() {
 
 
   async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, delay = 500): Promise<Response | undefined> {
-    let lastError: unknown;
+    let lastError: any;
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
         return await fetch(url, options);
