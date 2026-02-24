@@ -9,6 +9,7 @@ export const AppointmentErrorCode = {
   CreateFailed: 'APPOINTMENT_CREATE_FAILED',
   UpdateFailed: 'APPOINTMENT_UPDATE_FAILED',
   FetchFailed: 'APPOINTMENT_FETCH_FAILED',
+  PaymentNotAllowed: 'APPOINTMENT_PAYMENT_NOT_ALLOWED',
 } as const;
 
 export type AppointmentErrorCodeValue =
@@ -51,5 +52,12 @@ export class InvalidAppointmentStatusError extends AppointmentError {
   constructor() {
     super(AppointmentErrorCode.StatusInvalid, 400);
     this.name = 'InvalidAppointmentStatusError';
+  }
+}
+
+export class PaymentNotAllowedError extends AppointmentError {
+  constructor() {
+    super(AppointmentErrorCode.PaymentNotAllowed, 409);
+    this.name = 'PaymentNotAllowedError';
   }
 }

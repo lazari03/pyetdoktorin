@@ -66,6 +66,7 @@
   "videoConfigMissing": "Video session configuration is missing.",
   "videoTemplateMissing": "Video template configuration is missing.",
   "videoSessionFailed": "Unable to start the video session. Please try again.",
+  "paymentNotAllowed": "Payment is not allowed for this appointment yet.",
   "missingMedicines": "Please add at least one medicine.",
   "selectDoctorError": "Please select a doctor before continuing.",
   "signInToBookError": "Please sign in to book an appointment.",

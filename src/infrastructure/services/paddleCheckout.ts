@@ -96,14 +96,6 @@ export async function openPaddleCheckout(params: {
   if (!params.appointmentId) {
     throw new Error('Missing appointment id');
   }
-  if (typeof window !== 'undefined') {
-    try {
-      window.sessionStorage.setItem('pendingPaidAppointmentId', params.appointmentId);
-      window.sessionStorage.setItem('pendingPaidStartedAt', String(Date.now()));
-    } catch {
-      // ignore storage failures
-    }
-  }
   const paddle = await ensurePaddleInitialized();
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID || '';
   if (!priceId) {

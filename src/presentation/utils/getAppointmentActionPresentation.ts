@@ -6,7 +6,7 @@ import { Appointment } from '@/domain/entities/Appointment';
 import { UserRole } from '@/domain/entities/UserRole';
 
 export interface AppointmentActionPresentation {
-  type: 'join' | 'pay' | 'disabled' | 'waiting' | 'past' | 'none';
+  type: 'join' | 'pay' | 'processing' | 'disabled' | 'waiting' | 'past' | 'none';
   label: string;
   disabled?: boolean;
 }
@@ -31,6 +31,10 @@ export function getAppointmentActionPresentation(
 
   if (action.label === 'joinNow') {
     return { type: 'join', label: 'joinNow', disabled: false };
+  }
+
+  if (isPatient && !appointment.isPaid && appointment.paymentStatus === 'processing') {
+    return { type: 'processing', label: 'paymentProcessing', disabled: true };
   }
 
   if (isPatient && action.label === 'payNow') {

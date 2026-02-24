@@ -36,3 +36,10 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
     body: JSON.stringify({ status }),
   });
 }
+
+export async function markPaymentProcessing(id: string) {
+  return backendFetch<{ ok: boolean }>(`/api/appointments/${id}/payment-started`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+}

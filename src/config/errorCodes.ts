@@ -9,6 +9,7 @@ export const APPOINTMENT_ERROR_CODES = {
   CreateFailed: 'APPOINTMENT_CREATE_FAILED',
   UpdateFailed: 'APPOINTMENT_UPDATE_FAILED',
   FetchFailed: 'APPOINTMENT_FETCH_FAILED',
+  PaymentNotAllowed: 'APPOINTMENT_PAYMENT_NOT_ALLOWED',
 } as const;
 
 export const VIDEO_ERROR_CODES = {

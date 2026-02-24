@@ -3,6 +3,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import {
   AppointmentNotFoundError,
   InvalidAppointmentStatusError,
+  PaymentNotAllowedError,
   PreferredTimeRequiredError,
   SlotAlreadyBookedError,
 } from '@/errors/appointmentErrors';
@@ -173,4 +174,34 @@ export async function markAppointmentPaid(id: string, transactionId: string): Pr
     transactionId,
     paidAt: Date.now(),
   }, { merge: true });
+}
+
+export async function markAppointmentPaymentProcessing(
+  id: string,
+  actor: { uid: string; role: UserRole }
+): Promise<void> {
+  const admin = getFirebaseAdmin();
+  const db = admin.firestore();
+  await db.runTransaction(async (tx) => {
+    const appointmentRef = db.collection(COLLECTION).doc(id);
+    const appointmentSnap = await tx.get(appointmentRef);
+    if (!appointmentSnap.exists) {
+      throw new AppointmentNotFoundError();
+    }
+    const appointment = appointmentSnap.data() as Appointment;
+    if (actor.role === UserRole.Patient && appointment.patientId !== actor.uid) {
+      throw new PaymentNotAllowedError();
+    }
+    if (appointment.status !== 'accepted') {
+      throw new PaymentNotAllowedError();
+    }
+    if (appointment.isPaid) {
+      return;
+    }
+    tx.set(appointmentRef, {
+      paymentStatus: 'processing',
+      paymentProvider: 'paddle',
+      paymentStartedAt: Date.now(),
+    }, { merge: true });
+  });
 }

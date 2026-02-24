@@ -1,7 +1,6 @@
 
 "use client";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardViewModel, DashboardUserContext } from "@/presentation/view-models/userDashboardViewModel";
 import Loader from "@/presentation/components/Loader/Loader";
@@ -97,19 +96,6 @@ export default function Dashboard() {
   authLoading,
   };
   const vm = useDashboardViewModel(authContext);
-  const [pendingPaidId, setPendingPaidId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const startedAt = Number(window.sessionStorage.getItem("pendingPaidStartedAt") || "0");
-      const isFresh = startedAt > 0 && Date.now() - startedAt < 10 * 60 * 1000;
-      const storedId = window.sessionStorage.getItem("pendingPaidAppointmentId");
-      setPendingPaidId(isFresh && storedId ? storedId : null);
-    } catch {
-      setPendingPaidId(null);
-    }
-  }, []);
 
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
@@ -125,9 +111,9 @@ export default function Dashboard() {
 
   const upcoming = vm.filteredAppointments.filter((a) => !vm.isAppointmentPast(a)).slice(0, 3);
   const heroAppointment = upcoming[0];
-  const heroIsPaid = Boolean(
-    heroAppointment &&
-    (heroAppointment.isPaid || (pendingPaidId && heroAppointment.id === pendingPaidId))
+  const heroIsPaid = Boolean(heroAppointment && heroAppointment.isPaid);
+  const heroIsProcessing = Boolean(
+    heroAppointment && heroAppointment.paymentStatus === "processing" && !heroAppointment.isPaid
   );
   
   // Recent Doctors (for patients)
@@ -199,6 +185,7 @@ export default function Dashboard() {
                     : undefined
                 }
                 isPaid={heroIsPaid}
+                isProcessing={heroIsProcessing}
                 onViewProfile={
                   role === UserRole.Patient && heroAppointment.doctorId
                     ? () => nav.pushPath(`/doctor/${heroAppointment.doctorId}`)
@@ -206,6 +193,7 @@ export default function Dashboard() {
                 }
                 ctaLabel={t("joinNow") || "Join now"}
                 payLabel={t("payNow") || "Pay now"}
+                processingLabel={t("paymentProcessing") || "Processing payment"}
                 profileLabel={t("viewDoctor") || "View doctor"}
               />
             ) : (

@@ -21,8 +21,8 @@ function parseSignature(header: string) {
   const signatures: string[] = [];
   for (const part of parts) {
     const [key, value = ''] = part.split('=');
-    if (key === 'ts') timestamp = value;
-    if (key === 'h1' && value) signatures.push(value);
+    if ((key === 'ts' || key === 't') && value) timestamp = value;
+    if ((key === 'h1' || key === 'v1') && value) signatures.push(value);
   }
   return { timestamp, signatures };
 }
@@ -163,7 +163,9 @@ router.post('/sync', express.json(), requireAuth([UserRole.Patient, UserRole.Adm
 });
 
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const secret = env.paddleWebhookSecret;
+  const secret = env.paddleWebhookSecret
+    ? env.paddleWebhookSecret.trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1')
+    : '';
   if (!secret) {
     return respond(res, 500, { error: 'Missing Paddle webhook secret' });
   }

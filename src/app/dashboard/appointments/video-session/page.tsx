@@ -10,6 +10,7 @@ export default function VideoSessionPage() {
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const fullscreenModeRef = useRef<"native" | "css" | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,7 +63,11 @@ export default function VideoSessionPage() {
 
   useEffect(() => {
     const handleFullscreenChange = () => {
+      if (fullscreenModeRef.current !== "native") return;
       const isActive = typeof document !== "undefined" && !!document.fullscreenElement;
+      if (!isActive) {
+        fullscreenModeRef.current = null;
+      }
       setIsFullscreen(isActive);
     };
     if (typeof document !== "undefined") {
@@ -75,14 +80,20 @@ export default function VideoSessionPage() {
   useEffect(() => {
     if (!roomCode) return;
     const el = containerRef.current;
-    if (!el || typeof el.requestFullscreen !== "function") return;
+    if (!el) return;
     const request = async () => {
       try {
-        await el.requestFullscreen();
-        setIsFullscreen(true);
+        if (typeof el.requestFullscreen === "function") {
+          await el.requestFullscreen();
+          fullscreenModeRef.current = "native";
+          setIsFullscreen(true);
+          return;
+        }
       } catch {
-        setIsFullscreen(false);
+        // fall through to CSS fullscreen
       }
+      fullscreenModeRef.current = "css";
+      setIsFullscreen(true);
     };
     request();
   }, [roomCode]);
@@ -94,6 +105,19 @@ export default function VideoSessionPage() {
     }
     return undefined;
   }, [error, roomCode, router]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const previousOverflow = document.body.style.overflow;
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+    document.body.style.overflow = previousOverflow;
+    return undefined;
+  }, [isFullscreen]);
 
   if (loading) {
     return <Loader />;
@@ -115,13 +139,18 @@ export default function VideoSessionPage() {
 
   const requestFullscreen = async () => {
     const el = containerRef.current;
-    if (!el || typeof el.requestFullscreen !== "function") return;
     try {
-      await el.requestFullscreen();
-      setIsFullscreen(true);
+      if (el && typeof el.requestFullscreen === "function") {
+        await el.requestFullscreen();
+        fullscreenModeRef.current = "native";
+        setIsFullscreen(true);
+        return;
+      }
     } catch {
-      setIsFullscreen(false);
+      // fall through to CSS fullscreen
     }
+    fullscreenModeRef.current = "css";
+    setIsFullscreen(true);
   };
 
   const exitFullscreen = async () => {
@@ -132,9 +161,11 @@ export default function VideoSessionPage() {
     } catch {
       // ignore
     } finally {
+      fullscreenModeRef.current = null;
       setIsFullscreen(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6">

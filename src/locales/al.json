@@ -67,6 +67,7 @@
   "videoConfigMissing": "Mungon konfigurimi i seancës video.",
   "videoTemplateMissing": "Mungon konfigurimi i shabllonit të videos.",
   "videoSessionFailed": "Nuk mund të nisë seanca video. Ju lutemi provoni përsëri.",
+  "paymentNotAllowed": "Pagesa nuk lejohet ende për këtë takim.",
   "missingMedicines": "Ju lutem shtoni të paktën një ilaç.",
   "selectDoctorError": "Ju lutem zgjidhni një mjek për të vazhduar.",
   "signInToBookError": "Ju lutem hyni për të rezervuar një takim.",

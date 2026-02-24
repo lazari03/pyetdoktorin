@@ -43,6 +43,7 @@ const APPOINTMENT_CODE_TO_I18N: Record<string, string> = {
   [APPOINTMENT_ERROR_CODES.CreateFailed]: 'appointmentBookingFailed',
   [APPOINTMENT_ERROR_CODES.UpdateFailed]: 'unknownError',
   [APPOINTMENT_ERROR_CODES.FetchFailed]: 'unknownError',
+  [APPOINTMENT_ERROR_CODES.PaymentNotAllowed]: 'paymentNotAllowed',
 };
 
 const VIDEO_CODE_TO_I18N: Record<string, string> = {

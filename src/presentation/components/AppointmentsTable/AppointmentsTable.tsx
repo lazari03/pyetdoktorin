@@ -42,6 +42,18 @@ const ActionButtons: React.FC<{
 		);
 	}
 
+	if (presentation.type === 'processing') {
+		return (
+			<button
+				className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-3.5 py-1.5 text-xs font-semibold text-purple-700 cursor-wait"
+				disabled
+			>
+				<span className="h-3 w-3 animate-spin rounded-full border border-purple-400 border-t-transparent" />
+				{t(presentation.label)}
+			</button>
+		);
+	}
+
 	if (presentation.type === 'join') {
 		return (
 			<button

@@ -7,6 +7,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useTranslation } from 'react-i18next';
 import { getVideoErrorMessage } from '@/presentation/utils/errorMessages';
+import { syncPaddlePayment } from '@/network/payments';
 
 export function useDashboardActions() {
   const { user, role } = useAuth();
@@ -49,7 +50,13 @@ export function useDashboardActions() {
 
   const handlePayNow = useCallback((appointmentId: string, amount: number) => {
     trackAnalyticsEvent('payment_initiated', { appointmentId, amount });
-    storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase));
+    storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
+      onClose: () => {
+        syncPaddlePayment(appointmentId).catch((error) => {
+          console.warn('Payment sync failed', error);
+        });
+      },
+    });
   }, [storeHandlePayNow, handlePayNowUseCase]);
 
   return { handleJoinCall, handlePayNow };

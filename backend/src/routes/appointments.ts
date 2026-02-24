@@ -6,6 +6,7 @@ import {
   listAppointmentsForUser,
   updateAppointmentStatus,
   getAppointmentById,
+  markAppointmentPaymentProcessing,
 } from '@/services/appointmentsService';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 import {
@@ -96,6 +97,20 @@ router.get('/:id', requireAuth(), async (req: AuthenticatedRequest, res) => {
     return res.status(403).json({ error: AppointmentErrorCode.Forbidden });
   }
   res.json(appointment);
+});
+
+router.post('/:id/payment-started', requireAuth([UserRole.Patient, UserRole.Admin]), async (req: AuthenticatedRequest, res) => {
+  const { id } = req.params as { id: string };
+  try {
+    await markAppointmentPaymentProcessing(id, { uid: req.user!.uid, role: req.user!.role });
+    return res.json({ ok: true });
+  } catch (error) {
+    if (error instanceof AppointmentError) {
+      return res.status(error.status).json({ error: error.code });
+    }
+    console.error('Error marking payment processing:', error);
+    return res.status(500).json({ error: AppointmentErrorCode.UpdateFailed });
+  }
 });
 
 export default router;

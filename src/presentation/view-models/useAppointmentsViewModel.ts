@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useSearchParams } from "next/navigation";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { useAuth } from "@/context/AuthContext";
 import { useVideoStore } from "@/store/videoStore";
@@ -44,17 +43,14 @@ export interface AppointmentsViewModelResult {
 export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   const [showRedirecting, setShowRedirecting] = useState(false);
   const { t } = useTranslation();
-  const searchParams = useSearchParams();
 
   const { user, isAuthenticated, role } = useAuth();
   const {
     appointments,
     isDoctor,
     isAppointmentPast,
-    fetchAppointments,
-    optimisticMarkPaid,
-    optimisticPaidIds,
     handlePayNow: storeHandlePayNow,
+    subscribeAppointments,
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
   const {
@@ -68,87 +64,17 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
     setAuthStatus(isAuthenticated, user?.uid || null, user?.name || null);
   }, [isAuthenticated, user, setAuthStatus]);
 
-  // Fetch appointments when user/role changes
+  // Subscribe to appointments for real-time updates
   useEffect(() => {
-    if (!role) return;
-    fetchAppointments(role);
-  }, [role, fetchAppointments]);
-
-  // For doctors, poll to pick up payment status changes from patients.
-  useEffect(() => {
-    if (!isDoctor || !role) return;
-    const hasPendingPayment = appointments.some(
-      (appointment) => appointment.status === "accepted" && !appointment.isPaid
-    );
-    if (!hasPendingPayment) return;
-
-    let cancelled = false;
-    const timer = setInterval(() => {
-      if (cancelled) return;
-      fetchAppointments(role);
-    }, 5000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, [appointments, fetchAppointments, isDoctor, role]);
+    if (!role || !user?.uid) return;
+    const unsubscribe = subscribeAppointments(user.uid, role);
+    return () => unsubscribe();
+  }, [role, subscribeAppointments, user?.uid]);
 
   const appointmentsRef = useRef(appointments);
   useEffect(() => {
     appointmentsRef.current = appointments;
   }, [appointments]);
-
-  // Refresh appointments after payment return so isPaid updates
-  useEffect(() => {
-    if (!role) return;
-    const fromQuery = searchParams?.get("paid");
-    let paidId = fromQuery;
-    if (!paidId && typeof window !== "undefined") {
-      try {
-        const startedAt = Number(window.sessionStorage.getItem("pendingPaidStartedAt") || "0");
-        const isFresh = startedAt > 0 && Date.now() - startedAt < 10 * 60 * 1000;
-        const storedId = window.sessionStorage.getItem("pendingPaidAppointmentId");
-        if (isFresh && storedId) paidId = storedId;
-      } catch {
-        // ignore storage failures
-      }
-    }
-    if (!paidId) return;
-    optimisticMarkPaid(paidId);
-    let cancelled = false;
-    let attempts = 0;
-    const maxAttempts = 30;
-    const pollIntervalMs = 1000;
-
-    const poll = async () => {
-      if (cancelled) return;
-      attempts += 1;
-      await fetchAppointments(role);
-      if (cancelled) return;
-      const isPaid = appointmentsRef.current.some(
-        (appointment) => appointment.id === paidId && appointment.isPaid
-      );
-      if (isPaid || attempts >= maxAttempts) {
-        if (timer) clearInterval(timer);
-      }
-      if (isPaid && typeof window !== "undefined") {
-        try {
-          window.sessionStorage.removeItem("pendingPaidAppointmentId");
-          window.sessionStorage.removeItem("pendingPaidStartedAt");
-        } catch {
-          // ignore storage failures
-        }
-      }
-    };
-
-    poll();
-    const timer = setInterval(poll, pollIntervalMs);
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, [fetchAppointments, optimisticMarkPaid, role, searchParams]);
 
   // Join video call handler
   const handleJoinCall = useCallback(
@@ -182,42 +108,28 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
           return;
         }
 
-        if (role) {
-          await fetchAppointments(role);
-        }
         const freshAppointment = appointmentsRef.current.find((a) => a.id === appointmentId);
         let appointment = freshAppointment ?? appointments.find((a) => a.id === appointmentId);
         if (!appointment) throw new Error(APPOINTMENT_ERROR_CODES.NotFound);
 
         if (!isDoctor && !appointment.isPaid) {
-          const pendingFromStorage =
-            typeof window !== "undefined" &&
-            window.sessionStorage.getItem("pendingPaidAppointmentId") === appointmentId;
-          const isPending = Boolean(optimisticPaidIds?.[appointmentId]) || pendingFromStorage;
-          if (!isPending) {
-            try {
-              await syncPaddlePayment(appointmentId);
-              const response = await listAppointments();
-              const refreshed = response.items.find((a) => a.id === appointmentId);
-              if (refreshed) appointment = refreshed;
-              if (role) await fetchAppointments(role);
-            } catch (syncError) {
-              console.warn("Payment sync failed", syncError);
-            }
+          try {
+            await syncPaddlePayment(appointmentId);
+            const response = await listAppointments();
+            const refreshed = response.items.find((a) => a.id === appointmentId);
+            if (refreshed) appointment = refreshed;
+          } catch (syncError) {
+            console.warn("Payment sync failed", syncError);
           }
         }
 
         if (!isDoctor && !appointment.isPaid) {
           setShowRedirecting(false);
-          const pendingFromStorage =
-            typeof window !== "undefined" &&
-            window.sessionStorage.getItem("pendingPaidAppointmentId") === appointmentId;
-          const isPending = Boolean(optimisticPaidIds?.[appointmentId]) || pendingFromStorage;
           trackAnalyticsEvent("appointment_join_blocked", {
             appointmentId,
-            reason: isPending ? "payment_processing" : "payment_required",
+            reason: "payment_required",
           });
-          alert(isPending ? t("paymentProcessing") : t("paymentRequired"));
+          alert(t("paymentRequired"));
           return;
         }
         if (!isDoctor) {
@@ -281,12 +193,9 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
     },
     [
       appointments,
-      fetchAppointments,
       generateRoomCodeUseCase,
       isDoctor,
       isAppointmentPast,
-      optimisticPaidIds,
-      role,
       setAuthStatus,
       t,
       updateAppointmentUseCase,
@@ -315,7 +224,13 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         appointmentId,
         amount,
       });
-      return storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase));
+      return storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
+        onClose: () => {
+          syncPaddlePayment(appointmentId).catch((error) => {
+            console.warn("Payment sync failed", error);
+          });
+        },
+      });
     },
   };
 }
