@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { clinicsCatalog } from '@/data/clinics';
-import { createClinicBooking, listBookingsByClinic, listBookingsByPatient, listAllBookings, updateClinicBookingStatus, getClinicBookingById } from '@/services/clinicBookingsService';
+import { createClinicBooking, listBookingsByClinic, listBookingsByPatient, listAllBookings, updateClinicBookingStatus, getClinicBookingById, type ClinicBookingStatus } from '@/services/clinicBookingsService';
 import { UserRole } from '@/domain/entities/UserRole';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
@@ -84,16 +84,17 @@ router.post('/bookings', requireAuth([UserRole.Patient]), async (req: Authentica
   const displayName = buildDisplayName(patientProfile, patientName || 'Patient');
   const displayEmail = patientProfile?.email ?? patientEmail ?? '';
   const displayPhone = patientProfile?.phone ?? patientPhone;
-  const booking = await createClinicBooking({
+  const bookingInput = {
     clinicId,
     clinicName,
     patientId: user.uid,
     patientName: displayName,
     patientEmail: displayEmail,
-    patientPhone: displayPhone,
     note,
-    preferredDate,
-  });
+    ...(displayPhone !== undefined ? { patientPhone: displayPhone } : {}),
+    ...(preferredDate !== undefined ? { preferredDate } : {}),
+  };
+  const booking = await createClinicBooking(bookingInput);
   res.status(201).json(booking);
 });
 
@@ -101,7 +102,7 @@ router.patch('/bookings/:id/status', requireAuth([UserRole.Admin, UserRole.Clini
   const { id } = req.params as { id: string };
   const payload = validateBody(res, updateBookingStatusSchema, req.body, 'MISSING_STATUS');
   if (!payload) return;
-  const { status } = payload;
+  const status = payload.status as ClinicBookingStatus;
   const user = (req as AuthenticatedRequest).user!;
   const booking = await getClinicBookingById(id);
   if (!booking) {

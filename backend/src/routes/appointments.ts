@@ -8,6 +8,7 @@ import {
   updateAppointmentStatus,
   getAppointmentById,
   markAppointmentPaymentProcessing,
+  type AppointmentStatus,
 } from '@/services/appointmentsService';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 import {
@@ -59,17 +60,18 @@ router.post('/', requireAuth([UserRole.Patient]), async (req: AuthenticatedReque
   const patientDisplayName = buildDisplayName(patientProfile, 'Patient');
   const doctorDisplayName = buildDisplayName(doctorProfile, doctorName || 'Doctor');
   try {
-    const appointment = await createAppointment({
+    const appointmentInput = {
       patientId: user.uid,
       patientName: patientDisplayName,
       doctorId,
       doctorName: doctorDisplayName,
-      appointmentType,
       preferredDate,
       preferredTime,
-      note,
-      notes,
-    });
+      ...(appointmentType !== undefined ? { appointmentType } : {}),
+      ...(note !== undefined ? { note } : {}),
+      ...(notes !== undefined ? { notes } : {}),
+    };
+    const appointment = await createAppointment(appointmentInput);
     res.status(201).json(appointment);
   } catch (error) {
     if (error instanceof AppointmentError) {
@@ -89,7 +91,7 @@ router.patch('/:id/status', requireAuth([UserRole.Doctor, UserRole.Admin]), asyn
       issues: parsed.error.issues,
     });
   }
-  const { status } = parsed.data;
+  const status = parsed.data.status as AppointmentStatus;
   const appointment = await getAppointmentById(id);
   if (!appointment) {
     return res.status(404).json({ error: AppointmentErrorCode.NotFound });

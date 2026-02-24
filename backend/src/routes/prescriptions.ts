@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
-import { createPrescription, listPrescriptionsForRole, updatePrescriptionStatus, getPrescriptionById, type PrescriptionInput } from '@/services/prescriptionsService';
+import { createPrescription, listPrescriptionsForRole, updatePrescriptionStatus, getPrescriptionById, type PrescriptionInput, type PrescriptionStatus } from '@/services/prescriptionsService';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 import { z } from 'zod';
 import { validateBody } from '@/routes/validation';
@@ -33,9 +33,9 @@ router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
 
 router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
-  const payload = validateBody(res, createPrescriptionSchema, req.body, 'INVALID_PAYLOAD');
-  if (!payload) return;
-  const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, signatureDataUrl, doctorName } = payload;
+  const requestPayload = validateBody(res, createPrescriptionSchema, req.body, 'INVALID_PAYLOAD');
+  if (!requestPayload) return;
+  const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, signatureDataUrl, doctorName } = requestPayload;
   const [doctorProfile, patientProfile, pharmacyProfile] = await Promise.all([
     getUserProfile(user.uid),
     getUserProfile(patientId),
@@ -44,7 +44,7 @@ router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedReques
   const doctorDisplayName = buildDisplayName(doctorProfile, doctorName || 'Doctor');
   const patientDisplayName = buildDisplayName(patientProfile, patientName || 'Patient');
   const pharmacyDisplayName = pharmacyProfile?.pharmacyName ?? pharmacyName;
-  const payload: PrescriptionInput = {
+  const prescriptionInput: PrescriptionInput = {
     doctorId: user.uid,
     doctorName: doctorDisplayName,
     patientId,
@@ -57,15 +57,15 @@ router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedReques
     ...(title !== undefined ? { title } : {}),
     ...(signatureDataUrl !== undefined ? { signatureDataUrl } : {}),
   };
-  const prescription = await createPrescription(payload);
+  const prescription = await createPrescription(prescriptionInput);
   res.status(201).json(prescription);
 });
 
 router.patch('/:id/status', requireAuth([UserRole.Pharmacy, UserRole.Doctor, UserRole.Admin]), async (req, res) => {
   const { id } = req.params as { id: string };
-  const payload = validateBody(res, updatePrescriptionStatusSchema, req.body, 'MISSING_STATUS');
-  if (!payload) return;
-  const { status } = payload;
+  const requestPayload = validateBody(res, updatePrescriptionStatusSchema, req.body, 'MISSING_STATUS');
+  if (!requestPayload) return;
+  const status = requestPayload.status as PrescriptionStatus;
   const user = (req as AuthenticatedRequest).user!;
   const prescription = await getPrescriptionById(id);
   if (!prescription) {
