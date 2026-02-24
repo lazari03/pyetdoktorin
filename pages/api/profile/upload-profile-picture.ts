@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
-import { IncomingForm } from 'formidable';
+import { IncomingForm, type File as FormidableFile } from 'formidable';
 import fs from 'fs/promises';
 
 // Disable default body parsing to handle FormData
@@ -35,7 +35,7 @@ function parseForm(req: NextApiRequest) {
     maxFileSize: 10 * 1024 * 1024, // 10MB limit
     keepExtensions: true,
   });
-  return new Promise<{ fields: Record<string, unknown>; files: Record<string, any> }>((resolve, reject) => {
+  return new Promise<{ fields: Record<string, unknown>; files: Record<string, FormidableFile | FormidableFile[]> }>((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
       if (err) return reject(err);
       resolve({ fields, files });
