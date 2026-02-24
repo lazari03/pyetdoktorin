@@ -95,10 +95,10 @@ function sanitizeDoctorFields(fields: DoctorFields): Record<string, unknown> {
 async function verifyAdminFromRequest(req: NextApiRequest): Promise<boolean> {
   try {
     // Prefer Authorization header: "Bearer <ID_TOKEN>"
-    const auth = req.headers.authorization;
+    const authHeader = req.headers.authorization;
     let idToken: string | null = null;
-    if (auth && auth.startsWith('Bearer ')) {
-      idToken = auth.substring('Bearer '.length);
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      idToken = authHeader.substring('Bearer '.length);
     }
 
     // Optional: look for a cookie named "__session" or "token" if using cookie-based tokens
@@ -108,8 +108,8 @@ async function verifyAdminFromRequest(req: NextApiRequest): Promise<boolean> {
 
     if (!idToken) return false;
 
-    const { auth, db } = getAdmin();
-  const decoded = await auth.verifyIdToken(idToken);
+    const { auth: adminAuth, db } = getAdmin();
+    const decoded = await adminAuth.verifyIdToken(idToken);
     // Accept either a custom claim admin: true or role === 'admin'
     const claimAdmin = (
       ('admin' in decoded && (decoded as { admin?: boolean }).admin === true) ||
