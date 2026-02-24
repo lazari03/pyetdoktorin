@@ -6,6 +6,8 @@ import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { env } from '@/config/env';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
+import { z } from 'zod';
+import { validateBody } from '@/routes/validation';
 
 const router = Router();
 
@@ -105,10 +107,9 @@ async function fetchPaddleTransactions(apiKey: string) {
 }
 
 router.post('/sync', express.json(), requireAuth([UserRole.Patient, UserRole.Admin, UserRole.Doctor]), async (req: AuthenticatedRequest, res) => {
-  const appointmentId = (req.body as { appointmentId?: string })?.appointmentId;
-  if (!appointmentId) {
-    return respond(res, 400, { error: 'Missing appointmentId' });
-  }
+  const payload = validateBody(res, z.object({ appointmentId: z.string().min(1) }), req.body, 'MISSING_APPOINTMENT_ID');
+  if (!payload) return;
+  const { appointmentId } = payload;
   const apiKey = env.paddleApiKey;
   if (!apiKey) {
     return respond(res, 500, { error: 'Missing Paddle API key' });

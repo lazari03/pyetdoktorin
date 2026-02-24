@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import { getAdmin } from '@/app/api/_lib/admin';
+import { VIDEO_ERROR_CODES } from '@/config/errorCodes';
 
 type SessionPayload = {
   userId: string;
@@ -19,22 +20,22 @@ type AppointmentDoc = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: VIDEO_ERROR_CODES.MethodNotAllowed });
   }
 
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret) {
-    return res.status(500).json({ error: 'SESSION_SECRET is not configured' });
+    return res.status(500).json({ error: VIDEO_ERROR_CODES.SessionSecretMissing });
   }
 
   const { sessionToken } = req.body ?? {};
   if (!sessionToken) {
-    return res.status(400).json({ error: 'Missing sessionToken' });
+    return res.status(400).json({ error: VIDEO_ERROR_CODES.MissingParams });
   }
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authentication token missing' });
+    return res.status(401).json({ error: VIDEO_ERROR_CODES.AuthMissing });
   }
 
   const idToken = authHeader.substring(7);
@@ -45,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     decodedIdToken = await adminAuth.verifyIdToken(idToken);
   } catch (error) {
     console.error('Failed to verify Firebase ID token', error);
-    return res.status(401).json({ error: 'Invalid or expired authentication token' });
+    return res.status(401).json({ error: VIDEO_ERROR_CODES.AuthInvalid });
   }
 
   let sessionPayload: SessionPayload;
@@ -53,16 +54,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     sessionPayload = jwt.verify(sessionToken, sessionSecret) as SessionPayload;
   } catch (error) {
     console.error('Session token verification failed', error);
-    return res.status(401).json({ error: 'Invalid or expired session token' });
+    return res.status(401).json({ error: VIDEO_ERROR_CODES.AuthInvalid });
   }
 
   if (sessionPayload.userId !== decodedIdToken.uid) {
-    return res.status(403).json({ error: 'Session does not belong to this user' });
+    return res.status(403).json({ error: VIDEO_ERROR_CODES.UserMismatch });
   }
 
   const appointmentSnap = await adminDb.collection('appointments').doc(sessionPayload.appointmentId).get();
   if (!appointmentSnap.exists) {
-    return res.status(404).json({ error: 'Appointment not found' });
+    return res.status(404).json({ error: VIDEO_ERROR_CODES.AppointmentNotFound });
   }
 
   const appointmentData = appointmentSnap.data() as AppointmentDoc;
@@ -71,15 +72,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const isPatient = appointmentData?.patientId === sessionPayload.userId;
 
   if (!isDoctor && !isPatient) {
-    return res.status(403).json({ error: 'You are not assigned to this appointment' });
+    return res.status(403).json({ error: VIDEO_ERROR_CODES.AppointmentForbidden });
   }
 
   if (appointmentStatus === 'cancelled') {
-    return res.status(403).json({ error: 'Appointment is cancelled' });
+    return res.status(403).json({ error: VIDEO_ERROR_CODES.AppointmentCancelled });
   }
 
   if (isPatient && !appointmentData?.isPaid && appointmentStatus !== 'completed') {
-    return res.status(402).json({ error: 'Payment required before joining' });
+    return res.status(402).json({ error: VIDEO_ERROR_CODES.PaymentRequired });
   }
 
   return res.status(200).json({

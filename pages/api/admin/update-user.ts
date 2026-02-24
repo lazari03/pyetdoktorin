@@ -1,35 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import admin from 'firebase-admin';
 import { FirestoreCollections } from '@/config/FirestoreCollections';
-
-// ------------------------
-// FIREBASE ADMIN INIT
-// ------------------------
-// Initialize Admin SDK once using FIREBASE_SERVICE_ACCOUNT environment variable
-if (!admin.apps.length) {
-  let serviceAccount;
-  try {
-    const svcEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!svcEnv) throw new Error('FIREBASE_SERVICE_ACCOUNT env is not set');
-    const svc: admin.ServiceAccount = JSON.parse(svcEnv);
-    admin.initializeApp({
-      credential: admin.credential.cert(svc),
-    });
-    const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!envVar) {
-      throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable is not set.');
-    }
-    serviceAccount = JSON.parse(envVar);
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'FIREBASE_SERVICE_ACCOUNT env is not valid JSON.';
-    console.error(message);
-    throw new Error(message);
-  }
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
-// ------------------------
+import { getAdmin } from '@/app/api/_lib/admin';
 
 type UserFields = {
   name?: string;
@@ -56,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { id, userFields, doctorFields, approveDoctor } = req.body as { id?: string; userFields?: UserFields; doctorFields?: DoctorFields; approveDoctor?: boolean };
     if (!id) return res.status(400).json({ error: 'Missing user id' });
 
-    const db = admin.firestore();
+    const { db } = getAdmin();
 
     // Handle user fields
     if (userFields && hasKeys(userFields)) {
@@ -93,8 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ ok: true });
   } catch (e: unknown) {
     console.error('Admin update-user error:', e);
-    const message = typeof e === 'object' && e && 'message' in e ? String((e as { message: unknown }).message) : 'Internal Server Error';
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
@@ -138,7 +108,8 @@ async function verifyAdminFromRequest(req: NextApiRequest): Promise<boolean> {
 
     if (!idToken) return false;
 
-  const decoded = await admin.auth().verifyIdToken(idToken);
+    const { auth, db } = getAdmin();
+  const decoded = await auth.verifyIdToken(idToken);
     // Accept either a custom claim admin: true or role === 'admin'
     const claimAdmin = (
       ('admin' in decoded && (decoded as { admin?: boolean }).admin === true) ||
@@ -148,7 +119,6 @@ async function verifyAdminFromRequest(req: NextApiRequest): Promise<boolean> {
 
     // Fallback: check Firestore user doc role
     const uid = decoded.uid;
-    const db = admin.firestore();
     const snap = await db.collection(FirestoreCollections.Users).doc(uid).get();
     const role = snap.exists ? (snap.data()?.role as string | undefined) : undefined;
     return role === 'admin';

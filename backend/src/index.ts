@@ -12,6 +12,7 @@ import clinicsRouter from '@/routes/clinics';
 import paddleRouter from '@/routes/paddle';
 import statsRouter from '@/routes/stats';
 import notificationsRouter from '@/routes/notifications';
+import { createRateLimiter } from '@/middleware/rateLimit';
 
 const app = express();
 
@@ -41,6 +42,21 @@ app.use(cors({
   },
   credentials: true,
 }));
+
+const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 150 });
+const writeLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 120 });
+const readLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 600 });
+const webhookLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 300 });
+
+app.use('/api/auth', authLimiter);
+app.use('/api/appointments', writeLimiter);
+app.use('/api/paddle/webhook', webhookLimiter);
+app.use('/api/paddle/sync', writeLimiter);
+app.use('/api/users', readLimiter);
+app.use('/api/clinics', readLimiter);
+app.use('/api/prescriptions', readLimiter);
+app.use('/api/notifications', readLimiter);
+app.use('/api/stats', readLimiter);
 app.use('/api/paddle', paddleRouter);
 app.use(express.json());
 app.use(cookieParser());

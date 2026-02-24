@@ -230,11 +230,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         createRoomData = createRoomRaw ? JSON.parse(createRoomRaw) : {};
       } catch {
-  // Error parsing 100ms create room response as JSON
-        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: createRoomRaw });
+      console.error('Error parsing 100ms create room response', createRoomRaw);
+        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed });
       }
       if (!createRoomRes.ok || !createRoomData.id) {
-        return res.status(createRoomRes.status).json({ error: createRoomData.error || 'Failed to create 100ms room', raw: createRoomRaw });
+        console.error('100ms create room failed', createRoomRaw);
+        return res.status(createRoomRes.status).json({ error: VIDEO_ERROR_CODES.GenericFailed });
       }
       actualRoomId = createRoomData.id;
       // --- Create room codes for all roles in the room at once ---
@@ -250,11 +251,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         createCodesData = createCodesRaw ? JSON.parse(createCodesRaw) : {};
       } catch {
-  // Error parsing 100ms create room codes response as JSON
-        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: createCodesRaw });
+      console.error('Error parsing 100ms create room codes response', createCodesRaw);
+        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed });
       }
       if (!createCodesRes.ok || !Array.isArray(createCodesData.data)) {
-        return res.status(createCodesRes.status).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: createCodesRaw });
+        console.error('100ms create room codes failed', createCodesRaw);
+        return res.status(createCodesRes.status).json({ error: VIDEO_ERROR_CODES.GenericFailed });
       }
       // Wait a moment for codes to be available
       await new Promise((r) => setTimeout(r, 2000));
@@ -271,10 +273,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         getRoomData = getRoomRaw ? JSON.parse(getRoomRaw) : {};
       } catch {
-  // Error parsing 100ms get room response as JSON
+        console.error('Error parsing 100ms get room response', getRoomRaw);
       }
       if (!getRoomRes.ok || !getRoomData.id) {
-        return res.status(getRoomRes.status).json({ error: getRoomData.error || 'Failed to fetch 100ms room', raw: getRoomRaw });
+        console.error('100ms get room failed', getRoomRaw);
+        return res.status(getRoomRes.status).json({ error: VIDEO_ERROR_CODES.GenericFailed });
       }
       actualRoomId = getRoomData.id;
       // --- Automate room code creation for both doctor and patient roles for existing rooms ---
@@ -327,8 +330,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       getRoomCodesData = getRoomCodesRaw ? JSON.parse(getRoomCodesRaw) : {};
     } catch {
-  // Error parsing 100ms get room codes response as JSON
-      return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: getRoomCodesRaw });
+      console.error('Error parsing 100ms room codes response', getRoomCodesRaw);
+      return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed });
     }
     const roomCodesArr = getRoomCodesData.data;
     roomCode = Array.isArray(roomCodesArr) && roomCodesArr.length > 0 ? roomCodesArr[0].code : null;
@@ -345,8 +348,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         getAllRoomCodesData = getAllRoomCodesRaw ? JSON.parse(getAllRoomCodesRaw) : {};
       } catch {
-  // Error parsing 100ms get all room codes response as JSON
-        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: getAllRoomCodesRaw });
+        console.error('Error parsing 100ms all room codes response', getAllRoomCodesRaw);
+        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed });
       }
       const allRoomCodesArr = getAllRoomCodesData.data;
       // Find the first enabled room code that matches the prebuilt format (3 groups of 3 lowercase letters)
@@ -375,23 +378,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         try {
           createRoomCodeData = createRoomCodeRaw ? JSON.parse(createRoomCodeRaw) : {};
         } catch {
-          // Error parsing 100ms create room code response as JSON
-          return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed, raw: createRoomCodeRaw });
+          console.error('Error parsing 100ms create room code response', createRoomCodeRaw);
+          return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed });
         }
         if (!createRoomCodeRes.ok || !createRoomCodeData.code) {
           // Log a clear message if Prebuilt is blocking room code creation
           if (createRoomCodeRes.status === 404) {
             // 100ms Prebuilt BLOCKED: Room code creation failed with 404. Prebuilt not initialized for this room/role.
           }
-          return res.status(createRoomCodeRes.status).json({
-            error: createRoomCodeData.error || 'Failed to create 100ms room code',
-            raw: createRoomCodeRaw,
-            request: {
-              room_id: actualRoomId,
-              role,
-              enabled: true
-            }
-          });
+          console.error('100ms create room code failed', createRoomCodeRaw);
+          return res.status(createRoomCodeRes.status).json({ error: VIDEO_ERROR_CODES.GenericFailed });
         }
         roomCode = createRoomCodeData.code as string;
       }

@@ -1,13 +1,21 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { EstablishSessionUseCase } from '@/application/auth/EstablishSessionUseCase';
 import { FirebaseServerSessionService } from '@/services/serverSessionService';
 import { SessionException } from '@/application/errors/SessionException';
+import { validateBody } from '@/routes/validation';
 
 const router = Router();
 
+const sessionSchema = z.object({
+  idToken: z.string().min(1),
+});
+
 router.post('/session', async (req, res) => {
   try {
-    const { idToken } = req.body || {};
+    const payload = validateBody(res, sessionSchema, req.body, 'INVALID_SESSION_PAYLOAD');
+    if (!payload) return;
+    const { idToken } = payload;
     const sessionService = new FirebaseServerSessionService(process.env.NODE_ENV === 'production');
     const useCase = new EstablishSessionUseCase(sessionService);
     const result = await useCase.execute(idToken);

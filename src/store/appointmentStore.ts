@@ -4,6 +4,7 @@ import { getAppointmentAction } from "@/presentation/utils/appointmentActionButt
 import { APPOINTMENT_DURATION_MINUTES } from '../config/appointmentConfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { listAppointments } from '@/network/appointments';
+import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
 import { subscribeAppointmentsForDoctor, subscribeAppointmentsForUser } from '@/network/firebase/appointments';
 
 /**
@@ -66,7 +67,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         isDoctor: typeof role === 'undefined' ? get().isDoctor : role === UserRole.Doctor,
       });
     } catch {
-      set({ error: "Failed to fetch appointments", loading: false });
+      set({ error: APPOINTMENT_ERROR_CODES.FetchFailed, loading: false });
     }
   },
   subscribeAppointments: (userId, role) => {

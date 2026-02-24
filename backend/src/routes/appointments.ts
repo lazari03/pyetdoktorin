@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
 import {
@@ -16,6 +17,20 @@ import {
 
 const router = Router();
 
+const createAppointmentSchema = z.object({
+  doctorId: z.string().min(1),
+  doctorName: z.string().min(1),
+  appointmentType: z.string().optional(),
+  preferredDate: z.string().min(1),
+  preferredTime: z.string().min(1),
+  note: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const updateStatusSchema = z.object({
+  status: z.string().min(1),
+});
+
 router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
   try {
     const user = req.user!;
@@ -29,10 +44,14 @@ router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
 
 router.post('/', requireAuth([UserRole.Patient]), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
-  const { doctorId, doctorName, appointmentType, preferredDate, preferredTime, note, notes } = req.body || {};
-  if (!doctorId || !doctorName || !preferredDate || !preferredTime) {
-    return res.status(400).json({ error: AppointmentErrorCode.MissingRequiredFields });
+  const parsed = createAppointmentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: AppointmentErrorCode.MissingRequiredFields,
+      issues: parsed.error.issues,
+    });
   }
+  const { doctorId, doctorName, appointmentType, preferredDate, preferredTime, note, notes } = parsed.data;
   const [patientProfile, doctorProfile] = await Promise.all([
     getUserProfile(user.uid),
     getUserProfile(doctorId),
@@ -63,10 +82,14 @@ router.post('/', requireAuth([UserRole.Patient]), async (req: AuthenticatedReque
 
 router.patch('/:id/status', requireAuth([UserRole.Doctor, UserRole.Admin]), async (req: AuthenticatedRequest, res) => {
   const { id } = req.params as { id: string };
-  const { status } = req.body || {};
-  if (!status) {
-    return res.status(400).json({ error: AppointmentErrorCode.StatusMissing });
+  const parsed = updateStatusSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: AppointmentErrorCode.StatusMissing,
+      issues: parsed.error.issues,
+    });
   }
+  const { status } = parsed.data;
   const appointment = await getAppointmentById(id);
   if (!appointment) {
     return res.status(404).json({ error: AppointmentErrorCode.NotFound });

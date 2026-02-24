@@ -941,5 +941,17 @@
   "bmi_underweight": "Underweight",
   "bmi_normal": "Normal",
   "bmi_overweight": "Overweight",
-  "bmi_obese": "Obese"
+  "bmi_obese": "Obese",
+  "profilePictureUploadFailed": "Failed to upload profile picture.",
+  "profilePictureUploadConfigMissing": "Upload is not configured. Please contact support.",
+  "profilePictureUploadInvalidType": "Unsupported file type. Please upload an image.",
+  "profilePictureUploadMissing": "No file selected. Please choose an image.",
+  "videoSessionEyebrow": "Video session",
+  "videoSessionTitle": "In call",
+  "videoSessionSubtitle": "Tap full screen to expand the call.",
+  "videoSessionExitFullscreen": "Exit full screen",
+  "videoSessionFullscreen": "Full screen",
+  "videoSessionBackToDashboard": "Back to dashboard",
+  "videoSessionExpiredCopy": "Your session expired. Please go back and try joining again.",
+  "videoSessionFailedCopy": "Unable to start the video session. Redirecting to dashboard..."
 }

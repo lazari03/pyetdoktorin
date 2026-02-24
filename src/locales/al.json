@@ -941,5 +941,17 @@
   "bmi_underweight": "Nënpeshë",
   "bmi_normal": "Normale",
   "bmi_overweight": "Mbipeshë",
-  "bmi_obese": "Obezitet"
+  "bmi_obese": "Obezitet",
+  "profilePictureUploadFailed": "Ngarkimi i fotos së profilit dështoi.",
+  "profilePictureUploadConfigMissing": "Ngarkimi nuk është konfiguruar. Kontaktoni mbështetjen.",
+  "profilePictureUploadInvalidType": "Lloj i pambështetur skedari. Ju lutemi ngarkoni një imazh.",
+  "profilePictureUploadMissing": "Nuk është zgjedhur skedar. Ju lutemi zgjidhni një imazh.",
+  "videoSessionEyebrow": "Seancë video",
+  "videoSessionTitle": "Në telefonatë",
+  "videoSessionSubtitle": "Prek ekranin e plotë për ta zgjeruar thirrjen.",
+  "videoSessionExitFullscreen": "Dil nga ekrani i plotë",
+  "videoSessionFullscreen": "Ekran i plotë",
+  "videoSessionBackToDashboard": "Kthehu te paneli",
+  "videoSessionExpiredCopy": "Seanca juaj ka skaduar. Ju lutem kthehuni dhe provoni përsëri.",
+  "videoSessionFailedCopy": "Nuk u arrit të nisej seanca video. Po ridrejtoheni te paneli..."
 }

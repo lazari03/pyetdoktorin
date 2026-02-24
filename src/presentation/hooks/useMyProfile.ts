@@ -56,9 +56,18 @@ export const useMyProfile = () => {
       const publicUrl = await uploadProfilePictureUseCase.execute(user.uid, file);
       setFormData((prev) => ({ ...prev, profilePicture: publicUrl }));
       trackAnalyticsEvent("profile_picture_upload_success");
-    } catch {
+    } catch (error) {
       trackAnalyticsEvent("profile_picture_upload_failed");
-      alert("Failed to upload profile picture.");
+      const code = error instanceof Error ? error.message : "";
+      if (code === "UPLOAD_CONFIG_MISSING") {
+        alert(t("profilePictureUploadConfigMissing"));
+      } else if (code === "UPLOAD_INVALID_TYPE") {
+        alert(t("profilePictureUploadInvalidType"));
+      } else if (code === "UPLOAD_FILE_MISSING") {
+        alert(t("profilePictureUploadMissing"));
+      } else {
+        alert(t("profilePictureUploadFailed"));
+      }
     } finally {
       setUploading(false);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import useNewAppointment from "@/presentation/hooks/useNewAppointment";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 
@@ -87,6 +88,7 @@ export interface NewAppointmentViewModelResult {
 }
 
 export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
+  const { t } = useTranslation();
   const {
     selectedDoctor,
     setSelectedDoctor,
@@ -155,7 +157,7 @@ export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
       ...doctor,
       specialization: Array.isArray(doctor.specialization)
         ? doctor.specialization.join(", ")
-        : doctor.specialization || "General",
+        : doctor.specialization || t("generalSpecialization"),
     });
   };
   const clearSelectedDoctor = () => {

@@ -25,8 +25,16 @@ export class UserProfileService implements IUserProfileService {
     });
 
     if (!uploadRes.ok) {
-      const errorText = await uploadRes.text();
-      throw new Error('Failed to upload: ' + errorText);
+      let errorCode = 'UPLOAD_FAILED';
+      try {
+        const payload = await uploadRes.json();
+        if (payload?.error) {
+          errorCode = String(payload.error);
+        }
+      } catch {
+        // ignore
+      }
+      throw new Error(errorCode);
     }
 
     const { publicUrl } = await uploadRes.json();

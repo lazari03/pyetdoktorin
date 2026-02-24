@@ -4,6 +4,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { createPrescription, listPrescriptionsForRole, updatePrescriptionStatus, getPrescriptionById, type PrescriptionInput } from '@/services/prescriptionsService';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 import { z } from 'zod';
+import { validateBody } from '@/routes/validation';
 
 const router = Router();
 
@@ -20,6 +21,10 @@ const createPrescriptionSchema = z.object({
   doctorName: z.string().optional(),
 }).strict();
 
+const updatePrescriptionStatusSchema = z.object({
+  status: z.string().min(1),
+});
+
 router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
   const prescriptions = await listPrescriptionsForRole(user.uid, user.role);
@@ -28,14 +33,9 @@ router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
 
 router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
-  const parsed = createPrescriptionSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid payload', issues: parsed.error.issues });
-  }
-  const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, signatureDataUrl, doctorName } = parsed.data;
-  if (!patientId || !patientName || !Array.isArray(medicines) || medicines.length === 0) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+  const payload = validateBody(res, createPrescriptionSchema, req.body, 'INVALID_PAYLOAD');
+  if (!payload) return;
+  const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, signatureDataUrl, doctorName } = payload;
   const [doctorProfile, patientProfile, pharmacyProfile] = await Promise.all([
     getUserProfile(user.uid),
     getUserProfile(patientId),
@@ -63,10 +63,9 @@ router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedReques
 
 router.patch('/:id/status', requireAuth([UserRole.Pharmacy, UserRole.Doctor, UserRole.Admin]), async (req, res) => {
   const { id } = req.params as { id: string };
-  const { status } = req.body || {};
-  if (!status) {
-    return res.status(400).json({ error: 'Missing status' });
-  }
+  const payload = validateBody(res, updatePrescriptionStatusSchema, req.body, 'MISSING_STATUS');
+  if (!payload) return;
+  const { status } = payload;
   const user = (req as AuthenticatedRequest).user!;
   const prescription = await getPrescriptionById(id);
   if (!prescription) {

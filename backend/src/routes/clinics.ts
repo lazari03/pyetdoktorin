@@ -1,12 +1,28 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { clinicsCatalog } from '@/data/clinics';
 import { createClinicBooking, listBookingsByClinic, listBookingsByPatient, listAllBookings, updateClinicBookingStatus, getClinicBookingById } from '@/services/clinicBookingsService';
 import { UserRole } from '@/domain/entities/UserRole';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
+import { validateBody } from '@/routes/validation';
 
 const router = Router();
+
+const createBookingSchema = z.object({
+  clinicId: z.string().min(1),
+  clinicName: z.string().min(1),
+  note: z.string().min(1),
+  preferredDate: z.string().optional(),
+  patientName: z.string().optional(),
+  patientEmail: z.string().optional(),
+  patientPhone: z.string().optional(),
+});
+
+const updateBookingStatusSchema = z.object({
+  status: z.string().min(1),
+});
 
 router.get('/catalog', (_req, res) => {
   res.json({ items: clinicsCatalog });
@@ -61,21 +77,20 @@ router.get('/bookings', requireAuth(), async (req: AuthenticatedRequest, res) =>
 
 router.post('/bookings', requireAuth([UserRole.Patient]), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
-  const { clinicId, clinicName, note, preferredDate } = req.body || {};
-  if (!clinicId || !clinicName || !note) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+  const payload = validateBody(res, createBookingSchema, req.body, 'MISSING_REQUIRED_FIELDS');
+  if (!payload) return;
+  const { clinicId, clinicName, note, preferredDate, patientName, patientEmail, patientPhone } = payload;
   const patientProfile = await getUserProfile(user.uid);
-  const patientName = buildDisplayName(patientProfile, req.body.patientName || 'Patient');
-  const patientEmail = patientProfile?.email ?? req.body.patientEmail ?? '';
-  const patientPhone = patientProfile?.phone ?? req.body.patientPhone;
+  const displayName = buildDisplayName(patientProfile, patientName || 'Patient');
+  const displayEmail = patientProfile?.email ?? patientEmail ?? '';
+  const displayPhone = patientProfile?.phone ?? patientPhone;
   const booking = await createClinicBooking({
     clinicId,
     clinicName,
     patientId: user.uid,
-    patientName,
-    patientEmail,
-    patientPhone,
+    patientName: displayName,
+    patientEmail: displayEmail,
+    patientPhone: displayPhone,
     note,
     preferredDate,
   });
@@ -84,10 +99,9 @@ router.post('/bookings', requireAuth([UserRole.Patient]), async (req: Authentica
 
 router.patch('/bookings/:id/status', requireAuth([UserRole.Admin, UserRole.Clinic]), async (req, res) => {
   const { id } = req.params as { id: string };
-  const { status } = req.body || {};
-  if (!status) {
-    return res.status(400).json({ error: 'Missing status' });
-  }
+  const payload = validateBody(res, updateBookingStatusSchema, req.body, 'MISSING_STATUS');
+  if (!payload) return;
+  const { status } = payload;
   const user = (req as AuthenticatedRequest).user!;
   const booking = await getClinicBookingById(id);
   if (!booking) {

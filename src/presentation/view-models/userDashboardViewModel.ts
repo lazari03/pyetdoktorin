@@ -20,8 +20,6 @@ export type DashboardUserContext = {
 export function useDashboardViewModel(auth: DashboardUserContext) {
   const { userId, role, authLoading } = auth;
     const {
-        totalAppointments,
-        fetchAppointments,
         activeFilter,
         setActiveFilter,
         showRedirecting,
@@ -30,7 +28,6 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
     const {
         appointments,
         isAppointmentPast,
-        fetchAppointments: fetchAllAppointments,
         subscribeAppointments,
     } = useAppointmentStore();
     const { handleJoinCall: baseHandleJoinCall, handlePayNow } =
@@ -42,7 +39,7 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
-    const fetchAll = async () => {
+    const fetchProfileStatus = async () => {
       try {
         if (userId && role) {
           setProfileIncomplete(
@@ -52,28 +49,17 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
               checkProfileCompleteUseCase
             )
           );
-          await Promise.all([
-            fetchAppointments(role),
-            fetchAllAppointments(role),
-          ]);
         }
       } finally {
         setLoading(false);
       }
     };
     if (!authLoading) {
-      fetchAll();
+      fetchProfileStatus();
       timeout = setTimeout(() => setLoading(false), 5000);
     }
     return () => timeout && clearTimeout(timeout);
-  }, [
-    userId,
-    role,
-    fetchAppointments,
-    fetchAllAppointments,
-    authLoading,
-    checkProfileCompleteUseCase,
-  ]);
+  }, [userId, role, authLoading, checkProfileCompleteUseCase]);
 
   useEffect(() => {
     if (!role || !userId) return;
@@ -96,12 +82,13 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
       return appointments;
   }
 }, [appointments, activeFilter, isAppointmentPast]);
+
+  const totalAppointments = appointments.length;
     
   return {
     userId,
     role,
     authLoading,
-    totalAppointments,
     appointments,
     activeFilter,
     setActiveFilter,
@@ -114,8 +101,7 @@ export function useDashboardViewModel(auth: DashboardUserContext) {
     setProfileIncomplete,
     loading,
     setLoading,
-    fetchAppointments,
-    fetchAllAppointments,
+    totalAppointments,
     filteredAppointments,
   };
 
