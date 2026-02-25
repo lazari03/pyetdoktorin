@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useDI } from "@/context/DIContext";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import Image from "next/image";
-import { fetchPrescriptions } from '@/network/prescriptions';
 import { UserRole } from "@/domain/entities/UserRole";
+import type { ReciepePayload } from "@/application/ports/IReciepeService";
 
 type Reciepe = {
   id: string;
@@ -23,6 +24,7 @@ type Reciepe = {
 export default function PatientReciepesPage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
+  const { getReciepesByPatientUseCase } = useDI();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
 
@@ -30,17 +32,16 @@ export default function PatientReciepesPage() {
     const load = async () => {
       if (!user?.uid) return;
       try {
-        const response = await fetchPrescriptions();
-        const mapped = (response.items || [])
-          .filter((r) => r.patientId === user.uid)
-          .map((r) => ({
-            id: r.id || (r.patientId + r.createdAt),
+        const response = await getReciepesByPatientUseCase.execute(user.uid);
+        const mapped = (response || [])
+          .map((r: ReciepePayload) => ({
+            id: r.id || (r.patientId + String(r.createdAt ?? "")),
             doctor: r.doctorName || "",
             title: r.title || t("reciepeTitleDoctor") || "Reciepe",
             medicines: Array.isArray(r.medicines) ? r.medicines.join(', ') : String(r.medicines ?? ''),
             dosage: r.dosage || "",
             notes: r.notes,
-            date: new Date(r.createdAt).toISOString().split("T")[0],
+            date: new Date(r.createdAt ?? Date.now()).toISOString().split("T")[0],
             status: r.status || "pending",
             signatureDataUrl: r.signatureDataUrl,
           }));
@@ -51,7 +52,7 @@ export default function PatientReciepesPage() {
       }
     };
     load();
-  }, [user?.uid, t]);
+  }, [user?.uid, t, getReciepesByPatientUseCase]);
 
   if (role !== UserRole.Patient) {
     return <RedirectingModal show />;

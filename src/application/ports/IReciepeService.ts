@@ -1,27 +1,23 @@
-import type { EncryptedPayload } from "@/presentation/utils/crypto";
-
 export type ReciepePayload = {
   id?: string;
   patientId: string;
   patientName: string;
-  pharmacyId: string;
-  pharmacyName: string;
-  doctorId: string;
+  pharmacyId?: string;
+  pharmacyName?: string;
+  doctorId?: string;
   doctorName?: string;
-  title: string;
-  medicines: string;
+  title?: string;
+  medicines: string[];
   dosage: string;
   notes?: string;
   status?: "pending" | "accepted" | "rejected";
-  createdAt: string; // ISO
+  createdAt?: number;
   signatureDataUrl?: string;
-  encryptedSignature?: EncryptedPayload;
-  encryptedNotes?: EncryptedPayload;
-  encrypted?: boolean;
+  statusUpdatedAt?: number;
 };
 
 export interface IReciepeService {
-  createReciepe(data: ReciepePayload): Promise<string>;
+  createReciepe(data: ReciepePayload): Promise<ReciepePayload>;
   listByDoctor(doctorId: string): Promise<ReciepePayload[]>;
   listByPatient(patientId: string): Promise<ReciepePayload[]>;
   listByPharmacy(pharmacyId: string): Promise<ReciepePayload[]>;

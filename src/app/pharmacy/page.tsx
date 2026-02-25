@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
+import { useDI } from "@/context/DIContext";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
-import { fetchPrescriptions, updatePrescriptionStatus } from '@/network/prescriptions';
 import { UserRole } from "@/domain/entities/UserRole";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
+import type { ReciepePayload } from "@/application/ports/IReciepeService";
 
 type PharmacyNotification = {
   id: string;
@@ -31,6 +32,7 @@ type PharmacyReciepe = {
 export default function PharmacyDashboardPage() {
   const { role, user } = useAuth();
   const { t } = useTranslation();
+  const { getReciepesByPharmacyUseCase, updateReciepeStatusUseCase } = useDI();
   const [reciepes, setReciepes] = useState<PharmacyReciepe[]>([]);
 
   const notifications: PharmacyNotification[] = useMemo(() => {
@@ -51,17 +53,16 @@ export default function PharmacyDashboardPage() {
     const load = async () => {
       if (!user?.uid) return;
       try {
-        const response = await fetchPrescriptions();
-        const mapped = (response.items || [])
-          .filter((r) => (!r.pharmacyId || !user.uid) ? true : r.pharmacyId === user.uid)
-          .map((r) => ({
-            id: r.id || `${r.pharmacyId ?? ''}${r.createdAt}`,
+        const response = await getReciepesByPharmacyUseCase.execute(user.uid);
+        const mapped = (response || [])
+          .map((r: ReciepePayload) => ({
+            id: r.id || `${r.pharmacyId ?? ''}${r.createdAt ?? ''}`,
             patient: r.patientName,
             doctor: r.doctorName || "",
             title: r.title || t("reciepeTitleDoctor") || "Reciepe",
             medicines: Array.isArray(r.medicines) ? r.medicines.join(', ') : String(r.medicines ?? ''),
             dosage: r.dosage || "",
-            createdAt: new Date(r.createdAt).toISOString().split("T")[0],
+            createdAt: new Date(r.createdAt ?? Date.now()).toISOString().split("T")[0],
             status: (r.status as PharmacyReciepe["status"]) || "pending",
             signatureDataUrl: r.signatureDataUrl,
           }));
@@ -71,7 +72,7 @@ export default function PharmacyDashboardPage() {
       }
     };
     load();
-  }, [user?.uid, t]);
+  }, [user?.uid, t, getReciepesByPharmacyUseCase]);
 
   if (role !== UserRole.Pharmacy) return <RedirectingModal show />;
 
@@ -80,7 +81,7 @@ export default function PharmacyDashboardPage() {
 
   const markReciepe = async (id: string, status: "accepted" | "rejected") => {
     try {
-      await updatePrescriptionStatus(id, status);
+      await updateReciepeStatusUseCase.execute(id, status);
       setReciepes((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
       trackAnalyticsEvent('prescription_status_updated', { prescriptionId: id, status });
     } catch (error) {

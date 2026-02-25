@@ -63,8 +63,23 @@ router.get('/', requireAuth([UserRole.Admin, UserRole.Doctor, UserRole.Pharmacy]
       return res.status(403).json({ error: 'Forbidden' });
     }
   }
-  const snapshot = await admin.firestore().collection('users').get();
-  let users = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Array<{ id: string } & Record<string, unknown>>;
+  const collectionRef = admin.firestore().collection('users');
+  let users: Array<{ id: string } & Record<string, unknown>> = [];
+  let total = 0;
+  if (roleFilter && !search) {
+    const totalSnapshot = await collectionRef.where('role', '==', roleFilter).get();
+    total = totalSnapshot.size;
+    const snapshot = await collectionRef
+      .where('role', '==', roleFilter)
+      .offset(page * pageSize)
+      .limit(pageSize)
+      .get();
+    users = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Array<{ id: string } & Record<string, unknown>>;
+  } else {
+    const snapshot = await collectionRef.get();
+    users = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Array<{ id: string } & Record<string, unknown>>;
+    total = users.length;
+  }
   if (roleFilter) {
     users = users.filter((user) => String(user.role || '').toLowerCase() === roleFilter);
   }
@@ -85,9 +100,8 @@ router.get('/', requireAuth([UserRole.Admin, UserRole.Doctor, UserRole.Pharmacy]
       pharmacyName: user.pharmacyName,
     }));
   }
-  const total = users.length;
   const start = page * pageSize;
-  const items = users.slice(start, start + pageSize);
+  const items = roleFilter && !search ? users : users.slice(start, start + pageSize);
   res.json({ items, total, page, pageSize });
 });
 

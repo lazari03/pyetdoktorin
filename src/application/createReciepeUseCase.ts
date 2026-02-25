@@ -7,15 +7,16 @@ export class CreateReciepeUseCase {
     private analytics?: IAnalyticsService
   ) {}
   
-  async execute(payload: ReciepePayload): Promise<string> {
-    const id = await this.service.createReciepe(payload);
+  async execute(payload: ReciepePayload): Promise<ReciepePayload> {
+    const created = await this.service.createReciepe(payload);
     
-    this.analytics?.track('prescription_created', {
-      doctorId: payload.doctorId,
+    const meta: Record<string, string | number | boolean> = {
       patientId: payload.patientId,
-      pharmacyId: payload.pharmacyId,
-    });
+    };
+    if (payload.doctorId) meta.doctorId = payload.doctorId;
+    if (payload.pharmacyId) meta.pharmacyId = payload.pharmacyId;
+    this.analytics?.track('prescription_created', meta);
     
-    return id;
+    return created;
   }
 }

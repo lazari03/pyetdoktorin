@@ -25,6 +25,8 @@ const updatePrescriptionStatusSchema = z.object({
   status: z.string().min(1),
 });
 
+const REAUTH_WINDOW_MS = 5 * 60 * 1000;
+
 router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
   const prescriptions = await listPrescriptionsForRole(user.uid, user.role);
@@ -33,6 +35,10 @@ router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
 
 router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
+  const authTime = user.authTime ?? 0;
+  if (!authTime || Date.now() - authTime > REAUTH_WINDOW_MS) {
+    return res.status(401).json({ error: 'REAUTH_REQUIRED' });
+  }
   const requestPayload = validateBody(res, createPrescriptionSchema, req.body, 'INVALID_PAYLOAD');
   if (!requestPayload) return;
   const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, doctorName } = requestPayload;

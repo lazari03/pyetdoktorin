@@ -6,7 +6,8 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { backendFetch } from '@/network/backendClient';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
-import { fetchPrescriptions } from '@/network/prescriptions';
+import { useDI } from '@/context/DIContext';
+import type { ReciepePayload } from '@/application/ports/IReciepeService';
 
 interface AppointmentDetail {
   id: string;
@@ -29,6 +30,11 @@ interface PrescriptionNotification {
 export function useNotificationsLogic(nav: NavigationCoordinator) {
   const { appointments, loading: isLoading, error, fetchAppointments } = useAppointmentStore();
   const { user } = useAuth();
+  const {
+    getReciepesByDoctorUseCase,
+    getReciepesByPatientUseCase,
+    getReciepesByPharmacyUseCase,
+  } = useDI();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [appointmentDetails, setAppointmentDetails] = useState<AppointmentDetail[]>([]);
   const [pendingAppointments, setPendingAppointments] = useState<
@@ -75,18 +81,26 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     const fetchPrescriptionUpdates = async () => {
       if (!user?.uid) return;
       try {
-        const response = await fetchPrescriptions();
-        const mapped = (response.items || [])
+        let reciepes: ReciepePayload[] = [];
+        if (userRole === UserRole.Doctor) {
+          reciepes = await getReciepesByDoctorUseCase.execute(user.uid);
+        } else if (userRole === UserRole.Patient) {
+          reciepes = await getReciepesByPatientUseCase.execute(user.uid);
+        } else if (userRole === UserRole.Pharmacy) {
+          reciepes = await getReciepesByPharmacyUseCase.execute(user.uid);
+        }
+        const mapped = (reciepes || [])
           .filter((p) => p.status && p.status !== 'pending')
           .map((p) => ({
-            id: p.id,
+            id: p.id || '',
             title: p.title || '',
             patientName: p.patientName,
             doctorName: p.doctorName,
             pharmacyName: p.pharmacyName,
-            status: p.status,
+            status: p.status || 'pending',
             updatedAt: p.statusUpdatedAt ?? p.createdAt ?? 0,
           }))
+          .filter((p) => p.id)
           .sort((a, b) => b.updatedAt - a.updatedAt);
         setPrescriptionNotifications(mapped);
       } catch {
@@ -96,7 +110,7 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     if (userRole) {
       fetchPrescriptionUpdates();
     }
-  }, [user?.uid, userRole]);
+  }, [user?.uid, userRole, getReciepesByDoctorUseCase, getReciepesByPatientUseCase, getReciepesByPharmacyUseCase]);
 
   useEffect(() => {
     const fetchRelevantAppointments = async () => {

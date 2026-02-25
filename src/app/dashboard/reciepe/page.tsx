@@ -7,8 +7,8 @@ import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import Modal from "@/presentation/components/Modal/Modal";
 import { fetchAdminUsers } from '@/network/adminUsers';
-import { createPrescription, fetchPrescriptions } from '@/network/prescriptions';
-import type { Prescription } from '@/network/prescriptions';
+import { BackendError } from '@/network/backendClient';
+import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import { UserRole } from '@/domain/entities/UserRole';
 import Link from "next/link";
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential } from "firebase/auth";
@@ -31,7 +31,7 @@ type Reciepe = {
 export default function DoctorReciepePage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const { getUserProfileUseCase } = useDI();
+  const { getUserProfileUseCase, createReciepeUseCase, getReciepesByDoctorUseCase } = useDI();
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [pharmacies, setPharmacies] = useState<{ id: string; name: string }[]>([]);
@@ -53,8 +53,8 @@ export default function DoctorReciepePage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showIssuedModal, setShowIssuedModal] = useState(false);
-  const toReciepe = useCallback((p: Prescription): Reciepe => ({
-    id: p.id,
+  const toReciepe = useCallback((p: ReciepePayload): Reciepe => ({
+    id: p.id || "",
     patientId: p.patientId,
     patient: p.patientName,
     pharmacyId: p.pharmacyId,
@@ -63,7 +63,7 @@ export default function DoctorReciepePage() {
     medicines: Array.isArray(p.medicines) ? p.medicines.join(', ') : String(p.medicines ?? ''),
     dosage: p.dosage || "",
     notes: p.notes,
-    date: new Date(p.createdAt).toISOString().split("T")[0],
+    date: new Date(p.createdAt ?? Date.now()).toISOString().split("T")[0],
     status: p.status,
     signatureDataUrl: p.signatureDataUrl,
   }), [t]);
@@ -174,11 +174,12 @@ export default function DoctorReciepePage() {
     try {
       setIsSubmitting(true);
       await reauthenticate(password);
-      const created = await createPrescription({
+      const created = await createReciepeUseCase.execute({
         patientId: form.patientId,
         patientName: form.patient,
         pharmacyId: form.pharmacyId,
         pharmacyName: form.pharmacy || '',
+        doctorId: user?.uid,
         doctorName: user?.name || '',
         medicines: medicineList,
         dosage: form.dosage,
@@ -198,6 +199,10 @@ export default function DoctorReciepePage() {
         setSubmitError(t("invalidPassword") || "Incorrect password. Please try again.");
       } else if (code === "auth/too-many-requests") {
         setSubmitError(t("tooManyAttempts") || "Too many attempts. Please wait and try again.");
+      } else if (error instanceof BackendError && error.code === "REAUTH_REQUIRED") {
+        setSubmitError(t("confirmPasswordRequired") || "Please confirm your password to issue a reciepe.");
+      } else if (error instanceof BackendError && error.code === "MISSING_SIGNATURE") {
+        setSubmitError(t("missingSignatureProfile") || "Please add your signature in your profile before issuing a reciepe.");
       } else {
         const message = error instanceof Error ? error.message : (t("unknownError") || "Failed to issue prescription.");
         setSubmitError(message);
@@ -209,31 +214,84 @@ export default function DoctorReciepePage() {
 
   const downloadPdf = (r: Reciepe) => {
     const serial = r.id;
-    const content = `
-      <div style="font-family: Arial, sans-serif; padding: 24px; max-width: 700px; margin: 0 auto; color: #1f2937;">
-        <h2 style="margin: 0 0 12px; color: #4c1d95;">Reciepe • ${serial}</h2>
-        <p style="margin: 4px 0; font-size: 13px;">Issued by pyetdoktorin.al</p>
-        <p style="margin: 4px 0; font-size: 13px;">Status: ${r.status ?? "pending"}</p>
-        <p style="margin: 4px 0; font-size: 13px;">Date: ${r.date}</p>
-        <hr style="margin: 16px 0;" />
-        <p style="margin: 4px 0; font-size: 14px;"><strong>Patient:</strong> ${r.patient}</p>
-        <p style="margin: 4px 0; font-size: 14px;"><strong>Pharmacy:</strong> ${r.pharmacy ?? "-"}</p>
-        <p style="margin: 4px 0; font-size: 14px;"><strong>Title:</strong> ${r.title}</p>
-        <p style="margin: 4px 0; font-size: 14px;"><strong>Medicines:</strong> ${r.medicines}</p>
-        <p style="margin: 4px 0; font-size: 14px;"><strong>Dosage:</strong> ${r.dosage}</p>
-        ${r.notes ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Notes:</strong> ${r.notes}</p>` : ""}
-        ${
-          r.signatureDataUrl
-            ? `<div style="margin-top:16px;"><p style="margin:0 0 6px; font-size: 14px;">Doctor signature</p><img src="${r.signatureDataUrl}" style="max-width:300px;border:1px solid #e5e7eb;"/></div>`
-            : ""
-        }
-        <p style="margin-top:24px; font-size:12px; color:#6b7280;">pyetdoktorin.al • Secure prescription</p>
-      </div>
-    `;
     const w = window.open("", "_blank", "width=800,height=900");
     if (!w) return;
-    w.document.write(content);
-    w.document.close();
+    const doc = w.document;
+    doc.open();
+    doc.write("<!doctype html><html><head><title>Reciepe</title></head><body></body></html>");
+    doc.close();
+    const container = doc.createElement("div");
+    container.style.fontFamily = "Arial, sans-serif";
+    container.style.padding = "24px";
+    container.style.maxWidth = "700px";
+    container.style.margin = "0 auto";
+    container.style.color = "#1f2937";
+
+    const heading = doc.createElement("h2");
+    heading.style.margin = "0 0 12px";
+    heading.style.color = "#4c1d95";
+    heading.textContent = `Reciepe • ${serial}`;
+    container.appendChild(heading);
+
+    const meta = [
+      `Issued by pyetdoktorin.al`,
+      `Status: ${r.status ?? "pending"}`,
+      `Date: ${r.date}`,
+    ];
+    meta.forEach((text) => {
+      const p = doc.createElement("p");
+      p.style.margin = "4px 0";
+      p.style.fontSize = "13px";
+      p.textContent = text;
+      container.appendChild(p);
+    });
+
+    const hr = doc.createElement("hr");
+    hr.style.margin = "16px 0";
+    container.appendChild(hr);
+
+    const addRow = (label: string, value: string) => {
+      const p = doc.createElement("p");
+      p.style.margin = "4px 0";
+      p.style.fontSize = "14px";
+      const strong = doc.createElement("strong");
+      strong.textContent = `${label}: `;
+      p.appendChild(strong);
+      p.appendChild(doc.createTextNode(value));
+      container.appendChild(p);
+    };
+
+    addRow("Patient", r.patient);
+    addRow("Pharmacy", r.pharmacy ?? "-");
+    addRow("Title", r.title);
+    addRow("Medicines", r.medicines);
+    addRow("Dosage", r.dosage);
+    if (r.notes) addRow("Notes", r.notes);
+
+    if (r.signatureDataUrl) {
+      const sigWrap = doc.createElement("div");
+      sigWrap.style.marginTop = "16px";
+      const label = doc.createElement("p");
+      label.style.margin = "0 0 6px";
+      label.style.fontSize = "14px";
+      label.textContent = "Doctor signature";
+      const img = doc.createElement("img");
+      img.src = r.signatureDataUrl;
+      img.style.maxWidth = "300px";
+      img.style.border = "1px solid #e5e7eb";
+      sigWrap.appendChild(label);
+      sigWrap.appendChild(img);
+      container.appendChild(sigWrap);
+    }
+
+    const footer = doc.createElement("p");
+    footer.style.marginTop = "24px";
+    footer.style.fontSize = "12px";
+    footer.style.color = "#6b7280";
+    footer.textContent = "pyetdoktorin.al • Secure prescription";
+    container.appendChild(footer);
+
+    doc.body.appendChild(container);
     w.focus();
     w.print();
   };
@@ -242,15 +300,15 @@ export default function DoctorReciepePage() {
     const loadReciepes = async () => {
       if (!user?.uid) return;
       try {
-        const response = await fetchPrescriptions();
-        const mapped = (response.items || []).map(toReciepe);
+        const response = await getReciepesByDoctorUseCase.execute(user.uid);
+        const mapped = (response || []).map(toReciepe);
         setReciepes(mapped);
       } catch {
         setReciepes([]);
       }
     };
     loadReciepes();
-  }, [user?.uid, toReciepe]);
+  }, [user?.uid, toReciepe, getReciepesByDoctorUseCase]);
 
   if (role !== UserRole.Doctor) {
     return <RedirectingModal show />;

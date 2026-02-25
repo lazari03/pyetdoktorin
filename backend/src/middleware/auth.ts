@@ -6,6 +6,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     uid: string;
     role: UserRole;
+    authTime?: number;
   };
 }
 
@@ -38,7 +39,8 @@ export function requireAuth(requiredRoles?: UserRole[]) {
           });
         }
       }
-      req.user = { uid: decoded.uid, role };
+      const authTime = typeof decoded.auth_time === 'number' ? decoded.auth_time * 1000 : undefined;
+      req.user = { uid: decoded.uid, role, authTime };
       if (requiredRoles && !requiredRoles.includes(role)) {
         return res.status(403).json({ error: 'Forbidden' });
       }

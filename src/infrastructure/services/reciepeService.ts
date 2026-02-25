@@ -1,47 +1,67 @@
 import type { IReciepeService, ReciepePayload } from "@/application/ports/IReciepeService";
-import { db } from "@/config/firebaseconfig";
+import type { Prescription } from "@/network/prescriptions";
+import { createPrescription, fetchPrescriptions, updatePrescriptionStatus } from "@/network/prescriptions";
+
+const mapPrescription = (p: Prescription): ReciepePayload => ({
+  id: p.id,
+  patientId: p.patientId,
+  patientName: p.patientName,
+  pharmacyId: p.pharmacyId,
+  pharmacyName: p.pharmacyName,
+  doctorId: p.doctorId,
+  doctorName: p.doctorName,
+  title: p.title,
+  medicines: Array.isArray(p.medicines) ? p.medicines : [],
+  dosage: p.dosage || "",
+  notes: p.notes,
+  status: p.status,
+  createdAt: p.createdAt,
+  signatureDataUrl: p.signatureDataUrl,
+  statusUpdatedAt: p.statusUpdatedAt,
+});
 
 export class ReciepeService implements IReciepeService {
-  async createReciepe(data: ReciepePayload): Promise<string> {
-    const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
-    const ref = await addDoc(collection(db, "recipe"), {
-      ...data,
-      status: data.status || "pending",
-      createdAt: data.createdAt || new Date().toISOString(),
-      createdAtTs: serverTimestamp(),
+  async createReciepe(data: ReciepePayload): Promise<ReciepePayload> {
+    const created = await createPrescription({
+      patientId: data.patientId,
+      patientName: data.patientName,
+      pharmacyId: data.pharmacyId,
+      pharmacyName: data.pharmacyName,
+      doctorName: data.doctorName,
+      medicines: data.medicines,
+      dosage: data.dosage,
+      notes: data.notes,
+      title: data.title,
+      signatureDataUrl: data.signatureDataUrl,
     });
-    return ref.id;
+    return mapPrescription(created);
   }
 
   async listByDoctor(doctorId: string): Promise<ReciepePayload[]> {
-    const { collection, getDocs, query, where } = await import("firebase/firestore");
-    const q = query(collection(db, "recipe"), where("doctorId", "==", doctorId));
-    const snap = await getDocs(q);
-    return snap.docs
-      .map((d) => ({ id: d.id, ...(d.data() as ReciepePayload) }))
-      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    const response = await fetchPrescriptions();
+    return (response.items || [])
+      .filter((p) => p.doctorId === doctorId)
+      .map(mapPrescription)
+      .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
   }
 
   async listByPatient(patientId: string): Promise<ReciepePayload[]> {
-    const { collection, getDocs, query, where } = await import("firebase/firestore");
-    const q = query(collection(db, "recipe"), where("patientId", "==", patientId));
-    const snap = await getDocs(q);
-    return snap.docs
-      .map((d) => ({ id: d.id, ...(d.data() as ReciepePayload) }))
-      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    const response = await fetchPrescriptions();
+    return (response.items || [])
+      .filter((p) => p.patientId === patientId)
+      .map(mapPrescription)
+      .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
   }
 
   async listByPharmacy(pharmacyId: string): Promise<ReciepePayload[]> {
-    const { collection, getDocs, query, where } = await import("firebase/firestore");
-    const q = query(collection(db, "recipe"), where("pharmacyId", "==", pharmacyId));
-    const snap = await getDocs(q);
-    return snap.docs
-      .map((d) => ({ id: d.id, ...(d.data() as ReciepePayload) }))
-      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    const response = await fetchPrescriptions();
+    return (response.items || [])
+      .filter((p) => (p.pharmacyId ?? "") === pharmacyId)
+      .map(mapPrescription)
+      .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
   }
 
   async updateStatus(id: string, status: "accepted" | "rejected"): Promise<void> {
-    const { doc, updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "recipe", id), { status });
+    await updatePrescriptionStatus(id, status);
   }
 }

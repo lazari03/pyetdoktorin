@@ -21,6 +21,11 @@ import { UploadProfilePictureUseCase } from '@/application/uploadProfilePictureU
 import { ResetUserPasswordUseCase } from '@/application/resetUserPasswordUseCase';
 import { GetDoctorProfileUseCase } from '@/application/getDoctorProfileUseCase';
 import { CheckProfileCompleteUseCase } from '@/application/checkProfileCompleteUseCase';
+import { CreateReciepeUseCase } from '@/application/createReciepeUseCase';
+import { GetReciepesByDoctorUseCase } from '@/application/getReciepesByDoctorUseCase';
+import { GetReciepesByPatientUseCase } from '@/application/getReciepesByPatientUseCase';
+import { GetReciepesByPharmacyUseCase } from '@/application/getReciepesByPharmacyUseCase';
+import { UpdateReciepeStatusUseCase } from '@/application/updateReciepeStatusUseCase';
 import { FirebaseAppointmentRepository } from '@/infrastructure/repositories/FirebaseAppointmentRepository';
 import { FirebaseUserRepository } from '@/infrastructure/repositories/FirebaseUserRepository';
 import { FirebaseSessionRepository } from '@/infrastructure/repositories/FirebaseSessionRepository';
@@ -37,6 +42,7 @@ import { RegistrationService } from '@/infrastructure/services/registrationServi
 import { DoctorSearchService } from '@/infrastructure/services/doctorSearchService';
 import { GA4AnalyticsService } from '@/infrastructure/services/analyticsService';
 import { IAnalyticsService } from '@/application/ports/IAnalyticsService';
+import { ReciepeService } from '@/infrastructure/services/reciepeService';
 
 interface DIContextValue {
   fetchAppointmentsUseCase: FetchAppointmentsUseCase;
@@ -60,6 +66,11 @@ interface DIContextValue {
   resetUserPasswordUseCase: ResetUserPasswordUseCase;
   getDoctorProfileUseCase: GetDoctorProfileUseCase;
   checkProfileCompleteUseCase: CheckProfileCompleteUseCase;
+  createReciepeUseCase: CreateReciepeUseCase;
+  getReciepesByDoctorUseCase: GetReciepesByDoctorUseCase;
+  getReciepesByPatientUseCase: GetReciepesByPatientUseCase;
+  getReciepesByPharmacyUseCase: GetReciepesByPharmacyUseCase;
+  updateReciepeStatusUseCase: UpdateReciepeStatusUseCase;
 }
 
 const DIContext = createContext<DIContextValue | undefined>(undefined);
@@ -80,6 +91,7 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const registrationService = new RegistrationService();
   const doctorSearchService = new DoctorSearchService();
   const analyticsService: IAnalyticsService = new GA4AnalyticsService();
+  const reciepeService = new ReciepeService();
 
   const fetchAppointmentsUseCase = new FetchAppointmentsUseCase(appointmentRepo);
   const setAppointmentPaidUseCase = new SetAppointmentPaidUseCase(appointmentService);
@@ -102,6 +114,11 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const resetUserPasswordUseCase = new ResetUserPasswordUseCase(authService);
   const getDoctorProfileUseCase = new GetDoctorProfileUseCase(doctorProfileService);
   const checkProfileCompleteUseCase = new CheckProfileCompleteUseCase(userRepo);
+  const createReciepeUseCase = new CreateReciepeUseCase(reciepeService, analyticsService);
+  const getReciepesByDoctorUseCase = new GetReciepesByDoctorUseCase(reciepeService);
+  const getReciepesByPatientUseCase = new GetReciepesByPatientUseCase(reciepeService);
+  const getReciepesByPharmacyUseCase = new GetReciepesByPharmacyUseCase(reciepeService);
+  const updateReciepeStatusUseCase = new UpdateReciepeStatusUseCase(reciepeService);
 
   return (
     <DIContext.Provider
@@ -127,6 +144,11 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         registerUserUseCase,
         fetchDoctorsUseCase,
         checkProfileCompleteUseCase,
+        createReciepeUseCase,
+        getReciepesByDoctorUseCase,
+        getReciepesByPatientUseCase,
+        getReciepesByPharmacyUseCase,
+        updateReciepeStatusUseCase,
       }}
     >
       {children}
