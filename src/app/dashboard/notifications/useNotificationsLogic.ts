@@ -6,6 +6,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { backendFetch } from '@/network/backendClient';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
+import { fetchPrescriptions } from '@/network/prescriptions';
 
 interface AppointmentDetail {
   id: string;
@@ -13,6 +14,16 @@ interface AppointmentDetail {
   doctorName: string | null;
   preferredDate: string;
   notes: string;
+}
+
+interface PrescriptionNotification {
+  id: string;
+  title: string;
+  patientName?: string;
+  doctorName?: string;
+  pharmacyName?: string;
+  status: string;
+  updatedAt: number;
 }
 
 export function useNotificationsLogic(nav: NavigationCoordinator) {
@@ -23,6 +34,7 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
   const [pendingAppointments, setPendingAppointments] = useState<
     (AppointmentDetail & { status?: string; dismissedBy?: Record<string, boolean> })[]
   >([]);
+  const [prescriptionNotifications, setPrescriptionNotifications] = useState<PrescriptionNotification[]>([]);
 
   const didInitRef = useRef(false);
   useEffect(() => {
@@ -58,6 +70,33 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     };
     fetchDetails();
   }, [appointments]);
+
+  useEffect(() => {
+    const fetchPrescriptionUpdates = async () => {
+      if (!user?.uid) return;
+      try {
+        const response = await fetchPrescriptions();
+        const mapped = (response.items || [])
+          .filter((p) => p.status && p.status !== 'pending')
+          .map((p) => ({
+            id: p.id,
+            title: p.title || '',
+            patientName: p.patientName,
+            doctorName: p.doctorName,
+            pharmacyName: p.pharmacyName,
+            status: p.status,
+            updatedAt: p.statusUpdatedAt ?? p.createdAt ?? 0,
+          }))
+          .sort((a, b) => b.updatedAt - a.updatedAt);
+        setPrescriptionNotifications(mapped);
+      } catch {
+        setPrescriptionNotifications([]);
+      }
+    };
+    if (userRole) {
+      fetchPrescriptionUpdates();
+    }
+  }, [user?.uid, userRole]);
 
   useEffect(() => {
     const fetchRelevantAppointments = async () => {
@@ -115,6 +154,7 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     error,
     userRole,
     pendingAppointments,
+    prescriptionNotifications,
     handleDismissNotification,
     handleAppointmentAction,
   };

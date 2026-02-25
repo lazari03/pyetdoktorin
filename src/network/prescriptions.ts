@@ -17,6 +17,7 @@ export interface Prescription {
   signatureDataUrl?: string;
   status: PrescriptionStatus;
   createdAt: number;
+  statusUpdatedAt?: number;
 }
 
 export interface PrescriptionListResponse {

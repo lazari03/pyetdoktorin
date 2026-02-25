@@ -19,6 +19,7 @@ export default function MyProfilePage() {
     handlePasswordReset,
     handleSubmit,
     handleProfilePictureChange,
+    handleSignatureChange,
   } = useMyProfile();
 
   if (authLoading || isFetching || !role) {
@@ -38,6 +39,7 @@ export default function MyProfilePage() {
       handleSubmit={handleSubmit}
       handleProfilePictureChange={handleProfilePictureChange}
       handlePasswordReset={handlePasswordReset}
+      handleSignatureChange={handleSignatureChange}
     />
   );
 }

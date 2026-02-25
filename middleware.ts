@@ -12,6 +12,18 @@ export function middleware(req: NextRequest) {
   const idleMs = 30 * 60 * 1000; // 30 minutes
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
+  const isDoctorPublicPath = url.pathname === '/doctor' || url.pathname.startsWith('/doctor/');
+
+  // Redirect authenticated users from public doctor URLs to the dashboard profile view
+  if (hasSession && isDoctorPublicPath) {
+    if (url.pathname === '/doctor' || url.pathname === '/doctor/') {
+      url.pathname = '/dashboard';
+    } else {
+      url.pathname = `/dashboard${url.pathname}`;
+    }
+    return NextResponse.redirect(url);
+  }
+
   // Redirect authenticated users away from auth pages
   // Admins should land on /admin, others on /dashboard
   // Require both auth token AND role cookie to reduce false positives from stale tokens
@@ -110,5 +122,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/clinic/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/clinic/:path*', '/doctor/:path*', '/login', '/register'],
 };

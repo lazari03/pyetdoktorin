@@ -197,6 +197,15 @@ function MobileTopBar({
       >
         {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
       </button>
+      <div className="flex-1 flex justify-center">
+        <Link
+          href="/dashboard"
+          className="text-sm font-semibold tracking-[0.2em] text-purple-700 uppercase"
+          aria-label="pyetdoktorin"
+        >
+          pyetdoktorin
+        </Link>
+      </div>
       <div className="relative z-[200]" ref={profileMenuRef}>
         <button
           onClick={onToggleProfile}
@@ -278,6 +287,13 @@ function MobileMenu({
   return (
     <div className={`md:hidden fixed inset-0 top-14 left-0 right-0 bg-white ${z.navbar}`}>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] px-6">
+        <Link
+          href="/dashboard"
+          className="mb-6 text-sm font-semibold tracking-[0.2em] text-purple-700 uppercase"
+          aria-label="pyetdoktorin"
+        >
+          pyetdoktorin
+        </Link>
         <nav className="flex flex-col items-center w-full max-w-sm space-y-2">
           {items.map((item) => {
             const active = activePath === item.href;
@@ -328,7 +344,13 @@ function DesktopTopBar({
   return (
     <header className="hidden md:block">
       <div className="flex items-center justify-between px-10 py-6 relative shadow-lg bg-gradient-to-r from-purple-700 via-purple-600 to-purple-500 text-white rounded-b-2xl border-b border-purple-400/40">
-        <div className="w-24" />
+        <Link
+          href="/dashboard"
+          className="text-sm font-semibold tracking-[0.22em] uppercase text-white"
+          aria-label="pyetdoktorin"
+        >
+          pyetdoktorin
+        </Link>
         <nav className="flex items-center gap-3 text-sm font-semibold text-white/85">
           {items.map((item) => {
             const active = activePath === item.href;

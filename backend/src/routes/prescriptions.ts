@@ -35,12 +35,16 @@ router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedReques
   const user = req.user!;
   const requestPayload = validateBody(res, createPrescriptionSchema, req.body, 'INVALID_PAYLOAD');
   if (!requestPayload) return;
-  const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, signatureDataUrl, doctorName } = requestPayload;
+  const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, doctorName } = requestPayload;
   const [doctorProfile, patientProfile, pharmacyProfile] = await Promise.all([
     getUserProfile(user.uid),
     getUserProfile(patientId),
     pharmacyId ? getUserProfile(pharmacyId) : Promise.resolve(null),
   ]);
+  const doctorSignature = doctorProfile?.signatureDataUrl;
+  if (!doctorSignature) {
+    return res.status(400).json({ error: 'MISSING_SIGNATURE' });
+  }
   const doctorDisplayName = buildDisplayName(doctorProfile, doctorName || 'Doctor');
   const patientDisplayName = buildDisplayName(patientProfile, patientName || 'Patient');
   const pharmacyDisplayName = pharmacyProfile?.pharmacyName ?? pharmacyName;
@@ -55,7 +59,7 @@ router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedReques
     ...(dosage !== undefined ? { dosage } : {}),
     ...(notes !== undefined ? { notes } : {}),
     ...(title !== undefined ? { title } : {}),
-    ...(signatureDataUrl !== undefined ? { signatureDataUrl } : {}),
+    signatureDataUrl: doctorSignature,
   };
   const prescription = await createPrescription(prescriptionInput);
   res.status(201).json(prescription);

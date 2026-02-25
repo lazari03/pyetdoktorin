@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useDI } from "@/context/DIContext";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
-import { SignaturePad } from "@/presentation/components/SignaturePad";
+import Modal from "@/presentation/components/Modal/Modal";
 import { fetchAdminUsers } from '@/network/adminUsers';
 import { createPrescription, fetchPrescriptions } from '@/network/prescriptions';
 import type { Prescription } from '@/network/prescriptions';
 import { UserRole } from '@/domain/entities/UserRole';
+import Link from "next/link";
+import { EmailAuthProvider, getAuth, reauthenticateWithCredential } from "firebase/auth";
 
 type Reciepe = {
   id: string;
@@ -28,6 +31,7 @@ type Reciepe = {
 export default function DoctorReciepePage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
+  const { getUserProfileUseCase } = useDI();
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [pharmacies, setPharmacies] = useState<{ id: string; name: string }[]>([]);
@@ -43,9 +47,12 @@ export default function DoctorReciepePage() {
   });
   const [search, setSearch] = useState("");
   const [pharmacySearch, setPharmacySearch] = useState("");
-  const [signatureUrl, setSignatureUrl] = useState<string>("");
+  const [savedSignatureUrl, setSavedSignatureUrl] = useState<string>("");
+  const [signatureLoaded, setSignatureLoaded] = useState(false);
+  const [password, setPassword] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showIssuedModal, setShowIssuedModal] = useState(false);
   const toReciepe = useCallback((p: Prescription): Reciepe => ({
     id: p.id,
     patientId: p.patientId,
@@ -93,6 +100,21 @@ export default function DoctorReciepePage() {
     loadPharmacies();
   }, []);
 
+  useEffect(() => {
+    const loadSignature = async () => {
+      if (!user?.uid) return;
+      try {
+        const profile = await getUserProfileUseCase.execute(user.uid);
+        setSavedSignatureUrl(profile?.signatureDataUrl || "");
+      } catch {
+        setSavedSignatureUrl("");
+      } finally {
+        setSignatureLoaded(true);
+      }
+    };
+    loadSignature();
+  }, [user?.uid, getUserProfileUseCase]);
+
   const filteredPatients = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (term.length < 4) return [];
@@ -107,6 +129,21 @@ export default function DoctorReciepePage() {
       .slice(0, 10);
   }, [pharmacies, pharmacySearch]);
 
+  const reauthenticate = async (passwordValue: string) => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error(t("notAuthenticated") || "User not authenticated.");
+    }
+    const email = currentUser.email || user?.email;
+    if (!email) {
+      throw new Error(t("missingEmail") || "Missing email for re-authentication.");
+    }
+    const credential = EmailAuthProvider.credential(email, passwordValue);
+    await reauthenticateWithCredential(currentUser, credential);
+    await currentUser.getIdToken(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
@@ -116,6 +153,14 @@ export default function DoctorReciepePage() {
     }
     if (!form.patient || !form.pharmacy) {
       setSubmitError(t("missingRequiredFields") || "Please select a patient and pharmacy.");
+      return;
+    }
+    if (!savedSignatureUrl) {
+      setSubmitError(t("missingSignatureProfile") || "Please add your signature in your profile before issuing a reciepe.");
+      return;
+    }
+    if (!password) {
+      setSubmitError(t("confirmPasswordRequired") || "Please confirm your password to issue a reciepe.");
       return;
     }
     const medicineList = form.medicines
@@ -128,6 +173,7 @@ export default function DoctorReciepePage() {
     }
     try {
       setIsSubmitting(true);
+      await reauthenticate(password);
       const created = await createPrescription({
         patientId: form.patientId,
         patientName: form.patient,
@@ -138,16 +184,24 @@ export default function DoctorReciepePage() {
         dosage: form.dosage,
         notes: form.notes,
         title: form.title,
-        signatureDataUrl: signatureUrl,
+        signatureDataUrl: savedSignatureUrl,
       });
       setReciepes((prev) => [toReciepe(created), ...prev]);
       setForm({ patientId: '', patient: '', pharmacyId: '', pharmacy: '', title: '', medicines: '', dosage: '', notes: '' });
       setSearch('');
       setPharmacySearch('');
-      setSignatureUrl('');
+      setPassword('');
+      setShowIssuedModal(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : (t("unknownError") || "Failed to issue prescription.");
-      setSubmitError(message);
+      const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
+      if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+        setSubmitError(t("invalidPassword") || "Incorrect password. Please try again.");
+      } else if (code === "auth/too-many-requests") {
+        setSubmitError(t("tooManyAttempts") || "Too many attempts. Please wait and try again.");
+      } else {
+        const message = error instanceof Error ? error.message : (t("unknownError") || "Failed to issue prescription.");
+        setSubmitError(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -204,6 +258,25 @@ export default function DoctorReciepePage() {
 
   return (
     <div className="min-h-screen py-6 px-3">
+      <Modal isOpen={showIssuedModal} onClose={() => setShowIssuedModal(false)}>
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {t("reciepeIssuedTitle") || "Reciepe issued"}
+          </h3>
+          <p className="text-sm text-gray-600">
+            {t("reciepeIssuedBody") || "The reciepe has been issued successfully."}
+          </p>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowIssuedModal(false)}
+              className="inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
+            >
+              {t("close") || "Close"}
+            </button>
+          </div>
+        </div>
+      </Modal>
       <div className="max-w-5xl mx-auto space-y-4">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">{t("secureAccessEyebrow") || "Secure access"}</p>
@@ -387,7 +460,41 @@ export default function DoctorReciepePage() {
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                 />
               </div>
-              <SignaturePad onChange={(dataUrl) => setSignatureUrl(dataUrl)} />
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-gray-700">{t("doctorSignature") || "Doctor signature"}</p>
+                  <Link href="/dashboard/myprofile" className="text-[11px] font-semibold text-purple-600 hover:text-purple-700">
+                    {t("manageSignature") || "Manage signature"}
+                  </Link>
+                </div>
+                {!signatureLoaded ? (
+                  <p className="text-xs text-gray-500">{t("loadingSignature") || "Loading signature..."}</p>
+                ) : savedSignatureUrl ? (
+                  <img
+                    src={savedSignatureUrl}
+                    alt={t("doctorSignature") || "Doctor signature"}
+                    className="max-w-[260px] border border-gray-200 bg-white p-2"
+                  />
+                ) : (
+                  <p className="text-xs text-gray-600">
+                    {t("missingSignatureProfile") || "Please add your signature in your profile before issuing a reciepe."}
+                  </p>
+                )}
+                <p className="text-[11px] text-gray-500">
+                  {t("signatureAppliedOnIssue") || "Signature will be applied after password confirmation."}
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">{t("confirmPassword") || "Confirm password"}</label>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
               <div className="flex justify-end">
                 <button
                   type="submit"

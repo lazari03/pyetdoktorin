@@ -20,6 +20,7 @@ type Props = {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   handleProfilePictureChange?: (file: File) => void;
   handlePasswordReset: () => void;
+  handleSignatureChange?: (dataUrl: string) => void;
 };
 
 export function ProfileLayout(props: Props) {
@@ -36,6 +37,7 @@ export function ProfileLayout(props: Props) {
     handleSubmit,
     handleProfilePictureChange,
     handlePasswordReset,
+    handleSignatureChange,
   } = props;
 
   const handleInput = (
@@ -77,6 +79,7 @@ export function ProfileLayout(props: Props) {
               handleSubmit={handleSubmit}
               onProfilePictureChange={handleProfilePictureChange}
               uploading={uploading}
+              onSignatureChange={handleSignatureChange}
 
             />
           </section>

@@ -15,6 +15,7 @@ function NotificationsPage() {
     error,
     userRole,
     pendingAppointments,
+    prescriptionNotifications,
     handleDismissNotification,
     handleAppointmentAction,
   } = useNotificationsLogic(nav);
@@ -45,7 +46,7 @@ function NotificationsPage() {
     );
   }
 
-  if (pendingAppointments.length === 0) {
+  if (pendingAppointments.length === 0 && prescriptionNotifications.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-gray-500">
         <p className="mb-4">{t('noNewNotifications', 'No new notifications')}</p>
@@ -55,6 +56,13 @@ function NotificationsPage() {
       </div>
     );
   }
+
+  const formatDate = (ts: number) => {
+    if (!ts) return '';
+    const date = new Date(ts);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  };
 
   return (
     <div className="min-h-screen py-8 px-3">
@@ -183,6 +191,56 @@ function NotificationsPage() {
               </button>
             </div>
           )}
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-gray-900">
+              {t('prescriptionUpdates') || 'Prescription updates'}
+            </p>
+            <span className="text-xs text-gray-500">
+              {t('pharmacyNotificationsSubtitle') || 'Orders and prescription updates'}
+            </span>
+          </div>
+          <div className="space-y-3">
+            {prescriptionNotifications.map((item) => {
+              const status = item.status?.toLowerCase();
+              const chip =
+                status === 'accepted'
+                  ? { text: t('accepted'), classes: 'bg-green-50 text-green-700 border border-green-100' }
+                  : status === 'rejected'
+                  ? { text: t('rejected'), classes: 'bg-red-50 text-red-700 border border-red-100' }
+                  : { text: t('pending'), classes: 'bg-amber-50 text-amber-700 border border-amber-100' };
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-2"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {item.title || t('reciepeTitleDoctor') || 'Reciepe'}
+                      </p>
+                      <p className="text-xs text-gray-600 truncate">
+                        {userRole === UserRole.Doctor
+                          ? `${item.patientName || t('patient')} • ${item.pharmacyName || t('pharmacyName') || 'Pharmacy'}`
+                          : `${item.doctorName || t('doctor')} • ${item.pharmacyName || t('pharmacyName') || 'Pharmacy'}`}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        {formatDate(item.updatedAt)}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-[11px] font-semibold ${chip.classes}`}>
+                      {chip.text}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            {prescriptionNotifications.length === 0 && (
+              <p className="text-sm text-gray-500 py-4">{t('noPrescriptionUpdates') || 'No prescription updates yet.'}</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

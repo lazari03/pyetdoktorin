@@ -188,7 +188,7 @@ export default function Dashboard() {
                 isProcessing={heroIsProcessing}
                 onViewProfile={
                   role === UserRole.Patient && heroAppointment.doctorId
-                    ? () => nav.pushPath(`/doctor/${heroAppointment.doctorId}`)
+                    ? () => nav.toDoctorProfile(heroAppointment.doctorId)
                     : undefined
                 }
                 ctaLabel={t("joinNow") || "Join now"}

@@ -21,12 +21,14 @@ export interface Prescription extends PrescriptionInput {
   id: string;
   status: PrescriptionStatus;
   createdAt: number;
+  statusUpdatedAt?: number;
 }
 
 const COLLECTION = 'recipe';
 
 export async function createPrescription(input: PrescriptionInput): Promise<Prescription> {
   const admin = getFirebaseAdmin();
+  const createdAt = Date.now();
   const payload: Omit<Prescription, 'id'> = {
     doctorId: input.doctorId,
     doctorName: input.doctorName,
@@ -34,7 +36,8 @@ export async function createPrescription(input: PrescriptionInput): Promise<Pres
     patientName: input.patientName,
     medicines: input.medicines,
     status: 'pending' as PrescriptionStatus,
-    createdAt: Date.now(),
+    createdAt,
+    statusUpdatedAt: createdAt,
     ...(input.pharmacyId !== undefined ? { pharmacyId: input.pharmacyId } : {}),
     ...(input.pharmacyName !== undefined ? { pharmacyName: input.pharmacyName } : {}),
     ...(input.dosage !== undefined ? { dosage: input.dosage } : {}),
@@ -88,7 +91,10 @@ export async function updatePrescriptionStatus(id: string, status: PrescriptionS
     throw new Error('Invalid prescription status');
   }
   const admin = getFirebaseAdmin();
-  await admin.firestore().collection(COLLECTION).doc(id).set({ status }, { merge: true });
+  await admin.firestore().collection(COLLECTION).doc(id).set({
+    status,
+    statusUpdatedAt: Date.now(),
+  }, { merge: true });
 }
 
 export async function getPrescriptionById(id: string): Promise<Prescription | null> {

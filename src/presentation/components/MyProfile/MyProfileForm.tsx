@@ -2,6 +2,7 @@ import Image from 'next/image';
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '@/domain/entities/UserRole';
+import { SignaturePad } from '@/presentation/components/SignaturePad';
 
 export interface MyProfileFormData {
   name: string;
@@ -16,6 +17,7 @@ export interface MyProfileFormData {
   timeZone?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  signatureDataUrl?: string;
   [key: string]: unknown;
 }
 
@@ -46,6 +48,7 @@ interface MyProfileFormProps {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onProfilePictureChange?: (file: File) => void;
   uploading?: boolean;
+  onSignatureChange?: (dataUrl: string) => void;
 }
 
 const ProfileImage = React.memo<{
@@ -181,10 +184,44 @@ const MyProfileForm = ({
   handleSubmit,
   onProfilePictureChange,
   uploading = false,
+  onSignatureChange,
 }: MyProfileFormProps) => {
   const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState('');
+  const [signatureEditMode, setSignatureEditMode] = useState(false);
+  const [signatureBackup, setSignatureBackup] = useState('');
+  const [signatureDraft, setSignatureDraft] = useState('');
+  const [signatureSaveSignal, setSignatureSaveSignal] = useState(0);
+
+  const hasSignature = Boolean(formData.signatureDataUrl);
+  const showSignatureEditor = signatureEditMode || !hasSignature;
+
+  const handleSignatureUpdate = (dataUrl: string) => {
+    if (onSignatureChange) {
+      onSignatureChange(dataUrl);
+    }
+  };
+
+  const beginSignatureEdit = () => {
+    setSignatureBackup(formData.signatureDataUrl || '');
+    setSignatureDraft('');
+    setSignatureEditMode(true);
+  };
+
+  const cancelSignatureEdit = () => {
+    if (onSignatureChange) {
+      onSignatureChange(signatureBackup);
+    }
+    setSignatureDraft('');
+    setSignatureEditMode(false);
+  };
+
+  const saveSignatureEdit = () => {
+    if (!signatureDraft) return;
+    setSignatureSaveSignal((prev) => prev + 1);
+    setSignatureEditMode(false);
+  };
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -290,6 +327,75 @@ const MyProfileForm = ({
               </>
             )}
           </div>
+          {role === UserRole.Doctor && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-medium text-gray-600">
+                  {t('doctorSignature') || 'Doctor signature'}
+                </label>
+                {hasSignature && !signatureEditMode && (
+                  <button
+                    type="button"
+                    onClick={beginSignatureEdit}
+                    className="text-[11px] font-semibold text-purple-600 hover:text-purple-700"
+                  >
+                    {t('replaceSignature') || 'Replace'}
+                  </button>
+                )}
+                {signatureEditMode && hasSignature && (
+                  <button
+                    type="button"
+                    onClick={cancelSignatureEdit}
+                    className="text-[11px] font-semibold text-gray-500 hover:text-gray-700"
+                  >
+                    {t('cancel') || 'Cancel'}
+                  </button>
+                )}
+              </div>
+              {hasSignature && !signatureEditMode ? (
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
+                  <img
+                    src={formData.signatureDataUrl}
+                    alt={t('doctorSignature') || 'Doctor signature'}
+                    className="max-w-[260px] border border-gray-200 bg-white p-2"
+                  />
+                  <p className="mt-2 text-[11px] text-gray-500">
+                    {t('signatureSavedHelp') || 'This signature will be applied to new prescriptions.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <SignaturePad
+                    onChange={handleSignatureUpdate}
+                    onDraftChange={setSignatureDraft}
+                    saveSignal={signatureSaveSignal}
+                    autoSave={false}
+                  />
+                  <div className="flex justify-end gap-2">
+                    {showSignatureEditor && (
+                      <button
+                        type="button"
+                        onClick={saveSignatureEdit}
+                        className="inline-flex items-center rounded-full bg-purple-600 px-4 py-1.5 text-[11px] font-semibold text-white hover:bg-purple-700 transition disabled:opacity-60"
+                        disabled={!signatureDraft}
+                      >
+                        {t('saveSignature') || 'Save signature'}
+                      </button>
+                    )}
+                    {hasSignature && !signatureEditMode && (
+                      <button
+                        type="button"
+                        onClick={beginSignatureEdit}
+                        className="inline-flex items-center rounded-full border border-purple-500 px-4 py-1.5 text-[11px] font-semibold text-purple-600 hover:bg-purple-500 hover:text-white transition"
+                      >
+                        {t('replaceSignature') || 'Replace'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <div className="mt-6 flex justify-end">
             <button
               type="submit"

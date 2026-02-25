@@ -15,6 +15,7 @@ export interface UserProfileData {
   timeZone?: string;
   communicationPreference?: 'video' | 'voice' | 'chat';
   shareSummaryConsent?: boolean;
+  signatureDataUrl?: string;
 }
 
 export interface IUserProfileService {

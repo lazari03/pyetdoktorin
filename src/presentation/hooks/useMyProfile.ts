@@ -27,6 +27,7 @@ export const useMyProfile = () => {
     timeZone: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
+    signatureDataUrl: "",
   });
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isFetching, setIsFetching] = useState(true); // To handle data fetching state
@@ -93,6 +94,7 @@ export const useMyProfile = () => {
             timeZone: userData.timeZone || "",
             emergencyContactName: userData.emergencyContactName || "",
             emergencyContactPhone: userData.emergencyContactPhone || "",
+            signatureDataUrl: userData.signatureDataUrl || "",
           }));
         } else {
           setFormData((prev) => ({
@@ -150,6 +152,10 @@ export const useMyProfile = () => {
     }
   };
 
+  const handleSignatureChange = (dataUrl: string) => {
+    setFormData((prev) => ({ ...prev, signatureDataUrl: dataUrl }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -190,5 +196,6 @@ export const useMyProfile = () => {
     handlePasswordReset,
     handleSubmit,
     handleProfilePictureChange,
+    handleSignatureChange,
   };
 };
