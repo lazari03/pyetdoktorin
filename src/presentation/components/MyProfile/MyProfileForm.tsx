@@ -354,10 +354,13 @@ const MyProfileForm = ({
               </div>
               {hasSignature && !signatureEditMode ? (
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
-                  <img
-                    src={formData.signatureDataUrl}
+                  <Image
+                    src={formData.signatureDataUrl!}
                     alt={t('doctorSignature') || 'Doctor signature'}
-                    className="max-w-[260px] border border-gray-200 bg-white p-2"
+                    width={300}
+                    height={120}
+                    unoptimized
+                    className="max-w-[260px] border border-gray-200 bg-white p-2 h-auto w-auto"
                   />
                   <p className="mt-2 text-[11px] text-gray-500">
                     {t('signatureSavedHelp') || 'This signature will be applied to new prescriptions.'}

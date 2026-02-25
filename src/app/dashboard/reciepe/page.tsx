@@ -11,6 +11,7 @@ import { BackendError } from '@/network/backendClient';
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import { UserRole } from '@/domain/entities/UserRole';
 import Link from "next/link";
+import Image from "next/image";
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential } from "firebase/auth";
 
 type Reciepe = {
@@ -528,10 +529,13 @@ export default function DoctorReciepePage() {
                 {!signatureLoaded ? (
                   <p className="text-xs text-gray-500">{t("loadingSignature") || "Loading signature..."}</p>
                 ) : savedSignatureUrl ? (
-                  <img
+                  <Image
                     src={savedSignatureUrl}
                     alt={t("doctorSignature") || "Doctor signature"}
-                    className="max-w-[260px] border border-gray-200 bg-white p-2"
+                    width={300}
+                    height={120}
+                    unoptimized
+                    className="max-w-[260px] border border-gray-200 bg-white p-2 h-auto w-auto"
                   />
                 ) : (
                   <p className="text-xs text-gray-600">

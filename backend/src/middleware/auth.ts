@@ -40,7 +40,11 @@ export function requireAuth(requiredRoles?: UserRole[]) {
         }
       }
       const authTime = typeof decoded.auth_time === 'number' ? decoded.auth_time * 1000 : undefined;
-      req.user = { uid: decoded.uid, role, authTime };
+      const userPayload: { uid: string; role: UserRole; authTime?: number } = { uid: decoded.uid, role };
+      if (authTime !== undefined) {
+        userPayload.authTime = authTime;
+      }
+      req.user = userPayload;
       if (requiredRoles && !requiredRoles.includes(role)) {
         return res.status(403).json({ error: 'Forbidden' });
       }
