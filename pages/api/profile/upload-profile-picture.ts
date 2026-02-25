@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
-import { IncomingForm, type File as FormidableFile, type Files, type Fields } from 'formidable';
+import { IncomingForm, type Files, type Fields } from 'formidable';
 import fs from 'fs/promises';
 
 // Disable default body parsing to handle FormData
