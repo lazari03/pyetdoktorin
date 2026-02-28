@@ -1,5 +1,6 @@
 import { Appointment } from "@/domain/entities/Appointment";
 import { UserRole } from "@/domain/entities/UserRole";
+import { AppointmentActionKey } from "@/domain/entities/AppointmentAction";
 
 enum AppointmentActionVariant {
 	Finished = "finished",
@@ -9,10 +10,10 @@ enum AppointmentActionVariant {
 }
 
 const AppointmentActionLabels: Record<AppointmentActionVariant, string> = {
-	[AppointmentActionVariant.Finished]: "Finished",
-	[AppointmentActionVariant.Join]: "Join Now",
-	[AppointmentActionVariant.Pay]: "Pay Now",
-	[AppointmentActionVariant.None]: ""
+	[AppointmentActionVariant.Finished]: AppointmentActionKey.Completed,
+	[AppointmentActionVariant.Join]: AppointmentActionKey.JoinNow,
+	[AppointmentActionVariant.Pay]: AppointmentActionKey.PayNow,
+	[AppointmentActionVariant.None]: AppointmentActionKey.None
 };
 
 export function getAppointmentAction(
@@ -43,14 +44,14 @@ export function getAppointmentAction(
 	}
 	if (appointment.status === "pending") {
 		return {
-			label: "Pending",
+			label: AppointmentActionKey.Pending,
 			disabled: true,
 			variant: AppointmentActionVariant.Pay
 		};
 	}
 	if (appointment.status === "rejected") {
 		return {
-			label: "Declined",
+			label: AppointmentActionKey.Declined,
 			disabled: true,
 			variant: AppointmentActionVariant.None
 		};

@@ -115,6 +115,11 @@ const structuredData = [
   },
 ];
 
+const safeStructuredData = structuredData.map((item) => ({
+  ...item,
+  "@context": item["@context"] || "https://schema.org",
+}));
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = (await cookies()).get('language')?.value || 'en';
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID;
@@ -137,10 +142,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Script>
           </>
         ) : null}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
+        {safeStructuredData.map((item, index) => (
+          <script
+            key={`schema-${index}`}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+          />
+        ))}
         <HeadNonce />
       </head>
       <body className="bg-base-100 min-h-screen">
