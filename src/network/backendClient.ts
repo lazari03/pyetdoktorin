@@ -72,13 +72,14 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, de
 }
 
 export async function backendFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
-  const url = `${backendBaseUrl}${path}`;
+  const useProxy = typeof window !== 'undefined';
+  const url = useProxy ? `/api/backend${path}` : `${backendBaseUrl}${path}`;
   const headers = new Headers(options.headers);
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
   let hasAuthHeader = headers.has('Authorization');
-  if (!hasAuthHeader) {
+  if (!useProxy && !hasAuthHeader) {
     const token = await getOptionalIdToken();
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
@@ -95,7 +96,7 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
   let response: Response;
   try {
     response = await fetchWithRetry(url, baseOptions);
-    if (response.status === 401 && !hasAuthHeader) {
+    if (!useProxy && response.status === 401 && !hasAuthHeader) {
       const token = await getOptionalIdToken();
       if (token) {
         const retryHeaders = new Headers(headers);

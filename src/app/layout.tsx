@@ -68,6 +68,12 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     images: ["/og/pyet-doktorin.svg"],
   },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   robots: {
     index: true,
     follow: true,

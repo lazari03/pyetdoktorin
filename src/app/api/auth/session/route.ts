@@ -62,7 +62,45 @@ export async function POST(req: Request) {
     const setCookie = (backendRes.headers as unknown as { getSetCookie?: () => string[] }).getSetCookie?.();
     const rawSetCookie = backendRes.headers.get('set-cookie');
     const cookies = setCookie && setCookie.length ? setCookie : rawSetCookie ? splitSetCookie(rawSetCookie) : [];
-    cookies.forEach((cookie) => response.headers.append('Set-Cookie', cookie));
+
+    const parseCookie = (cookie: string) => {
+      const parts = cookie.split(';').map((part) => part.trim());
+      const [nameValue, ...attrs] = parts;
+      const [name, ...valueParts] = nameValue.split('=');
+      const value = valueParts.join('=');
+      const options: {
+        path?: string;
+        httpOnly?: boolean;
+        secure?: boolean;
+        sameSite?: 'lax' | 'strict' | 'none';
+        maxAge?: number;
+      } = {};
+      attrs.forEach((attr) => {
+        const [attrName, attrValue] = attr.split('=');
+        const lower = attrName.toLowerCase();
+        if (lower === 'httponly') options.httpOnly = true;
+        if (lower === 'secure') options.secure = true;
+        if (lower === 'path') options.path = attrValue || '/';
+        if (lower === 'samesite') {
+          const normalized = (attrValue || '').toLowerCase();
+          if (normalized === 'lax' || normalized === 'strict' || normalized === 'none') {
+            options.sameSite = normalized;
+          }
+        }
+        if (lower === 'max-age') {
+          const parsed = Number(attrValue);
+          if (Number.isFinite(parsed)) options.maxAge = parsed;
+        }
+      });
+      return { name, value, options };
+    };
+
+    cookies.forEach((cookie) => {
+      const parsed = parseCookie(cookie);
+      if (parsed.name) {
+        response.cookies.set(parsed.name, parsed.value, parsed.options);
+      }
+    });
 
     return response;
   } catch (error) {
