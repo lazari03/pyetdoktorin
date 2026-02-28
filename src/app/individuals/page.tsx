@@ -1,16 +1,14 @@
-'use client';
-
 import "../styles.css";
-import { useTranslation } from "react-i18next";
 import WebsiteShell from '../../presentation/components/website/WebsiteShell';
 import WebsiteHero from '../../presentation/components/website/WebsiteHero';
 import WebsiteSection from '../../presentation/components/website/WebsiteSection';
 import WebsiteFeatureGrid from '../../presentation/components/website/WebsiteFeatureGrid';
 import WebsiteSplitSection from '../../presentation/components/website/WebsiteSplitSection';
 import WebsiteCta from '../../presentation/components/website/WebsiteCta';
+import { getServerTranslations } from "@/i18n/serverTranslations";
 
-export default function IndividualsPage() {
-  const { t } = useTranslation();
+export default async function IndividualsPage() {
+  const t = await getServerTranslations();
   return (
     <WebsiteShell>
       <WebsiteHero

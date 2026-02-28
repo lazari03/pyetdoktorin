@@ -57,6 +57,7 @@ function mapAppointmentDoc(id: string, data: Record<string, unknown>): Appointme
     notes: (data.notes ?? data.note ?? '') as string,
     isPaid: Boolean(data.isPaid),
     paymentStatus: data.paymentStatus as string | undefined,
+    paymentStartedAt: data.paymentStartedAt as number | undefined,
     createdAt: data.createdAt as string,
     status: data.status as AppointmentStatus,
     roomId: data.roomId as string | undefined,

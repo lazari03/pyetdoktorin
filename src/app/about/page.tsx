@@ -1,16 +1,14 @@
-"use client";
-
 import "../styles.css";
 import React from "react";
-import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import Image from "next/image";
 import FooterSection from "../../presentation/components/footerSection/footerSection";
 import NavBar from "../../presentation/components/navBar/navBar";
+import { getServerTranslations } from "@/i18n/serverTranslations";
 
 
-export default function AboutPage() {
-  const { t } = useTranslation();
+export default async function AboutPage() {
+  const t = await getServerTranslations();
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">

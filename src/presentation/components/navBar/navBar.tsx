@@ -27,6 +27,9 @@ export default function NavBar() {
   }, [isMenuOpen]);
 
   const navItems = [
+    { path: '/si-funksionon', label: t('howItWorks') },
+    { path: '/services', label: t('services') },
+    { path: '/blog', label: t('blog') },
     { path: '/pricing', label: t('pricing') },
     { path: '/about', label: t('about') || t('aboutUs') },
     { path: '/contact', label: t('contact') },

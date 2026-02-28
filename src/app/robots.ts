@@ -11,12 +11,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           "/admin",
           "/dashboard",
-          "/pharmacy",
-          "/clinic",
           "/api",
-          "/_next",
-          "/dashboard/appointments/video-session",
-          "/dashboard/pay",
         ],
       },
     ],

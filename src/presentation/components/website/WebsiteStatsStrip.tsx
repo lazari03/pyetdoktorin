@@ -1,5 +1,3 @@
-'use client';
-
 type Stat = { label: string; value: string };
 
 export default function WebsiteStatsStrip({ stats }: { stats: Stat[] }) {

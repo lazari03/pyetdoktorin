@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Mulish } from "next/font/google";
 import ClientProviders from "./ClientProviders";
 import { DIProvider } from '@/context/DIContext';
 import Script from "next/script";
@@ -11,7 +12,21 @@ import { getSiteUrl } from "./seo";
 
 const SITE_URL = getSiteUrl();
 const DEFAULT_TITLE = "Pyet Doktorin";
-const DEFAULT_DESCRIPTION = "All-in-one telemedicine app for clinics, doctors, and patients with secure video, smart scheduling, and integrated payments.";
+const DEFAULT_DESCRIPTION = "Platforma shqiptare për konsultë mjeku online, recetë elektronike dhe kujdes shëndetësor të sigurt.";
+const DEFAULT_KEYWORDS = [
+  "konsultë mjeku online",
+  "mjek online Shqipëri",
+  "recetë elektronike",
+  "doktor online tani",
+  "telemedicinë Shqipëri",
+  "psikolog online",
+];
+
+const mulish = Mulish({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -20,15 +35,7 @@ export const metadata: Metadata = {
   },
   description: DEFAULT_DESCRIPTION,
   applicationName: DEFAULT_TITLE,
-  keywords: [
-    "telemedicine app",
-    "online doctor",
-    "virtual care",
-    "clinic management software",
-    "patient portal",
-    "secure video consultation",
-    "digital health platform",
-  ],
+  keywords: DEFAULT_KEYWORDS,
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: SITE_URL,
@@ -39,8 +46,8 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     url: SITE_URL,
     siteName: DEFAULT_TITLE,
-    locale: "en_US",
-    alternateLocale: ["sq_AL"],
+    locale: "sq_AL",
+    alternateLocale: ["en_US"],
     images: [
       {
         url: "/og/pyet-doktorin.svg",
@@ -49,6 +56,9 @@ export const metadata: Metadata = {
         alt: "Pyet Doktorin",
       },
     ],
+  },
+  other: {
+    "content-language": "sq-AL",
   },
   twitter: {
     card: "summary_large_image",
@@ -75,24 +85,20 @@ export const metadata: Metadata = {
 const structuredData = [
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: DEFAULT_TITLE,
-    description: DEFAULT_DESCRIPTION,
-    operatingSystem: "Web",
-    applicationCategory: "HealthApplication",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "EUR",
-      availability: "https://schema.org/InStock",
-    },
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "MedicalOrganization",
     name: DEFAULT_TITLE,
     url: SITE_URL,
     email: "atelemedicine30@gmail.com",
+    areaServed: "AL",
+    medicalSpecialty: [
+      "PrimaryCare",
+      "Dermatology",
+      "Pediatrics",
+      "Cardiology",
+      "Endocrinology",
+      "Gynecology",
+      "Psychiatry",
+    ],
     contactPoint: [
       {
         "@type": "ContactPoint",
@@ -101,6 +107,20 @@ const structuredData = [
         areaServed: "AL",
       },
     ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    operatingSystem: "Web",
+    applicationCategory: "HealthApplication",
+    offers: {
+      "@type": "Offer",
+      price: "13",
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+    },
   },
   {
     "@context": "https://schema.org",
@@ -121,7 +141,7 @@ const safeStructuredData = structuredData.map((item) => ({
 }));
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const lang = (await cookies()).get('language')?.value || 'en';
+  const lang = (await cookies()).get('language')?.value || 'al';
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID;
   return (
     <html lang={lang} data-theme="light">
@@ -151,7 +171,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         ))}
         <HeadNonce />
       </head>
-      <body className="bg-base-100 min-h-screen">
+      <body className={`${mulish.className} bg-base-100 min-h-screen`}>
         <DIProvider>
           <ClientProviders>
             <Suspense fallback={null}>

@@ -1,38 +1,14 @@
-"use client";
-
 import "../styles.css";
-import React, { useRef } from "react";
-import { useTranslation } from "react-i18next";
+import React from "react";
 import WebsiteShell from "@/presentation/components/website/WebsiteShell";
 import WebsiteHero from "@/presentation/components/website/WebsiteHero";
 import WebsiteSection from "@/presentation/components/website/WebsiteSection";
 import WebsiteStatsStrip from "@/presentation/components/website/WebsiteStatsStrip";
+import { getServerTranslations } from "@/i18n/serverTranslations";
+import ContactForm from "./ContactForm";
 
-function ContactPageInner() {
-  const { t } = useTranslation();
-  const nameRef = useRef<HTMLInputElement>(null);
-  const emailRef = useRef<HTMLInputElement>(null);
-  const messageRef = useRef<HTMLTextAreaElement>(null);
-
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = nameRef.current?.value || "";
-    const email = emailRef.current?.value || "";
-    const message = messageRef.current?.value || "";
-    // Only proceed with sending email if reCAPTCHA passes
-    const res = await fetch("/api/contact/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, message, source: "contact_page" }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert(t('messageSent'));
-    } else {
-      alert(data.message || t('failedToSendMessage'));
-    }
-  };
-
+export default async function ContactPage() {
+  const t = await getServerTranslations();
   return (
     <WebsiteShell>
       <WebsiteHero
@@ -64,35 +40,14 @@ function ContactPageInner() {
               </div>
             </div>
             <div className="website-card">
-              <form className="flex flex-col gap-4" onSubmit={handleContactSubmit}>
-                <input
-                  ref={nameRef}
-                  type="text"
-                  placeholder={t('yourName')}
-                  className="rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  required
-                />
-                <input
-                  ref={emailRef}
-                  type="email"
-                  placeholder={t('yourEmail')}
-                  className="rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  required
-                />
-                <textarea
-                  ref={messageRef}
-                  placeholder={t('yourMessage')}
-                  className="rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  rows={4}
-                  required
-                />
-                <button
-                  type="submit"
-                  className="rounded-full bg-purple-600 text-white font-semibold py-3 px-6 hover:bg-purple-500 transition"
-                >
-                  {t('sendMessage')}
-                </button>
-              </form>
+              <ContactForm
+                namePlaceholder={t("yourName")}
+                emailPlaceholder={t("yourEmail")}
+                messagePlaceholder={t("yourMessage")}
+                submitLabel={t("sendMessage")}
+                successMessage={t("messageSent")}
+                errorMessage={t("failedToSendMessage")}
+              />
             </div>
           </div>
         </div>
@@ -112,8 +67,4 @@ function ContactPageInner() {
       </WebsiteSection>
     </WebsiteShell>
   );
-}
-
-export default function ContactPage() {
-  return <ContactPageInner />;
 }

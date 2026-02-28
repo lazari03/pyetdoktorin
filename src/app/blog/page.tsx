@@ -1,14 +1,12 @@
-'use client';
-
 import "../styles.css";
-import { useTranslation } from "react-i18next";
 import WebsiteShell from "@/presentation/components/website/WebsiteShell";
 import WebsiteHero from "@/presentation/components/website/WebsiteHero";
 import WebsiteSection from "@/presentation/components/website/WebsiteSection";
 import WebsiteCta from "@/presentation/components/website/WebsiteCta";
+import { getServerTranslations } from "@/i18n/serverTranslations";
 
-export default function BlogPage() {
-  const { t } = useTranslation();
+export default async function BlogPage() {
+  const t = await getServerTranslations();
 
   const posts = [
     {

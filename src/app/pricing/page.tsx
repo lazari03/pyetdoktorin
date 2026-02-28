@@ -1,14 +1,14 @@
-'use client';
-
 import "../styles.css";
-import { useTranslation } from "react-i18next";
 import WebsiteShell from "@/presentation/components/website/WebsiteShell";
 import WebsiteHero from "@/presentation/components/website/WebsiteHero";
 import WebsiteSection from "@/presentation/components/website/WebsiteSection";
 import WebsiteCta from "@/presentation/components/website/WebsiteCta";
+import { getServerTranslations } from "@/i18n/serverTranslations";
+import SeoHead from "@/presentation/components/seo/SeoHead";
+import { buildMedicalOrganizationSchema, buildMedicalWebPageSchema } from "../seo";
 
-export default function PricingPage() {
-  const { t } = useTranslation();
+export default async function PricingPage() {
+  const t = await getServerTranslations();
 
   const plans = [
     {
@@ -45,6 +45,16 @@ export default function PricingPage() {
 
   return (
     <WebsiteShell>
+      <SeoHead
+        schema={[
+          buildMedicalOrganizationSchema(),
+          buildMedicalWebPageSchema({
+            title: t("pricingMetaTitle"),
+            description: t("pricingMetaDescription"),
+            path: "/pricing",
+          }),
+        ]}
+      />
       <WebsiteHero
         className="website-hero--doctors"
         variant="centered"

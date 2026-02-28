@@ -16,6 +16,19 @@ module.exports = {
     ],
   },
   productionBrowserSourceMaps: false,
+  async redirects() {
+    return [
+      { source: "/how-it-works", destination: "/si-funksionon", permanent: true },
+      { source: "/faq", destination: "/help-center", permanent: true },
+      { source: "/privacy", destination: "/privacy-policy", permanent: true },
+      { source: "/terms", destination: "/terms-of-service", permanent: true },
+      { source: "/kontakt", destination: "/contact", permanent: true },
+      { source: "/cmimet", destination: "/pricing", permanent: true },
+      { source: "/mjek-online", destination: "/konsulte-mjeku-online", permanent: true },
+      { source: "/mjeku-online", destination: "/konsulte-mjeku-online", permanent: true },
+      { source: "/recete-online", destination: "/recete-elektronike", permanent: true },
+    ];
+  },
   webpack: (config, { isServer, dev }) => {
     if (!dev && !isServer && WebpackObfuscator) {
       config.plugins.push(

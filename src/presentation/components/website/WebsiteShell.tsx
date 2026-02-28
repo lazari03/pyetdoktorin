@@ -1,5 +1,3 @@
-'use client';
-
 import NavBar from '@/presentation/components/navBar/navBar';
 import FooterSection from '@/presentation/components/footerSection/footerSection';
 

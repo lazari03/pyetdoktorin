@@ -19,6 +19,7 @@ import { BmiCalculatorCard } from "@/presentation/components/dashboard/BmiCalcul
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
 import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
+import { isPaymentProcessingActive } from "@/presentation/utils/paymentProcessing";
 
 // Helper function to calculate monthly earnings
 function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: UserRole) {
@@ -113,7 +114,7 @@ export default function Dashboard() {
   const heroAppointment = upcoming[0];
   const heroIsPaid = Boolean(heroAppointment && heroAppointment.isPaid);
   const heroIsProcessing = Boolean(
-    heroAppointment && heroAppointment.paymentStatus === "processing" && !heroAppointment.isPaid
+    heroAppointment && isPaymentProcessingActive(heroAppointment)
   );
   
   // Recent Doctors (for patients)

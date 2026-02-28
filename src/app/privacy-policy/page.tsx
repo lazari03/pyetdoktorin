@@ -1,14 +1,12 @@
-"use client";
-
 import "../styles.css";
 import React from "react";
 import Link from "next/link";
-import { useTranslation } from "react-i18next";
 import FooterSection from "@/presentation/components/footerSection/footerSection";
 import NavBar from "@/presentation/components/navBar/navBar";
+import { getServerTranslations } from "@/i18n/serverTranslations";
 
-export default function PrivacyPolicyPage() {
-  const { t } = useTranslation();
+export default async function PrivacyPolicyPage() {
+  const t = await getServerTranslations();
   
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">

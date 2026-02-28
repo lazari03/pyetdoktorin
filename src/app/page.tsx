@@ -1,7 +1,5 @@
-'use client';
-
 import "./styles.css";
-import { useTranslation } from "react-i18next";
+import Link from "next/link";
 import WebsiteShell from "@/presentation/components/website/WebsiteShell";
 import WebsiteHero from "@/presentation/components/website/WebsiteHero";
 import WebsiteSection from "@/presentation/components/website/WebsiteSection";
@@ -9,11 +7,32 @@ import WebsiteFeatureGrid from "@/presentation/components/website/WebsiteFeature
 import WebsiteSplitSection from "@/presentation/components/website/WebsiteSplitSection";
 import WebsiteStatsStrip from "@/presentation/components/website/WebsiteStatsStrip";
 import WebsiteCta from "@/presentation/components/website/WebsiteCta";
+import { getServerTranslations } from "@/i18n/serverTranslations";
+import SeoHead from "@/presentation/components/seo/SeoHead";
+import { buildMedicalOrganizationSchema, buildMedicalWebPageSchema, buildMetadata, SEO_KEYWORDS_AL } from "./seo";
+import type { Metadata } from "next";
 
-export default function Home() {
-  const { t } = useTranslation();
+export const metadata: Metadata = buildMetadata({
+  title: "Konsultë mjeku online | Pyet Doktorin",
+  description: "Rezervo mjekë shqiptarë online, merr recetë elektronike dhe paguaj vetëm pasi mjeku pranon.",
+  path: "/",
+  keywords: SEO_KEYWORDS_AL,
+});
+
+export default async function Home() {
+  const t = await getServerTranslations();
   return (
     <WebsiteShell>
+      <SeoHead
+        schema={[
+          buildMedicalOrganizationSchema(),
+          buildMedicalWebPageSchema({
+            title: t("homeMetaTitle"),
+            description: t("homeMetaDescription"),
+            path: "/",
+          }),
+        ]}
+      />
       <WebsiteHero
         className="website-hero--home"
         eyebrow={t("homeHeroEyebrow")}
@@ -27,6 +46,7 @@ export default function Home() {
         chip={t("homeHeroChip")}
         metaText={t("homeHeroMeta")}
         floatingText={t("homeHeroFloating")}
+        priority
       />
 
       <WebsiteSection>
@@ -67,6 +87,30 @@ export default function Home() {
                 },
               ]}
             />
+          </div>
+        </div>
+      </WebsiteSection>
+
+      <WebsiteSection variant="alt">
+        <div className="website-container">
+          <div className="website-pill">{t("homeLinksEyebrow")}</div>
+          <h2 className="website-section-title">{t("homeLinksTitle")}</h2>
+          <p className="website-section-body">{t("homeLinksSubtitle")}</p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { href: "/si-funksionon", label: t("homeLinkHowItWorks"), desc: t("homeLinkHowItWorksDesc") },
+              { href: "/doctors", label: t("homeLinkDoctors"), desc: t("homeLinkDoctorsDesc") },
+              { href: "/services", label: t("homeLinkSpecialties"), desc: t("homeLinkSpecialtiesDesc") },
+              { href: "/pricing", label: t("homeLinkPricing"), desc: t("homeLinkPricingDesc") },
+              { href: "/blog", label: t("homeLinkBlog"), desc: t("homeLinkBlogDesc") },
+            ].map((link) => (
+              <Link key={link.href} href={link.href} className="website-card group">
+                <div className="text-sm font-semibold text-slate-900 group-hover:text-purple-600">
+                  {link.label}
+                </div>
+                <p className="mt-2 text-xs text-slate-600">{link.desc}</p>
+              </Link>
+            ))}
           </div>
         </div>
       </WebsiteSection>

@@ -380,15 +380,18 @@
 .website-list li {
   display: flex;
   gap: 10px;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .website-check {
+  display: inline-block;
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  flex: 0 0 18px;
+  border-radius: 9999px;
   background: var(--website-accent);
   position: relative;
+  margin-top: 3px;
 }
 
 .website-check::after {

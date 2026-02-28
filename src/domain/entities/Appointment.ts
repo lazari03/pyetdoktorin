@@ -12,6 +12,7 @@ export interface Appointment {
 	notes: string;
 	isPaid: boolean;
 	paymentStatus?: string;
+	paymentStartedAt?: number;
 	createdAt: string;
 	status: AppointmentStatus;
 	roomId?: string; // 100ms room UUID

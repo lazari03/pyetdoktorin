@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 
 export default function WebsiteSplitSection({
@@ -42,7 +40,6 @@ export default function WebsiteSplitSection({
             fill
             sizes="(max-width: 768px) 320px, 520px"
             className="website-media-image"
-            unoptimized
           />
         </div>
       </div>

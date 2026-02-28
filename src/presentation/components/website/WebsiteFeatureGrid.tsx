@@ -1,5 +1,3 @@
-'use client';
-
 type Feature = {
   title: string;
   description: string;

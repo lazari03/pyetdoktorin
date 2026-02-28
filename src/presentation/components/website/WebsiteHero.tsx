@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -24,6 +22,7 @@ export default function WebsiteHero({
   metaText,
   floatingText,
   cardClassName = '',
+  priority = false,
 }: {
   eyebrow: string;
   title: string;
@@ -39,6 +38,7 @@ export default function WebsiteHero({
   metaText?: string;
   floatingText?: string;
   cardClassName?: string;
+  priority?: boolean;
 }) {
   return (
     <section className={`website-hero ${className}`.trim()}>
@@ -81,7 +81,7 @@ export default function WebsiteHero({
                   fill
                   sizes="(max-width: 768px) 320px, 420px"
                   className="website-hero-image"
-                  unoptimized
+                  priority={priority}
                 />
                 {chip && <div className="website-hero-chip">{chip}</div>}
                 {floatingText && (

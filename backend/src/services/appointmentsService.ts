@@ -27,6 +27,8 @@ export interface Appointment extends AppointmentInput {
   status: AppointmentStatus;
   isPaid: boolean;
   createdAt: number;
+  paymentStatus?: string;
+  paymentStartedAt?: number;
 }
 
 const COLLECTION = 'appointments';
