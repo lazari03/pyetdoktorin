@@ -18,8 +18,9 @@ module.exports = {
   productionBrowserSourceMaps: false,
   async redirects() {
     return [
-      { source: "/en/:year/:month/:day/:slug*", destination: "/blog", permanent: true },
-      { source: "/:year/:month/:day/:slug*", destination: "/blog", permanent: true },
+      // Legacy WP-style blog URLs; constrain to numeric dates so we don't catch /api/* or other app routes.
+      { source: "/en/:year(\\d{4})/:month(\\d{1,2})/:day(\\d{1,2})/:slug*", destination: "/blog", permanent: true },
+      { source: "/:year(\\d{4})/:month(\\d{1,2})/:day(\\d{1,2})/:slug*", destination: "/blog", permanent: true },
       { source: "/rritja-e-aksesit-shendetesor", destination: "/blog", permanent: true },
       { source: "/menagjimi-i-semundjeve-kronike", destination: "/blog", permanent: true },
       { source: "/is-ʻoumuamua-still-debated-among-top-scientists", destination: "/blog", permanent: true },

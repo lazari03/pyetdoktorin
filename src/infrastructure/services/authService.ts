@@ -42,17 +42,35 @@ export const login = async (email: string, password: string): Promise<{ user: Us
 
         // Get ID token and send to server to create an HttpOnly session cookie
         const idToken = await user.getIdToken(true);
-        const sessionUrl = '/api/auth/session';
+        const sessionUrl = '/api/backend/api/auth/session';
         const res = await fetch(sessionUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
+            redirect: 'manual',
             body: JSON.stringify({ idToken }),
         });
         if (!res.ok) {
             const body = await res.text();
             console.error('Session API error', res.status, body);
             throw new Error(body || 'Failed to establish session');
+        }
+        // Guard against misrouted redirects returning HTML (e.g. Next redirects /api/* to /blog).
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            const body = await res.text();
+            console.error('Session API returned non-JSON response', res.status, contentType, body.slice(0, 200));
+            throw new Error('Failed to establish session');
+        }
+        try {
+            const payload = (await res.json()) as { ok?: boolean; role?: string; error?: string };
+            if (!payload?.ok) {
+                console.error('Session API returned unexpected payload', payload);
+                throw new Error(payload?.error || 'Failed to establish session');
+            }
+        } catch (parseError) {
+            console.error('Failed to parse Session API response', parseError);
+            throw new Error('Failed to establish session');
         }
 
         // Refresh token to pull updated custom claims (role/admin) after session is established

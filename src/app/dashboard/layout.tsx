@@ -39,6 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [isAuthenticated, role, user, initializeAppointments]);
 
   useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') return;
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js');
     }
