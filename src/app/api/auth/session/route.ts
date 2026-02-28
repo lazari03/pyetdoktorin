@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 
-const THIRTY_MIN = 30 * 60; // seconds
+const splitSetCookie = (header: string): string[] => {
+  if (!header) return [];
+  return header.split(/,(?=[^;]+=[^;]+)/g).map((item) => item.trim()).filter(Boolean);
+};
 
 const getBackendBaseUrl = () => {
   const base = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:4000';
@@ -54,36 +57,12 @@ export async function POST(req: Request) {
     }
 
     const role = data?.role || 'patient';
-    const now = Date.now();
-    const isProd = process.env.NODE_ENV === 'production';
-    const secure = isProd;
-
     const response = NextResponse.json({ ok: true, role });
-    response.cookies.set('session', '1', {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure,
-      path: '/',
-      maxAge: THIRTY_MIN,
-    });
-    response.cookies.set('userRole', encodeURIComponent(role), {
-      sameSite: 'lax',
-      secure,
-      path: '/',
-      maxAge: THIRTY_MIN,
-    });
-    response.cookies.set('lastActivity', String(now), {
-      sameSite: 'lax',
-      secure,
-      path: '/',
-      maxAge: THIRTY_MIN,
-    });
-    response.cookies.set('loggedIn', '1', {
-      sameSite: 'lax',
-      secure,
-      path: '/',
-      maxAge: THIRTY_MIN,
-    });
+
+    const setCookie = (backendRes.headers as unknown as { getSetCookie?: () => string[] }).getSetCookie?.();
+    const rawSetCookie = backendRes.headers.get('set-cookie');
+    const cookies = setCookie && setCookie.length ? setCookie : rawSetCookie ? splitSetCookie(rawSetCookie) : [];
+    cookies.forEach((cookie) => response.headers.append('Set-Cookie', cookie));
 
     return response;
   } catch (error) {

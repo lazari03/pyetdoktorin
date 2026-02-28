@@ -2,21 +2,17 @@ import { IServerSessionService, SessionCookiesResult } from '@/application/ports
 import { SessionException } from '@/application/errors/SessionException';
 import { UserRole } from '@/domain/entities/UserRole';
 import { getAdmin } from '@/app/api/_lib/admin';
-
-const THIRTY_MIN = 30 * 60; // seconds
+import { AUTH_COOKIE_MAX_AGE_SECONDS, AUTH_COOKIE_NAMES, COOKIE_SAMESITE } from '@/config/cookies';
 
 export class FirebaseServerSessionService implements IServerSessionService {
   constructor(private isProd: boolean) {}
 
   private buildCookies(role: UserRole): string[] {
-    const secure = this.isProd ? '; Secure' : '';
-    const base = `Path=/; SameSite=Lax; Max-Age=${THIRTY_MIN}`;
     const now = Date.now();
     return [
-      `session=1; ${base}; HttpOnly${secure}`,
-      `userRole=${encodeURIComponent(role)}; ${base}${secure}`,
-      `lastActivity=${now}; ${base}${secure}`,
-      `loggedIn=1; ${base}${secure}`,
+      `session=1; Path=/; SameSite=${COOKIE_SAMESITE}; Max-Age=${AUTH_COOKIE_MAX_AGE_SECONDS}; HttpOnly${this.isProd ? '; Secure' : ''}`,
+      `${AUTH_COOKIE_NAMES.userRole}=${encodeURIComponent(role)}; Path=/; SameSite=${COOKIE_SAMESITE}; Max-Age=${AUTH_COOKIE_MAX_AGE_SECONDS}; HttpOnly${this.isProd ? '; Secure' : ''}`,
+      `${AUTH_COOKIE_NAMES.lastActivity}=${now}; Path=/; SameSite=${COOKIE_SAMESITE}; Max-Age=${AUTH_COOKIE_MAX_AGE_SECONDS}; HttpOnly${this.isProd ? '; Secure' : ''}`,
     ];
   }
 

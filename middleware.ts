@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { AUTH_COOKIE_MAX_AGE_SECONDS, AUTH_COOKIE_NAMES, COOKIE_SAMESITE, LANGUAGE_COOKIE_NAME, isSecureCookieEnv } from '@/config/cookies';
 
 // Root-level middleware (must be at project root for Next.js to apply)
 export function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
-  const role = req.cookies.get('userRole')?.value;
-  const hasSession = req.cookies.get('session')?.value;
-  const lastActivityStr = req.cookies.get('lastActivity')?.value;
+  const role = req.cookies.get(AUTH_COOKIE_NAMES.userRole)?.value;
+  const hasSession = req.cookies.get(AUTH_COOKIE_NAMES.session)?.value;
+  const lastActivityStr = req.cookies.get(AUTH_COOKIE_NAMES.lastActivity)?.value;
   const lastActivity = lastActivityStr ? Number(lastActivityStr) : null;
   const now = Date.now();
   const idleMs = 30 * 60 * 1000; // 30 minutes
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const secureCookie = isSecureCookieEnv();
 
   const isDoctorPublicPath = url.pathname === '/doctor' || url.pathname.startsWith('/doctor/');
 
@@ -45,10 +47,9 @@ export function middleware(req: NextRequest) {
       url.searchParams.set('reason', 'idle-timeout');
       const res = NextResponse.redirect(url);
       // Clear session cookies
-      res.cookies.set('session', '', { path: '/', maxAge: 0, httpOnly: true });
-      res.cookies.set('userRole', '', { path: '/', maxAge: 0 });
-      res.cookies.set('lastActivity', '', { path: '/', maxAge: 0 });
-      res.cookies.set('loggedIn', '', { path: '/', maxAge: 0 });
+      res.cookies.set(AUTH_COOKIE_NAMES.session, '', { path: '/', maxAge: 0, httpOnly: true, secure: secureCookie });
+      res.cookies.set(AUTH_COOKIE_NAMES.userRole, '', { path: '/', maxAge: 0, httpOnly: true, secure: secureCookie });
+      res.cookies.set(AUTH_COOKIE_NAMES.lastActivity, '', { path: '/', maxAge: 0, httpOnly: true, secure: secureCookie });
       return res;
     }
 
@@ -105,7 +106,7 @@ export function middleware(req: NextRequest) {
   }
 
   // Pass language header for SSR
-  const lang = req.cookies.get('language')?.value || 'en';
+  const lang = req.cookies.get(LANGUAGE_COOKIE_NAME)?.value || 'en';
   const res = NextResponse.next({
     request: {
       headers: req.headers,
@@ -115,8 +116,13 @@ export function middleware(req: NextRequest) {
   res.headers.set('x-nonce', nonce);
   // Refresh lastActivity cookie while navigating SSR paths (sliding window)
   if (hasSession) {
-    res.cookies.set('lastActivity', String(now), { path: '/', sameSite: 'lax', maxAge: 30 * 60 });
-    res.cookies.set('loggedIn', '1', { path: '/', sameSite: 'lax', maxAge: 30 * 60 });
+    res.cookies.set(AUTH_COOKIE_NAMES.lastActivity, String(now), {
+      path: '/',
+      sameSite: COOKIE_SAMESITE,
+      maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+      httpOnly: true,
+      secure: secureCookie,
+    });
   }
   return res;
 }

@@ -32,27 +32,8 @@ function LoginPageContent() {
       if (!navigator.onLine) {
         throw new Error(t('offlineError'));
       }
-      await loginUseCase.execute(email, password);
-      // Poll for the loggedIn cookie the session API sets
-      const waitForSessionCookie = async () => {
-        const maxAttempts = 10;
-        for (let i = 0; i < maxAttempts; i += 1) {
-          if (/(?:^|; )loggedIn=/.test(document.cookie)) return true;
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-        return false;
-      };
-      const cookieReady = await waitForSessionCookie();
-      if (!cookieReady) {
-        setErrorMsg(t('authTokenWarning'));
-        setLoading(false);
-        return;
-      }
-      // Redirect to the role-appropriate landing page.
-      // Read the role from the cookie the session API just set.
-      const roleMatch = document.cookie.match(/(?:^|; )userRole=([^;]*)/);
-      const roleValue = roleMatch ? decodeURIComponent(roleMatch[1]) : null;
-      const target = getRoleLandingPath(roleValue as Parameters<typeof getRoleLandingPath>[0]);
+      const result = await loginUseCase.execute(email, password);
+      const target = getRoleLandingPath(result?.role);
       window.location.replace(target);
     } catch (err) {
       setErrorMsg(t('unknownError'));

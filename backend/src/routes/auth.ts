@@ -4,6 +4,7 @@ import { EstablishSessionUseCase } from '@/application/auth/EstablishSessionUseC
 import { FirebaseServerSessionService } from '@/services/serverSessionService';
 import { SessionException } from '@/application/errors/SessionException';
 import { validateBody } from '@/routes/validation';
+import { AUTH_COOKIE_NAMES, buildExpiredCookie } from '@/config/cookies';
 
 const router = Router();
 
@@ -31,13 +32,11 @@ router.post('/session', async (req, res) => {
 });
 
 router.post('/logout', (_req, res) => {
-    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-    const expired = 'Path=/; SameSite=Lax; Max-Age=0';
+    const isProd = process.env.NODE_ENV === 'production';
     res.setHeader('Set-Cookie', [
-      `session=; ${expired}; HttpOnly${secure}`,
-      `userRole=; ${expired}${secure}`,
-      `lastActivity=; ${expired}${secure}`,
-      `loggedIn=; ${expired}${secure}`,
+      buildExpiredCookie(AUTH_COOKIE_NAMES.session, isProd),
+      buildExpiredCookie(AUTH_COOKIE_NAMES.userRole, isProd),
+      buildExpiredCookie(AUTH_COOKIE_NAMES.lastActivity, isProd),
     ]);
     res.json({ ok: true });
 });

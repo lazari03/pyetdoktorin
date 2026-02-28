@@ -2,7 +2,7 @@ import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import type { User } from '@/domain/entities/User';
 import { IAdminUserService, AdminUsersPage } from '@/application/ports/IAdminUserService';
 import { getAllUsers, getUsersPage, getUserById, getDoctorProfile, resetUserPassword, deleteUserAccount, createAdminUser } from '@/infrastructure/queries/users';
-import { apiUpdateUser } from '@/network/admin';
+import { updateAdminUser } from '@/network/adminUsers';
 
 export class AdminUserService implements IAdminUserService {
   async getAllUsers(): Promise<User[]> {
@@ -35,14 +35,14 @@ export class AdminUserService implements IAdminUserService {
   }
 
   async updateUserAdmin(id: string, payload: { name?: string; surname?: string; role?: User['role']; email?: string }): Promise<void> {
-    await apiUpdateUser({ id, userFields: { ...payload } });
+    await updateAdminUser(id, { ...payload });
   }
 
   async updateDoctorProfileAdmin(id: string, payload: { specialization?: string; bio?: string; specializations?: string[] }): Promise<void> {
-    await apiUpdateUser({ id, doctorFields: { ...payload } });
+    await updateAdminUser(id, { ...payload });
   }
 
   async approveDoctor(id: string): Promise<void> {
-    await apiUpdateUser({ id, approveDoctor: true });
+    await updateAdminUser(id, { approvalStatus: 'approved' });
   }
 }

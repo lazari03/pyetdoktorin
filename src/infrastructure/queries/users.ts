@@ -2,7 +2,7 @@ import type { User } from '@/domain/entities/User';
 import { UserRole } from '@/domain/entities/UserRole';
 import { fetchUsers, fetchUserById, fetchDoctorById, fetchUsersPage, UsersPage, upsertUser, updateDoctorProfile } from '@/network/firebase/users';
 import type { QueryDocumentSnapshot } from 'firebase/firestore';
-import { apiCreateAdmin, apiResetPassword, apiDeleteUser } from '@/network/admin';
+import { createAdminUser as createAdminUserRequest, resetAdminUserPassword, deleteAdminUser } from '@/network/adminUsers';
 import { fetchAppointmentsForUser, fetchAppointmentsForDoctor } from '@/network/firebase/appointments';
 
 export async function getAllUsers(): Promise<User[]> {
@@ -32,16 +32,16 @@ export async function getDoctorAppointmentCount(doctorId: string): Promise<numbe
 }
 
 export async function createAdminUser(payload: { name: string; surname: string; email: string; password: string; role: UserRole; phone?: string }): Promise<User> {
-  const res = await apiCreateAdmin({ ...payload });
+  const res = await createAdminUserRequest({ ...payload });
   return { id: res.id, email: payload.email, role: payload.role } as User;
 }
 
 export async function resetUserPassword(userId: string): Promise<void> {
-  await apiResetPassword(userId);
+  await resetAdminUserPassword(userId);
 }
 
 export async function deleteUserAccount(userId: string): Promise<void> {
-  await apiDeleteUser(userId);
+  await deleteAdminUser(userId);
 }
 
 export async function updateUserFields(user: Partial<User> & { id: string }): Promise<void> {

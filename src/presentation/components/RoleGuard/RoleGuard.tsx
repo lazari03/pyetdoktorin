@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { UserRole } from '@/domain/entities/UserRole';
 import { hasRole } from '@/domain/rules/userRules';
+import { useAuth } from '@/context/AuthContext';
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -13,34 +14,23 @@ interface RoleGuardProps {
 
 export default function RoleGuard({ children, allowedRoles, fallbackPath = '/dashboard' }: RoleGuardProps) {
   const nav = useNavigationCoordinator();
+  const { role, loading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    function checkUserRole() {
-      try {
-        const userRole = localStorage.getItem('userRole');
-        
-        if (!userRole || !hasRole(userRole, allowedRoles)) {
-          setRedirecting(true);
-          // Use replace instead of push to avoid adding to history
-          nav.replacePath(fallbackPath);
-          return false;
-        }
-        return true;
-      } catch {
-        setRedirecting(true);
-        nav.replacePath(fallbackPath);
-        return false;
-      }
+    if (loading) return;
+    if (!role || !hasRole(role, allowedRoles)) {
+      setRedirecting(true);
+      nav.replacePath(fallbackPath);
+      setIsAuthorized(false);
+      setIsLoading(false);
+      return;
     }
-
-    // Check immediately, no artificial delay
-    const authorized = checkUserRole();
-    setIsAuthorized(authorized);
+    setIsAuthorized(true);
     setIsLoading(false);
-  }, [allowedRoles, fallbackPath, nav]);
+  }, [allowedRoles, fallbackPath, nav, role, loading]);
 
   // Show loader while checking or redirecting
   if (isLoading || redirecting) {

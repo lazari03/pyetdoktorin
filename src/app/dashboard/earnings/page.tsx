@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { APPOINTMENT_PRICE_CURRENCY, APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_PERCENTAGE, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardViewModel, DashboardUserContext } from "@/presentation/view-models/userDashboardViewModel";
 import Loader from "@/presentation/components/Loader/Loader";
@@ -13,8 +14,8 @@ import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
 
 // Helper function to calculate earnings data
 function calculateEarningsData(appointments: Array<{ doctorId: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string) {
-  const payoutPercentage = 0.70; // 70% to doctor
-  const appointmentAmount = 13; // $13 per appointment
+  const payoutPercentage = DOCTOR_PAYOUT_RATE;
+  const appointmentAmount = APPOINTMENT_PRICE_EUR;
   
   // Filter completed/paid appointments for this doctor
   const doctorAppointments = appointments.filter(a =>
@@ -250,7 +251,9 @@ export default function EarningsPage() {
         {/* Info Note */}
         <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
           <p className="text-sm text-blue-800">
-            <strong>{t("note") || "Note"}:</strong> {t("earningsInfo") || "You receive 70% of each appointment fee ($13). Earnings are calculated based on completed and paid appointments only."}
+            <strong>{t("note") || "Note"}:</strong>{" "}
+            {t("earningsInfo") ||
+              `You receive ${DOCTOR_PAYOUT_PERCENTAGE}% of each appointment fee (${APPOINTMENT_PRICE_CURRENCY} ${APPOINTMENT_PRICE_EUR}). Earnings are calculated based on completed and paid appointments only.`}
           </p>
         </div>
       </div>

@@ -1,10 +1,11 @@
-import { openPaddleCheckout } from '@/infrastructure/services/paddleCheckout';
-import { markPaymentProcessing } from '@/network/appointments';
-import { getAppointmentErrorMessage } from '@/presentation/utils/errorMessages';
-import i18n from '@/i18n/i18n';
+import { IAppointmentPaymentService } from '@/application/ports/IAppointmentPaymentService';
+import { IPaymentCheckoutService } from '@/application/ports/IPaymentCheckoutService';
 
 export class HandlePayNowUseCase {
-  constructor() {}
+  constructor(
+    private readonly paymentService: IAppointmentPaymentService,
+    private readonly checkoutService: IPaymentCheckoutService
+  ) {}
 
   async execute(
     appointmentId: string,
@@ -12,16 +13,9 @@ export class HandlePayNowUseCase {
     options?: { onClose?: () => void }
   ): Promise<void> {
     if (!appointmentId) {
-      alert('Missing appointment id.');
-      return;
+      throw new Error('Missing appointment id');
     }
-    try {
-      await markPaymentProcessing(appointmentId);
-      await openPaddleCheckout({ appointmentId, onClose: options?.onClose });
-    } catch (error) {
-      console.error('Failed to open Paddle checkout', error);
-      const message = getAppointmentErrorMessage(error, i18n.t.bind(i18n));
-      alert(message ?? 'Unable to start the payment. Please try again.');
-    }
+    await this.paymentService.markPaymentProcessing(appointmentId);
+    await this.checkoutService.openCheckout({ appointmentId, onClose: options?.onClose });
   }
 }

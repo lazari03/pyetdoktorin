@@ -219,18 +219,27 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
     // Actions
     handleJoinCall,
-    handlePayNow: (appointmentId, amount) => {
+    handlePayNow: async (appointmentId, amount) => {
       trackAnalyticsEvent("payment_initiated", {
         appointmentId,
         amount,
       });
-      return storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
-        onClose: () => {
-          syncPaddlePayment(appointmentId).catch((error) => {
-            console.warn("Payment sync failed", error);
-          });
-        },
-      });
+      try {
+        await storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
+          onClose: () => {
+            syncPaddlePayment(appointmentId).catch((error) => {
+              console.warn("Payment sync failed", error);
+            });
+          },
+        });
+      } catch (error) {
+        trackAnalyticsEvent("payment_failed", {
+          appointmentId,
+          reason: error instanceof Error ? error.message.slice(0, 120) : "unknown_error",
+        });
+        const translatedMessage = getAppointmentErrorMessage(error, t);
+        alert(translatedMessage ?? t("genericError"));
+      }
     },
   };
 }

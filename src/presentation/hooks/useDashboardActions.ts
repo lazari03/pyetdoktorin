@@ -6,7 +6,7 @@ import { useDI } from '@/context/DIContext';
 import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useTranslation } from 'react-i18next';
-import { getVideoErrorMessage } from '@/presentation/utils/errorMessages';
+import { getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation/utils/errorMessages';
 import { syncPaddlePayment } from '@/network/payments';
 
 export function useDashboardActions() {
@@ -48,16 +48,25 @@ export function useDashboardActions() {
     }
   }, [user, role, setAuthStatus, generateRoomCodeAndStore, t]);
 
-  const handlePayNow = useCallback((appointmentId: string, amount: number) => {
+  const handlePayNow = useCallback(async (appointmentId: string, amount: number) => {
     trackAnalyticsEvent('payment_initiated', { appointmentId, amount });
-    storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
-      onClose: () => {
-        syncPaddlePayment(appointmentId).catch((error) => {
-          console.warn('Payment sync failed', error);
-        });
-      },
-    });
-  }, [storeHandlePayNow, handlePayNowUseCase]);
+    try {
+      await storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
+        onClose: () => {
+          syncPaddlePayment(appointmentId).catch((error) => {
+            console.warn('Payment sync failed', error);
+          });
+        },
+      });
+    } catch (error) {
+      trackAnalyticsEvent('payment_failed', {
+        appointmentId,
+        reason: error instanceof Error ? error.message.slice(0, 120) : 'unknown_error',
+      });
+      const translatedMessage = getAppointmentErrorMessage(error, t);
+      alert(translatedMessage ?? t('genericError'));
+    }
+  }, [storeHandlePayNow, handlePayNowUseCase, t]);
 
   return { handleJoinCall, handlePayNow };
 }

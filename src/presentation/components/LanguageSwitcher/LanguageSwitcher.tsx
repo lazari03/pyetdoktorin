@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
+import { setLanguageCookie } from "@/presentation/utils/clientCookies";
 
 export default function LanguageSwitcher({ className = "" }: { className?: string }) {
   const { i18n } = useTranslation();
@@ -19,7 +20,7 @@ export default function LanguageSwitcher({ className = "" }: { className?: strin
     const newLang = e.target.value;
     setLang(newLang);
     i18n.changeLanguage(newLang);
-    document.cookie = `language=${newLang}; path=/; max-age=31536000`;
+    setLanguageCookie(newLang);
   };
 
   return (

@@ -1,11 +1,10 @@
 import { create } from 'zustand';
 import { LogoutSessionUseCase } from '../application/logoutSessionUseCase';
 import { LogoutServerUseCase } from '@/application/logoutServerUseCase';
-import { setCookie, getCookie, deleteCookie } from '@/presentation/utils/sessionUtils';
+import { SESSION_IDLE_TIMEOUT_MS, SESSION_LAST_ACTIVITY_KEY, SESSION_REFRESH_THROTTLE_MS } from '@/config/sessionConfig';
 
-// 30 minutes idle timeout
-const IDLE_MS = 30 * 60 * 1000;
-const REFRESH_THROTTLE_MS = 60 * 1000; // 1 minute
+const IDLE_MS = SESSION_IDLE_TIMEOUT_MS;
+const REFRESH_THROTTLE_MS = SESSION_REFRESH_THROTTLE_MS;
 
 
 
@@ -35,20 +34,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     if (typeof window === 'undefined') return;
     if (get().isMonitoring) return;
 
-    const maxAgeSeconds = Math.floor(get().idleMs / 1000);
-
     const refresh = () => {
       const now = Date.now();
       if (now - get()._lastRefresh < REFRESH_THROTTLE_MS) return;
       set({ _lastRefresh: now, lastActivity: now });
-
-      // Update lastActivity and refresh auth cookies expiry (sliding window)
-      setCookie('lastActivity', String(now), maxAgeSeconds);
-      // Refresh lightweight client cookies; HttpOnly session is extended by middleware on requests
-      const loggedIn = getCookie('loggedIn');
-      if (loggedIn) setCookie('loggedIn', '1', maxAgeSeconds);
-      const role = getCookie('userRole');
-      if (role) setCookie('userRole', role, maxAgeSeconds);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(SESSION_LAST_ACTIVITY_KEY, String(now));
+      }
     };
 
     const handleActivity = () => {
@@ -72,7 +64,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
     const id = window.setInterval(() => {
       const { idleMs } = get();
-      const last = Number(getCookie('lastActivity')) || 0;
+      const last = typeof window === 'undefined'
+        ? 0
+        : Number(window.localStorage.getItem(SESSION_LAST_ACTIVITY_KEY)) || 0;
       const inactive = Date.now() - last > idleMs;
       if (inactive) {
         get().logoutForIdle(logoutSessionUseCase);
@@ -105,26 +99,25 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   touchActivity: () => {
-    const maxAgeSeconds = Math.floor(get().idleMs / 1000);
     const now = Date.now();
     set({ lastActivity: now });
-    setCookie('lastActivity', String(now), maxAgeSeconds);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(SESSION_LAST_ACTIVITY_KEY, String(now));
+    }
   },
 
   refreshSlidingCookies: () => {
-    const maxAgeSeconds = Math.floor(get().idleMs / 1000);
-    const loggedIn = getCookie('loggedIn');
-    if (loggedIn) setCookie('loggedIn', '1', maxAgeSeconds);
-    const role = getCookie('userRole');
-    if (role) setCookie('userRole', role, maxAgeSeconds);
+    const now = Date.now();
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(SESSION_LAST_ACTIVITY_KEY, String(now));
+    }
   },
 
   logoutForIdle: (logoutSessionUseCase: LogoutSessionUseCase) => {
     logoutSessionUseCase.execute();
-    // HttpOnly session is cleared by middleware or via API logout; clear client-visible helpers
-    deleteCookie('userRole');
-    deleteCookie('lastActivity');
-    deleteCookie('loggedIn');
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(SESSION_LAST_ACTIVITY_KEY);
+    }
     if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
       window.location.href = '/login?reason=idle-timeout';
     }
@@ -137,9 +130,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         await logoutServerUseCase.execute();
       } catch {}
     }
-    deleteCookie('userRole');
-    deleteCookie('lastActivity');
-    deleteCookie('loggedIn');
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(SESSION_LAST_ACTIVITY_KEY);
+    }
     if (typeof window !== 'undefined') {
       const suffix = reason ? `?reason=${encodeURIComponent(reason)}` : '';
       window.location.href = `/login${suffix}`;

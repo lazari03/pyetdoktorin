@@ -8,10 +8,11 @@ import { useMemo } from 'react';
 import { ClinicBooking } from '@/domain/entities/ClinicBooking';
 import { RecentPatientsList, RecentPatient } from '@/presentation/components/dashboard/RecentPatientsList';
 import { DoctorEarningsCard } from '@/presentation/components/dashboard/DoctorEarningsCard';
+import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from '@/config/paywallConfig';
 
 function calculateClinicEarnings(bookings: ClinicBooking[]) {
-  const payoutPercentage = 0.7;
-  const appointmentAmount = 13;
+  const payoutPercentage = DOCTOR_PAYOUT_RATE;
+  const appointmentAmount = APPOINTMENT_PRICE_EUR;
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();

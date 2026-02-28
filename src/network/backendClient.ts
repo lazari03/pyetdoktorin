@@ -58,22 +58,36 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, de
 }
 
 export async function backendFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = await getIdToken();
   const url = `${backendBaseUrl}${path}`;
+  const headers = new Headers(options.headers);
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  const hasAuthHeader = headers.has('Authorization');
+
+  const baseOptions: RequestInit = {
+    ...options,
+    headers,
+    credentials: 'include',
+  };
+
   let response: Response;
   try {
-    response = await fetchWithRetry(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers || {}),
-        Authorization: `Bearer ${token}`,
-      },
-      credentials: 'include',
-    });
+    response = await fetchWithRetry(url, baseOptions);
+    if (response.status === 401 && !hasAuthHeader) {
+      const token = await getIdToken();
+      const retryHeaders = new Headers(headers);
+      retryHeaders.set('Authorization', `Bearer ${token}`);
+      response = await fetchWithRetry(url, {
+        ...baseOptions,
+        headers: retryHeaders,
+      });
+    }
   } catch (err) {
-    // Log and rethrow for higher-level handling
     console.error('backendFetch network error:', err);
+    if (err instanceof Error && err.message === 'Not authenticated') {
+      throw err;
+    }
     throw new Error('Network error: ' + (err instanceof Error ? err.message : String(err)));
   }
   if (!response.ok) {

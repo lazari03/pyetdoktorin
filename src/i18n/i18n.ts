@@ -3,6 +3,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from '../locales/en.json' assert { type: 'json' };
 import al from '../locales/al.json' assert { type: 'json' };
+import { getLanguageCookie } from '@/presentation/utils/clientCookies';
 
 
 const resources = {
@@ -11,9 +12,7 @@ const resources = {
 };
 
 function getLangFromCookie() {
-  if (typeof document === 'undefined') return 'al';
-  const match = document.cookie.match(/language=([a-zA-Z-]+)/);
-  return match ? match[1] : 'al';
+  return getLanguageCookie() ?? 'al';
 }
 
 const isClient = typeof window !== 'undefined';

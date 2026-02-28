@@ -3,7 +3,6 @@ import { useAppointmentStore } from '@/store/appointmentStore';
 import type { NavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/domain/entities/UserRole';
-import { normalizeRole } from '@/domain/rules/userRules';
 import { backendFetch } from '@/network/backendClient';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useDI } from '@/context/DIContext';
@@ -29,13 +28,13 @@ interface PrescriptionNotification {
 
 export function useNotificationsLogic(nav: NavigationCoordinator) {
   const { appointments, loading: isLoading, error, fetchAppointments } = useAppointmentStore();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const {
     getReciepesByDoctorUseCase,
     getReciepesByPatientUseCase,
     getReciepesByPharmacyUseCase,
   } = useDI();
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const userRole = role;
   const [appointmentDetails, setAppointmentDetails] = useState<AppointmentDetail[]>([]);
   const [pendingAppointments, setPendingAppointments] = useState<
     (AppointmentDetail & { status?: string; dismissedBy?: Record<string, boolean> })[]
@@ -45,23 +44,14 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
   const didInitRef = useRef(false);
   useEffect(() => {
     if (didInitRef.current) return;
+    if (!user?.uid) {
+      nav.toLogin();
+      return;
+    }
+    if (!role) return;
     didInitRef.current = true;
-    const fetchUserRoleAndAppointments = async () => {
-      if (!user?.uid) {
-        nav.toLogin();
-        return;
-      }
-      const response = await backendFetch<{ role: string }>('/api/notifications/role');
-      const role = normalizeRole(response.role);
-      if (role) {
-        setUserRole(role);
-        await fetchAppointments(role);
-      } else {
-        nav.toLogin();
-      }
-    };
-    fetchUserRoleAndAppointments();
-  }, [fetchAppointments, user?.uid, nav]);
+    fetchAppointments(role);
+  }, [fetchAppointments, user?.uid, nav, role]);
 
   useEffect(() => {
     const fetchDetails = async () => {

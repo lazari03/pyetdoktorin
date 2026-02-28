@@ -20,6 +20,7 @@ import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
 import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
 import { isPaymentProcessingActive } from "@/presentation/utils/paymentProcessing";
+import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
 
 // Helper function to calculate monthly earnings
 function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: UserRole) {
@@ -27,8 +28,8 @@ function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patien
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
   
-  const payoutPercentage = 0.70; // 70% to doctor
-  const appointmentAmount = 13; // $13 per appointment
+  const payoutPercentage = DOCTOR_PAYOUT_RATE;
+  const appointmentAmount = APPOINTMENT_PRICE_EUR;
   
   // Filter completed/paid appointments for this doctor
   const doctorAppointments = appointments.filter(a =>
@@ -179,9 +180,7 @@ export default function Dashboard() {
                 onPay={
                   role === UserRole.Patient && heroAppointment && !heroIsPaid
                     ? () => {
-                        const amount = Number.parseFloat(process.env.NEXT_PUBLIC_PAYWALL_AMOUNT_USD || "");
-                        const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 13;
-                        vm.handlePayNow(heroAppointment.id, safeAmount);
+                        vm.handlePayNow(heroAppointment.id, APPOINTMENT_PRICE_EUR);
                       }
                     : undefined
                 }

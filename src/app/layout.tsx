@@ -9,6 +9,8 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import HeadNonce from "./HeadNonce";
 import { getSiteUrl } from "./seo";
+import { LANGUAGE_COOKIE_NAME } from "@/config/cookies";
+import { APPOINTMENT_PRICE_CURRENCY, APPOINTMENT_PRICE_EUR } from "@/config/paywallConfig";
 
 const SITE_URL = getSiteUrl();
 const DEFAULT_TITLE = "Pyet Doktorin";
@@ -117,8 +119,8 @@ const structuredData = [
     applicationCategory: "HealthApplication",
     offers: {
       "@type": "Offer",
-      price: "13",
-      priceCurrency: "EUR",
+      price: String(APPOINTMENT_PRICE_EUR),
+      priceCurrency: APPOINTMENT_PRICE_CURRENCY,
       availability: "https://schema.org/InStock",
     },
   },
@@ -141,7 +143,7 @@ const safeStructuredData = structuredData.map((item) => ({
 }));
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const lang = (await cookies()).get('language')?.value || 'al';
+  const lang = (await cookies()).get(LANGUAGE_COOKIE_NAME)?.value || 'al';
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID;
   return (
     <html lang={lang} data-theme="light">

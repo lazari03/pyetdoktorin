@@ -43,6 +43,8 @@ import { DoctorSearchService } from '@/infrastructure/services/doctorSearchServi
 import { GA4AnalyticsService } from '@/infrastructure/services/analyticsService';
 import { IAnalyticsService } from '@/application/ports/IAnalyticsService';
 import { ReciepeService } from '@/infrastructure/services/reciepeService';
+import { AppointmentPaymentService } from '@/infrastructure/services/appointmentPaymentService';
+import { PaymentCheckoutService } from '@/infrastructure/services/paymentCheckoutService';
 
 interface DIContextValue {
   fetchAppointmentsUseCase: FetchAppointmentsUseCase;
@@ -92,10 +94,12 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const doctorSearchService = new DoctorSearchService();
   const analyticsService: IAnalyticsService = new GA4AnalyticsService();
   const reciepeService = new ReciepeService();
+  const appointmentPaymentService = new AppointmentPaymentService();
+  const paymentCheckoutService = new PaymentCheckoutService();
 
   const fetchAppointmentsUseCase = new FetchAppointmentsUseCase(appointmentRepo);
   const setAppointmentPaidUseCase = new SetAppointmentPaidUseCase(appointmentService);
-  const handlePayNowUseCase = new HandlePayNowUseCase();
+  const handlePayNowUseCase = new HandlePayNowUseCase(appointmentPaymentService, paymentCheckoutService);
   const checkIfPastAppointmentUseCase = new CheckIfPastAppointmentUseCase(appointmentService);
   const updateAppointmentUseCase = new UpdateAppointmentUseCase(appointmentRepo);
   const generateRoomCodeUseCase = new GenerateRoomCodeUseCase(videoSessionService, analyticsService);

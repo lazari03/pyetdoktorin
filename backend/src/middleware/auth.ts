@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { UserRole } from '@/domain/entities/UserRole';
+import { AUTH_COOKIE_NAMES } from '@/config/cookies';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -14,12 +15,18 @@ export function requireAuth(requiredRoles?: UserRole[]) {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Missing Authorization header' });
-      }
-      const token = authHeader.slice('Bearer '.length);
+      const sessionCookie = req.cookies?.[AUTH_COOKIE_NAMES.session] as string | undefined;
       const admin = getFirebaseAdmin();
-      const decoded = await admin.auth().verifyIdToken(token);
+
+      let decoded: Awaited<ReturnType<typeof admin.auth().verifyIdToken>>;
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice('Bearer '.length);
+        decoded = await admin.auth().verifyIdToken(token);
+      } else if (sessionCookie) {
+        decoded = await admin.auth().verifySessionCookie(sessionCookie, true);
+      } else {
+        return res.status(401).json({ error: 'Missing authentication credentials' });
+      }
       const normalizeRole = (raw: unknown): UserRole | null => {
         if (typeof raw !== 'string') return null;
         const normalized = raw.toLowerCase();

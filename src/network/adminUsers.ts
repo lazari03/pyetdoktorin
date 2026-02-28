@@ -55,7 +55,7 @@ export async function fetchAdminUser(id: string) {
 }
 
 export async function createAdminUser(payload: AdminUserCreatePayload) {
-  return backendFetch(`/api/users`, {
+  return backendFetch<{ id: string; role: UserRole }>(`/api/users`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });

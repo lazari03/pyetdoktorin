@@ -45,11 +45,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userData = userDoc.data();
             const normalizedRole = normalizeRole(userData.role);
             setRole(normalizedRole);
-            if (normalizedRole) {
-              localStorage.setItem('userRole', normalizedRole);
-            } else {
-              localStorage.removeItem('userRole');
-            }
             setUser({
               uid: currentUser.uid,
               name: userData.name || currentUser.displayName || 'Unknown',
@@ -59,12 +54,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           } else {
 
             setRole(null);
-            localStorage.removeItem('userRole'); // Remove role if not found
             setUser(null);
           }
         } catch {
           setRole(null);
-          localStorage.removeItem('userRole'); // Remove role on error
           setUser(null);
         }
       } else {
@@ -72,7 +65,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUid(null); // Reset `uid`
         setUser(null);
         setRole(null);
-        localStorage.removeItem('userRole'); // Clear role on logout
       }
 
       setLoading(false);

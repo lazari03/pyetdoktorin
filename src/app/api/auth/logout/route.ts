@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { AUTH_COOKIE_NAMES, COOKIE_SAMESITE, isSecureCookieEnv } from '@/config/cookies';
 
 const getBackendBaseUrl = () => {
   const base = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:4000';
@@ -6,8 +7,7 @@ const getBackendBaseUrl = () => {
 };
 
 export async function POST() {
-  const isProd = process.env.NODE_ENV === 'production';
-  const secure = isProd;
+  const secure = isSecureCookieEnv();
 
 
   async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, delay = 500): Promise<Response | undefined> {
@@ -36,10 +36,9 @@ export async function POST() {
   }
 
   const response = NextResponse.json({ ok: true });
-  const expired = { path: '/', maxAge: 0, sameSite: 'lax' as const, secure };
-  response.cookies.set('session', '', { ...expired, httpOnly: true });
-  response.cookies.set('userRole', '', expired);
-  response.cookies.set('lastActivity', '', expired);
-  response.cookies.set('loggedIn', '', expired);
+  const expired = { path: '/', maxAge: 0, sameSite: COOKIE_SAMESITE, secure, httpOnly: true };
+  response.cookies.set(AUTH_COOKIE_NAMES.session, '', expired);
+  response.cookies.set(AUTH_COOKIE_NAMES.userRole, '', expired);
+  response.cookies.set(AUTH_COOKIE_NAMES.lastActivity, '', expired);
   return response;
 }

@@ -1,5 +1,6 @@
 import { IDoctorPayoutService, PayoutRecord } from '@/application/ports/IDoctorPayoutService';
 import { getAdmin } from '@/app/api/_lib/admin';
+import { DOCTOR_PAYOUT_PERCENTAGE } from '@/config/paywallConfig';
 
 /**
  * Firebase implementation of doctor payout tracking
@@ -12,8 +13,8 @@ export class DoctorPayoutService implements IDoctorPayoutService {
   }
 
   private calculatePayoutAmount(totalAmount: number): number {
-    const payoutPercentage = Number(process.env.DOCTOR_PAYOUT_PERCENTAGE ?? 70);
-    return Math.round((totalAmount * payoutPercentage) / 100 * 100) / 100; // Round to 2 decimals
+    const payoutAmount = (totalAmount * DOCTOR_PAYOUT_PERCENTAGE) / 100;
+    return Math.round(payoutAmount * 100) / 100;
   }
 
   async recordPayout(appointmentId: string, doctorId: string, totalAmount: number): Promise<void> {

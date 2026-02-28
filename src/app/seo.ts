@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { APPOINTMENT_PRICE_CURRENCY, APPOINTMENT_PRICE_EUR } from "@/config/paywallConfig";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://pyetdoktorin.al";
 const DEFAULT_IMAGE = "/og/pyet-doktorin.svg";
@@ -64,7 +65,15 @@ export const SEO_KEYWORDS_AL = [
   "psikolog online",
 ];
 
-export const PRICE_PER_APPOINTMENT_EUR = 13;
+const currencySymbolMap: Record<string, string> = {
+  EUR: "€",
+  USD: "$",
+};
+
+const currencySymbol = currencySymbolMap[APPOINTMENT_PRICE_CURRENCY];
+const priceRange = currencySymbol
+  ? `${currencySymbol}${APPOINTMENT_PRICE_EUR}`
+  : `${APPOINTMENT_PRICE_CURRENCY} ${APPOINTMENT_PRICE_EUR}`;
 
 type JsonLd = Record<string, unknown>;
 
@@ -75,7 +84,7 @@ export function buildMedicalOrganizationSchema(): JsonLd {
     name: "Pyet Doktorin",
     url: SITE_URL,
     areaServed: "AL",
-    priceRange: `€${PRICE_PER_APPOINTMENT_EUR}`,
+    priceRange,
     medicalSpecialty: [
       "PrimaryCare",
       "Dermatology",

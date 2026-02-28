@@ -1,6 +1,9 @@
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, updateEmail } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/config/firebaseconfig';
+import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeRole } from '@/domain/rules/userRules';
 
 import { sendPasswordResetEmail } from "firebase/auth";
 
@@ -27,14 +30,15 @@ export const isAuthenticated = (callback: (authState: { userId: string | null; e
 };
 
 // Login function
-export const login = async (email: string, password: string) => {
+export const login = async (email: string, password: string): Promise<{ user: User; role: UserRole }> => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
         // Retrieve user role from Firestore
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const role = userDoc.exists() ? userDoc.data()?.role || 'patient' : 'patient';
+        const role = userDoc.exists() ? normalizeRole(userDoc.data()?.role) : UserRole.Patient;
+        const resolvedRole = role ?? UserRole.Patient;
 
         // Get ID token and send to server to create an HttpOnly session cookie
         const idToken = await user.getIdToken(true);
@@ -58,7 +62,7 @@ export const login = async (email: string, password: string) => {
             console.warn('Failed to refresh token after session setup', refreshError);
         }
 
-        return { user, role };
+        return { user, role: resolvedRole };
     } catch (error) {
         console.error('Login error:', error); // Log the actual error object
         throw new Error('Failed to log in');

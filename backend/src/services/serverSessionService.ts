@@ -2,21 +2,29 @@ import { IServerSessionService, SessionCookiesResult } from '@/application/ports
 import { SessionException } from '@/application/errors/SessionException';
 import { UserRole } from '@/domain/entities/UserRole';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
-
-const THIRTY_MIN = 30 * 60; // seconds
+import { AUTH_COOKIE_NAMES, AUTH_COOKIE_MAX_AGE_SECONDS, buildAuthCookie } from '@/config/cookies';
 
 export class FirebaseServerSessionService implements IServerSessionService {
   constructor(private readonly isProd: boolean) {}
 
-  private buildCookies(role: UserRole): string[] {
-    const secure = this.isProd ? '; Secure' : '';
-    const base = `Path=/; SameSite=Lax; Max-Age=${THIRTY_MIN}`;
+  private buildCookies(sessionCookie: string, role: UserRole): string[] {
     const now = Date.now();
     return [
-      `session=1; ${base}; HttpOnly${secure}`,
-      `userRole=${encodeURIComponent(role)}; ${base}${secure}`,
-      `lastActivity=${now}; ${base}${secure}`,
-      `loggedIn=1; ${base}${secure}`,
+      buildAuthCookie({
+        name: AUTH_COOKIE_NAMES.session,
+        value: sessionCookie,
+        isProd: this.isProd,
+      }),
+      buildAuthCookie({
+        name: AUTH_COOKIE_NAMES.userRole,
+        value: encodeURIComponent(role),
+        isProd: this.isProd,
+      }),
+      buildAuthCookie({
+        name: AUTH_COOKIE_NAMES.lastActivity,
+        value: String(now),
+        isProd: this.isProd,
+      }),
     ];
   }
 
@@ -59,10 +67,12 @@ export class FirebaseServerSessionService implements IServerSessionService {
         admin: role === UserRole.Admin,
       });
     }
+    const expiresIn = AUTH_COOKIE_MAX_AGE_SECONDS * 1000;
+    const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
 
     return {
       role,
-      cookies: this.buildCookies(role),
+      cookies: this.buildCookies(sessionCookie, role),
     };
   }
 }
