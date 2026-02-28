@@ -31,6 +31,9 @@ app.use(cors({
     if (!origin) {
       return callback(null, true);
     }
+    if (!isProd && /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
     if (allowAllOrigins) {
       return callback(null, true);
     }
@@ -38,9 +41,14 @@ app.use(cors({
     if (allowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
+    if (!isProd) {
+      console.warn('CORS blocked origin:', origin);
+      return callback(null, false);
+    }
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 150 });

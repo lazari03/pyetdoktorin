@@ -42,3 +42,15 @@ export async function POST() {
   response.cookies.set(AUTH_COOKIE_NAMES.lastActivity, '', expired);
   return response;
 }
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      Allow: 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Credentials': 'true',
+    },
+  });
+}

@@ -18,7 +18,8 @@ export function requireAuth(requiredRoles?: UserRole[]) {
       const sessionCookie = req.cookies?.[AUTH_COOKIE_NAMES.session] as string | undefined;
       const admin = getFirebaseAdmin();
 
-      let decoded: Awaited<ReturnType<typeof admin.auth().verifyIdToken>>;
+      type VerifyIdToken = ReturnType<typeof admin.auth>['verifyIdToken'];
+      let decoded: Awaited<ReturnType<VerifyIdToken>>;
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.slice('Bearer '.length);
         decoded = await admin.auth().verifyIdToken(token);

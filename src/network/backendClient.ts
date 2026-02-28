@@ -1,5 +1,6 @@
 
-import { getAuth } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/config/firebaseconfig';
 
 const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
 
@@ -31,13 +32,32 @@ const parseBackendError = (text: string): BackendErrorPayload | null => {
   }
 };
 
-async function getIdToken(): Promise<string> {
-  const auth = getAuth();
-  const user = auth.currentUser;
+async function waitForAuthUser(timeoutMs = 1500) {
+  if (auth.currentUser) return auth.currentUser;
+  return new Promise<ReturnType<typeof auth.currentUser>>((resolve) => {
+    const timeout = setTimeout(() => {
+      unsubscribe();
+      resolve(null);
+    }, timeoutMs);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      clearTimeout(timeout);
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}
+
+async function getOptionalIdToken(): Promise<string | null> {
+  const user = auth.currentUser ?? (await waitForAuthUser());
   if (!user) {
-    throw new Error('Not authenticated');
+    return null;
   }
-  return user.getIdToken();
+  try {
+    return await user.getIdToken();
+  } catch (error) {
+    console.warn('Failed to get auth token', error);
+    return null;
+  }
 }
 
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3, delay = 500): Promise<Response> {
@@ -63,7 +83,14 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  const hasAuthHeader = headers.has('Authorization');
+  let hasAuthHeader = headers.has('Authorization');
+  if (!hasAuthHeader) {
+    const token = await getOptionalIdToken();
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+      hasAuthHeader = true;
+    }
+  }
 
   const baseOptions: RequestInit = {
     ...options,
@@ -75,19 +102,18 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
   try {
     response = await fetchWithRetry(url, baseOptions);
     if (response.status === 401 && !hasAuthHeader) {
-      const token = await getIdToken();
-      const retryHeaders = new Headers(headers);
-      retryHeaders.set('Authorization', `Bearer ${token}`);
-      response = await fetchWithRetry(url, {
-        ...baseOptions,
-        headers: retryHeaders,
-      });
+      const token = await getOptionalIdToken();
+      if (token) {
+        const retryHeaders = new Headers(headers);
+        retryHeaders.set('Authorization', `Bearer ${token}`);
+        response = await fetchWithRetry(url, {
+          ...baseOptions,
+          headers: retryHeaders,
+        });
+      }
     }
   } catch (err) {
     console.error('backendFetch network error:', err);
-    if (err instanceof Error && err.message === 'Not authenticated') {
-      throw err;
-    }
     throw new Error('Network error: ' + (err instanceof Error ? err.message : String(err)));
   }
   if (!response.ok) {
