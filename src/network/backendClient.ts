@@ -1,5 +1,4 @@
 
-import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/config/firebaseconfig';
 
 const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
@@ -32,23 +31,18 @@ const parseBackendError = (text: string): BackendErrorPayload | null => {
   }
 };
 
-async function waitForAuthUser(timeoutMs = 1500) {
+async function waitForCurrentUser(timeoutMs = 3000, intervalMs = 120) {
   if (auth.currentUser) return auth.currentUser;
-  return new Promise<ReturnType<typeof auth.currentUser>>((resolve) => {
-    const timeout = setTimeout(() => {
-      unsubscribe();
-      resolve(null);
-    }, timeoutMs);
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      clearTimeout(timeout);
-      unsubscribe();
-      resolve(user);
-    });
-  });
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (auth.currentUser) return auth.currentUser;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  return null;
 }
 
 async function getOptionalIdToken(): Promise<string | null> {
-  const user = auth.currentUser ?? (await waitForAuthUser());
+  const user = auth.currentUser ?? (await waitForCurrentUser());
   if (!user) {
     return null;
   }
