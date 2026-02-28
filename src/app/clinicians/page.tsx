@@ -6,6 +6,17 @@ import WebsiteFeatureGrid from '../../presentation/components/website/WebsiteFea
 import WebsiteSplitSection from '../../presentation/components/website/WebsiteSplitSection';
 import WebsiteCta from '../../presentation/components/website/WebsiteCta';
 import { getServerTranslations } from "@/i18n/serverTranslations";
+import { buildMetadata, SEO_KEYWORDS_AL } from "../seo";
+
+export async function generateMetadata() {
+  const t = await getServerTranslations();
+  return buildMetadata({
+    title: t("cliniciansMetaTitle"),
+    description: t("cliniciansMetaDescription"),
+    path: "/clinicians",
+    keywords: SEO_KEYWORDS_AL,
+  });
+}
 
 export default async function ClinicsPage() {
   const t = await getServerTranslations();

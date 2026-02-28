@@ -5,6 +5,11 @@ import { AUTH_COOKIE_MAX_AGE_SECONDS, AUTH_COOKIE_NAMES, COOKIE_SAMESITE, LANGUA
 // Root-level middleware (must be at project root for Next.js to apply)
 export function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
+  const forwardedProto = req.headers.get('x-forwarded-proto');
+  if (process.env.NODE_ENV === 'production' && forwardedProto === 'http') {
+    url.protocol = 'https:';
+    return NextResponse.redirect(url, 308);
+  }
   const role = req.cookies.get(AUTH_COOKIE_NAMES.userRole)?.value;
   const hasSession = req.cookies.get(AUTH_COOKIE_NAMES.session)?.value;
   const lastActivityStr = req.cookies.get(AUTH_COOKIE_NAMES.lastActivity)?.value;

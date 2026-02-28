@@ -18,6 +18,13 @@ module.exports = {
   productionBrowserSourceMaps: false,
   async redirects() {
     return [
+      { source: "/en/:year/:month/:day/:slug*", destination: "/blog", permanent: true },
+      { source: "/:year/:month/:day/:slug*", destination: "/blog", permanent: true },
+      { source: "/rritja-e-aksesit-shendetesor", destination: "/blog", permanent: true },
+      { source: "/menagjimi-i-semundjeve-kronike", destination: "/blog", permanent: true },
+      { source: "/is-ʻoumuamua-still-debated-among-top-scientists", destination: "/blog", permanent: true },
+      { source: "/en", destination: "/", permanent: true },
+      { source: "/en/:path*", destination: "/:path*", permanent: true },
       { source: "/how-it-works", destination: "/si-funksionon", permanent: true },
       { source: "/faq", destination: "/help-center", permanent: true },
       { source: "/privacy", destination: "/privacy-policy", permanent: true },

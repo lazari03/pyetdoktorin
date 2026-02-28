@@ -4,6 +4,17 @@ import Link from "next/link";
 import FooterSection from "@/presentation/components/footerSection/footerSection";
 import NavBar from "@/presentation/components/navBar/navBar";
 import { getServerTranslations } from "@/i18n/serverTranslations";
+import { buildMetadata, SEO_KEYWORDS_AL } from "../seo";
+
+export async function generateMetadata() {
+  const t = await getServerTranslations();
+  return buildMetadata({
+    title: t("privacyMetaTitle"),
+    description: t("privacyMetaDescription"),
+    path: "/privacy-policy",
+    keywords: SEO_KEYWORDS_AL,
+  });
+}
 
 export default async function PrivacyPolicyPage() {
   const t = await getServerTranslations();

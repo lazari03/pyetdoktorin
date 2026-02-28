@@ -5,7 +5,18 @@ import WebsiteHero from "@/presentation/components/website/WebsiteHero";
 import WebsiteSection from "@/presentation/components/website/WebsiteSection";
 import WebsiteStatsStrip from "@/presentation/components/website/WebsiteStatsStrip";
 import { getServerTranslations } from "@/i18n/serverTranslations";
+import { buildMetadata, SEO_KEYWORDS_AL } from "../seo";
 import ContactForm from "./ContactForm";
+
+export async function generateMetadata() {
+  const t = await getServerTranslations();
+  return buildMetadata({
+    title: t("contactMetaTitle"),
+    description: t("contactMetaDescription"),
+    path: "/contact",
+    keywords: SEO_KEYWORDS_AL,
+  });
+}
 
 export default async function ContactPage() {
   const t = await getServerTranslations();
@@ -32,8 +43,8 @@ export default async function ContactPage() {
               <div className="mt-6 space-y-2 text-sm text-slate-600">
                 <div>
                   {t('email')}:{' '}
-                  <a className="text-purple-600" href="mailto:atelemedicine30@gmail.com">
-                    atelemedicine30@gmail.com
+                  <a className="text-purple-600" href="mailto:info@pyetdoktorin.al">
+                    info@pyetdoktorin.al
                   </a>
                 </div>
                 <div>{t('supportHours')}</div>

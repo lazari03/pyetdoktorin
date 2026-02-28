@@ -4,6 +4,17 @@ import WebsiteHero from "@/presentation/components/website/WebsiteHero";
 import WebsiteSection from "@/presentation/components/website/WebsiteSection";
 import WebsiteCta from "@/presentation/components/website/WebsiteCta";
 import { getServerTranslations } from "@/i18n/serverTranslations";
+import { buildMetadata, SEO_KEYWORDS_AL } from "../seo";
+
+export async function generateMetadata() {
+  const t = await getServerTranslations();
+  return buildMetadata({
+    title: t("blogMetaTitle"),
+    description: t("blogMetaDescription"),
+    path: "/blog",
+    keywords: SEO_KEYWORDS_AL,
+  });
+}
 
 export default async function BlogPage() {
   const t = await getServerTranslations();

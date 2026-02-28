@@ -5,7 +5,17 @@ import WebsiteSection from "@/presentation/components/website/WebsiteSection";
 import WebsiteCta from "@/presentation/components/website/WebsiteCta";
 import { getServerTranslations } from "@/i18n/serverTranslations";
 import SeoHead from "@/presentation/components/seo/SeoHead";
-import { buildMedicalOrganizationSchema, buildMedicalWebPageSchema } from "../seo";
+import { buildMedicalOrganizationSchema, buildMedicalWebPageSchema, buildMetadata, SEO_KEYWORDS_AL } from "../seo";
+
+export async function generateMetadata() {
+  const t = await getServerTranslations();
+  return buildMetadata({
+    title: t("pricingMetaTitle"),
+    description: t("pricingMetaDescription"),
+    path: "/pricing",
+    keywords: SEO_KEYWORDS_AL,
+  });
+}
 
 export default async function PricingPage() {
   const t = await getServerTranslations();

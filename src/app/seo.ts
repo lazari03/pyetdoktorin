@@ -98,7 +98,7 @@ export function buildMedicalOrganizationSchema(): JsonLd {
       {
         "@type": "ContactPoint",
         contactType: "customer support",
-        email: "atelemedicine30@gmail.com",
+        email: "info@pyetdoktorin.al",
         areaServed: "AL",
       },
     ],

@@ -90,7 +90,7 @@ const structuredData = [
     "@type": "MedicalOrganization",
     name: DEFAULT_TITLE,
     url: SITE_URL,
-    email: "atelemedicine30@gmail.com",
+    email: "info@pyetdoktorin.al",
     areaServed: "AL",
     medicalSpecialty: [
       "PrimaryCare",
@@ -104,7 +104,7 @@ const structuredData = [
     contactPoint: [
       {
         "@type": "ContactPoint",
-        email: "atelemedicine30@gmail.com",
+        email: "info@pyetdoktorin.al",
         contactType: "customer support",
         areaServed: "AL",
       },

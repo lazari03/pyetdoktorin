@@ -5,6 +5,18 @@ import Image from "next/image";
 import FooterSection from "../../presentation/components/footerSection/footerSection";
 import NavBar from "../../presentation/components/navBar/navBar";
 import { getServerTranslations } from "@/i18n/serverTranslations";
+import { buildMetadata, SEO_KEYWORDS_AL } from "../seo";
+
+
+export async function generateMetadata() {
+  const t = await getServerTranslations();
+  return buildMetadata({
+    title: t("aboutMetaTitle"),
+    description: t("aboutMetaDescription"),
+    path: "/about",
+    keywords: SEO_KEYWORDS_AL,
+  });
+}
 
 
 export default async function AboutPage() {

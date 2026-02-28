@@ -50,7 +50,7 @@ export default function ContactForm() {
             <p className="text-base opacity-90 mb-6">{t('getInTouchSubtitle')}</p>
             <div className="flex flex-col gap-4 text-base">
               <div className="flex items-center gap-3"><UserIcon className="w-5 h-5" /> +355 68 123 4567</div>
-              <div className="flex items-center gap-3"><EnvelopeIcon className="w-5 h-5" /> atelemedicine30@gmail.com</div>
+              <div className="flex items-center gap-3"><EnvelopeIcon className="w-5 h-5" /> info@pyetdoktorin.al</div>
               <div className="flex items-center gap-3"><ChatBubbleLeftRightIcon className="w-5 h-5" /> Tirana, Albania</div>
             </div>
           </div>

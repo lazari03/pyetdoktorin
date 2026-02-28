@@ -5,6 +5,17 @@ import WebsiteSection from "@/presentation/components/website/WebsiteSection";
 import WebsiteFeatureGrid from "@/presentation/components/website/WebsiteFeatureGrid";
 import WebsiteCta from "@/presentation/components/website/WebsiteCta";
 import { getServerTranslations } from "@/i18n/serverTranslations";
+import { buildMetadata, SEO_KEYWORDS_AL } from "../seo";
+
+export async function generateMetadata() {
+  const t = await getServerTranslations();
+  return buildMetadata({
+    title: t("helpCenterMetaTitle"),
+    description: t("helpCenterMetaDescription"),
+    path: "/help-center",
+    keywords: SEO_KEYWORDS_AL,
+  });
+}
 
 export default async function HelpCenterPage() {
   const t = await getServerTranslations();

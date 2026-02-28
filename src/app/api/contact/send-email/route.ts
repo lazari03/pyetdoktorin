@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
   }
 
-  const toEmail = process.env.CONTACT_EMAIL_TO || "atelemedicine30@gmail.com";
+  const toEmail = process.env.CONTACT_EMAIL_TO || "info@pyetdoktorin.al";
   const smtpUser = process.env.CONTACT_EMAIL_USER || toEmail;
   const smtpPass = process.env.CONTACT_EMAIL_PASS;
 

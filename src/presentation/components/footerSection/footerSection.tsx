@@ -72,6 +72,7 @@ export default function FooterSection() {
                 <li><Link href="/help-center" className="hover:text-white">{t('helpCenter')}</Link></li>
                 <li><Link href="/terms-of-service" className="hover:text-white">{t('termsOfService')}</Link></li>
                 <li><Link href="/privacy-policy" className="hover:text-white">{t('privacyPolicy')}</Link></li>
+                <li><Link href="/status" className="hover:text-white">{t('status')}</Link></li>
               </ul>
             </div>
           </div>
