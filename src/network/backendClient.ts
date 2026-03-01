@@ -84,6 +84,8 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
+  const method = (options.method || 'GET').toUpperCase();
+  const isRead = method === 'GET' || method === 'HEAD';
   let hasAuthHeader = headers.has('Authorization');
   if (!hasAuthHeader) {
     const token = await getOptionalIdToken();
@@ -97,6 +99,8 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
     ...options,
     headers,
     credentials: 'include',
+    // Prevent stale cached responses for auth-protected dashboard reads.
+    ...(isRead ? { cache: 'no-store' } : {}),
   };
 
   let response: Response;

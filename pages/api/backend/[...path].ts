@@ -19,6 +19,7 @@ async function readRawBody(req: NextApiRequest): Promise<ArrayBuffer> {
     req.on('data', (chunk) => {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     });
+    req.on('end', () => resolve());
     req.on('error', reject);
   });
   const buffer = Buffer.concat(chunks);
@@ -57,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   delete headers['content-length'];
 
   const body: ArrayBuffer | undefined =
-    method === 'GET' || method === 'HEAD' || method === 'OPTIONS' ? undefined : await readBody(req);
+    method === 'GET' || method === 'HEAD' || method === 'OPTIONS' ? undefined : await readRawBody(req);
 
   let backendRes: Response;
   try {
@@ -85,8 +86,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   backendRes.headers.forEach((value, key) => {
     if (key.toLowerCase() === 'set-cookie') return;
     if (key.toLowerCase() === 'transfer-encoding') return;
+    if (key.toLowerCase() === 'etag') return;
+    if (key.toLowerCase() === 'cache-control') return;
     res.setHeader(key, value);
   });
+
+  // Avoid browser caching for authenticated API data (prevents 304/stale lists in dashboards).
+  res.setHeader('Cache-Control', 'no-store');
 
   const headerWithGetSetCookie = backendRes.headers as unknown as { getSetCookie?: () => string[] };
   const setCookies = headerWithGetSetCookie.getSetCookie?.() ?? [];

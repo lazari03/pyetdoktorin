@@ -75,11 +75,41 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     const onChange = (appointments: Appointment[]) => {
       set({ appointments, loading: false, error: null });
     };
+
+    const refreshFromBackend = async () => {
+      try {
+        const response = await listAppointments();
+        set({
+          appointments: response.items,
+          loading: false,
+          error: null,
+        });
+      } catch (error) {
+        console.warn('Backend appointments refresh failed', error);
+      }
+    };
+
+    // Hydrate immediately from the backend (source of truth) so users see new
+    // appointments even if the Firestore subscription fails or lags.
+    refreshFromBackend();
+    const refreshInterval = setInterval(refreshFromBackend, 30_000);
+
     const unsubscribe =
       role === UserRole.Doctor
-        ? subscribeAppointmentsForDoctor(userId, onChange)
-        : subscribeAppointmentsForUser(userId, onChange);
-    return () => unsubscribe();
+        ? subscribeAppointmentsForDoctor(userId, onChange, (error) => {
+            set({ loading: false, error: APPOINTMENT_ERROR_CODES.FetchFailed });
+            console.warn('Firestore appointment subscription failed (doctor)', error);
+            refreshFromBackend();
+          })
+        : subscribeAppointmentsForUser(userId, onChange, (error) => {
+            set({ loading: false, error: APPOINTMENT_ERROR_CODES.FetchFailed });
+            console.warn('Firestore appointment subscription failed (patient)', error);
+            refreshFromBackend();
+          });
+    return () => {
+      clearInterval(refreshInterval);
+      unsubscribe();
+    };
   },
   setAppointmentPaid: async (appointmentId, setAppointmentPaidUseCase) => setAppointmentPaidUseCase(appointmentId),
   handlePayNow: async (appointmentId, amount, handlePayNowUseCase, options) =>

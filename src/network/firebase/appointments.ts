@@ -20,27 +20,43 @@ export async function fetchAppointmentsForDoctor(id: string): Promise<Appointmen
 
 export function subscribeAppointmentsForUser(
   id: string,
-  onChange: (appointments: Appointment[]) => void
+  onChange: (appointments: Appointment[]) => void,
+  onError?: (error: unknown) => void
 ): () => void {
   const col = collection(db, FirestoreCollections.Appointments);
   const q = query(col, where('patientId', '==', id));
-  const unsubscribe = onSnapshot(q, (snap) => {
-    const items = snap.docs.map((doc) => mapAppointmentDoc(doc.id, doc.data() as Record<string, unknown>));
-    onChange(items);
-  });
+  const unsubscribe = onSnapshot(
+    q,
+    (snap) => {
+      const items = snap.docs.map((doc) => mapAppointmentDoc(doc.id, doc.data() as Record<string, unknown>));
+      onChange(items);
+    },
+    (error) => {
+      console.error('Appointments subscription (patient) failed', error);
+      onError?.(error);
+    }
+  );
   return () => unsubscribe();
 }
 
 export function subscribeAppointmentsForDoctor(
   id: string,
-  onChange: (appointments: Appointment[]) => void
+  onChange: (appointments: Appointment[]) => void,
+  onError?: (error: unknown) => void
 ): () => void {
   const col = collection(db, FirestoreCollections.Appointments);
   const q = query(col, where('doctorId', '==', id));
-  const unsubscribe = onSnapshot(q, (snap) => {
-    const items = snap.docs.map((doc) => mapAppointmentDoc(doc.id, doc.data() as Record<string, unknown>));
-    onChange(items);
-  });
+  const unsubscribe = onSnapshot(
+    q,
+    (snap) => {
+      const items = snap.docs.map((doc) => mapAppointmentDoc(doc.id, doc.data() as Record<string, unknown>));
+      onChange(items);
+    },
+    (error) => {
+      console.error('Appointments subscription (doctor) failed', error);
+      onError?.(error);
+    }
+  );
   return () => unsubscribe();
 }
 
