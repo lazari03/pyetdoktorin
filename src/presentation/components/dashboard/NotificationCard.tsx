@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { getRoleNotificationsPath } from "@/navigation/roleRoutes";
 
 type Props = {
   appointments: Appointment[];
@@ -12,13 +14,29 @@ type Props = {
 export function NotificationCard({ appointments }: Props) {
   const { t } = useTranslation();
   const router = useRouter();
+  const { role } = useAuth();
+  const notificationsHref = getRoleNotificationsPath(role);
 
   const items = useMemo(() => {
     return [...appointments]
+      .sort((a, b) => {
+        const at = Number.isFinite(new Date(a.createdAt).getTime()) ? new Date(a.createdAt).getTime() : 0;
+        const bt = Number.isFinite(new Date(b.createdAt).getTime()) ? new Date(b.createdAt).getTime() : 0;
+        return bt - at;
+      })
       .slice(0, 20) // keep payload light
       .map((a) => {
         const status = getAppointmentStatusPresentation(a.status);
-        const ts = `${a.preferredDate || ""} ${a.preferredTime || ""}`.trim();
+        const createdAt = new Date(a.createdAt);
+        const createdLabel = Number.isNaN(createdAt.getTime())
+          ? `${a.preferredDate || ""} ${a.preferredTime || ""}`.trim()
+          : createdAt.toLocaleString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
         const title =
           a.status?.toLowerCase() === "accepted"
             ? t("notificationAccepted", { doctor: a.doctorName || t("doctor") })
@@ -26,12 +44,12 @@ export function NotificationCard({ appointments }: Props) {
             ? t("notificationRejected", { doctor: a.doctorName || t("doctor") })
             : t("notificationPending", { doctor: a.doctorName || t("doctor") });
         const desc = a.appointmentType ? `${a.appointmentType}` : "";
-        return { id: a.id, title, desc, ts, status };
+        return { id: a.id, title, desc, ts: createdLabel, status };
       });
   }, [appointments, t]);
 
   const handleNotificationClick = () => {
-    router.push("/dashboard/notifications");
+    router.push(notificationsHref);
   };
 
   return (
@@ -41,7 +59,7 @@ export function NotificationCard({ appointments }: Props) {
           <p className="text-sm font-semibold text-gray-900">{t("notifications") || "Notifications"}</p>
         </div>
         <Link
-          href="/dashboard/notifications"
+          href={notificationsHref}
           className="text-xs font-semibold text-purple-600 hover:text-purple-700"
           aria-label={t("viewAll") || "View all notifications"}
         >
