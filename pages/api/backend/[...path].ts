@@ -6,49 +6,59 @@ export const config = {
   },
 };
 
+const backendBaseUrl =
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  'http://localhost:4000';
+
 const normalizeBaseUrl = (base: string) => base.replace(/\/$/, '');
 
-async function readRawBody(req: NextApiRequest): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  await new Promise<void>((resolve, reject) => {
-    req.on('data', (chunk) => {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-    });
-    req.on('end', () => resolve());
+const readBody = async (req: NextApiRequest): Promise<Buffer> => {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
   });
-  return Buffer.concat(chunks);
-}
+};
+
+const toHeaderRecord = (headers: NextApiRequest['headers']): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(headers)) {
+    if (value == null) continue;
+    out[key] = Array.isArray(value) ? value.join(',') : value;
+  }
+  return out;
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const backendBaseUrl =
-    process.env.BACKEND_URL ||
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    'http://localhost:4000';
-
-  const incomingUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
-  const pathParts = req.query.path;
+  const base = normalizeBaseUrl(backendBaseUrl);
+  const pathParts = (req.query.path ?? []) as string[] | string;
   const path = Array.isArray(pathParts) ? pathParts.join('/') : String(pathParts || '');
 
-  const target = new URL(`${normalizeBaseUrl(backendBaseUrl)}/${path}`);
-  target.search = incomingUrl.search;
-
-  const headers: Record<string, string> = {};
-  for (const [key, value] of Object.entries(req.headers)) {
-    if (value === undefined) continue;
-    headers[key] = Array.isArray(value) ? value.join(',') : value;
+  const url = new URL(`${base}/${path}`);
+  for (const [key, value] of Object.entries(req.query)) {
+    if (key === 'path') continue;
+    if (value == null) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) url.searchParams.append(key, item);
+    } else {
+      url.searchParams.set(key, value);
+    }
   }
+
+  const method = (req.method || 'GET').toUpperCase();
+  const headers = toHeaderRecord(req.headers);
   delete headers.host;
   delete headers.connection;
   delete headers['content-length'];
 
-  const method = (req.method || 'GET').toUpperCase();
   const body =
-    method === 'GET' || method === 'HEAD' ? undefined : await readRawBody(req);
+    method === 'GET' || method === 'HEAD' || method === 'OPTIONS' ? undefined : await readBody(req);
 
-  let upstream: Response;
+  let backendRes: Response;
   try {
-    upstream = await fetch(target.toString(), {
+    backendRes = await fetch(url.toString(), {
       method,
       headers,
       body: body && body.length > 0 ? body : undefined,
@@ -56,23 +66,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return res.status(502).json({ error: 'Backend unreachable', detail: message });
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Backend proxy fetch failed', { url: url.toString(), method, message });
+    }
+    res.status(502).json({
+      error: 'Backend unreachable',
+      detail: process.env.NODE_ENV !== 'production' ? message : undefined,
+    });
+    return;
   }
 
-  // Copy headers (except Set-Cookie which can appear multiple times).
-  upstream.headers.forEach((value, key) => {
+  res.status(backendRes.status);
+
+  // Copy headers (preserve multi-value Set-Cookie).
+  backendRes.headers.forEach((value, key) => {
     if (key.toLowerCase() === 'set-cookie') return;
     if (key.toLowerCase() === 'transfer-encoding') return;
     res.setHeader(key, value);
   });
 
-  const headerWithGetSetCookie = upstream.headers as unknown as { getSetCookie?: () => string[] };
+  const headerWithGetSetCookie = backendRes.headers as unknown as { getSetCookie?: () => string[] };
   const setCookies = headerWithGetSetCookie.getSetCookie?.() ?? [];
   if (setCookies.length > 0) {
-    res.setHeader('set-cookie', setCookies);
+    res.setHeader('Set-Cookie', setCookies);
+  } else {
+    const single = backendRes.headers.get('set-cookie');
+    if (single) res.setHeader('Set-Cookie', single);
   }
 
-  const buffer = Buffer.from(await upstream.arrayBuffer());
-  res.status(upstream.status).send(buffer);
+  const arrayBuffer = await backendRes.arrayBuffer();
+  res.send(Buffer.from(arrayBuffer));
 }
-
