@@ -12,6 +12,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 import { z } from '@/config/zIndex';
+import Loader from '@/presentation/components/Loader/Loader';
 
 type NavItem = { name: string; href: string };
 
@@ -49,7 +50,7 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => setProfileMenuOpen(false), [pathname]);
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen" />;
+  if (loading) return <Loader />;
   if (!isAuthenticated || role !== UserRole.Clinic) return <RedirectingModal show />;
 
   const initials =

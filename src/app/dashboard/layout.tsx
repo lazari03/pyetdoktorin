@@ -14,6 +14,8 @@ import { useSessionStore } from '@/store/sessionStore';
 import { z } from '@/config/zIndex';
 import { UserRole } from '@/domain/entities/UserRole';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
+import Loader from '@/presentation/components/Loader/Loader';
+import MissingRole from '@/presentation/components/MissingRole/MissingRole';
 
 type NavItem = {
   key: NavigationKey;
@@ -43,10 +45,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Service workers are intentionally opt-in: caching HTML in Next.js apps can cause blank screens
     // after deploys (stale HTML referencing old hashed chunks). Enable only when explicitly needed.
     if (process.env.NODE_ENV !== 'production') return;
-    if (process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER !== 'true') return;
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    const enabled = process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER === 'true';
+
+    if (!enabled) {
+      // Migration path: if a SW was registered in older builds, unregister it to avoid stale HTML/assets.
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => reg.unregister().catch(() => {}));
+      }).catch(() => {});
+
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          keys
+            .filter((key) => key.startsWith('myapp-cache-') || key.startsWith('pyetdoktorin-cache-'))
+            .forEach((key) => caches.delete(key));
+        }).catch(() => {});
+      }
+      return;
     }
+
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
   }, []);
 
   const nav = useNavigationCoordinator();
@@ -77,11 +96,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [pathname]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    );
+    return <Loader />;
   }
 
   if (!isAuthenticated) {
@@ -95,11 +110,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   if (!role) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg" />
-      </div>
-    );
+    return <MissingRole onLogout={handleLogoutClick} />;
   }
 
   const isAdminSection = pathname?.startsWith('/admin');

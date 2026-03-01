@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { Appointment } from '@/domain/entities/Appointment';
 import { UserRole } from '@/domain/entities/UserRole';
+import CenteredLoader from '@/presentation/components/CenteredLoader/CenteredLoader';
 
 export default function UpcomingRequestsPage() {
   const [requests, setRequests] = useState<Appointment[]>([]);
@@ -49,9 +50,9 @@ export default function UpcomingRequestsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span className="loading loading-spinner loading-lg"></span>
-        <span className="ml-2 text-sm text-gray-600">{t('loading')}</span>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <CenteredLoader />
+        <span className="text-sm text-gray-600">{t('loading')}</span>
       </div>
     );
   }

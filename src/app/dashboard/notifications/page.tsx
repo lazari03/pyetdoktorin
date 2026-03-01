@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Link from "next/link";
 import { useNotificationsLogic } from './useNotificationsLogic';
 import { UserRole } from '@/domain/entities/UserRole';
+import CenteredLoader from '@/presentation/components/CenteredLoader/CenteredLoader';
 
 function NotificationsPage() {
   const { t } = useTranslation();
@@ -39,9 +40,9 @@ function NotificationsPage() {
 
   if (isLoading || !userRole) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
-        <span className="ml-2">{t('loadingNotifications', 'Loading notifications...')}</span>
+      <div className="flex flex-col justify-center items-center min-h-screen gap-3">
+        <CenteredLoader />
+        <span className="text-sm text-gray-600">{t('loadingNotifications', 'Loading notifications...')}</span>
       </div>
     );
   }
