@@ -71,6 +71,12 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, de
   throw lastError;
 }
 
+function isProbablyHtmlResponse(res: Response, bodyText: string): boolean {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.toLowerCase().includes('text/html')) return true;
+  return /^\s*<!doctype html/i.test(bodyText) || /^\s*<html[\s>]/i.test(bodyText);
+}
+
 export async function backendFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   const useProxy = typeof window !== 'undefined';
   const url = useProxy ? `/api/backend${path}` : `${backendBaseUrl}${path}`;
@@ -115,6 +121,28 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
   }
   if (!response.ok) {
     const text = await response.text();
+
+    // If the /api/backend proxy route isn't available (common in some deploy setups),
+    // Next may return an HTML 404 page. Fall back to calling the backend directly.
+    if (useProxy && response.status === 404 && isProbablyHtmlResponse(response, text)) {
+      try {
+        const directUrl = `${backendBaseUrl}${path}`;
+        const directRes = await fetchWithRetry(directUrl, {
+          ...baseOptions,
+          // Direct calls don't need cookies; avoid CORS/credential edge cases.
+          credentials: 'omit',
+        });
+        if (directRes.ok) {
+          const directText = await directRes.text();
+          return directText ? (JSON.parse(directText) as T) : ({} as T);
+        }
+        const directText = await directRes.text();
+        console.error('backendFetch direct fallback error:', directRes.status, directText);
+      } catch (fallbackError) {
+        console.error('backendFetch direct fallback failed:', fallbackError);
+      }
+    }
+
     console.error('backendFetch error response:', response.status, text);
     const payload = parseBackendError(text);
     const code = typeof payload?.error === 'string' ? payload.error : undefined;
