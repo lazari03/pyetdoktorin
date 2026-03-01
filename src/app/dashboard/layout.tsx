@@ -13,6 +13,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
 import { z } from '@/config/zIndex';
 import { UserRole } from '@/domain/entities/UserRole';
+import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 
 type NavItem = {
   key: NavigationKey;
@@ -39,9 +40,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [isAuthenticated, role, user, initializeAppointments]);
 
   useEffect(() => {
+    // Service workers are intentionally opt-in: caching HTML in Next.js apps can cause blank screens
+    // after deploys (stale HTML referencing old hashed chunks). Enable only when explicitly needed.
     if (process.env.NODE_ENV !== 'production') return;
+    if (process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER !== 'true') return;
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js');
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     }
   }, []);
 
@@ -81,7 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   if (!isAuthenticated) {
-    return null;
+    return <RedirectingModal show />;
   }
 
   // If a pharmacy user hits /dashboard, push them to /pharmacy and stop rendering to avoid a stuck modal

@@ -1,55 +1,53 @@
-const CACHE_NAME = 'myapp-cache-v2';
-const urlsToCache = [
-  '/',
-  '/img/logo.png',
-  '/manifest.json',
-  '/favicon.ico',
-  '/globals.css',
-];
+// NOTE: Service workers are intentionally conservative here.
+// Caching HTML in Next.js apps can cause blank screens after deploys because
+// stale cached HTML references old hashed chunk URLs. If you need offline/PWA,
+// migrate this to a Workbox-based setup with a tested update strategy.
 
-self.addEventListener('install', event => {
+const CACHE_PREFIXES_TO_CLEAR = ['myapp-cache-', 'pyetdoktorin-cache-'];
+
+self.addEventListener('install', (event) => {
+  // Activate updated SW ASAP to clear old caches.
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter((key) => CACHE_PREFIXES_TO_CLEAR.some((prefix) => key.startsWith(prefix)))
+          .map((key) => caches.delete(key))
+      );
+      await self.clients.claim();
+    })()
   );
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-    ))
-  );
-});
-
-self.addEventListener('fetch', event => {
-  // Skip non-GET requests and API/auth requests
+self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  
+
   const url = new URL(event.request.url);
-  
-  // Don't cache API routes, auth requests, or Firebase requests
-  if (
-    url.pathname.startsWith('/api/') ||
-    url.pathname.startsWith('/_next/') ||
-    url.hostname.includes('firebase') ||
-    url.hostname.includes('googleapis')
-  ) {
+
+  // Never interfere with Next.js assets or API routes.
+  if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/api/')) {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request).catch(() => {
-        // Return a fallback for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
-        }
-        // For other requests, just fail silently
-        return new Response('', { status: 503, statusText: 'Service Unavailable' });
-      });
-    })
-  );
+  // Network-first for navigations. No HTML caching.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(
+        () =>
+          new Response('Offline', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+          })
+      )
+    );
+    return;
+  }
+
+  // For other requests, just pass-through (avoid surprising caching bugs).
+  event.respondWith(fetch(event.request));
 });
