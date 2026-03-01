@@ -53,8 +53,29 @@ export function AppointmentTimeline({ items, role, isAppointmentPast, onJoinCall
                 </button>
               );
             }
+            if (presentation.type === "processing") {
+              return (
+                <button
+                  className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-3 py-1.5 text-xs font-semibold text-purple-700 cursor-wait"
+                  disabled
+                >
+                  <span className="h-3 w-3 animate-spin rounded-full border border-purple-400 border-t-transparent" />
+                  {t(presentation.label)}
+                </button>
+              );
+            }
             if (presentation.type === "waiting") {
               return <span className="text-xs font-semibold text-purple-600">{t(presentation.label)}</span>;
+            }
+            if (presentation.type === "disabled") {
+              return (
+                <button
+                  className="inline-flex items-center gap-2 rounded-full bg-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 cursor-not-allowed"
+                  disabled
+                >
+                  {t(presentation.label)}
+                </button>
+              );
             }
             return null;
           };

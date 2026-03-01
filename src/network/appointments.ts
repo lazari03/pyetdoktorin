@@ -43,3 +43,10 @@ export async function markPaymentProcessing(id: string) {
     body: JSON.stringify({}),
   });
 }
+
+export async function clearPaymentProcessing(id: string) {
+  return backendFetch<{ ok: boolean }>(`/api/appointments/${id}/payment-cancelled`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+}

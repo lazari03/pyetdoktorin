@@ -5,7 +5,6 @@
 import { Appointment } from '@/domain/entities/Appointment';
 import { UserRole } from '@/domain/entities/UserRole';
 import { AppointmentActionKey } from '@/domain/entities/AppointmentAction';
-import { isPaymentProcessingActive } from '@/presentation/utils/paymentProcessing';
 
 export interface AppointmentActionPresentation {
   type: 'join' | 'pay' | 'processing' | 'disabled' | 'waiting' | 'past' | 'none';
@@ -36,9 +35,6 @@ export function getAppointmentActionPresentation(
   }
 
   if (isPatient && !appointment.isPaid && appointment.paymentStatus === 'processing') {
-    if (isPaymentProcessingActive(appointment)) {
-      return { type: 'processing', label: 'paymentProcessing', disabled: true };
-    }
     return { type: 'pay', label: AppointmentActionKey.PayNow, disabled: false };
   }
 

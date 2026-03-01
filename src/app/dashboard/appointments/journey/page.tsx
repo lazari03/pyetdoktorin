@@ -7,10 +7,14 @@ import { AppointmentSummaryCard } from "@/presentation/components/appointments/A
 import { AppointmentFilters, AppointmentFilter } from "@/presentation/components/appointments/AppointmentFilters";
 import { AppointmentTimeline } from "@/presentation/components/appointments/AppointmentTimeline";
 import { sortAppointments } from "@/presentation/utils/sortAppointments";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { UserRole } from "@/domain/entities/UserRole";
+import { useRouter, useSearchParams } from "next/navigation";
+import { syncPaddlePaymentWithRetry } from "@/network/payments";
+import { listAppointments } from "@/network/appointments";
+import { useAppointmentStore } from "@/store/appointmentStore";
 import {
   isCanceledStatus,
   isRejectedStatus,
@@ -22,6 +26,33 @@ function JourneyPage() {
   const vm = useAppointmentsViewModel();
   const { t } = useTranslation();
   const [filter, setFilter] = useState<AppointmentFilter>("upcoming");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const paidAppointmentId = searchParams?.get("paid") || "";
+  const paidSyncRef = useRef<string>("");
+  const setAppointments = useAppointmentStore((s) => s.setAppointments);
+
+  useEffect(() => {
+    if (!paidAppointmentId) return;
+    if (paidSyncRef.current === paidAppointmentId) return;
+    paidSyncRef.current = paidAppointmentId;
+    syncPaddlePaymentWithRetry(paidAppointmentId)
+      .catch((error) => {
+        console.warn("Payment sync after checkout failed", error);
+      })
+      .finally(() => {
+        listAppointments()
+          .then((refreshed) => setAppointments(refreshed.items))
+          .catch((error) => console.warn("Appointment refresh after payment failed", error));
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("paid");
+          router.replace(url.pathname + url.search);
+        } catch {
+          router.replace("/dashboard/appointments");
+        }
+      });
+  }, [paidAppointmentId, router, setAppointments]);
 
   const sorted = useMemo(
     () => (vm.appointments?.length ? sortAppointments(vm.appointments, 300) : []),

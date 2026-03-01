@@ -207,3 +207,34 @@ export async function markAppointmentPaymentProcessing(
     }, { merge: true });
   });
 }
+
+export async function clearAppointmentPaymentProcessing(
+  id: string,
+  actor: { uid: string; role: UserRole }
+): Promise<void> {
+  const admin = getFirebaseAdmin();
+  const db = admin.firestore();
+  await db.runTransaction(async (tx) => {
+    const appointmentRef = db.collection(COLLECTION).doc(id);
+    const appointmentSnap = await tx.get(appointmentRef);
+    if (!appointmentSnap.exists) {
+      throw new AppointmentNotFoundError();
+    }
+    const appointment = appointmentSnap.data() as Appointment;
+    if (actor.role === UserRole.Patient && appointment.patientId !== actor.uid) {
+      throw new PaymentNotAllowedError();
+    }
+    if (appointment.isPaid) {
+      return;
+    }
+    if (appointment.paymentStatus !== 'processing') {
+      return;
+    }
+    const del = admin.firestore.FieldValue.delete();
+    tx.set(appointmentRef, {
+      paymentStatus: del,
+      paymentProvider: del,
+      paymentStartedAt: del,
+    }, { merge: true });
+  });
+}

@@ -110,6 +110,22 @@ export async function openPaddleCheckout(params: {
     successUrl.searchParams.delete('appointmentId');
   }
   successUrl.searchParams.set('paid', params.appointmentId);
+  let closed = false;
+  const closeOnce = () => {
+    if (closed) return;
+    closed = true;
+    params.onClose?.();
+  };
+
+  const eventCallback = (event: unknown) => {
+    const nameRaw = (event as { name?: unknown })?.name;
+    const name = typeof nameRaw === 'string' ? nameRaw.toLowerCase() : '';
+    if (!name) return;
+    if (name.includes('close') || name.includes('closed') || name.includes('complete') || name.includes('completed')) {
+      closeOnce();
+    }
+  };
+
   paddle.Checkout.open({
     items: [{ priceId, quantity: 1 }],
     customData: { appointmentId: params.appointmentId, userId: params.userId ?? null },
@@ -117,8 +133,11 @@ export async function openPaddleCheckout(params: {
       displayMode: 'overlay',
       successUrl: successUrl.toString(),
     },
-    closeCallback: () => {
-      params.onClose?.();
-    },
-  });
+    // Some Paddle SDK versions expect successUrl at the top level.
+    successUrl: successUrl.toString(),
+    closeCallback: closeOnce,
+    // Some Paddle SDK versions expose checkout lifecycle events via eventCallback.
+    eventCallback,
+    onClose: closeOnce,
+  } as Record<string, unknown>);
 }

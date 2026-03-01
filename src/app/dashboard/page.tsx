@@ -8,6 +8,7 @@ import RedirectingModal from "@/presentation/components/RedirectingModal/Redirec
 import ProfileWarning from "@/presentation/components/ProfileWarning/ProfileWarning";
 import AppointmentsTable from "@/presentation/components/AppointmentsTable/AppointmentsTable";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { HeroCard } from "@/presentation/components/dashboard/HeroCard";
 import { RecentDoctorsList, RecentDoctor } from "@/presentation/components/dashboard/RecentDoctorsList";
 import { RecentPatientsList, RecentPatient } from "@/presentation/components/dashboard/RecentPatientsList";
@@ -19,8 +20,13 @@ import { BmiCalculatorCard } from "@/presentation/components/dashboard/BmiCalcul
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
 import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
-import { isPaymentProcessingActive } from "@/presentation/utils/paymentProcessing";
+import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
+import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
+import { syncPaddlePaymentWithRetry } from "@/network/payments";
+import { listAppointments } from "@/network/appointments";
+import { useAppointmentStore } from "@/store/appointmentStore";
+import { useEffect, useRef } from "react";
 
 // Helper function to calculate monthly earnings
 function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: UserRole) {
@@ -92,12 +98,39 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const { user, role, loading: authLoading } = useAuth();
   const nav = useNavigationCoordinator();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const paidAppointmentId = searchParams?.get("paid") || "";
+  const paidSyncRef = useRef<string>("");
+  const setAppointments = useAppointmentStore((s) => s.setAppointments);
   const authContext: DashboardUserContext = {
   userId: user?.uid ?? null,
   role: role ?? null,
   authLoading,
   };
   const vm = useDashboardViewModel(authContext);
+
+  useEffect(() => {
+    if (!paidAppointmentId) return;
+    if (paidSyncRef.current === paidAppointmentId) return;
+    paidSyncRef.current = paidAppointmentId;
+    syncPaddlePaymentWithRetry(paidAppointmentId)
+      .catch((error) => {
+        console.warn("Payment sync after checkout failed", error);
+      })
+      .finally(() => {
+        listAppointments()
+          .then((refreshed) => setAppointments(refreshed.items))
+          .catch((error) => console.warn("Appointment refresh after payment failed", error));
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("paid");
+          router.replace(url.pathname + url.search);
+        } catch {
+          router.replace("/dashboard");
+        }
+      });
+  }, [paidAppointmentId, router, setAppointments]);
 
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
@@ -111,12 +144,24 @@ export default function Dashboard() {
 
   if (vm.authLoading || vm.loading || !vm.role) return <Loader />;
 
-  const upcoming = vm.filteredAppointments.filter((a) => !vm.isAppointmentPast(a)).slice(0, 3);
+  const upcoming = [...vm.filteredAppointments]
+    .filter((a) => !vm.isAppointmentPast(a))
+    .sort((a, b) => {
+      const dateDiff = new Date(a.preferredDate).getTime() - new Date(b.preferredDate).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return (a.preferredTime || "").localeCompare(b.preferredTime || "");
+    })
+    .slice(0, 3);
   const heroAppointment = upcoming[0];
   const heroIsPaid = Boolean(heroAppointment && heroAppointment.isPaid);
-  const heroIsProcessing = Boolean(
-    heroAppointment && isPaymentProcessingActive(heroAppointment)
-  );
+  const heroAction = heroAppointment
+    ? getAppointmentAction(heroAppointment, vm.isAppointmentPast, vm.role)
+    : null;
+  const heroPresentation = heroAppointment && heroAction
+    ? getAppointmentActionPresentation(heroAppointment, vm.role, heroAction)
+    : null;
+  const heroIsProcessing = heroPresentation?.type === "processing";
+  const heroIsWaiting = heroPresentation?.type === "waiting" || heroPresentation?.type === "disabled";
   
   // Recent Doctors (for patients)
   const recentDoctorsMap = vm.filteredAppointments
@@ -176,16 +221,19 @@ export default function Dashboard() {
                 }
                 subtitle={heroAppointment.appointmentType || t("stayPrepared") || "Stay prepared for your upcoming session"}
                 helper={`${t("consultation") || "Consultation"} • ${heroAppointment.preferredDate ?? (t("today") || "Today")}`}
-                onJoin={heroAppointment && heroIsPaid ? () => handleJoinCall(heroAppointment.id) : undefined}
+                onJoin={
+                  heroPresentation?.type === "join"
+                    ? () => handleJoinCall(heroAppointment.id)
+                    : undefined
+                }
                 onPay={
-                  role === UserRole.Patient && heroAppointment && !heroIsPaid
-                    ? () => {
-                        vm.handlePayNow(heroAppointment.id, APPOINTMENT_PRICE_EUR);
-                      }
+                  heroPresentation?.type === "pay"
+                    ? () => vm.handlePayNow(heroAppointment.id, APPOINTMENT_PRICE_EUR)
                     : undefined
                 }
                 isPaid={heroIsPaid}
                 isProcessing={heroIsProcessing}
+                isWaiting={heroIsWaiting}
                 onViewProfile={
                   role === UserRole.Patient && heroAppointment.doctorId
                     ? () => nav.toDoctorProfile(heroAppointment.doctorId)
@@ -193,7 +241,16 @@ export default function Dashboard() {
                 }
                 ctaLabel={t("joinNow") || "Join now"}
                 payLabel={t("payNow") || "Pay now"}
-                processingLabel={t("paymentProcessing") || "Processing payment"}
+                processingLabel={
+                  (heroPresentation?.type === "processing"
+                    ? t(heroPresentation.label)
+                    : t("paymentProcessing")) || "Processing payment"
+                }
+                waitingLabel={
+                  (heroIsWaiting && heroPresentation
+                    ? t(heroPresentation.label)
+                    : t("waitingForAcceptance")) || "Waiting for approval"
+                }
                 profileLabel={t("viewDoctor") || "View doctor"}
               />
             ) : (

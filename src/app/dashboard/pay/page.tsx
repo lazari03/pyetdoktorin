@@ -7,6 +7,7 @@ import '@/i18n/i18n';
 import { useAuth } from '@/context/AuthContext';
 import { openPaddleCheckout, preparePaddleCheckout } from '@/infrastructure/services/paddleCheckout';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
+import { syncPaddlePaymentWithRetry } from '@/network/payments';
 
 export default function PayPage() {
   const { t } = useTranslation();
@@ -54,13 +55,27 @@ export default function PayPage() {
       onClose: () => {
         setStatus('idle');
         trackAnalyticsEvent('payment_checkout_closed', { appointmentId });
+        syncPaddlePaymentWithRetry(appointmentId)
+          .then((result) => {
+            if (result.isPaid) {
+              router.replace(`/dashboard/appointments?paid=${encodeURIComponent(appointmentId)}`);
+            }
+          })
+          .catch((error) => {
+            console.warn('Payment sync after checkout failed', error);
+          });
       },
-    }).catch(() => {
+    })
+      .then(() => {
+        // Checkout.open() is non-blocking; immediately revert to idle so the UI doesn't get stuck.
+        setStatus('idle');
+      })
+      .catch(() => {
       setStatus('error');
       setErrorMessage(t('paymentFailed'));
       trackAnalyticsEvent('payment_checkout_failed', { appointmentId, reason: 'open_failed' });
     });
-  }, [appointmentId, t, user?.uid]);
+  }, [appointmentId, router, t, user?.uid]);
 
   if (!appointmentId) {
     return (
@@ -89,9 +104,9 @@ export default function PayPage() {
           </div>
         </div>
 
-        {status === 'loading' && (
-          <div className="text-sm text-gray-700">{t('paymentProcessing')}</div>
-        )}
+        {/* Intentionally avoid rendering a persistent "processing" message here.
+            The checkout overlay handles the payment flow and may not reliably
+            emit close events across SDK versions. */}
         {status === 'success' && (
           <div className="text-sm text-green-600">{t('paymentSucceeded')}</div>
         )}

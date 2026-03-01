@@ -41,8 +41,8 @@ async function waitForCurrentUser(timeoutMs = 3000, intervalMs = 120) {
   return null;
 }
 
-async function getOptionalIdToken(): Promise<string | null> {
-  const user = auth.currentUser ?? (await waitForCurrentUser());
+async function getOptionalIdToken(timeoutMs = 3000): Promise<string | null> {
+  const user = auth.currentUser ?? (await waitForCurrentUser(timeoutMs));
   if (!user) {
     return null;
   }
@@ -79,7 +79,7 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
     headers.set('Content-Type', 'application/json');
   }
   let hasAuthHeader = headers.has('Authorization');
-  if (!useProxy && !hasAuthHeader) {
+  if (!hasAuthHeader) {
     const token = await getOptionalIdToken();
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
@@ -96,8 +96,10 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
   let response: Response;
   try {
     response = await fetchWithRetry(url, baseOptions);
-    if (!useProxy && response.status === 401 && !hasAuthHeader) {
-      const token = await getOptionalIdToken();
+    if (response.status === 401 && !hasAuthHeader) {
+      // After a redirect/reload (e.g. returning from Paddle), Firebase Auth can take a moment to hydrate.
+      // Give it longer on the 401 retry so payment sync doesn't fail spuriously.
+      const token = await getOptionalIdToken(15000);
       if (token) {
         const retryHeaders = new Headers(headers);
         retryHeaders.set('Authorization', `Bearer ${token}`);

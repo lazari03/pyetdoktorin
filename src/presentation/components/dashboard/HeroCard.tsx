@@ -1,4 +1,4 @@
-import { PhoneIcon, CreditCardIcon, UserIcon } from "@heroicons/react/24/outline";
+import { PhoneIcon, CreditCardIcon, UserIcon, ClockIcon } from "@heroicons/react/24/outline";
 import React from "react";
 import { z } from "@/config/zIndex";
 
@@ -11,9 +11,11 @@ type HeroCardProps = {
   onViewProfile?: () => void;
   isPaid?: boolean;
   isProcessing?: boolean;
+  isWaiting?: boolean;
   ctaLabel?: string;
   payLabel?: string;
   processingLabel?: string;
+  waitingLabel?: string;
   profileLabel?: string;
 };
 
@@ -26,14 +28,17 @@ export function HeroCard({
   onViewProfile,
   isPaid,
   isProcessing = false,
+  isWaiting = false,
   ctaLabel = "Join now",
   payLabel = "Pay now",
   processingLabel = "Processing payment",
+  waitingLabel = "Waiting for approval",
   profileLabel = "View doctor",
 }: HeroCardProps) {
   const showProcessing = Boolean(isProcessing);
-  const showPay = Boolean(onPay && isPaid === false && !showProcessing);
-  const showJoin = Boolean(onJoin && !showPay && !showProcessing);
+  const showWaiting = Boolean(isWaiting && !showProcessing);
+  const showPay = Boolean(onPay && isPaid === false && !showWaiting && !showProcessing);
+  const showJoin = Boolean(onJoin && !showPay && !showWaiting && !showProcessing);
 
   return (
     <section className="bg-white rounded-3xl shadow-lg overflow-hidden border border-purple-50">
@@ -63,6 +68,15 @@ export function HeroCard({
               >
                 <span className="h-4 w-4 animate-spin rounded-full border border-purple-400 border-t-transparent" />
                 {processingLabel}
+              </button>
+            )}
+            {showWaiting && (
+              <button
+                className="inline-flex items-center gap-2 rounded-full bg-white/20 text-white px-4 py-2 text-sm font-semibold shadow cursor-not-allowed"
+                disabled
+              >
+                <ClockIcon className="h-4 w-4" />
+                {waitingLabel}
               </button>
             )}
             {showPay && (

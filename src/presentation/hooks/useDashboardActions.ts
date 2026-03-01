@@ -7,12 +7,14 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useTranslation } from 'react-i18next';
 import { getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation/utils/errorMessages';
-import { syncPaddlePayment } from '@/network/payments';
+import { syncPaddlePaymentWithRetry } from '@/network/payments';
+import { clearPaymentProcessing } from '@/network/appointments';
+import { listAppointments } from '@/network/appointments';
 
 export function useDashboardActions() {
   const { user, role } = useAuth();
   const { setAuthStatus, generateRoomCodeAndStore } = useVideoStore();
-  const { handlePayNow: storeHandlePayNow } = useAppointmentStore();
+  const { handlePayNow: storeHandlePayNow, setAppointments } = useAppointmentStore();
   const { handlePayNowUseCase } = useDI();
   const { t } = useTranslation();
 
@@ -53,9 +55,20 @@ export function useDashboardActions() {
     try {
       await storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
         onClose: () => {
-          syncPaddlePayment(appointmentId).catch((error) => {
-            console.warn('Payment sync failed', error);
+          clearPaymentProcessing(appointmentId).catch((error) => {
+            console.warn('Payment processing clear failed', error);
           });
+          (async () => {
+            try {
+              await syncPaddlePaymentWithRetry(appointmentId);
+            } catch (error) {
+              console.warn('Payment sync failed', error);
+            } finally {
+              listAppointments()
+                .then((refreshed) => setAppointments(refreshed.items))
+                .catch((error) => console.warn('Appointment refresh after payment failed', error));
+            }
+          })();
         },
       });
     } catch (error) {
@@ -66,7 +79,7 @@ export function useDashboardActions() {
       const translatedMessage = getAppointmentErrorMessage(error, t);
       alert(translatedMessage ?? t('genericError'));
     }
-  }, [storeHandlePayNow, handlePayNowUseCase, t]);
+  }, [storeHandlePayNow, handlePayNowUseCase, setAppointments, t]);
 
   return { handleJoinCall, handlePayNow };
 }

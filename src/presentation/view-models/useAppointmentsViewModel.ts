@@ -10,8 +10,9 @@ import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 import { useTranslation } from "react-i18next";
 import { auth } from "@/config/firebaseconfig";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
-import { syncPaddlePayment } from "@/network/payments";
+import { syncPaddlePayment, syncPaddlePaymentWithRetry } from "@/network/payments";
 import { listAppointments } from "@/network/appointments";
+import { clearPaymentProcessing } from "@/network/appointments";
 import { getAppointmentErrorMessage, getVideoErrorMessage } from "@/presentation/utils/errorMessages";
 import { APPOINTMENT_ERROR_CODES, VIDEO_ERROR_CODES } from "@/config/errorCodes";
 
@@ -50,6 +51,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
     isDoctor,
     isAppointmentPast,
     handlePayNow: storeHandlePayNow,
+    setAppointments,
     subscribeAppointments,
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
@@ -227,9 +229,20 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
       try {
         await storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
           onClose: () => {
-            syncPaddlePayment(appointmentId).catch((error) => {
-              console.warn("Payment sync failed", error);
+            clearPaymentProcessing(appointmentId).catch((error) => {
+              console.warn("Payment processing clear failed", error);
             });
+            (async () => {
+              try {
+                await syncPaddlePaymentWithRetry(appointmentId);
+              } catch (error) {
+                console.warn("Payment sync failed", error);
+              } finally {
+                listAppointments()
+                  .then((refreshed) => setAppointments(refreshed.items))
+                  .catch((error) => console.warn("Appointment refresh after payment failed", error));
+              }
+            })();
           },
         });
       } catch (error) {
