@@ -1,12 +1,21 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useState, useEffect } from "react";
+import { useId, useState, useEffect } from "react";
 import { setLanguageCookie } from "@/presentation/utils/clientCookies";
+import { useRouter } from "next/navigation";
 
-export default function LanguageSwitcher({ className = "" }: { className?: string }) {
-  const { i18n } = useTranslation();
+export default function LanguageSwitcher({
+  className = "",
+  label,
+}: {
+  className?: string;
+  label?: string;
+}) {
+  const { t, i18n } = useTranslation();
   const [lang, setLang] = useState(i18n.language || "al");
+  const id = useId();
+  const router = useRouter();
 
   useEffect(() => {
     const onLangChanged = (lng: string) => setLang(lng);
@@ -21,19 +30,22 @@ export default function LanguageSwitcher({ className = "" }: { className?: strin
     setLang(newLang);
     i18n.changeLanguage(newLang);
     setLanguageCookie(newLang);
+    router.refresh();
   };
 
   return (
     <div className={className}>
-      <label htmlFor="lang-switch" className="mr-2 text-xs text-gray-700 font-medium">Language:</label>
+      <label htmlFor={id} className="block text-xs font-semibold text-slate-700">
+        {label ?? t('language') ?? 'Language'}
+      </label>
       <select
-        id="lang-switch"
+        id={id}
         value={lang}
         onChange={handleLanguageChange}
-        className="border rounded px-2 py-1 text-xs"
+        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
       >
-        <option value="al">Shqip</option>
-        <option value="en">English</option>
+        <option value="al">{`🇦🇱 ${t('albanian') || 'Shqip'}`}</option>
+        <option value="en">{`🇺🇸 ${t('english') || 'English'}`}</option>
       </select>
     </div>
   );

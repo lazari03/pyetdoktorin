@@ -8,17 +8,19 @@ import { Bars3Icon, XMarkIcon, BanknotesIcon, UserCircleIcon, ArrowRightOnRectan
 import { useInitializeAppointments } from '../../store/appointmentStore';
 import { useDI } from '@/context/DIContext';
 import { useAuth } from '@/context/AuthContext';
-import { getNavigationPaths, NavigationKey } from '@/store/navigationStore';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
+import { ROUTES } from '@/config/routes';
 import { z } from '@/config/zIndex';
 import { UserRole } from '@/domain/entities/UserRole';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 import Loader from '@/presentation/components/Loader/Loader';
 import MissingRole from '@/presentation/components/MissingRole/MissingRole';
+import { useDashboardGuard } from '@/navigation/useDashboardGuard';
+import { getAdminNavDefs, getDashboardNavDefs } from '@/navigation/navConfig';
 
 type NavItem = {
-  key: NavigationKey;
+  key: string;
   name: string;
   href: string;
 };
@@ -30,29 +32,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
 
   const { role, loading, isAuthenticated, user } = useAuth();
+  const { t } = useTranslation();
   const { logoutSessionUseCase, logoutServerUseCase } = useDI();
   const initializeAppointments = useInitializeAppointments();
+  const { redirecting } = useDashboardGuard({ loading, isAuthenticated, role, pathname });
 
   const initializedRef = useRef(false);
   useEffect(() => {
     if (!initializedRef.current && isAuthenticated && role && user && initializeAppointments) {
+      if (role !== UserRole.Doctor && role !== UserRole.Patient) return;
       initializeAppointments(role);
       initializedRef.current = true;
     }
   }, [isAuthenticated, role, user, initializeAppointments]);
 
   const nav = useNavigationCoordinator();
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      nav.toLogin(pathname ?? undefined);
-    }
-  }, [loading, isAuthenticated, pathname, nav]);
-
-  useEffect(() => {
-    if (!loading && role === UserRole.Pharmacy && !pathname?.startsWith('/pharmacy')) {
-      nav.pushPath('/pharmacy');
-    }
-  }, [loading, role, pathname, nav]);
 
   // Centralized logout wiring
   const logout = useSessionStore((s) => s.logout);
@@ -68,6 +62,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setProfileMenuOpen(false);
   }, [pathname]);
 
+  if (redirecting) {
+    return <RedirectingModal show />;
+  }
+
   if (loading) {
     return <Loader />;
   }
@@ -76,24 +74,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return <RedirectingModal show />;
   }
 
-  // If a pharmacy user hits /dashboard, push them to /pharmacy and stop rendering to avoid a stuck modal
-  if (role === UserRole.Pharmacy) {
-    nav.pushPath('/pharmacy');
-    return null;
-  }
-
   if (!role) {
     return <MissingRole onLogout={handleLogoutClick} />;
   }
 
-  const isAdminSection = pathname?.startsWith('/admin');
-  const navItems: NavItem[] = isAdminSection
-    ? [
-        { key: NavigationKey.Dashboard, name: 'dashboard', href: '/admin' },
-        { key: NavigationKey.Appointments, name: 'users', href: '/admin/users' },
-        { key: NavigationKey.AppointmentHistory, name: 'notifications', href: '/admin/notifications' },
-      ]
-    : getNavigationPaths(role);
+  const isAdminSection = pathname?.startsWith(ROUTES.ADMIN);
+  const navDefs = isAdminSection ? getAdminNavDefs() : getDashboardNavDefs(role);
+  const navItems: NavItem[] = navDefs.map((item) => ({
+    key: item.key,
+    href: item.href,
+    name: t(item.labelKey, { defaultValue: item.fallback }),
+  }));
 
   const handleNavClick = (href: string) => {
     setMobileMenuOpen(false);
@@ -183,6 +174,7 @@ function MobileTopBar({
         onClick={onToggleMenu}
         className="text-gray-800 hover:text-gray-900"
         aria-label="Toggle navigation menu"
+        data-analytics="dashboard.mobile_menu.toggle"
       >
         {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
       </button>
@@ -191,6 +183,7 @@ function MobileTopBar({
           href="/dashboard"
           className="text-sm font-semibold tracking-[0.2em] text-purple-700 uppercase"
           aria-label="pyetdoktorin"
+          data-analytics="dashboard.brand.home"
         >
           pyetdoktorin
         </Link>
@@ -200,6 +193,7 @@ function MobileTopBar({
           onClick={onToggleProfile}
           className="h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center"
           aria-label="Open profile menu"
+          data-analytics="dashboard.profile.toggle"
         >
           {initials}
         </button>
@@ -215,6 +209,7 @@ function MobileTopBar({
                 href="/dashboard/myprofile"
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                data-analytics="dashboard.profile.settings"
               >
                 <UserCircleIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("profileSettings") || "Profile settings"}</span>
@@ -223,6 +218,7 @@ function MobileTopBar({
                 href="/dashboard/appointments"
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                data-analytics="dashboard.profile.appointments"
               >
                 <CalendarIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("myAppointments") || "My appointments"}</span>
@@ -231,6 +227,7 @@ function MobileTopBar({
                 href="/dashboard/notifications"
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                data-analytics="dashboard.profile.notifications"
               >
                 <BellIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("notifications") || "Notifications"}</span>
@@ -240,6 +237,7 @@ function MobileTopBar({
                   href="/dashboard/earnings"
                   onClick={onCloseProfileMenu}
                   className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                  data-analytics="dashboard.profile.earnings"
                 >
                   <BanknotesIcon className="h-5 w-5 text-gray-500" />
                   <span className="font-medium">{t("earnings") || "Earnings"}</span>
@@ -249,6 +247,7 @@ function MobileTopBar({
               <button
                 onClick={onLogout}
                 className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                data-analytics="dashboard.profile.logout"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-500" />
                 <span className="font-medium">{t("logOut") || "Log out"}</span>
@@ -280,6 +279,7 @@ function MobileMenu({
           href="/dashboard"
           className="mb-6 text-sm font-semibold tracking-[0.2em] text-purple-700 uppercase"
           aria-label="pyetdoktorin"
+          data-analytics="dashboard.brand.home"
         >
           pyetdoktorin
         </Link>
@@ -295,6 +295,7 @@ function MobileMenu({
                     ? 'text-purple-600 bg-purple-50 shadow-sm' 
                     : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                 }`}
+                data-analytics={`dashboard.nav.${item.key}`}
               >
                 <span className="capitalize">{item.name}</span>
               </button>
@@ -337,6 +338,7 @@ function DesktopTopBar({
           href="/dashboard"
           className="text-sm font-semibold tracking-[0.22em] uppercase text-white"
           aria-label="pyetdoktorin"
+          data-analytics="dashboard.brand.home"
         >
           pyetdoktorin
         </Link>
@@ -352,6 +354,7 @@ function DesktopTopBar({
                     ? 'bg-white/25 text-white shadow-sm'
                     : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
                 }`}
+                data-analytics={`dashboard.nav.${item.key}`}
               >
                 {item.name}
               </button>
@@ -362,6 +365,7 @@ function DesktopTopBar({
           <button
             onClick={onToggleProfile}
             className="h-9 w-9 rounded-full bg-white text-xs font-semibold text-purple-600 flex items-center justify-center shadow"
+            data-analytics="dashboard.profile.toggle"
           >
             {initials}
           </button>
@@ -372,6 +376,7 @@ function DesktopTopBar({
                 href="/dashboard/myprofile"
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                data-analytics="dashboard.profile.settings"
               >
                 <UserCircleIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("profileSettings") || "Profile settings"}</span>
@@ -382,6 +387,7 @@ function DesktopTopBar({
                 href="/dashboard/appointments"
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                data-analytics="dashboard.profile.appointments"
               >
                 <CalendarIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("myAppointments") || "My appointments"}</span>
@@ -392,6 +398,7 @@ function DesktopTopBar({
                 href="/dashboard/notifications"
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                data-analytics="dashboard.profile.notifications"
               >
                 <BellIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t("notifications") || "Notifications"}</span>
@@ -403,6 +410,7 @@ function DesktopTopBar({
                   href="/dashboard/earnings"
                   onClick={onCloseProfileMenu}
                   className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                  data-analytics="dashboard.profile.earnings"
                 >
                   <BanknotesIcon className="h-5 w-5 text-gray-500" />
                   <span className="font-medium">{t("earnings") || "Earnings"}</span>
@@ -415,6 +423,7 @@ function DesktopTopBar({
               <button
                 onClick={onLogout}
                 className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                data-analytics="dashboard.profile.logout"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-500" />
                 <span className="font-medium">{t("logOut") || "Log out"}</span>

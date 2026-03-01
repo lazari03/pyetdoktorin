@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import CenteredLoader from '@/presentation/components/CenteredLoader/CenteredLoader';
+import Loader from '@/presentation/components/Loader/Loader';
 import { getAppointmentAction } from '@/presentation/utils/getAppointmentAction';
 import { getAppointmentActionPresentation } from '@/presentation/utils/getAppointmentActionPresentation';
 import { sortAppointments } from '@/presentation/utils/sortAppointments';
@@ -106,7 +106,7 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 		? 'flex items-center text-gray-900 text-sm py-4 hover:bg-gray-50/80 border-b border-gray-100 last:border-b-0'
 		: 'flex items-center text-gray-900 text-sm py-4';
 
-	if (loading) return <CenteredLoader />;
+	if (loading) return <Loader variant="inline" />;
 
 	const sortedAppointments = appointments?.length > 0 ? sortAppointments(appointments, maxRows) : [];
 	const isDoctor = role === UserRole.Doctor;

@@ -5,6 +5,7 @@
 // Future extensions: analytics, auth guards, prefetching, role-based gating.
 
 import { useRouter } from 'next/navigation';
+import { ROUTES } from '@/config/routes';
 
 // Stable route keys to avoid scattering raw strings.
 export enum AppRouteKey {
@@ -22,6 +23,9 @@ export enum AppRouteKey {
   Individuals = 'individuals',
   DoctorsLanding = 'doctorsLanding',
   Clinicians = 'clinicians',
+  Admin = 'admin',
+  Pharmacy = 'pharmacy',
+  Clinic = 'clinic',
 }
 
 // Base path builders; dynamic segments handled via functions.
@@ -33,27 +37,30 @@ const routePaths: Record<
   >,
   string
 > = {
-  [AppRouteKey.Dashboard]: '/dashboard',
-  [AppRouteKey.Appointments]: '/dashboard/appointments',
-  [AppRouteKey.AppointmentHistory]: '/dashboard/appointments', // same path different semantic
-  [AppRouteKey.NewAppointment]: '/dashboard/new-appointment',
-  [AppRouteKey.Profile]: '/dashboard/myprofile',
-  [AppRouteKey.DoctorCalendar]: '/dashboard/doctor/calendar',
+  [AppRouteKey.Dashboard]: ROUTES.DASHBOARD,
+  [AppRouteKey.Appointments]: `${ROUTES.DASHBOARD}/appointments`,
+  [AppRouteKey.AppointmentHistory]: `${ROUTES.DASHBOARD}/appointments`, // same path different semantic
+  [AppRouteKey.NewAppointment]: `${ROUTES.DASHBOARD}/new-appointment`,
+  [AppRouteKey.Profile]: `${ROUTES.DASHBOARD}/myprofile`,
+  [AppRouteKey.DoctorCalendar]: `${ROUTES.DASHBOARD}/doctor/calendar`,
   [AppRouteKey.Login]: '/login',
   [AppRouteKey.Register]: '/register',
-  [AppRouteKey.Notifications]: '/dashboard/notifications',
-  [AppRouteKey.Individuals]: '/individuals',
-  [AppRouteKey.DoctorsLanding]: '/doctors',
-  [AppRouteKey.Clinicians]: '/clinicians',
+  [AppRouteKey.Notifications]: `${ROUTES.DASHBOARD}/notifications`,
+  [AppRouteKey.Individuals]: ROUTES.INDIVIDUALS,
+  [AppRouteKey.DoctorsLanding]: ROUTES.DOCTORS,
+  [AppRouteKey.Clinicians]: ROUTES.CLINICIANS,
+  [AppRouteKey.Admin]: ROUTES.ADMIN,
+  [AppRouteKey.Pharmacy]: ROUTES.PHARMACY,
+  [AppRouteKey.Clinic]: ROUTES.CLINIC,
 };
 
 // Dynamic path helpers kept together for discoverability.
 export function doctorProfilePath(doctorId: string) {
-  return `/dashboard/doctor/${doctorId}`;
+  return `${ROUTES.DASHBOARD}/doctor/${doctorId}`;
 }
 
 function chatRoomPath(requestId: string) {
-  return `/dashboard/chat-room/${requestId}`;
+  return `${ROUTES.DASHBOARD}/chat-room/${requestId}`;
 }
 
 function getPath(key: AppRouteKey): string {
@@ -85,6 +92,9 @@ export interface NavigationCoordinator {
   toIndividuals: () => void;
   toDoctorsLanding: () => void;
   toClinicians: () => void;
+  toAdmin: () => void;
+  toPharmacy: () => void;
+  toClinic: () => void;
   prefetch: (key: AppRouteKey) => void;
 }
 
@@ -113,6 +123,9 @@ export function useNavigationCoordinator(): NavigationCoordinator {
     toIndividuals: () => router.push(routePaths[AppRouteKey.Individuals]),
     toDoctorsLanding: () => router.push(routePaths[AppRouteKey.DoctorsLanding]),
     toClinicians: () => router.push(routePaths[AppRouteKey.Clinicians]),
+    toAdmin: () => router.push(routePaths[AppRouteKey.Admin]),
+    toPharmacy: () => router.push(routePaths[AppRouteKey.Pharmacy]),
+    toClinic: () => router.push(routePaths[AppRouteKey.Clinic]),
     prefetch: (key) => {
       try {
         const path = getPath(key);
@@ -150,6 +163,9 @@ export function createNavigationCoordinator(router: ReturnType<typeof useRouter>
     toIndividuals: () => router.push(routePaths[AppRouteKey.Individuals]),
     toDoctorsLanding: () => router.push(routePaths[AppRouteKey.DoctorsLanding]),
     toClinicians: () => router.push(routePaths[AppRouteKey.Clinicians]),
+    toAdmin: () => router.push(routePaths[AppRouteKey.Admin]),
+    toPharmacy: () => router.push(routePaths[AppRouteKey.Pharmacy]),
+    toClinic: () => router.push(routePaths[AppRouteKey.Clinic]),
     prefetch: (key) => {
       try { router.prefetch(getPath(key)); } catch {}
     },

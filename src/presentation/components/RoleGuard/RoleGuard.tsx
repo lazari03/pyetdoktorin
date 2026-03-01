@@ -5,6 +5,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { UserRole } from '@/domain/entities/UserRole';
 import { hasRole } from '@/domain/rules/userRules';
 import { useAuth } from '@/context/AuthContext';
+import { ROUTES } from '@/config/routes';
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -12,7 +13,7 @@ interface RoleGuardProps {
   fallbackPath?: string;
 }
 
-export default function RoleGuard({ children, allowedRoles, fallbackPath = '/dashboard' }: RoleGuardProps) {
+export default function RoleGuard({ children, allowedRoles, fallbackPath = ROUTES.DASHBOARD }: RoleGuardProps) {
   const nav = useNavigationCoordinator();
   const { role, loading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);

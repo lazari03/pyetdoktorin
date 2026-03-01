@@ -30,6 +30,7 @@ export function AppointmentSummaryCard({
 }: Props) {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
+  const isDoctor = role === UserRole.Doctor;
   const isPast = isAppointmentPast(appointment);
   const status = getAppointmentStatusPresentation(appointment.status);
   const action = getAppointmentAction(appointment, isAppointmentPast, toUserRole(role));
@@ -95,14 +96,22 @@ export function AppointmentSummaryCard({
           }`}>
             {isPast ? t("pastAppointment") : t("nextAppointment")}
           </p>
-          <Link
-            href={`/dashboard/doctor/${appointment.doctorId}`}
-            className={`text-xl font-semibold mt-1 line-clamp-1 block hover:underline ${
+          {isDoctor ? (
+            <p className={`text-xl font-semibold mt-1 line-clamp-1 ${
               isPast ? "text-gray-500" : "text-gray-900"
-            }`}
-          >
-            {appointment.doctorName || t("doctor")}
-          </Link>
+            }`}>
+              {appointment.patientName || t("patient")}
+            </p>
+          ) : (
+            <Link
+              href={`/dashboard/doctor/${appointment.doctorId}`}
+              className={`text-xl font-semibold mt-1 line-clamp-1 block hover:underline ${
+                isPast ? "text-gray-500" : "text-gray-900"
+              }`}
+            >
+              {appointment.doctorName || t("doctor")}
+            </Link>
+          )}
           <p className="text-sm text-gray-600">
             {appointment.appointmentType} • {appointment.preferredDate} • {appointment.preferredTime}
           </p>
@@ -151,6 +160,7 @@ export function AppointmentSummaryCard({
       <AppointmentDetailsModal
         open={showDetails}
         appointment={appointment}
+        role={role}
         onClose={() => setShowDetails(false)}
       />
     </div>

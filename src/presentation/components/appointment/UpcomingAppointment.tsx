@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useAppointmentStore } from '@/store/appointmentStore';
 import { useAuth } from '@/context/AuthContext';
-import CenteredLoader from '@/presentation/components/CenteredLoader/CenteredLoader';
+import Loader from '@/presentation/components/Loader/Loader';
 import { UserRole } from '@/domain/entities/UserRole';
 
 const UpcomingAppointment = () => {
@@ -44,7 +44,7 @@ const UpcomingAppointment = () => {
 				<div className="stat-title">{t('upcomingAppointment')}</div>
 				<div className="stat-value text-base text-purple-500">
 					{loading ? (
-						<CenteredLoader />
+						<Loader variant="inline" />
 					) : upcoming ? (
 						<span className="block text-purple-500 whitespace-nowrap overflow-hidden text-ellipsis max-w-full" style={{wordBreak: 'break-word'}}>
 							{upcoming.preferredDate} {t('at')} {upcoming.preferredTime} &nbsp; {nameLabel}: {nameValue}

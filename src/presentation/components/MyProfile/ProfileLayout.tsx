@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import MyProfileForm, { FormField, MyProfileFormData } from "./MyProfileForm";
 import PasswordResetSection from "./PasswordResetSection";
 import { UserRole } from "@/domain/entities/UserRole";
+import LanguageSwitcher from "@/presentation/components/LanguageSwitcher/LanguageSwitcher";
 
 type Props = {
   formData: MyProfileFormData;
@@ -104,6 +105,14 @@ export function ProfileLayout(props: Props) {
                   {recentLoginAt || t("recentLoginInfo") || new Date().toISOString()}
                 </p>
               </div>
+            </div>
+
+            <div className="mt-5 bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
+              <p className="text-sm font-semibold text-gray-900">{t("preferences") ?? "Preferences"}</p>
+              <p className="text-xs text-gray-600">
+                {t("preferencesCopy", "Choose your language and display preferences.")}
+              </p>
+              <LanguageSwitcher />
             </div>
           </aside>
         </div>

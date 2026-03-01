@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { setLanguageCookie } from "@/presentation/utils/clientCookies";
+import { useRouter } from "next/navigation";
 
 export default function FooterSection() {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const year = new Date().getFullYear();
   const languages = [
-    { code: 'en', label: t('english') },
-    { code: 'al', label: t('albanian') },
+    { code: 'en', label: `🇺🇸 ${t('english') || 'English'}` },
+    { code: 'al', label: `🇦🇱 ${t('albanian') || 'Shqip'}` },
   ];
 
   return (
@@ -28,7 +31,12 @@ export default function FooterSection() {
                 id="footer-lang"
                 className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 value={i18n.language}
-                onChange={(e) => i18n.changeLanguage(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  i18n.changeLanguage(next);
+                  setLanguageCookie(next);
+                  router.refresh();
+                }}
               >
                 {languages.map((lang) => (
                   <option key={lang.code} value={lang.code}>

@@ -44,7 +44,9 @@ export default function DashboardNotificationsBell({ doctorId }: { doctorId: str
   return (
     <div className="flex items-center gap-2">
       <span className="text-base text-gray-700">
-        You have <span className="font-bold text-purple-500">{notifications.length}</span> notification{notifications.length !== 1 ? 's' : ''}
+        {t('youHave') || 'You have'}{' '}
+        <span className="font-bold text-purple-500">{notifications.length}</span>{' '}
+        {notifications.length === 1 ? (t('notificationSingular') || 'notification') : (t('notificationPlural') || 'notifications')}
       </span>
       <Link href={href} className="text-purple-500 text-sm font-semibold hover:underline">
         {t('viewAll') || 'Shiko te gjitha'}

@@ -9,19 +9,15 @@ import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
 import { UserRole } from '@/domain/entities/UserRole';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
+import { useSectionGuard } from '@/navigation/useSectionGuard';
+import { getClinicNavDefs } from '@/navigation/navConfig';
 import { useSessionStore } from '@/store/sessionStore';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
+import { ROUTES } from '@/config/routes';
 import { z } from '@/config/zIndex';
 import Loader from '@/presentation/components/Loader/Loader';
 
 type NavItem = { name: string; href: string };
-
-const clinicNav: NavItem[] = [
-  { name: 'Dashboard', href: '/clinic' },
-  { name: 'Calendar', href: '/clinic/calendar' },
-  { name: 'Bookings', href: '/clinic/bookings' },
-  { name: 'Profile', href: '/clinic/profile' },
-];
 
 export default function ClinicLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -29,13 +25,15 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
   const { role, loading, isAuthenticated, user } = useAuth();
+  const { t } = useTranslation();
   const { logoutSessionUseCase, logoutServerUseCase } = useDI();
   const nav = useNavigationCoordinator();
   const logout = useSessionStore((s) => s.logout);
-
-  useEffect(() => {
-    if (!loading && !isAuthenticated) nav.toLogin(pathname ?? undefined);
-  }, [loading, isAuthenticated, pathname, nav]);
+  const { redirecting } = useSectionGuard({ loading, isAuthenticated, role, pathname, allowedRole: UserRole.Clinic });
+  const clinicNav: NavItem[] = getClinicNavDefs().map((item) => ({
+    name: t(item.labelKey, { defaultValue: item.fallback }),
+    href: item.href,
+  }));
 
   useEffect(() => {
     if (!profileMenuOpen) return;
@@ -50,6 +48,7 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => setProfileMenuOpen(false), [pathname]);
 
+  if (redirecting) return <RedirectingModal show />;
   if (loading) return <Loader />;
   if (!isAuthenticated || role !== UserRole.Clinic) return <RedirectingModal show />;
 
@@ -225,7 +224,7 @@ function DesktopTopBar({
             <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
               {/* Profile Settings */}
               <Link
-                href="/clinic/profile"
+                href={`${ROUTES.CLINIC}/profile`}
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
@@ -235,7 +234,7 @@ function DesktopTopBar({
               
               {/* Clinic Dashboard */}
               <Link
-                href="/clinic"
+                href={ROUTES.CLINIC}
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
@@ -245,7 +244,7 @@ function DesktopTopBar({
               
               {/* Calendar */}
               <Link
-                href="/clinic/calendar"
+                href={`${ROUTES.CLINIC}/calendar`}
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
@@ -255,17 +254,17 @@ function DesktopTopBar({
               
               {/* Bookings */}
               <Link
-                href="/clinic/bookings"
+                href={`${ROUTES.CLINIC}/bookings`}
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
                 <ClockIcon className="h-5 w-5 text-gray-500" />
-                <span className="font-medium">{t("bookings") || "Bookings"}</span>
+                <span className="font-medium">{t("bookingsTitle", { defaultValue: "Bookings" })}</span>
               </Link>
               
               {/* Notifications */}
               <Link
-                href="/dashboard/notifications"
+                href={`${ROUTES.DASHBOARD}/notifications`}
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
@@ -275,7 +274,7 @@ function DesktopTopBar({
               
               {/* Earnings */}
               <Link
-                href="/clinic/earnings"
+                href={`${ROUTES.CLINIC}/earnings`}
                 onClick={onCloseProfileMenu}
                 className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >

@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useTranslation } from 'react-i18next';
 import Link from "next/link";
 import { useNotificationsLogic } from './useNotificationsLogic';
 import { UserRole } from '@/domain/entities/UserRole';
-import CenteredLoader from '@/presentation/components/CenteredLoader/CenteredLoader';
+import Loader from '@/presentation/components/Loader/Loader';
+import { useSearchParams } from 'next/navigation';
 
 function NotificationsPage() {
   const { t } = useTranslation();
   const nav = useNavigationCoordinator();
+  const searchParams = useSearchParams();
   const {
     isLoading,
     error,
@@ -22,6 +24,8 @@ function NotificationsPage() {
   } = useNotificationsLogic(nav);
   const [page, setPage] = useState(0);
   const pageSize = 8;
+  const focusId = searchParams?.get('focus') ?? null;
+  const didScrollRef = useRef<string | null>(null);
 
   const pagedAppointments = useMemo(() => {
     const start = page * pageSize;
@@ -32,6 +36,36 @@ function NotificationsPage() {
 
   // The logic has been moved to useNotificationsLogic
 
+  useEffect(() => {
+    if (!focusId) return;
+    if (isLoading || !userRole) return;
+    const index = pendingAppointments.findIndex((appt) => appt.id === focusId);
+    if (index < 0) return;
+    const desiredPage = Math.floor(index / pageSize);
+    if (desiredPage !== page) {
+      setPage(desiredPage);
+    }
+  }, [focusId, isLoading, userRole, pendingAppointments, page, pageSize]);
+
+  useEffect(() => {
+    if (!focusId) return;
+    if (isLoading || !userRole) return;
+
+    const marker = `${focusId}:${page}`;
+    if (didScrollRef.current === marker) return;
+
+    // Wait for the focused item to render (especially after paging).
+    const appointmentId = `notification-${focusId}`;
+    const prescriptionId = `prescription-${focusId}`;
+    const el = typeof document === 'undefined' ? null : (document.getElementById(appointmentId) || document.getElementById(prescriptionId));
+    if (!el) return;
+
+    didScrollRef.current = marker;
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [focusId, isLoading, userRole, page, pagedAppointments]);
+
 
   if (error) {
     nav.toDashboard();
@@ -39,12 +73,7 @@ function NotificationsPage() {
   }
 
   if (isLoading || !userRole) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-screen gap-3">
-        <CenteredLoader />
-        <span className="text-sm text-gray-600">{t('loadingNotifications', 'Loading notifications...')}</span>
-      </div>
-    );
+    return <Loader label={t('loadingNotifications', 'Loading notifications...')} />;
   }
 
   if (pendingAppointments.length === 0 && prescriptionNotifications.length === 0) {
@@ -80,13 +109,14 @@ function NotificationsPage() {
               {t('notificationsSubtitle') || 'Latest care updates to keep you in control.'}
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="text-xs font-semibold text-purple-700 hover:text-purple-800"
-          >
-            {t('backToHome')}
-          </Link>
-        </div>
+        <Link
+          href="/dashboard"
+          className="text-xs font-semibold text-purple-700 hover:text-purple-800"
+          data-analytics="dashboard.notifications.back_home"
+        >
+          {t('backToHome')}
+        </Link>
+      </div>
 
         <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3">
@@ -104,10 +134,14 @@ function NotificationsPage() {
                   : status === 'rejected'
                   ? { text: t('rejected'), classes: 'bg-red-50 text-red-700 border border-red-100' }
                   : { text: t('pending'), classes: 'bg-amber-50 text-amber-700 border border-amber-100' };
+              const isFocused = Boolean(focusId && focusId === appointment.id);
               return (
                 <div
                   key={appointment.id}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-2"
+                  id={`notification-${appointment.id}`}
+                  className={`bg-white rounded-2xl border shadow-sm px-4 py-3 flex flex-col gap-2 transition ${
+                    isFocused ? 'border-purple-200 ring-2 ring-purple-300 bg-purple-50/40' : 'border-gray-100'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -138,12 +172,16 @@ function NotificationsPage() {
                         <button
                           className="inline-flex items-center rounded-full border border-green-300 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 transition"
                           onClick={() => handleAppointmentAction(appointment.id, "accepted")}
+                          data-analytics="dashboard.notifications.accept"
+                          data-analytics-id={appointment.id}
                         >
                           {t('accept')}
                         </button>
                         <button
                           className="inline-flex items-center rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition"
                           onClick={() => handleAppointmentAction(appointment.id, "rejected")}
+                          data-analytics="dashboard.notifications.reject"
+                          data-analytics-id={appointment.id}
                         >
                           {t('reject')}
                         </button>
@@ -151,7 +189,11 @@ function NotificationsPage() {
                     ) : (
                       status === 'rejected' && (
                         <Link href="/dashboard/new-appointment">
-                          <button className="inline-flex items-center rounded-full border border-purple-500 px-3 py-1.5 text-xs font-semibold text-purple-600 hover:bg-purple-500 hover:text-white transition">
+                          <button
+                            className="inline-flex items-center rounded-full border border-purple-500 px-3 py-1.5 text-xs font-semibold text-purple-600 hover:bg-purple-500 hover:text-white transition"
+                            data-analytics="dashboard.notifications.reschedule"
+                            data-analytics-id={appointment.id}
+                          >
                             {t('reschedule')}
                           </button>
                         </Link>
@@ -160,6 +202,8 @@ function NotificationsPage() {
                     <button
                       className="ml-auto inline-flex items-center rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
                       onClick={() => handleDismissNotification(appointment.id)}
+                      data-analytics="dashboard.notifications.dismiss"
+                      data-analytics-id={appointment.id}
                     >
                       {t('dismissNotification')}
                     </button>
@@ -177,6 +221,7 @@ function NotificationsPage() {
                 className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1.5 font-semibold hover:border-purple-300 hover:text-purple-700 transition disabled:opacity-50"
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
+                data-analytics="dashboard.notifications.pagination_prev"
               >
                 {t('previous') || 'Previous'}
               </button>
@@ -187,6 +232,7 @@ function NotificationsPage() {
                 className="inline-flex items-center rounded-full border border-gray-200 px-3 py-1.5 font-semibold hover:border-purple-300 hover:text-purple-700 transition disabled:opacity-50"
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
+                data-analytics="dashboard.notifications.pagination_next"
               >
                 {t('next') || 'Next'}
               </button>
@@ -212,10 +258,14 @@ function NotificationsPage() {
                   : status === 'rejected'
                   ? { text: t('rejected'), classes: 'bg-red-50 text-red-700 border border-red-100' }
                   : { text: t('pending'), classes: 'bg-amber-50 text-amber-700 border border-amber-100' };
+              const isFocused = Boolean(focusId && focusId === item.id);
               return (
                 <div
                   key={item.id}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-2"
+                  id={`prescription-${item.id}`}
+                  className={`bg-white rounded-2xl border shadow-sm px-4 py-3 flex flex-col gap-2 transition ${
+                    isFocused ? 'border-purple-200 ring-2 ring-purple-300 bg-purple-50/40' : 'border-gray-100'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">

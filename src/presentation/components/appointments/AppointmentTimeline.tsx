@@ -21,6 +21,7 @@ type Props = {
 export function AppointmentTimeline({ items, role, isAppointmentPast, onJoinCall, onPayNow }: Props) {
   const { t } = useTranslation();
   const [detailsAppointment, setDetailsAppointment] = useState<Appointment | null>(null);
+  const isDoctor = role === UserRole.Doctor;
 
   return (
     <>
@@ -95,7 +96,9 @@ export function AppointmentTimeline({ items, role, isAppointmentPast, onJoinCall
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">
-                      {appointment.doctorName || t("doctor")}
+                      {isDoctor
+                        ? (appointment.patientName || t("patient"))
+                        : (appointment.doctorName || t("doctor"))}
                     </p>
                     <p className="text-xs text-gray-600 truncate">
                       {appointment.appointmentType}
@@ -126,6 +129,7 @@ export function AppointmentTimeline({ items, role, isAppointmentPast, onJoinCall
       <AppointmentDetailsModal
         open={Boolean(detailsAppointment)}
         appointment={detailsAppointment}
+        role={role}
         onClose={() => setDetailsAppointment(null)}
       />
     </>

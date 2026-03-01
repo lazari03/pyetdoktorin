@@ -15,8 +15,11 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
+import { useSectionGuard } from '@/navigation/useSectionGuard';
+import { getAdminNavDefs } from '@/navigation/navConfig';
 import { useSessionStore } from '@/store/sessionStore';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
+import { ROUTES } from '@/config/routes';
 import { z } from '@/config/zIndex';
 import { UserRole } from '@/domain/entities/UserRole';
 import Loader from '@/presentation/components/Loader/Loader';
@@ -34,16 +37,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { logoutSessionUseCase, logoutServerUseCase } = useDI();
   const nav = useNavigationCoordinator();
   const logout = useSessionStore((s) => s.logout);
-  const adminNav: NavItem[] = [
-    { name: t('adminDashboard') || 'Dashboard', href: '/admin' },
-    { name: t('users') || 'Users', href: '/admin/users' },
-    { name: t('notifications') || 'Notifications', href: '/admin/notifications' },
-    { name: t('reports') || 'Reports', href: '/admin/reports' },
-  ];
-
-  useEffect(() => {
-    if (!loading && !isAuthenticated) nav.toLogin(pathname ?? undefined);
-  }, [loading, isAuthenticated, pathname, nav]);
+  const { redirecting } = useSectionGuard({ loading, isAuthenticated, role, pathname, allowedRole: UserRole.Admin });
+  const adminNav: NavItem[] = getAdminNavDefs().map((item) => ({
+    name: t(item.labelKey, { defaultValue: item.fallback }),
+    href: item.href,
+  }));
 
   useEffect(() => {
     if (!profileMenuOpen) return;
@@ -58,6 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => setProfileMenuOpen(false), [pathname]);
 
+  if (redirecting) return <RedirectingModal show />;
   if (loading) return <Loader />;
   if (!isAuthenticated || role !== UserRole.Admin) return <RedirectingModal show />;
 
@@ -230,29 +229,29 @@ function DesktopTopBar({
           >
             {initials}
           </button>
-          {profileMenuOpen && (
-            <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
-              <Link
-                href="/admin/profile"
-                onClick={onCloseProfileMenu}
-                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-              >
+	              {profileMenuOpen && (
+	            <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
+	              <Link
+	                href={`${ROUTES.ADMIN}/profile`}
+	                onClick={onCloseProfileMenu}
+	                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+	              >
                 <UserCircleIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t('profileSettings') || 'Profile settings'}</span>
-              </Link>
-              <Link
-                href="/admin"
-                onClick={onCloseProfileMenu}
-                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-              >
+	              </Link>
+	              <Link
+	                href={ROUTES.ADMIN}
+	                onClick={onCloseProfileMenu}
+	                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+	              >
                 <HomeModernIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t('adminDashboard') || 'Dashboard'}</span>
-              </Link>
-              <Link
-                href="/admin/notifications"
-                onClick={onCloseProfileMenu}
-                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-              >
+	              </Link>
+	              <Link
+	                href={`${ROUTES.ADMIN}/notifications`}
+	                onClick={onCloseProfileMenu}
+	                className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+	              >
                 <BellIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{t('notifications') || 'Notifications'}</span>
               </Link>

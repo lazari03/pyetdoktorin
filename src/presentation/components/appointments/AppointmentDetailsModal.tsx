@@ -4,14 +4,16 @@ import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
 import { useTranslation } from "react-i18next";
 import { useEffect, useRef } from "react";
+import { UserRole } from "@/domain/entities/UserRole";
 
 type Props = {
   open: boolean;
   appointment: Appointment | null;
+  role: UserRole;
   onClose: () => void;
 };
 
-export function AppointmentDetailsModal({ open, appointment, onClose }: Props) {
+export function AppointmentDetailsModal({ open, appointment, role, onClose }: Props) {
   const { t } = useTranslation();
 
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -42,6 +44,8 @@ export function AppointmentDetailsModal({ open, appointment, onClose }: Props) {
   if (!open || !appointment) return null;
 
   const status = getAppointmentStatusPresentation(appointment.status);
+  const isDoctor = role === UserRole.Doctor;
+  const title = isDoctor ? (appointment.patientName || t("patient")) : (appointment.doctorName || t("doctor"));
 
   return (
     <div className="fixed inset-0 z-[300]">
@@ -64,7 +68,7 @@ export function AppointmentDetailsModal({ open, appointment, onClose }: Props) {
                 {t("appointmentSummary")}
               </p>
               <h3 className="text-lg font-semibold text-gray-900 mt-1">
-                {appointment.doctorName || t("doctor")}
+                {title}
               </h3>
             </div>
             <button
@@ -79,6 +83,12 @@ export function AppointmentDetailsModal({ open, appointment, onClose }: Props) {
           </div>
 
           <div className="mt-4 space-y-3 text-sm">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-gray-500">{t(isDoctor ? "doctor" : "patient")}</span>
+              <span className="font-medium text-gray-900">
+                {isDoctor ? (appointment.doctorName || t("doctor")) : (appointment.patientName || t("patient"))}
+              </span>
+            </div>
             <div className="flex items-center justify-between gap-4">
               <span className="text-gray-500">{t("type")}</span>
               <span className="font-medium text-gray-900">{appointment.appointmentType}</span>

@@ -14,11 +14,6 @@ declare global {
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID || '';
 
-const getSafeText = (value?: string | null) => {
-  if (!value) return "";
-  return value.replace(/\s+/g, " ").trim().slice(0, 80);
-};
-
 const isElementDisabled = (el: Element) => {
   if (el instanceof HTMLButtonElement) return el.disabled;
   const ariaDisabled = el.getAttribute("aria-disabled");
@@ -83,19 +78,24 @@ export default function Analytics() {
       if (typeof window.gtag !== "function" || !GA_ID) return;
       const target = event.target as Element | null;
       if (!target) return;
-      const element = target.closest("button, a, [role='button']") as Element | null;
+      const element = target.closest("button, a, [role='button'], [data-analytics]") as Element | null;
       if (!element || isElementDisabled(element)) return;
 
-      const label =
-        element.getAttribute("data-analytics") ||
-        element.getAttribute("aria-label") ||
-        getSafeText(element.textContent);
       const href = element instanceof HTMLAnchorElement ? getHrefPath(element.getAttribute("href")) : "";
+      const analyticsName = element.getAttribute("data-analytics") || "";
+      const analyticsId = element.getAttribute("data-analytics-id") || "";
+      const ariaLabel = element.getAttribute("aria-label") || "";
+      // Avoid sending potentially sensitive text content to analytics (PII/PHI risk).
+      // Prefer stable identifiers that don't contain user-entered content.
+      const label = analyticsName || ariaLabel || href || element.getAttribute("id") || element.tagName.toLowerCase();
+
       const payload = {
         page_path: pagePath,
         element_type: element.tagName.toLowerCase(),
         element_id: element.getAttribute("id") || "",
         element_label: label,
+        element_analytics: analyticsName,
+        element_analytics_id: analyticsId,
         element_href: href,
         role: role || "unknown",
       };
