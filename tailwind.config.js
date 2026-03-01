@@ -3,10 +3,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#5a58d8', // blue
+        primary: '#7c3aed', // purple (brand primary)
         secondary: '#dbf544', // yellow-green accent
         accent: '#0f0e0e', // black
-        neutral: '#eeeeee', // light gray
+        neutral: '#f8fafc', // slate-50 (surface)
         purple: {
           DEFAULT: '#7c3aed', // main purple
           light: '#a78bfa',
@@ -23,11 +23,21 @@ module.exports = {
           DEFAULT: '#b6d6d6',
         },
       },
-        fontFamily: {
-          sans: ['Mulish', 'sans-serif'], // Set Mulish as the global font
+      fontFamily: {
+        sans: [
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          'Helvetica',
+          'Arial',
+          '"Apple Color Emoji"',
+          '"Segoe UI Emoji"',
+        ],
       },
-        // Other extensions can be added here if needed
     },
   },
-  plugins: [require('tailwindcss')],
+  plugins: [],
 };

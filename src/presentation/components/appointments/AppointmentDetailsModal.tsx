@@ -3,6 +3,7 @@
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
 import { useTranslation } from "react-i18next";
+import { useEffect, useRef } from "react";
 
 type Props = {
   open: boolean;
@@ -12,6 +13,31 @@ type Props = {
 
 export function AppointmentDetailsModal({ open, appointment, onClose }: Props) {
   const { t } = useTranslation();
+
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
 
   if (!open || !appointment) return null;
 
@@ -26,7 +52,12 @@ export function AppointmentDetailsModal({ open, appointment, onClose }: Props) {
         aria-label={t("close")}
       />
       <div className="fixed inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center">
-        <div className="w-full md:max-w-lg md:mx-6 bg-white rounded-t-3xl md:rounded-2xl shadow-2xl border border-gray-100 p-5 md:p-6">
+        <div
+          className="w-full md:max-w-lg md:mx-6 bg-white rounded-t-3xl md:rounded-2xl shadow-2xl border border-gray-100 p-5 md:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("appointmentSummary")}
+        >
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.14em] text-purple-600 font-semibold">
@@ -39,6 +70,7 @@ export function AppointmentDetailsModal({ open, appointment, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
+              ref={closeRef}
               className="h-9 w-9 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
               aria-label={t("close")}
             >

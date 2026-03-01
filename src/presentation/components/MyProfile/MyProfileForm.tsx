@@ -3,6 +3,8 @@ import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '@/domain/entities/UserRole';
 import { SignaturePad } from '@/presentation/components/SignaturePad';
+import { Button } from '@/presentation/ui/Button';
+import { Input } from '@/presentation/ui/Input';
 
 export interface MyProfileFormData {
   name: string;
@@ -147,28 +149,30 @@ const SpecializationField = React.memo<{
       </label>
       {specializations.map((spec, index) => (
         <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-          <input
+          <Input
             type="text"
             value={spec}
             onChange={(e) => onInputChange(e, 'specializations', index)}
-            className="input input-bordered w-full rounded flex-1"
+            className="flex-1"
           />
-          <button
+          <Button
             type="button"
             onClick={() => onRemove('specializations', index)}
-            className="btn btn-error btn-xs rounded w-full sm:w-auto shrink-0"
+            variant="danger"
+            size="xs"
+            className="w-full sm:w-auto shrink-0"
           >
             {t('remove') || 'Remove'}
-          </button>
+          </Button>
         </div>
       ))}
-      <button
+      <Button
         type="button"
         onClick={() => onAdd('specializations')}
-        className="btn btn-primary btn-xs rounded"
+        size="xs"
       >
         {t('addSpecialization') || 'Add Specialization'}
-      </button>
+      </Button>
     </div>
   );
 });

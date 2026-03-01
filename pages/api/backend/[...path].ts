@@ -13,18 +13,17 @@ const backendBaseUrl =
 
 const normalizeBaseUrl = (base: string) => base.replace(/\/$/, '');
 
-const readBody = async (req: NextApiRequest): Promise<ArrayBuffer> => {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
-    req.on('end', () => {
-      const buffer = Buffer.concat(chunks);
-      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-      resolve(arrayBuffer);
+async function readRawBody(req: NextApiRequest): Promise<ArrayBuffer> {
+  const chunks: Buffer[] = [];
+  await new Promise<void>((resolve, reject) => {
+    req.on('data', (chunk) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     });
     req.on('error', reject);
   });
-};
+  const buffer = Buffer.concat(chunks);
+  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+}
 
 const toHeaderRecord = (headers: NextApiRequest['headers']): Record<string, string> => {
   const out: Record<string, string> = {};

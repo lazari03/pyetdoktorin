@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Mulish } from "next/font/google";
 import ClientProviders from "./ClientProviders";
 import { DIProvider } from '@/context/DIContext';
 import Script from "next/script";
@@ -23,12 +22,6 @@ const DEFAULT_KEYWORDS = [
   "telemedicinë Shqipëri",
   "psikolog online",
 ];
-
-const mulish = Mulish({
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -179,7 +172,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         ))}
         <HeadNonce />
       </head>
-      <body className={`${mulish.className} bg-base-100 min-h-screen`}>
+      <body className="min-h-screen bg-white text-slate-900 antialiased">
         <DIProvider>
           <ClientProviders>
             <Suspense fallback={null}>
