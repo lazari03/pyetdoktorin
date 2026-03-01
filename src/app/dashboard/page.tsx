@@ -142,7 +142,8 @@ export default function Dashboard() {
     }
   };
 
-  if (vm.authLoading || vm.loading || !vm.role) return <Loader />;
+  // Render the dashboard as soon as role is known so the hero CTA doesn't disappear behind a full-screen loader.
+  if (!vm.role) return <Loader />;
 
   const upcoming = [...vm.filteredAppointments]
     .filter((a) => !vm.isAppointmentPast(a))
@@ -208,7 +209,7 @@ export default function Dashboard() {
     <div className="min-h-screen">
       <RedirectingModal show={vm.showRedirecting} />
       <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10 space-y-6">
-        <ProfileWarning show={vm.profileIncomplete} />
+        <ProfileWarning show={!vm.loading && vm.profileIncomplete} />
         <div className="grid gap-4 lg:grid-cols-3">
           {/* Left column: Hero + Emergency/BMI stacked */}
           <div className="lg:col-span-2 flex flex-col gap-4">
