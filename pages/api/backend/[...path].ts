@@ -13,11 +13,15 @@ const backendBaseUrl =
 
 const normalizeBaseUrl = (base: string) => base.replace(/\/$/, '');
 
-const readBody = async (req: NextApiRequest): Promise<Buffer> => {
+const readBody = async (req: NextApiRequest): Promise<ArrayBuffer> => {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
-    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('end', () => {
+      const buffer = Buffer.concat(chunks);
+      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+      resolve(arrayBuffer);
+    });
     req.on('error', reject);
   });
 };
@@ -53,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   delete headers.connection;
   delete headers['content-length'];
 
-  const body =
+  const body: ArrayBuffer | undefined =
     method === 'GET' || method === 'HEAD' || method === 'OPTIONS' ? undefined : await readBody(req);
 
   let backendRes: Response;
@@ -61,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     backendRes = await fetch(url.toString(), {
       method,
       headers,
-      body: body && body.length > 0 ? body : undefined,
+      body: body && body.byteLength > 0 ? body : undefined,
       redirect: 'manual',
     });
   } catch (error) {
