@@ -41,33 +41,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [isAuthenticated, role, user, initializeAppointments]);
 
-  useEffect(() => {
-    // Service workers are intentionally opt-in: caching HTML in Next.js apps can cause blank screens
-    // after deploys (stale HTML referencing old hashed chunks). Enable only when explicitly needed.
-    if (process.env.NODE_ENV !== 'production') return;
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
-
-    const enabled = process.env.NEXT_PUBLIC_ENABLE_SERVICE_WORKER === 'true';
-
-    if (!enabled) {
-      // Migration path: if a SW was registered in older builds, unregister it to avoid stale HTML/assets.
-      navigator.serviceWorker.getRegistrations().then((regs) => {
-        regs.forEach((reg) => reg.unregister().catch(() => {}));
-      }).catch(() => {});
-
-      if ('caches' in window) {
-        caches.keys().then((keys) => {
-          keys
-            .filter((key) => key.startsWith('myapp-cache-') || key.startsWith('pyetdoktorin-cache-'))
-            .forEach((key) => caches.delete(key));
-        }).catch(() => {});
-      }
-      return;
-    }
-
-    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
-  }, []);
-
   const nav = useNavigationCoordinator();
   useEffect(() => {
     if (!loading && !isAuthenticated) {

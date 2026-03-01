@@ -6,6 +6,20 @@ import { SESSION_IDLE_TIMEOUT_MS, SESSION_LAST_ACTIVITY_KEY, SESSION_REFRESH_THR
 const IDLE_MS = SESSION_IDLE_TIMEOUT_MS;
 const REFRESH_THROTTLE_MS = SESSION_REFRESH_THROTTLE_MS;
 
+function bestEffortServerLogout() {
+  if (typeof window === 'undefined') return;
+  try {
+    if ('sendBeacon' in navigator) {
+      navigator.sendBeacon('/api/auth/logout');
+      return;
+    }
+  } catch {}
+
+  try {
+    void fetch('/api/auth/logout', { method: 'POST', credentials: 'include', keepalive: true }).catch(() => {});
+  } catch {}
+}
+
 
 
 interface SessionState {
@@ -115,6 +129,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   logoutForIdle: (logoutSessionUseCase: LogoutSessionUseCase) => {
     logoutSessionUseCase.execute();
+    bestEffortServerLogout();
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(SESSION_LAST_ACTIVITY_KEY);
     }
@@ -124,11 +139,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
   logout: async (reason?: string, logoutSessionUseCase?: LogoutSessionUseCase, logoutServerUseCase?: LogoutServerUseCase) => {
     if (logoutSessionUseCase) logoutSessionUseCase.execute();
-    // Ask server to clear HttpOnly cookie via network layer
+    // Never block navigation on server logout: if the backend/proxy hangs, users get stuck on a loading screen.
+    // Do a best-effort logout that survives navigation via sendBeacon / keepalive fetch.
+    bestEffortServerLogout();
     if (logoutServerUseCase) {
-      try {
-        await logoutServerUseCase.execute();
-      } catch {}
+      void logoutServerUseCase.execute().catch(() => {});
     }
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(SESSION_LAST_ACTIVITY_KEY);
