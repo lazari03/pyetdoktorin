@@ -1,5 +1,8 @@
 'use client';
 
+import { ROUTES } from '@/config/routes';
+import { DASHBOARD_PATHS } from '@/navigation/paths';
+
 type PaddleCheckout = {
   open: (config: Record<string, unknown>) => void;
 };
@@ -105,8 +108,8 @@ export async function openPaddleCheckout(params: {
     throw new Error('Paddle checkout is unavailable');
   }
   const successUrl = new URL(window.location.href);
-  if (successUrl.pathname.startsWith('/dashboard/pay')) {
-    successUrl.pathname = '/dashboard/appointments';
+  if (successUrl.pathname.startsWith(`${ROUTES.DASHBOARD}/pay`)) {
+    successUrl.pathname = DASHBOARD_PATHS.appointments;
     successUrl.searchParams.delete('appointmentId');
   }
   successUrl.searchParams.set('paid', params.appointmentId);

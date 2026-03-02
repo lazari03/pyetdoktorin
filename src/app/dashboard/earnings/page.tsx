@@ -9,6 +9,7 @@ import { ArrowLeftIcon, BanknotesIcon, CalendarIcon } from "@heroicons/react/24/
 import Link from "next/link";
 import { useMemo } from "react";
 import { UserRole } from "@/domain/entities/UserRole";
+import { DASHBOARD_PATHS } from "@/navigation/paths";
 import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
 
 
@@ -127,7 +128,7 @@ export default function EarningsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">{t("accessDenied") || "Access denied"}</p>
-          <Link href="/dashboard" className="text-purple-600 hover:underline mt-2 inline-block">
+          <Link href={DASHBOARD_PATHS.root} className="text-purple-600 hover:underline mt-2 inline-block">
             {t("backToDashboard") || "Back to Dashboard"}
           </Link>
         </div>
@@ -143,7 +144,7 @@ export default function EarningsPage() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link 
-            href="/dashboard" 
+            href={DASHBOARD_PATHS.root}
             className="p-2 rounded-full bg-white shadow-sm hover:bg-gray-100 transition-colors"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-600" />

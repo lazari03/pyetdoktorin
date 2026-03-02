@@ -6,6 +6,7 @@ import { getAppointmentActionPresentation } from "@/presentation/utils/getAppoin
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
 import { toUserRole } from "@/presentation/utils/toUserRole";
 import { useTranslation } from "react-i18next";
+import { dashboardDoctorProfilePath } from "@/navigation/paths";
 import { PhoneIcon, CreditCardIcon, ArrowsRightLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { PAYWALL_AMOUNT_USD } from "@/config/paywallConfig";
 import { UserRole } from "@/domain/entities/UserRole";
@@ -104,7 +105,7 @@ export function AppointmentSummaryCard({
             </p>
           ) : (
             <Link
-              href={`/dashboard/doctor/${appointment.doctorId}`}
+              href={dashboardDoctorProfilePath(appointment.doctorId)}
               className={`text-xl font-semibold mt-1 line-clamp-1 block hover:underline ${
                 isPast ? "text-gray-500" : "text-gray-900"
               }`}

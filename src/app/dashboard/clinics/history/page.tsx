@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { backendFetch } from '@/network/backendClient';
 import { ClinicBooking } from '@/domain/entities/ClinicBooking';
 import { UserRole } from '@/domain/entities/UserRole';
+import { DASHBOARD_PATHS } from '@/navigation/paths';
 
 export default function ClinicBookingHistoryPage() {
   const { role } = useAuth();
@@ -48,7 +49,7 @@ export default function ClinicBookingHistoryPage() {
               {t('clinicBookingHistorySubtitle') || 'Track your requests and their status'}
             </p>
           </div>
-          <Link href="/dashboard/clinics" className="text-sm text-purple-600 hover:underline">
+          <Link href={DASHBOARD_PATHS.clinics} className="text-sm text-purple-600 hover:underline">
             {t('bookAnotherClinic') || 'Book another clinic'}
           </Link>
         </div>

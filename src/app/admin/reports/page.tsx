@@ -9,6 +9,7 @@ import { useAppointmentStore } from "@/store/appointmentStore";
 import { AppointmentFilters, AppointmentFilter } from "@/presentation/components/appointments/AppointmentFilters";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
 import { useAuth } from "@/context/AuthContext";
+import { adminReportDetailPath } from "@/navigation/paths";
 import {
   isCanceledStatus,
   isRejectedStatus,
@@ -139,12 +140,12 @@ export default function AdminReportsPage() {
                 ? (appointment.doctorName || t("reportUnknownActor"))
                 : (appointment.doctorName || t("reportUnknownActor"));
 
-              return (
-                <Link
-                  key={appointment.id}
-                  href={`/admin/reports/${appointment.id}`}
-                  className="group block rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-purple-300 hover:shadow-md"
-                >
+	              return (
+	                <Link
+	                  key={appointment.id}
+	                  href={adminReportDetailPath(appointment.id)}
+	                  className="group block rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-purple-300 hover:shadow-md"
+	                >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-gray-900">

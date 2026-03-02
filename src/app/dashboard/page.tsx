@@ -19,6 +19,7 @@ import { EmergencyCard } from "@/presentation/components/dashboard/EmergencyCard
 import { BmiCalculatorCard } from "@/presentation/components/dashboard/BmiCalculatorCard";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
+import { DASHBOARD_PATHS } from "@/navigation/paths";
 import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
 import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
@@ -126,11 +127,11 @@ export default function Dashboard() {
           const url = new URL(window.location.href);
           url.searchParams.delete("paid");
           router.replace(url.pathname + url.search);
-        } catch {
-          router.replace("/dashboard");
-        }
-      });
-  }, [paidAppointmentId, router, setAppointments]);
+	        } catch {
+	          router.replace(DASHBOARD_PATHS.root);
+	        }
+	      });
+	  }, [paidAppointmentId, router, setAppointments]);
 
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
@@ -266,10 +267,10 @@ export default function Dashboard() {
                     ? t("noUpcomingDoctorSubtitle") || "Your schedule is clear for now."
                     : t("noUpcomingSubtitle") || "Stay on top of your health—book a quick consultation now."
                 }
-                helper={t("noUpcomingHelper") || "Secure telemedicine on pyetdoktorin.al"}
-                onJoin={role === UserRole.Doctor ? undefined : () => nav.pushPath("/dashboard/new-appointment")}
-                ctaLabel={role === UserRole.Doctor ? undefined : (t("bookNow") || "Book now")}
-              />
+	                helper={t("noUpcomingHelper") || "Secure telemedicine on pyetdoktorin.al"}
+	                onJoin={role === UserRole.Doctor ? undefined : () => nav.toNewAppointment()}
+	                ctaLabel={role === UserRole.Doctor ? undefined : (t("bookNow") || "Book now")}
+	              />
             )}
 
             {/* Emergency & BMI directly under the hero card */}
@@ -352,10 +353,10 @@ export default function Dashboard() {
             <h2 className="text-base font-semibold text-gray-900">
               {t("yourAppointments")}
             </h2>
-            <Link href="/dashboard/appointments" className="text-xs text-purple-600 hover:underline">
-              {t("viewAll")}
-            </Link>
-          </div>
+	            <Link href={DASHBOARD_PATHS.appointments} className="text-xs text-purple-600 hover:underline">
+	              {t("viewAll")}
+	            </Link>
+	          </div>
           <AppointmentsTable
             appointments={vm.filteredAppointments}
             role={vm.role}

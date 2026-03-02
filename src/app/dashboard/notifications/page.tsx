@@ -8,6 +8,8 @@ import { useNotificationsLogic } from './useNotificationsLogic';
 import { UserRole } from '@/domain/entities/UserRole';
 import Loader from '@/presentation/components/Loader/Loader';
 import { useSearchParams } from 'next/navigation';
+import { DASHBOARD_PATHS } from '@/navigation/paths';
+import { getRoleLandingPath } from '@/navigation/roleRoutes';
 
 function NotificationsPage() {
   const { t } = useTranslation();
@@ -33,6 +35,7 @@ function NotificationsPage() {
   }, [pendingAppointments, page]);
 
   const totalPages = Math.max(1, Math.ceil(pendingAppointments.length / pageSize));
+  const homeHref = useMemo(() => getRoleLandingPath(userRole), [userRole]);
 
   // The logic has been moved to useNotificationsLogic
 
@@ -68,7 +71,7 @@ function NotificationsPage() {
 
 
   if (error) {
-    nav.toDashboard();
+    nav.replacePath(homeHref);
     return null;
   }
 
@@ -80,7 +83,7 @@ function NotificationsPage() {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-gray-500">
         <p className="mb-4">{t('noNewNotifications', 'No new notifications')}</p>
-        <Link href="/dashboard">
+        <Link href={homeHref}>
           <button className="btn btn-primary">{t('backToHome', 'Back to Home')}</button>
         </Link>
       </div>
@@ -110,7 +113,7 @@ function NotificationsPage() {
             </p>
           </div>
         <Link
-          href="/dashboard"
+          href={homeHref}
           className="text-xs font-semibold text-purple-700 hover:text-purple-800"
           data-analytics="dashboard.notifications.back_home"
         >
@@ -188,7 +191,7 @@ function NotificationsPage() {
                       </>
                     ) : (
                       status === 'rejected' && (
-                        <Link href="/dashboard/new-appointment">
+                        <Link href={DASHBOARD_PATHS.newAppointment}>
                           <button
                             className="inline-flex items-center rounded-full border border-purple-500 px-3 py-1.5 text-xs font-semibold text-purple-600 hover:bg-purple-500 hover:text-white transition"
                             data-analytics="dashboard.notifications.reschedule"

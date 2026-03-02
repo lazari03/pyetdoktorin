@@ -9,6 +9,8 @@ import { ClinicBooking } from '@/domain/entities/ClinicBooking';
 import { RecentPatientsList, RecentPatient } from '@/presentation/components/dashboard/RecentPatientsList';
 import { DoctorEarningsCard } from '@/presentation/components/dashboard/DoctorEarningsCard';
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from '@/config/paywallConfig';
+import { CLINIC_PATHS } from '@/navigation/paths';
+import { UserRole } from '@/domain/entities/UserRole';
 
 function calculateClinicEarnings(bookings: ClinicBooking[]) {
   const payoutPercentage = DOCTOR_PAYOUT_RATE;
@@ -91,7 +93,7 @@ export default function ClinicDashboardPage() {
     return Object.values(dictionary).slice(0, 3);
   }, [bookings]);
 
-  if (role !== 'clinic') {
+  if (role !== UserRole.Clinic) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center text-gray-600">
@@ -108,14 +110,14 @@ export default function ClinicDashboardPage() {
         <p className="text-sm text-gray-600">{t('clinicDashboardDescription') || 'Monitor bookings and performance'}</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <section className="bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-900">{t('recentPatients') ?? 'Recent patients'}</p>
-            <Link href="/clinic/bookings" className="text-xs text-purple-600 hover:underline">
-              {t('viewAll') || 'View all'}
-            </Link>
-          </div>
+	      <div className="grid gap-4 lg:grid-cols-3">
+	        <section className="bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col">
+	          <div className="flex items-center justify-between mb-3">
+	            <p className="text-sm font-semibold text-gray-900">{t('recentPatients') ?? 'Recent patients'}</p>
+	            <Link href={CLINIC_PATHS.bookings} className="text-xs text-purple-600 hover:underline">
+	              {t('viewAll') || 'View all'}
+	            </Link>
+	          </div>
           <div className="flex-1">
             <RecentPatientsList patients={recentPatients} />
           </div>
@@ -148,19 +150,19 @@ export default function ClinicDashboardPage() {
               <p className="text-[11px] text-gray-600">{t('scheduled') || 'Scheduled'}</p>
             </div>
           </div>
-          <Link href="/clinic/calendar" className="w-full text-center py-3 px-4 rounded-xl bg-purple-50 text-purple-600 text-sm font-semibold hover:bg-purple-100 transition-colors mt-auto">
-            {t('viewCalendar') || 'View calendar'}
-          </Link>
-        </section>
-      </div>
+	          <Link href={CLINIC_PATHS.calendar} className="w-full text-center py-3 px-4 rounded-xl bg-purple-50 text-purple-600 text-sm font-semibold hover:bg-purple-100 transition-colors mt-auto">
+	            {t('viewCalendar') || 'View calendar'}
+	          </Link>
+	        </section>
+	      </div>
 
       <section className="bg-white rounded-3xl shadow-lg p-4 border border-purple-50">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-gray-900">{t('latestRequests') || 'Latest requests'}</h2>
-          <Link href="/clinic/bookings" className="text-xs text-purple-600 hover:underline">
-            {t('viewAll')}
-          </Link>
-        </div>
+	        <div className="flex items-center justify-between mb-3">
+	          <h2 className="text-base font-semibold text-gray-900">{t('latestRequests') || 'Latest requests'}</h2>
+	          <Link href={CLINIC_PATHS.bookings} className="text-xs text-purple-600 hover:underline">
+	            {t('viewAll')}
+	          </Link>
+	        </div>
         <div className="divide-y divide-gray-100">
           {loading ? (
             <p className="text-center text-gray-500 py-6">{t('loading') || 'Loading...'}</p>

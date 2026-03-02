@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { openPaddleCheckout, preparePaddleCheckout } from '@/infrastructure/services/paddleCheckout';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { syncPaddlePaymentWithRetry } from '@/network/payments';
+import { DASHBOARD_PATHS } from '@/navigation/paths';
 
 export default function PayPage() {
   const { t } = useTranslation();
@@ -58,7 +59,7 @@ export default function PayPage() {
         syncPaddlePaymentWithRetry(appointmentId)
           .then((result) => {
             if (result.isPaid) {
-              router.replace(`/dashboard/appointments?paid=${encodeURIComponent(appointmentId)}`);
+              router.replace(`${DASHBOARD_PATHS.appointments}?paid=${encodeURIComponent(appointmentId)}`);
             }
           })
           .catch((error) => {

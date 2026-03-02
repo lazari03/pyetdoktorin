@@ -5,13 +5,15 @@ import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { useClinicBookings } from '@/presentation/hooks/useClinicBookings';
 import { format } from 'date-fns';
+import { CLINIC_PATHS } from '@/navigation/paths';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export default function ClinicCalendarPage() {
   const { user, role } = useAuth();
   const { t } = useTranslation();
   const { bookings, loading } = useClinicBookings({ clinicId: user?.uid });
 
-  if (role !== 'clinic') {
+  if (role !== UserRole.Clinic) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center text-gray-600">{t('accessDenied') || 'Access denied'}</div>
@@ -34,7 +36,7 @@ export default function ClinicCalendarPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t('clinicCalendar') || 'Clinic calendar'}</h1>
           <p className="text-sm text-gray-600">{t('clinicCalendarSubtitle') || 'Review your daily schedule'}</p>
         </div>
-        <Link href="/clinic/bookings" className="text-sm text-purple-600 hover:underline">
+        <Link href={CLINIC_PATHS.bookings} className="text-sm text-purple-600 hover:underline">
           {t('goToBookings') || 'Go to bookings'}
         </Link>
       </div>

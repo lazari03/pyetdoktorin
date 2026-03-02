@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { DASHBOARD_PATHS } from '@/navigation/paths';
 import { z } from '@/config/zIndex';
 
 export default function AppointmentConfirmation({ onClose }: { onClose: () => void }) {
@@ -51,13 +52,13 @@ export default function AppointmentConfirmation({ onClose }: { onClose: () => vo
 						{t('appointmentNotificationInfo')}
 					</p>
 
-					<div className="flex flex-col gap-3">
-						<Link href="/dashboard/appointments" className="w-full">
-							<button
-								className="w-full rounded-full bg-primary text-white font-semibold py-3 text-sm shadow-md hover:bg-secondary transition-colors"
-							>
-								{t('goToAppointmentHistory')}
-							</button>
+						<div className="flex flex-col gap-3">
+							<Link href={DASHBOARD_PATHS.appointments} className="w-full">
+								<button
+									className="w-full rounded-full bg-primary text-white font-semibold py-3 text-sm shadow-md hover:bg-secondary transition-colors"
+								>
+									{t('goToAppointmentHistory')}
+								</button>
 						</Link>
 					</div>
 				</div>

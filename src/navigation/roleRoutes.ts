@@ -22,9 +22,9 @@ export function getRoleNotificationsPath(role?: UserRole | null): string {
     case UserRole.Admin:
       return `${ROUTES.ADMIN}/notifications`;
     case UserRole.Pharmacy:
-      return ROUTES.PHARMACY;
+      return `${ROUTES.PHARMACY}/notifications`;
     case UserRole.Clinic:
-      return ROUTES.CLINIC;
+      return `${ROUTES.CLINIC}/notifications`;
     case UserRole.Doctor:
     case UserRole.Patient:
     default:

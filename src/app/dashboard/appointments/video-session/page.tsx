@@ -6,6 +6,7 @@ import Loader from "@/presentation/components/Loader/Loader";
 import { auth } from "@/config/firebaseconfig";
 import { useTranslation } from "react-i18next";
 import { VIDEO_ERROR_CODES } from "@/config/errorCodes";
+import { DASHBOARD_PATHS } from "@/navigation/paths";
 
 export default function VideoSessionPage() {
   const [loading, setLoading] = useState(true);
@@ -112,7 +113,7 @@ export default function VideoSessionPage() {
 
   useEffect(() => {
     if (error && !roomCode) {
-      const timer = setTimeout(() => router.replace('/dashboard'), 2000);
+      const timer = setTimeout(() => router.replace(DASHBOARD_PATHS.root), 2000);
       return () => clearTimeout(timer);
     }
     return undefined;
@@ -219,7 +220,7 @@ export default function VideoSessionPage() {
               </button>
               <button
                 type="button"
-                onClick={() => router.replace("/dashboard")}
+                onClick={() => router.replace(DASHBOARD_PATHS.root)}
                 className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
               >
                 {t("videoSessionBackToDashboard")}

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { dashboardDoctorProfilePath } from "@/navigation/paths";
 
 export type RecentDoctor = {
   id: string;
@@ -24,7 +25,7 @@ export function RecentDoctorsList({ doctors }: Props) {
       {visible.map((doc) => (
         <Link
           key={doc.id}
-          href={`/dashboard/doctor/${doc.id}`}
+          href={dashboardDoctorProfilePath(doc.id)}
           className="rounded-2xl border border-purple-50 bg-white shadow-sm p-4 flex items-center gap-4 hover:border-purple-100 hover:shadow-md transition"
         >
           <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-800 font-bold text-lg flex items-center justify-center">

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import "@i18n";
 import { useAuth } from "@/context/AuthContext";
 import { useAppointmentStore } from "@/store/appointmentStore";
+import { ADMIN_PATHS } from "@/navigation/paths";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
 import {
   isCanceledStatus,
@@ -75,25 +76,25 @@ export default function AdminReportDetailPage() {
 
   if (!appointmentId) {
     return (
-      <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center">
-        <p className="text-sm text-gray-600">{t("reportsEmpty")}</p>
-        <Link href="/admin/reports" className="mt-3 inline-flex text-sm font-semibold text-purple-600">
-          {t("reportBack")}
-        </Link>
-      </div>
-    );
-  }
+	        <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center">
+	          <p className="text-sm text-gray-600">{t("reportsEmpty")}</p>
+	        <Link href={ADMIN_PATHS.reports} className="mt-3 inline-flex text-sm font-semibold text-purple-600">
+	          {t("reportBack")}
+	        </Link>
+	      </div>
+	    );
+	  }
 
   if (!appointment) {
     return (
       <div className="space-y-4">
-        <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
-          <Link href="/admin/reports" className="text-xs font-semibold uppercase tracking-wide text-purple-600">
-            {t("reportBack")}
-          </Link>
-          <h1 className="text-2xl font-semibold text-gray-900 mt-2">{t("reportDetailTitle")}</h1>
-          <p className="text-sm text-gray-600 mt-1">{t("reportDetailSubtitle")}</p>
-        </section>
+	        <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
+	          <Link href={ADMIN_PATHS.reports} className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+	            {t("reportBack")}
+	          </Link>
+	          <h1 className="text-2xl font-semibold text-gray-900 mt-2">{t("reportDetailTitle")}</h1>
+	          <p className="text-sm text-gray-600 mt-1">{t("reportDetailSubtitle")}</p>
+	        </section>
         <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center">
           <p className="text-sm text-gray-600">
             {loading ? t("loading") : t("reportsEmpty")}
@@ -103,15 +104,15 @@ export default function AdminReportDetailPage() {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
-        <Link href="/admin/reports" className="text-xs font-semibold uppercase tracking-wide text-purple-600">
-          {t("reportBack")}
-        </Link>
-        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 mt-2">
-          {t("reportDetailTitle")}
-        </h1>
+	  return (
+	    <div className="space-y-6">
+	      <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
+	        <Link href={ADMIN_PATHS.reports} className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+	          {t("reportBack")}
+	        </Link>
+	        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 mt-2">
+	          {t("reportDetailTitle")}
+	        </h1>
         <p className="text-sm text-gray-600 mt-2">{t("reportDetailSubtitle")}</p>
       </section>
 

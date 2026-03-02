@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
+import Link from "next/link";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import { UserRole } from "@/domain/entities/UserRole";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
+import { DASHBOARD_PATHS } from "@/navigation/paths";
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
 
 type PharmacyNotification = {
@@ -168,17 +170,17 @@ export default function PharmacyDashboardPage() {
             </div>
           </section>
 
-          <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-4 space-y-3 h-full">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{t("notificationsLabel") || "Notifications"}</p>
-                <p className="text-xs text-gray-600">{t("pharmacyNotificationsSubtitle") || "Orders and prescription updates"}</p>
-              </div>
-              <a href="/dashboard/notifications" className="text-xs text-purple-600 hover:underline">
-                {t("viewAll") || "View all"}
-              </a>
-            </div>
-            <ul className="space-y-2 max-h-80 overflow-auto">
+	          <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-4 space-y-3 h-full">
+	            <div className="flex items-center justify-between">
+	              <div>
+	                <p className="text-sm font-semibold text-gray-900">{t("notificationsLabel") || "Notifications"}</p>
+	                <p className="text-xs text-gray-600">{t("pharmacyNotificationsSubtitle") || "Orders and prescription updates"}</p>
+	              </div>
+	              <Link href={DASHBOARD_PATHS.notifications} className="text-xs text-purple-600 hover:underline">
+	                {t("viewAll") || "View all"}
+	              </Link>
+	            </div>
+	            <ul className="space-y-2 max-h-80 overflow-auto">
               {notifications.map((n) => (
                 <li key={n.id} className="p-3 rounded-2xl border border-gray-100 bg-gray-50">
                   <div className="flex items-start justify-between gap-3">

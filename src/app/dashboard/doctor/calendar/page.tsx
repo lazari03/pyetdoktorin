@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import RoleGuard from '@/presentation/components/RoleGuard/RoleGuard';
 import { UserRole } from '@/domain/entities/UserRole';
+import { DASHBOARD_PATHS, dashboardVideoSessionUrl } from '@/navigation/paths';
 import Calendar from '../Calendar';
 import Loader from '@/presentation/components/Loader/Loader';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
@@ -114,7 +115,7 @@ export default function DoctorCalendarPage() {
       }
 
       trackAnalyticsEvent('appointment_join_success', { appointmentId, role: 'doctor' });
-      window.location.href = `/dashboard/appointments/video-session?session=${encodeURIComponent(sessionToken)}`;
+      window.location.href = dashboardVideoSessionUrl(sessionToken);
     } catch (error) {
       setShowRedirecting(false);
       const message = error instanceof Error ? error.message : 'An error occurred. Please try again.';
@@ -133,7 +134,7 @@ export default function DoctorCalendarPage() {
   if (loading && appointments.length === 0) return <Loader />;
 
   return (
-    <RoleGuard allowedRoles={[UserRole.Doctor]} fallbackPath="/dashboard">
+    <RoleGuard allowedRoles={[UserRole.Doctor]} fallbackPath={DASHBOARD_PATHS.root}>
       <div className="min-h-screen">
         <RedirectingModal show={showRedirecting} />
         <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10 space-y-6">

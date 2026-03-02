@@ -1,5 +1,7 @@
 'use client';
 import { useTranslation } from 'react-i18next';
+import Link from 'next/link';
+import { DASHBOARD_PATHS } from '@/navigation/paths';
 
 interface ProfileWarningProps {
   show: boolean;
@@ -23,12 +25,12 @@ export default function ProfileWarning({ show }: ProfileWarningProps) {
         </p>
       </div>
       <div>
-        <a
-          href="/dashboard/myprofile"
+        <Link
+          href={DASHBOARD_PATHS.profile}
           className="text-xs font-semibold text-purple-700 hover:text-purple-800 underline"
         >
           {t('editProfile') || 'Update now'}
-        </a>
+        </Link>
       </div>
     </div>
   );

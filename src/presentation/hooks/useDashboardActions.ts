@@ -10,6 +10,7 @@ import { getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation
 import { syncPaddlePaymentWithRetry } from '@/network/payments';
 import { clearPaymentProcessing } from '@/network/appointments';
 import { listAppointments } from '@/network/appointments';
+import { dashboardVideoSessionUrl } from '@/navigation/paths';
 
 export function useDashboardActions() {
   const { user, role } = useAuth();
@@ -37,7 +38,7 @@ export function useDashboardActions() {
         userId: user.uid,
         role: effectiveRole,
       });
-      const url = `/dashboard/appointments/video-session?session=${encodeURIComponent(sessionToken)}`;
+      const url = dashboardVideoSessionUrl(sessionToken);
       trackAnalyticsEvent('appointment_join_success', { appointmentId, role: effectiveRole });
       window.location.href = url;
     } catch (error) {

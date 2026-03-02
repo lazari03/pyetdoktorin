@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { syncPaddlePaymentWithRetry } from "@/network/payments";
 import { listAppointments } from "@/network/appointments";
 import { useAppointmentStore } from "@/store/appointmentStore";
+import { DASHBOARD_PATHS } from "@/navigation/paths";
 import {
   isCanceledStatus,
   isRejectedStatus,
@@ -49,7 +50,7 @@ function JourneyPage() {
           url.searchParams.delete("paid");
           router.replace(url.pathname + url.search);
         } catch {
-          router.replace("/dashboard/appointments");
+          router.replace(DASHBOARD_PATHS.appointments);
         }
       });
   }, [paidAppointmentId, router, setAppointments]);
@@ -121,7 +122,7 @@ function JourneyPage() {
           {vm.userRole === UserRole.Patient && (
             <div className="flex items-center gap-2">
               <Link
-                href="/dashboard/new-appointment"
+                href={DASHBOARD_PATHS.newAppointment}
                 className="inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-purple-700"
               >
                 {t("bookNewAppointment")}
@@ -144,7 +145,7 @@ function JourneyPage() {
             <p className="text-sm text-gray-600 mt-1">{t("emptyJourneyCopy")}</p>
             {vm.userRole === UserRole.Patient && (
               <Link
-                href="/dashboard/new-appointment"
+                href={DASHBOARD_PATHS.newAppointment}
                 className="mt-3 inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
               >
                 {t("bookNewAppointment")}

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { DASHBOARD_PATHS } from '@/navigation/paths';
 
 export default function DashboardNotFound() {
   const { t } = useTranslation();
@@ -20,14 +21,14 @@ export default function DashboardNotFound() {
           <p className="text-sm sm:text-base text-slate-600 max-w-xl">
             {t('notFoundSubtitle')}
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center rounded-full bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 transition"
-            >
-              {t('backToDashboard')}
-            </Link>
-          </div>
+	          <div className="flex flex-wrap gap-3">
+	            <Link
+	              href={DASHBOARD_PATHS.root}
+	              className="inline-flex items-center justify-center rounded-full bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 transition"
+	            >
+	              {t('backToDashboard')}
+	            </Link>
+	          </div>
         </div>
         <div className="relative w-full max-w-md justify-self-center">
           <Image

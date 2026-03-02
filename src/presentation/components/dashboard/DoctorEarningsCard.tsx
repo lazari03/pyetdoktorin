@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
+import { DASHBOARD_PATHS } from "@/navigation/paths";
 
 export type MonthlyEarning = {
   month: string;
@@ -87,7 +88,7 @@ export function DoctorEarningsCard({
 
       {/* See All Button */}
       <Link
-        href="/dashboard/earnings"
+        href={DASHBOARD_PATHS.earnings}
         className="mt-4 w-full text-center py-3 px-4 rounded-xl bg-purple-50 text-purple-600 text-sm font-semibold hover:bg-purple-100 transition-colors"
       >
         {t("viewAllEarnings") || "Shiko te gjitha"}

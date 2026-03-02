@@ -11,6 +11,7 @@ import { AppointmentsTableProps } from './types';
 import { Appointment } from '@/domain/entities/Appointment';
 import { PhoneIcon, CreditCardIcon } from '@heroicons/react/24/outline';
 import { UserRole } from '@/domain/entities/UserRole';
+import { dashboardDoctorProfilePath } from '@/navigation/paths';
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 	const { t } = useTranslation();
@@ -151,7 +152,7 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 											appointment.patientName || 'N/A'
 										) : (
 											<a
-												href={`/dashboard/doctor/${appointment.doctorId}`}
+												href={dashboardDoctorProfilePath(appointment.doctorId)}
 												className="text-purple-500 font-medium hover:text-purple-600"
 											>
 												{appointment.doctorName}
@@ -217,7 +218,7 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 												appointment.patientName || 'N/A'
 											) : (
 												<a
-													href={`/dashboard/doctor/${appointment.doctorId}`}
+													href={dashboardDoctorProfilePath(appointment.doctorId)}
 													className="text-purple-500 font-medium hover:text-purple-600"
 												>
 													{appointment.doctorName}

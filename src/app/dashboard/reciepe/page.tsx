@@ -13,6 +13,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import Link from "next/link";
 import Image from "next/image";
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential } from "firebase/auth";
+import { DASHBOARD_PATHS } from "@/navigation/paths";
 
 type Reciepe = {
   id: string;
@@ -519,13 +520,13 @@ export default function DoctorReciepePage() {
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                 />
               </div>
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-gray-700">{t("doctorSignature") || "Doctor signature"}</p>
-                  <Link href="/dashboard/myprofile" className="text-[11px] font-semibold text-purple-600 hover:text-purple-700">
-                    {t("manageSignature") || "Manage signature"}
-                  </Link>
-                </div>
+	              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+	                <div className="flex items-center justify-between">
+	                  <p className="text-xs font-medium text-gray-700">{t("doctorSignature") || "Doctor signature"}</p>
+	                  <Link href={DASHBOARD_PATHS.profile} className="text-[11px] font-semibold text-purple-600 hover:text-purple-700">
+	                    {t("manageSignature") || "Manage signature"}
+	                  </Link>
+	                </div>
                 {!signatureLoaded ? (
                   <p className="text-xs text-gray-500">{t("loadingSignature") || "Loading signature..."}</p>
                 ) : savedSignatureUrl ? (

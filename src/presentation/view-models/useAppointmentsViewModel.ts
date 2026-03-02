@@ -15,6 +15,7 @@ import { listAppointments } from "@/network/appointments";
 import { clearPaymentProcessing } from "@/network/appointments";
 import { getAppointmentErrorMessage, getVideoErrorMessage } from "@/presentation/utils/errorMessages";
 import { APPOINTMENT_ERROR_CODES, VIDEO_ERROR_CODES } from "@/config/errorCodes";
+import { dashboardVideoSessionUrl } from "@/navigation/paths";
 
 /**
  * View model result interface for appointments page
@@ -175,7 +176,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
           await updateAppointmentUseCase.execute(appointmentId, { roomCode, roomId });
         }
 
-        const joinUrl = `/dashboard/appointments/video-session?session=${encodeURIComponent(sessionToken)}`;
+        const joinUrl = dashboardVideoSessionUrl(sessionToken);
         trackAnalyticsEvent("appointment_join_success", {
           appointmentId,
           role: sessionRole,

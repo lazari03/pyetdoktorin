@@ -11,6 +11,7 @@ import { backendFetch } from '@/network/backendClient';
 import { UserRole } from '@/domain/entities/UserRole';
 import AppointmentConfirmation from '@/presentation/components/appointment/AppointmentConfirmation';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
+import { DASHBOARD_PATHS } from '@/navigation/paths';
 
 export default function ClinicsPage() {
   const { t } = useTranslation();
@@ -113,7 +114,7 @@ export default function ClinicsPage() {
             </p>
           </div>
           <Link
-            href="/dashboard/clinics/history"
+            href={DASHBOARD_PATHS.clinicsHistory}
             className="text-sm font-semibold text-purple-600 hover:underline"
           >
             {t('viewRequests') || 'View requests'}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
+import { DASHBOARD_PATHS } from "@/navigation/paths";
 
 interface DashboardBannerProps {
   href?: string;
@@ -10,7 +11,7 @@ interface DashboardBannerProps {
 
 const bannerImageUrl = "/api/images?key=dashboard";
 
-export default function DashboardBanner({ href = "/dashboard/appointments" }: DashboardBannerProps) {
+export default function DashboardBanner({ href = DASHBOARD_PATHS.appointments }: DashboardBannerProps) {
   const { t } = useTranslation();
 
   return (
