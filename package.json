@@ -14,6 +14,7 @@
     "start:prod:lowmem": "env-cmd -f .env.production NODE_OPTIONS=--max-old-space-size=512 next start",
     "start:lowmem": "NODE_OPTIONS=--max-old-space-size=512 next start",
     "lint": "next lint",
+    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' node -r ts-node/register/transpile-only tests/run.cjs",
     "start": "next start",
     "backfill:approval": "env-cmd -f .env.local node scripts/backfill-approvalStatus.js"
   },

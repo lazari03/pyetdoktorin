@@ -19,7 +19,7 @@ export default function DashboardNotificationsBell({ doctorId }: { doctorId: str
   const { subscribePendingNotificationsUseCase } = useDI();
   const { role } = useAuth();
   const { t } = useTranslation();
-  const href = getRoleNotificationsPath(role);
+  const href = getRoleNotificationsPath(role) || '/dashboard/notifications';
 
   const toNotification = (data: Record<string, unknown>): Notification => {
     return {

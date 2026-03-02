@@ -16,6 +16,7 @@ import { clearPaymentProcessing } from "@/network/appointments";
 import { getAppointmentErrorMessage, getVideoErrorMessage } from "@/presentation/utils/errorMessages";
 import { APPOINTMENT_ERROR_CODES, VIDEO_ERROR_CODES } from "@/config/errorCodes";
 import { dashboardVideoSessionUrl } from "@/navigation/paths";
+import { useToast } from "@/presentation/components/Toast/ToastProvider";
 
 /**
  * View model result interface for appointments page
@@ -45,6 +46,7 @@ export interface AppointmentsViewModelResult {
 export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   const [showRedirecting, setShowRedirecting] = useState(false);
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   const { user, isAuthenticated, role } = useAuth();
   const {
@@ -90,7 +92,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
             appointmentId,
             reason: "appointment_past",
           });
-          alert(t("appointmentPast"));
+          toast({ variant: "error", message: t("appointmentPast") });
           return;
         }
 
@@ -107,7 +109,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
             appointmentId,
             reason: "unauthenticated",
           });
-          alert(t("joinCallLoginRequired"));
+          toast({ variant: "error", message: t("joinCallLoginRequired") });
           return;
         }
 
@@ -132,7 +134,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
             appointmentId,
             reason: "payment_required",
           });
-          alert(t("paymentRequired"));
+          toast({ variant: "error", message: t("paymentRequired") });
           return;
         }
         if (!isDoctor) {
@@ -143,7 +145,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
               appointmentId,
               reason: "waiting_for_acceptance",
             });
-            alert(t("waitingForAcceptance"));
+            toast({ variant: "info", message: t("waitingForAcceptance") });
             return;
           }
         }
@@ -152,7 +154,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         const currentUser = auth.currentUser;
         if (!currentUser) {
           setShowRedirecting(false);
-          alert(t("sessionExpired"));
+          toast({ variant: "error", message: t("sessionExpired") });
           return;
         }
         const idToken = await currentUser.getIdToken();
@@ -191,7 +193,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
           appointmentId,
           reason: message.slice(0, 120),
         });
-        alert(message);
+        toast({ variant: "error", message });
       }
     },
     [
@@ -203,6 +205,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
       t,
       updateAppointmentUseCase,
       user,
+      toast,
     ]
   );
 
@@ -252,7 +255,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
           reason: error instanceof Error ? error.message.slice(0, 120) : "unknown_error",
         });
         const translatedMessage = getAppointmentErrorMessage(error, t);
-        alert(translatedMessage ?? t("genericError"));
+        toast({ variant: "error", message: translatedMessage ?? t("genericError") });
       }
     },
   };

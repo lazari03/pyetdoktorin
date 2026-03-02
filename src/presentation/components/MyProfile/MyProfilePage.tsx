@@ -1,8 +1,9 @@
 "use client";
 
 import { useMyProfile } from "@/presentation/hooks/useMyProfile";
-import Loader from "@/presentation/components/Loader/Loader";
 import { ProfileLayout } from "@/presentation/components/MyProfile/ProfileLayout";
+import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { DASHBOARD_PATHS } from "@/navigation/paths";
 
 export default function MyProfilePage() {
   const {
@@ -10,9 +11,11 @@ export default function MyProfilePage() {
     role,
     resetEmailSent,
     isFetching,
+    fetchError,
     authLoading,
     uploading,
     recentLoginAt,
+    refetchProfile,
     handleInputChange,
     handleAddField,
     handleRemoveField,
@@ -22,24 +25,30 @@ export default function MyProfilePage() {
     handleSignatureChange,
   } = useMyProfile();
 
-  if (authLoading || isFetching || !role) {
-    return <Loader />;
-  }
-
   return (
-    <ProfileLayout
-      formData={formData}
-      role={role}
-      uploading={uploading}
-      resetEmailSent={resetEmailSent}
-      recentLoginAt={recentLoginAt}
-      handleInputChange={handleInputChange}
-      handleAddField={handleAddField}
-      handleRemoveField={handleRemoveField}
-      handleSubmit={handleSubmit}
-      handleProfilePictureChange={handleProfilePictureChange}
-      handlePasswordReset={handlePasswordReset}
-      handleSignatureChange={handleSignatureChange}
-    />
+    <RequestStateGate
+      loading={authLoading || isFetching}
+      error={fetchError || (!role && !authLoading ? new Error("ROLE_MISSING") : null)}
+      onRetry={refetchProfile}
+      homeHref={DASHBOARD_PATHS.root}
+      analyticsPrefix="profile"
+    >
+      {role ? (
+        <ProfileLayout
+          formData={formData}
+          role={role}
+          uploading={uploading}
+          resetEmailSent={resetEmailSent}
+          recentLoginAt={recentLoginAt}
+          handleInputChange={handleInputChange}
+          handleAddField={handleAddField}
+          handleRemoveField={handleRemoveField}
+          handleSubmit={handleSubmit}
+          handleProfilePictureChange={handleProfilePictureChange}
+          handlePasswordReset={handlePasswordReset}
+          handleSignatureChange={handleSignatureChange}
+        />
+      ) : null}
+    </RequestStateGate>
   );
 }

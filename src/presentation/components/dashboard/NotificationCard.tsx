@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Appointment } from "@/domain/entities/Appointment";
@@ -14,7 +16,7 @@ type Props = {
 export function NotificationCard({ appointments }: Props) {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const notificationsHref = getRoleNotificationsPath(role);
+  const notificationsHref = getRoleNotificationsPath(role) || "/dashboard/notifications";
 
   const items = useMemo(() => {
     return [...appointments]

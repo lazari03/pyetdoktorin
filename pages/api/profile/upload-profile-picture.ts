@@ -3,6 +3,7 @@ import AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 import { IncomingForm, type Files, type Fields } from 'formidable';
 import fs from 'fs/promises';
+import { getAdmin } from '@/app/api/_lib/admin';
 
 // Disable default body parsing to handle FormData
 export const config = {
@@ -51,13 +52,69 @@ const ALLOWED_TYPES = new Set([
   'image/gif',
 ]);
 
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
+const RATE_LIMIT_MAX = 10;
+const rateLimit = new Map<string, number[]>();
+
+function getBearerToken(req: NextApiRequest) {
+  const header = req.headers.authorization;
+  if (!header) return null;
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  return match?.[1] ?? null;
+}
+
+function getClientKey(req: NextApiRequest, uid?: string) {
+  const xfwd = req.headers['x-forwarded-for'];
+  const ip = Array.isArray(xfwd) ? xfwd[0] : xfwd?.split(',')[0]?.trim();
+  return uid ? `uid:${uid}` : ip ? `ip:${ip}` : 'unknown';
+}
+
+function isRateLimited(key: string) {
+  const now = Date.now();
+  const existing = rateLimit.get(key) ?? [];
+  const recent = existing.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT_MAX) {
+    rateLimit.set(key, recent);
+    return true;
+  }
+  recent.push(now);
+  rateLimit.set(key, recent);
+  return false;
+}
+
+function getFirstFieldValue(fields: Fields, name: string): string | null {
+  const raw = fields[name];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return typeof value === 'string' ? value : null;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const token = getBearerToken(req);
+  if (!token) {
+    return res.status(401).json({ error: 'UPLOAD_AUTH_REQUIRED' });
+  }
+
+  const { auth } = getAdmin();
+  let uid: string;
   try {
-    const { files } = await parseForm(req);
+    const decoded = await auth.verifyIdToken(token);
+    uid = decoded.uid;
+  } catch {
+    return res.status(401).json({ error: 'UPLOAD_AUTH_INVALID' });
+  }
+
+  const limiterKey = getClientKey(req, uid);
+  if (isRateLimited(limiterKey)) {
+    return res.status(429).json({ error: 'RATE_LIMIT' });
+  }
+
+  let tmpPath: string | null = null;
+  try {
+    const { fields, files } = await parseForm(req);
     const rawFile = files.file;
     if (!rawFile) {
       return res.status(400).json({ error: 'UPLOAD_FILE_MISSING' });
@@ -66,6 +123,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     if (!file) {
       return res.status(400).json({ error: 'UPLOAD_FILE_MISSING' });
+    }
+
+    const requestedUserId = getFirstFieldValue(fields, 'userId');
+    if (!requestedUserId || requestedUserId !== uid) {
+      return res.status(403).json({ error: 'UPLOAD_FORBIDDEN' });
     }
 
     const bucket =
@@ -90,10 +152,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const rawName = file.originalFilename || file.newFilename || 'upload';
     const safeName = rawName.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const key = `img/doc-img/${uuidv4()}-${safeName}`;
+    const key = `img/profile/${uid}/${uuidv4()}-${safeName}`;
     const s3 = createS3Client(region, accessKey, secretKey);
 
     // Read the file content
+    tmpPath = filepath;
     const fileContent = await fs.readFile(filepath);
 
     // Upload directly to Spaces from the server
@@ -109,7 +172,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const publicUrl = `https://${bucket}.${region}.digitaloceanspaces.com/${key}`;
     
     // Clean up the temporary file
-    await fs.unlink(filepath);
+    await fs.unlink(filepath).catch(() => {});
+    tmpPath = null;
     
     res.status(200).json({ publicUrl });
   } catch (error) {
@@ -117,5 +181,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ 
       error: 'UPLOAD_FAILED',
     });
+  } finally {
+    if (tmpPath) {
+      await fs.unlink(tmpPath).catch(() => {});
+    }
   }
 }

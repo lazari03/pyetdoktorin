@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ClientProviders from "./ClientProviders";
-import { DIProvider } from '@/context/DIContext';
-import Script from "next/script";
-import Analytics from "./analytics/Analytics";
-import { Suspense } from "react";
 import { cookies } from "next/headers";
 import HeadNonce from "./HeadNonce";
 import { getSiteUrl } from "./seo";
 import { LANGUAGE_COOKIE_NAME } from "@/config/cookies";
-import { APPOINTMENT_PRICE_CURRENCY, APPOINTMENT_PRICE_EUR } from "@/config/paywallConfig";
 
 const SITE_URL = getSiteUrl();
 const DEFAULT_TITLE = "Pyet Doktorin";
@@ -83,104 +77,15 @@ export const metadata: Metadata = {
   },
 };
 
-const structuredData = [
-  {
-    "@context": "https://schema.org",
-    "@type": "MedicalOrganization",
-    name: DEFAULT_TITLE,
-    url: SITE_URL,
-    email: "info@pyetdoktorin.al",
-    areaServed: "AL",
-    medicalSpecialty: [
-      "PrimaryCare",
-      "Dermatology",
-      "Pediatrics",
-      "Cardiology",
-      "Endocrinology",
-      "Gynecology",
-      "Psychiatry",
-    ],
-    contactPoint: [
-      {
-        "@type": "ContactPoint",
-        email: "info@pyetdoktorin.al",
-        contactType: "customer support",
-        areaServed: "AL",
-      },
-    ],
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: DEFAULT_TITLE,
-    description: DEFAULT_DESCRIPTION,
-    operatingSystem: "Web",
-    applicationCategory: "HealthApplication",
-    offers: {
-      "@type": "Offer",
-      price: String(APPOINTMENT_PRICE_EUR),
-      priceCurrency: APPOINTMENT_PRICE_CURRENCY,
-      availability: "https://schema.org/InStock",
-    },
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: DEFAULT_TITLE,
-    url: SITE_URL,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${SITE_URL}/doctors?query={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
-  },
-];
-
-const safeStructuredData = structuredData.map((item) => ({
-  ...item,
-  "@context": item["@context"] || "https://schema.org",
-}));
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = (await cookies()).get(LANGUAGE_COOKIE_NAME)?.value || 'al';
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID;
   return (
     <html lang={lang} data-theme="light">
       <head>
-        {gaId ? (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-              strategy="afterInteractive"
-            />
-            <Script id="gtag-init" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${gaId}');
-              `}
-            </Script>
-          </>
-        ) : null}
-        {safeStructuredData.map((item, index) => (
-          <script
-            key={`schema-${index}`}
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
-          />
-        ))}
         <HeadNonce />
       </head>
       <body className="min-h-screen bg-white text-slate-900 antialiased">
-        <DIProvider>
-          <ClientProviders>
-            <Suspense fallback={null}>
-              <Analytics />
-            </Suspense>
-            {children}
-          </ClientProviders>
-        </DIProvider>
+        {children}
       </body>
     </html>
   );

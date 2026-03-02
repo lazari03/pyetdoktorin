@@ -25,6 +25,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          'var(--font-sans)',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',

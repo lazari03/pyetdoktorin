@@ -1,10 +1,10 @@
-import NavBar from '@/presentation/components/navBar/navBar';
+import NavBarServer from '@/presentation/components/navBar/NavBarServer';
 import FooterSection from '@/presentation/components/footerSection/footerSection';
 
 export default function WebsiteShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="website-page">
-      <NavBar />
+      <NavBarServer />
       {children}
       <FooterSection />
     </div>

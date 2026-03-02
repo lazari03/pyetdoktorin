@@ -3,6 +3,15 @@ import type { NextRequest } from 'next/server';
 import { AUTH_COOKIE_MAX_AGE_SECONDS, AUTH_COOKIE_NAMES, COOKIE_SAMESITE, LANGUAGE_COOKIE_NAME, isSecureCookieEnv } from '@/config/cookies';
 
 // Root-level middleware (must be at project root for Next.js to apply)
+function createNonce(bytes = 16) {
+  const arr = new Uint8Array(bytes);
+  crypto.getRandomValues(arr);
+  let binary = '';
+  for (const b of arr) binary += String.fromCharCode(b);
+  // `btoa` is available in the middleware runtime.
+  return btoa(binary);
+}
+
 export function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
   const forwardedProto = req.headers.get('x-forwarded-proto');
@@ -16,7 +25,7 @@ export function middleware(req: NextRequest) {
   const lastActivity = lastActivityStr ? Number(lastActivityStr) : null;
   const now = Date.now();
   const idleMs = 30 * 60 * 1000; // 30 minutes
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const nonce = createNonce();
   const secureCookie = isSecureCookieEnv();
 
   const isDoctorPublicPath = url.pathname === '/doctor' || url.pathname.startsWith('/doctor/');

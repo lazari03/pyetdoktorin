@@ -3,6 +3,8 @@
 
 export const ROUTES = {
   ROOT: '/',
+  LOGIN: '/login',
+  REGISTER: '/register',
   ABOUT: '/about',
   CONTACT: '/contact',
   CLINICIANS: '/clinicians',

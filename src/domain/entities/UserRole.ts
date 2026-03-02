@@ -4,5 +4,4 @@ export enum UserRole {
 	Admin = 'admin',
 	Pharmacy = 'pharmacy',
 	Clinic = 'clinic',
-	null = "null"
 }

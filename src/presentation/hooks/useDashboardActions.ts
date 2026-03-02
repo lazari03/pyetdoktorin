@@ -11,6 +11,7 @@ import { syncPaddlePaymentWithRetry } from '@/network/payments';
 import { clearPaymentProcessing } from '@/network/appointments';
 import { listAppointments } from '@/network/appointments';
 import { dashboardVideoSessionUrl } from '@/navigation/paths';
+import { useToast } from '@/presentation/components/Toast/ToastProvider';
 
 export function useDashboardActions() {
   const { user, role } = useAuth();
@@ -18,6 +19,7 @@ export function useDashboardActions() {
   const { handlePayNow: storeHandlePayNow, setAppointments } = useAppointmentStore();
   const { handlePayNowUseCase } = useDI();
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   // Join call using Zustand store and localStorage hydration
   const handleJoinCall = useCallback(async (appointmentId: string) => {
@@ -29,7 +31,7 @@ export function useDashboardActions() {
       setAuthStatus(!!user, user?.uid || null, user?.name || null);
       if (!user?.uid) {
         trackAnalyticsEvent('appointment_join_blocked', { appointmentId, reason: 'unauthenticated' });
-        alert(t('joinCallLoginRequired'));
+        toast({ variant: 'error', message: t('joinCallLoginRequired') });
         return;
       }
       const effectiveRole = role === UserRole.Doctor ? UserRole.Doctor : UserRole.Patient;
@@ -47,9 +49,9 @@ export function useDashboardActions() {
         reason: error instanceof Error ? error.message.slice(0, 120) : 'unknown_error',
       });
       const translatedMessage = getVideoErrorMessage(error, t);
-      alert(translatedMessage ?? t('genericError'));
+      toast({ variant: 'error', message: translatedMessage ?? t('genericError') });
     }
-  }, [user, role, setAuthStatus, generateRoomCodeAndStore, t]);
+  }, [user, role, setAuthStatus, generateRoomCodeAndStore, t, toast]);
 
   const handlePayNow = useCallback(async (appointmentId: string, amount: number) => {
     trackAnalyticsEvent('payment_initiated', { appointmentId, amount });
@@ -78,9 +80,9 @@ export function useDashboardActions() {
         reason: error instanceof Error ? error.message.slice(0, 120) : 'unknown_error',
       });
       const translatedMessage = getAppointmentErrorMessage(error, t);
-      alert(translatedMessage ?? t('genericError'));
+      toast({ variant: 'error', message: translatedMessage ?? t('genericError') });
     }
-  }, [storeHandlePayNow, handlePayNowUseCase, setAppointments, t]);
+  }, [storeHandlePayNow, handlePayNowUseCase, setAppointments, t, toast]);
 
   return { handleJoinCall, handlePayNow };
 }

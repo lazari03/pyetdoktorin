@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { CalendarDaysIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import AppointmentModal from '../appointment/AppointmentModal';
+import { useToast } from '@/presentation/components/Toast/ToastProvider';
 
 interface DoctorProfileProps {
 	id: string;
@@ -16,15 +17,16 @@ export default function DoctorProfile({ id }: DoctorProfileProps) {
 	const { doctor, loading, error } = useDoctorProfile(id);
 	const { user } = useAuth();
 	const { t } = useTranslation();
+	const { toast } = useToast();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const handleRequestAppointment = useCallback(() => {
 		if (!user) {
-			alert(t('signInToBookError'));
+			toast({ variant: 'error', message: t('signInToBookError') });
 			return;
 		}
 		setIsModalOpen(true);
-	}, [user, t]);
+	}, [user, t, toast]);
 
 	if (loading) {
 		return (

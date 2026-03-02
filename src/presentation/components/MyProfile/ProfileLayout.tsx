@@ -4,6 +4,7 @@ import MyProfileForm, { FormField, MyProfileFormData } from "./MyProfileForm";
 import PasswordResetSection from "./PasswordResetSection";
 import { UserRole } from "@/domain/entities/UserRole";
 import LanguageSwitcher from "@/presentation/components/LanguageSwitcher/LanguageSwitcher";
+import AnalyticsConsentControl from "@/presentation/components/AnalyticsConsentControl/AnalyticsConsentControl";
 
 type Props = {
   formData: MyProfileFormData;
@@ -113,6 +114,7 @@ export function ProfileLayout(props: Props) {
                 {t("preferencesCopy", "Choose your language and display preferences.")}
               </p>
               <LanguageSwitcher />
+              <AnalyticsConsentControl />
             </div>
           </aside>
         </div>

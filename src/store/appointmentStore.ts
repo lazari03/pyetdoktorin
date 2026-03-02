@@ -96,6 +96,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
           error: null,
         });
       } catch (error) {
+        set({ loading: false, error: APPOINTMENT_ERROR_CODES.FetchFailed });
         console.warn('Backend appointments refresh failed', error);
       }
     };

@@ -1,11 +1,6 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getRemoteConfig } from "firebase/remote-config";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -20,23 +15,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-if (typeof window !== "undefined") {
-  getAnalytics(app);
-}
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-
-// Remote Config: Only initialize on client
-let remoteConfig = null as ReturnType<typeof getRemoteConfig> | null;
-if (typeof window !== "undefined") {
-  remoteConfig = getRemoteConfig(app);
-  remoteConfig.settings = {
-    minimumFetchIntervalMillis: 3600000,
-    fetchTimeoutMillis: 60000, // 60 seconds
-  };
-  remoteConfig.defaultConfig = {};
-}
-
-export { remoteConfig };
 export default app;

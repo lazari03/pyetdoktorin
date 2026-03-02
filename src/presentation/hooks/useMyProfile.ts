@@ -1,12 +1,15 @@
-import { useState, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import { useTranslation } from "react-i18next";
+import { BackendError } from "@/network/backendClient";
+import { useToast } from "@/presentation/components/Toast/ToastProvider";
 
 export const useMyProfile = () => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { user, role, loading: authLoading } = useAuth(); // Access user, role, and loading from AuthContext
   const {
     getUserProfileUseCase,
@@ -31,6 +34,7 @@ export const useMyProfile = () => {
   });
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isFetching, setIsFetching] = useState(true); // To handle data fetching state
+  const [fetchError, setFetchError] = useState<unknown>(null);
   const [uploading, setUploading] = useState(false);
 
   const recentLoginAt = useMemo(() => {
@@ -61,13 +65,13 @@ export const useMyProfile = () => {
       trackAnalyticsEvent("profile_picture_upload_failed");
       const code = error instanceof Error ? error.message : "";
       if (code === "UPLOAD_CONFIG_MISSING") {
-        alert(t("profilePictureUploadConfigMissing"));
+        toast({ variant: "error", message: t("profilePictureUploadConfigMissing") });
       } else if (code === "UPLOAD_INVALID_TYPE") {
-        alert(t("profilePictureUploadInvalidType"));
+        toast({ variant: "error", message: t("profilePictureUploadInvalidType") });
       } else if (code === "UPLOAD_FILE_MISSING") {
-        alert(t("profilePictureUploadMissing"));
+        toast({ variant: "error", message: t("profilePictureUploadMissing") });
       } else {
-        alert(t("profilePictureUploadFailed"));
+        toast({ variant: "error", message: t("profilePictureUploadFailed") });
       }
     } finally {
       setUploading(false);
@@ -77,39 +81,46 @@ export const useMyProfile = () => {
   // Helper to check if profile is complete
   // Removed unused checkProfileComplete function
 
-  // Fetch user data from Firestore
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user?.uid) return;
-
-      try {
-        const userData = await getUserProfileUseCase.execute(user.uid);
-        if (userData) {
-          setFormData((prev) => ({
-            ...prev,
-            ...userData,
-            specializations: userData.specializations || [""],
-            education: userData.education || [""],
-            preferredLanguage: userData.preferredLanguage || "",
-            timeZone: userData.timeZone || "",
-            emergencyContactName: userData.emergencyContactName || "",
-            emergencyContactPhone: userData.emergencyContactPhone || "",
-            signatureDataUrl: userData.signatureDataUrl || "",
-          }));
-        } else {
-          setFormData((prev) => ({
-            ...prev,
-            email: "", // Keep email empty if profile is missing
-          }));
-        }
-      } catch {
-      } finally {
-        setIsFetching(false);
+  const refetchProfile = useCallback(async () => {
+    if (!user?.uid) return;
+    setIsFetching(true);
+    setFetchError(null);
+    try {
+      const userData = await getUserProfileUseCase.execute(user.uid);
+      if (userData) {
+        setFormData((prev) => ({
+          ...prev,
+          ...userData,
+          specializations: userData.specializations || [""],
+          education: userData.education || [""],
+          preferredLanguage: userData.preferredLanguage || "",
+          timeZone: userData.timeZone || "",
+          emergencyContactName: userData.emergencyContactName || "",
+          emergencyContactPhone: userData.emergencyContactPhone || "",
+          signatureDataUrl: userData.signatureDataUrl || "",
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          email: "",
+        }));
       }
-    };
+    } catch (error) {
+      // Prefer structured errors but never display raw messages to the user here.
+      if (error instanceof BackendError) {
+        setFetchError(error);
+      } else {
+        setFetchError(error instanceof Error ? error : new Error("PROFILE_FETCH_FAILED"));
+      }
+    } finally {
+      setIsFetching(false);
+    }
+  }, [getUserProfileUseCase, user?.uid]);
 
-    fetchUserData();
-  }, [user, getUserProfileUseCase]);
+  // Fetch user data on mount / user change
+  useEffect(() => {
+    void refetchProfile();
+  }, [refetchProfile]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -145,10 +156,16 @@ export const useMyProfile = () => {
       await resetUserPasswordUseCase.execute(email);
       setResetEmailSent(true);
       trackAnalyticsEvent("password_reset_success");
-      alert("Password reset email sent. Please check your inbox.");
+      toast({
+        variant: "success",
+        message: t("passwordResetEmailSent", { defaultValue: "Password reset email sent. Please check your inbox." }),
+      });
     } catch {
       trackAnalyticsEvent("password_reset_failed");
-      alert("Failed to send password reset email. Please try again.");
+      toast({
+        variant: "error",
+        message: t("passwordResetEmailFailed", { defaultValue: "Failed to send password reset email. Please try again." }),
+      });
     }
   };
 
@@ -166,17 +183,20 @@ export const useMyProfile = () => {
       trackAnalyticsEvent("profile_update_attempt");
       await updateUserProfileUseCase.execute(userId, formData);
       trackAnalyticsEvent("profile_update_success");
-      alert("Profile updated successfully!");
+      toast({
+        variant: "success",
+        message: t("profileUpdateSuccess", { defaultValue: "Profile updated successfully!" }),
+      });
     } catch (error) {
       const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
       if (code === "auth/requires-recent-login") {
-        alert(t("reauthRequired") || "Please re-login to change your email.");
+        toast({ variant: "error", message: t("reauthRequired", { defaultValue: "Please re-login to change your email." }) });
       } else if (code === "auth/email-already-in-use") {
-        alert(t("emailInUse") || "This email is already in use.");
+        toast({ variant: "error", message: t("emailInUse", { defaultValue: "This email is already in use." }) });
       } else if (code === "auth/invalid-email") {
-        alert(t("invalidEmailAddress") || "Please enter a valid email address.");
+        toast({ variant: "error", message: t("invalidEmailAddress", { defaultValue: "Please enter a valid email address." }) });
       } else {
-        alert("Failed to update profile!");
+        toast({ variant: "error", message: t("profileUpdateFailed", { defaultValue: "Failed to update profile!" }) });
       }
       trackAnalyticsEvent("profile_update_failed");
     }
@@ -187,9 +207,11 @@ export const useMyProfile = () => {
     role,
     resetEmailSent,
     isFetching,
+    fetchError,
     authLoading,
     uploading,
     recentLoginAt,
+    refetchProfile,
     handleInputChange,
     handleAddField,
     handleRemoveField,

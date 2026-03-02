@@ -16,12 +16,10 @@ export class FirebaseServerSessionService implements IServerSessionService {
     ];
   }
 
-  private normalizeRole(raw: unknown): UserRole {
-    const value = typeof raw === 'string' ? raw.toLowerCase() : null;
-    if (value && Object.values(UserRole).includes(value as UserRole)) {
-      return value as UserRole;
-    }
-    return UserRole.Patient;
+  private normalizeRole(raw: unknown): UserRole | null {
+    if (typeof raw !== 'string') return null;
+    const value = raw.toLowerCase();
+    return Object.values(UserRole).includes(value as UserRole) ? (value as UserRole) : null;
   }
 
   async establishSession(idToken: string): Promise<SessionCookiesResult> {
@@ -43,7 +41,7 @@ export class FirebaseServerSessionService implements IServerSessionService {
     const userDoc = await db.collection('users').doc(uid).get();
     const role = this.normalizeRole(userDoc.data()?.role);
 
-    if (role === UserRole.null || !Object.values(UserRole).includes(role)) {
+    if (!role) {
       throw new SessionException('Role not approved', 403);
     }
 

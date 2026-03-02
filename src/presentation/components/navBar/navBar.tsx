@@ -5,12 +5,10 @@ import '@i18n';
 import Link from 'next/link';
 import { Bars3Icon, XMarkIcon, ArrowRightOnRectangleIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
 import { z } from '@/config/zIndex';
 
-export default function NavBar() {
+export default function NavBar({ hasSession = false }: { hasSession?: boolean }) {
   const nav = useNavigationCoordinator();
-  const { isAuthenticated, loading } = useAuth();
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -36,8 +34,7 @@ export default function NavBar() {
   ].filter(item => item.label);
 
   const AuthButtons = () =>
-    !loading &&
-    (isAuthenticated ? (
+    (hasSession ? (
       <button
         className="rounded-full bg-slate-900 px-5 py-2 text-white text-sm font-semibold hover:bg-slate-800 transition"
         onClick={() => {

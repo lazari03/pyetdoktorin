@@ -2,6 +2,8 @@ export const COOKIE_SAMESITE = 'lax' as const;
 
 export const LANGUAGE_COOKIE_NAME = 'language';
 
+export const ANALYTICS_CONSENT_COOKIE_NAME = 'analytics_consent';
+
 export const AUTH_COOKIE_NAMES = {
   session: 'session',
   userRole: 'userRole',

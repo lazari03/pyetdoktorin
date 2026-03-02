@@ -1,45 +1,53 @@
 import axios from 'axios';
 import qs from 'qs';
-import { getUserPhoneNumber } from './userService';
+import { getAdmin } from '@/app/api/_lib/admin';
 
-const VONAGE_API_KEY = process.env.NEXT_PUBLIC_VONAGE_API_KEY;
-const VONAGE_API_SECRET = process.env.NEXT_PUBLIC_VONAGE_API_SECRET;
+const VONAGE_API_KEY = process.env.VONAGE_API_KEY;
+const VONAGE_API_SECRET = process.env.VONAGE_API_SECRET;
 const VONAGE_SMS_URL = 'https://rest.nexmo.com/sms/json';
-const FROM = 'PyetDoktorin';
+const FROM = process.env.VONAGE_FROM || 'PyetDoktorin';
 
-export async function sendSMSFromFirestore(userId: string, text: string): Promise<void> {
-  try {
-    if (!VONAGE_API_KEY || !VONAGE_API_SECRET) {
-      throw new Error('Vonage API credentials are not configured');
-    }
-    const to = await getUserPhoneNumber(userId);
-    if (!to) throw new Error('Phone number not found for user: ' + userId);
-    const data = {
-      api_key: VONAGE_API_KEY,
-      api_secret: VONAGE_API_SECRET,
-      from: FROM,
-      to,
-      text,
-    };
-    await axios.post(VONAGE_SMS_URL, qs.stringify(data), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
-  } catch (error) {
-    throw error;
+async function getUserPhoneNumberServer(userId: string): Promise<string | null> {
+  const { db } = getAdmin();
+  const snap = await db.collection('users').doc(userId).get();
+  if (!snap.exists) return null;
+  const data = snap.data() as { phoneNumber?: unknown } | undefined;
+  return typeof data?.phoneNumber === 'string' && data.phoneNumber.trim() ? data.phoneNumber : null;
+}
+
+export async function sendSmsToUserId(userId: string, text: string): Promise<void> {
+  if (!VONAGE_API_KEY || !VONAGE_API_SECRET) {
+    throw new Error('VONAGE_NOT_CONFIGURED');
   }
+  const to = await getUserPhoneNumberServer(userId);
+  if (!to) throw new Error('PHONE_NOT_FOUND');
+
+  const payload = {
+    api_key: VONAGE_API_KEY,
+    api_secret: VONAGE_API_SECRET,
+    from: FROM,
+    to,
+    text,
+  };
+
+  await axios.post(VONAGE_SMS_URL, qs.stringify(payload), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    timeout: 10_000,
+  });
 }
 
-export async function sendDoctorAppointmentRequestSMS(doctorId: string, patientName: string) {
+export async function sendDoctorAppointmentRequestSms(doctorId: string, patientName: string) {
   const text = `You have a new appointment request from ${patientName} on PyetDoktorin.al. Please log in to review.`;
-  await sendSMSFromFirestore(doctorId, text);
+  await sendSmsToUserId(doctorId, text);
 }
 
-export async function sendPatientAppointmentAcceptedSMS(patientId: string, doctorName: string) {
+export async function sendPatientAppointmentAcceptedSms(patientId: string, doctorName: string) {
   const text = `Your appointment with Dr. ${doctorName} has been accepted. Please check your dashboard for details.`;
-  await sendSMSFromFirestore(patientId, text);
+  await sendSmsToUserId(patientId, text);
 }
 
-export async function sendPatientAppointmentReminderSMS(patientId: string, doctorName: string, time: string) {
+export async function sendPatientAppointmentReminderSms(patientId: string, doctorName: string, time: string) {
   const text = `Reminder: Your appointment with Dr. ${doctorName} is scheduled for ${time}.`;
-  await sendSMSFromFirestore(patientId, text);
+  await sendSmsToUserId(patientId, text);
 }
+

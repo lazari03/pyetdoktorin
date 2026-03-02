@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { hasAnalyticsConsent, subscribeAnalyticsConsent } from "@/presentation/utils/analyticsConsent";
 
 
 // Declare gtag on the window object for TypeScript
 declare global {
   interface Window {
-    gtag?: (command: 'config' | 'event', targetId: string, params?: Record<string, unknown>) => void;
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
@@ -45,6 +46,7 @@ export default function Analytics() {
   const searchParams = useSearchParams();
   const { isAuthenticated, role } = useAuth();
   const lastStateRef = useRef<string | null>(null);
+  const [enabled, setEnabled] = useState(() => hasAnalyticsConsent());
 
   const pagePath = useMemo(
     () => pathname + (searchParams ? `?${searchParams}` : ""),
@@ -52,14 +54,20 @@ export default function Analytics() {
   );
 
   useEffect(() => {
+    return subscribeAnalyticsConsent(() => setEnabled(hasAnalyticsConsent()));
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !GA_ID) return;
     if (typeof window.gtag === "function") {
       window.gtag("config", GA_ID, {
         page_path: pagePath,
       });
     }
-  }, [pagePath]);
+  }, [enabled, pagePath]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (typeof window.gtag !== "function" || !GA_ID) return;
     const statePayload = {
       page_path: pagePath,
@@ -70,9 +78,10 @@ export default function Analytics() {
     if (lastStateRef.current === stateKey) return;
     lastStateRef.current = stateKey;
     window.gtag("event", "ui_state", statePayload);
-  }, [pagePath, isAuthenticated, role]);
+  }, [enabled, pagePath, isAuthenticated, role]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (typeof window === "undefined") return;
     const handleClick = (event: MouseEvent) => {
       if (typeof window.gtag !== "function" || !GA_ID) return;
@@ -104,9 +113,10 @@ export default function Analytics() {
 
     window.addEventListener("click", handleClick, { capture: true });
     return () => window.removeEventListener("click", handleClick, { capture: true });
-  }, [pagePath, role]);
+  }, [enabled, pagePath, role]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (typeof window === "undefined") return;
     const handleSubmit = (event: Event) => {
       if (typeof window.gtag !== "function" || !GA_ID) return;
@@ -122,9 +132,10 @@ export default function Analytics() {
 
     window.addEventListener("submit", handleSubmit, { capture: true });
     return () => window.removeEventListener("submit", handleSubmit, { capture: true });
-  }, [pagePath, role]);
+  }, [enabled, pagePath, role]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (typeof window === "undefined") return;
     const handleChange = (event: Event) => {
       if (typeof window.gtag !== "function" || !GA_ID) return;
@@ -150,7 +161,7 @@ export default function Analytics() {
 
     window.addEventListener("change", handleChange, { capture: true });
     return () => window.removeEventListener("change", handleChange, { capture: true });
-  }, [pagePath, role]);
+  }, [enabled, pagePath, role]);
 
   return null;
 }

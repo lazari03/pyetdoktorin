@@ -40,6 +40,7 @@ const APPOINTMENT_CODE_TO_I18N: Record<string, string> = {
   [APPOINTMENT_ERROR_CODES.StatusInvalid]: 'unknownError',
   [APPOINTMENT_ERROR_CODES.StatusMissing]: 'missingRequiredFields',
   [APPOINTMENT_ERROR_CODES.Forbidden]: 'accessDenied',
+  [APPOINTMENT_ERROR_CODES.Unauthorized]: 'sessionExpired',
   [APPOINTMENT_ERROR_CODES.CreateFailed]: 'appointmentBookingFailed',
   [APPOINTMENT_ERROR_CODES.UpdateFailed]: 'unknownError',
   [APPOINTMENT_ERROR_CODES.FetchFailed]: 'unknownError',

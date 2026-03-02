@@ -1,3 +1,5 @@
+import { hasAnalyticsConsent } from "@/presentation/utils/analyticsConsent";
+
 type AnalyticsParams = Record<string, string | number | boolean | null | undefined>;
 
 const GA_ID =
@@ -7,6 +9,7 @@ const GA_ID =
 
 export function trackAnalyticsEvent(eventName: string, params?: AnalyticsParams) {
   if (typeof window === "undefined" || !GA_ID) return;
+  if (!hasAnalyticsConsent()) return;
   const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
   if (typeof gtag !== "function") return;
   try {

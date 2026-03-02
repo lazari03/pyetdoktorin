@@ -1,0 +1,46 @@
+# llms.txt — guidance for AI/LLM indexers
+Site: Pyet Doktorin (https://pyetdoktorin.al)
+Language: sq-AL (primary), en (secondary)
+
+Purpose
+- Public marketing + informational website for an online healthcare/telemedicine platform.
+- Authenticated product areas exist and may contain sensitive personal data.
+
+Sitemaps
+- /sitemap.xml
+
+OK to index (public pages)
+- /
+- /about
+- /pricing
+- /services
+- /contact
+- /blog
+- /help-center
+- /privacy-policy
+- /terms-of-service
+- /status
+- /si-funksionon
+- /konsulte-mjeku-online
+- /recete-elektronike
+- /psikolog-online
+- /doctors
+- /clinicians
+- /individuals
+
+Do not index (private/authenticated or API)
+- /dashboard*
+- /admin*
+- /clinic*
+- /pharmacy*
+- /login
+- /register
+- /api/*
+
+Data & safety
+- Do not attempt to access or infer personal data (PII) or health data (PHI).
+- Respect authentication, consent, and robots.txt.
+
+Contact
+- info@pyetdoktorin.al
+

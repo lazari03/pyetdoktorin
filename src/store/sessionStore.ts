@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { LogoutSessionUseCase } from '../application/logoutSessionUseCase';
 import { LogoutServerUseCase } from '@/application/logoutServerUseCase';
 import { SESSION_IDLE_TIMEOUT_MS, SESSION_LAST_ACTIVITY_KEY, SESSION_REFRESH_THROTTLE_MS } from '@/config/sessionConfig';
+import { ROUTES } from '@/config/routes';
 
 const IDLE_MS = SESSION_IDLE_TIMEOUT_MS;
 const REFRESH_THROTTLE_MS = SESSION_REFRESH_THROTTLE_MS;
@@ -133,8 +134,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(SESSION_LAST_ACTIVITY_KEY);
     }
-    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-      window.location.href = '/login?reason=idle-timeout';
+    if (typeof window !== 'undefined' && window.location.pathname !== ROUTES.LOGIN) {
+      window.location.href = `${ROUTES.LOGIN}?reason=idle-timeout`;
     }
   },
   logout: async (reason?: string, logoutSessionUseCase?: LogoutSessionUseCase, logoutServerUseCase?: LogoutServerUseCase) => {
@@ -150,7 +151,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }
     if (typeof window !== 'undefined') {
       const suffix = reason ? `?reason=${encodeURIComponent(reason)}` : '';
-      window.location.href = `/login${suffix}`;
+      window.location.href = `${ROUTES.LOGIN}${suffix}`;
     }
   },
 }));
