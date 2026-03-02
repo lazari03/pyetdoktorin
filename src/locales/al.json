@@ -859,6 +859,7 @@
   "bookingsTitle": "Rezervime",
   "adminControlCenter": "Qendra e kontrollit për admin",
   "adminDashboardHero": "Monitoro aktivitetin e platformës, menaxho përdoruesit dhe rishiko rezervimet e klinikave.",
+  "notificationsLoadFailed": "Nuk arritëm të ngarkojmë njoftimet për momentin.",
   "revenueThisMonth": "Të ardhurat këtë muaj",
   "mjeketMeTeNgarkuar": "Mjekët më të ngarkuar",
   "manageUsersHint": "Rishiko, ndrysho dhe rivendos aksesin për çdo llogari.",

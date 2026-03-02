@@ -6,6 +6,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { listAppointments } from '@/network/appointments';
 import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
 import { subscribeAppointmentsForDoctor, subscribeAppointmentsForUser } from '@/network/firebase/appointments';
+import { BackendError } from '@/network/backendClient';
 
 /**
  * Convert a time string (either "HH:mm" or "hh:mm AM/PM") into "HH:mm" 24-hour format
@@ -66,7 +67,17 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         loading: false,
         isDoctor: typeof role === 'undefined' ? get().isDoctor : role === UserRole.Doctor,
       });
-    } catch {
+    } catch (error) {
+      if (error instanceof BackendError) {
+        if (error.status === 401) {
+          set({ error: APPOINTMENT_ERROR_CODES.Unauthorized, loading: false });
+          return;
+        }
+        if (error.status === 403) {
+          set({ error: APPOINTMENT_ERROR_CODES.Forbidden, loading: false });
+          return;
+        }
+      }
       set({ error: APPOINTMENT_ERROR_CODES.FetchFailed, loading: false });
     }
   },

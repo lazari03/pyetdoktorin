@@ -10,6 +10,7 @@ import Loader from '@/presentation/components/Loader/Loader';
 import { useSearchParams } from 'next/navigation';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
+import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
 
 function NotificationsPage() {
   const { t } = useTranslation();
@@ -23,6 +24,7 @@ function NotificationsPage() {
     prescriptionNotifications,
     handleDismissNotification,
     handleAppointmentAction,
+    retry,
   } = useNotificationsLogic(nav);
   const [page, setPage] = useState(0);
   const pageSize = 8;
@@ -70,9 +72,35 @@ function NotificationsPage() {
   }, [focusId, isLoading, userRole, page, pagedAppointments]);
 
 
-  if (error) {
-    nav.replacePath(homeHref);
+  if (error === APPOINTMENT_ERROR_CODES.Unauthorized) {
+    nav.toLogin();
     return null;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen py-8 px-3">
+        <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-lg border border-purple-50 p-6 space-y-3">
+          <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+            {t('secureAccessEyebrow') ?? 'Secure access'}
+          </p>
+          <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">
+            {t('notifications', 'Notifications')}
+          </h1>
+          <p className="text-sm text-gray-600">
+            {t('notificationsLoadFailed', 'We could not load your notifications right now.')}
+          </p>
+          <div className="flex items-center gap-2 pt-2">
+            <button className="btn btn-primary" onClick={retry} data-analytics="dashboard.notifications.retry">
+              {t('retry', 'Retry')}
+            </button>
+            <Link href={homeHref} className="btn btn-ghost" data-analytics="dashboard.notifications.back_home">
+              {t('backToHome', 'Back to Home')}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isLoading || !userRole) {

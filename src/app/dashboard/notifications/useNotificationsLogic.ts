@@ -153,6 +153,11 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     }
   }, []);
 
+  const retry = useCallback(() => {
+    if (!userRole) return;
+    fetchAppointments(userRole);
+  }, [fetchAppointments, userRole]);
+
   return {
     isLoading,
     error,
@@ -161,5 +166,6 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     prescriptionNotifications,
     handleDismissNotification,
     handleAppointmentAction,
+    retry,
   };
 }

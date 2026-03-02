@@ -859,6 +859,7 @@
   "bookingsTitle": "Bookings",
   "adminControlCenter": "Admin Control Center",
   "adminDashboardHero": "Monitor platform activity, manage users, and review clinic bookings from one place.",
+  "notificationsLoadFailed": "We could not load your notifications right now.",
   "revenueThisMonth": "Revenue this month",
   "mjeketMeTeNgarkuar": "Most loaded doctors",
   "manageUsersHint": "Review, edit, and reset access for any account.",
