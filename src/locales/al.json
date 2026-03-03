@@ -871,6 +871,7 @@
   "acceptAnalytics": "Pranoni",
   "rejectAnalytics": "Refuzoni",
   "somethingWentWrong": "Diçka shkoi keq",
+  "errorReference": "Referenca e gabimit",
   "revenueThisMonth": "Të ardhurat këtë muaj",
   "mjeketMeTeNgarkuar": "Mjekët më të ngarkuar",
   "manageUsersHint": "Rishikoni, ndryshoni dhe rivendosni qasjen për çdo llogari.",
@@ -970,7 +971,7 @@
   "profilePictureUploadConfigMissing": "Ngarkimi nuk është konfiguruar. Kontaktoni mbështetjen.",
   "profilePictureUploadInvalidType": "Lloj i pambështetur skedari. Ju lutemi ngarkoni një imazh.",
   "profilePictureUploadMissing": "Nuk është zgjedhur skedar. Ju lutemi zgjidhni një imazh.",
-  "passwordResetEmailSent": "Adresa elektronike për rivendosjen e fjalëkalimit u dërgua. Ju lutemi kontrolloni kutinë hyrëse.",
+  // removed duplicate "passwordResetEmailSent"
   "passwordResetEmailFailed": "Dështoi dërgimi i adresës elektronike për rivendosjen e fjalëkalimit. Ju lutemi provoni përsëri.",
   "profileUpdateSuccess": "Profili u përditësua me sukses!",
   "profileUpdateFailed": "Dështoi përditësimi i profilit!",
