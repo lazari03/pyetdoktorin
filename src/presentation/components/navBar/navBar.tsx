@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next';
 import '@i18n';
 import Link from 'next/link';
 import { Bars3Icon, XMarkIcon, ArrowRightOnRectangleIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { z } from '@/config/zIndex';
 
 export default function NavBar({ hasSession = false }: { hasSession?: boolean }) {
   const nav = useNavigationCoordinator();
   const { t } = useTranslation();
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -24,6 +26,10 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
     return () => { document.body.style.overflow = ''; };
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
   const navItems = [
     { path: '/si-funksionon', label: t('howItWorks') },
     { path: '/services', label: t('services') },
@@ -36,32 +42,35 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
   const AuthButtons = () =>
     (hasSession ? (
       <button
-        className="rounded-full bg-slate-900 px-5 py-2 text-white text-sm font-semibold hover:bg-slate-800 transition"
+        className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-white text-sm font-semibold shadow-sm hover:bg-slate-800 transition focus:outline-none focus:ring-2 focus:ring-slate-400/40"
         onClick={() => {
           setIsMenuOpen(false);
           nav.toDashboard();
         }}
+        data-analytics="nav.goto_dashboard"
       >
         {t('goToDashboard')}
       </button>
     ) : (
       <>
         <button
-          className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-transparent px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-purple-300 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-200"
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:border-slate-300 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
           onClick={() => {
             setIsMenuOpen(false);
             nav.toLogin();
           }}
+          data-analytics="nav.sign_in"
         >
           <ArrowRightOnRectangleIcon className="h-4 w-4" />
           {t('signIn')}
         </button>
         <button
-          className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300"
+          className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300"
           onClick={() => {
             setIsMenuOpen(false);
             nav.toRegister();
           }}
+          data-analytics="nav.register"
         >
           <UserPlusIcon className="h-4 w-4" />
           {t('registerNow')}
@@ -79,7 +88,7 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
           onClick={() => setIsMenuOpen(false)}
         />
         <div
-          className={`fixed top-0 right-0 h-full w-[86%] max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out ${
+          className={`fixed top-0 right-0 h-full w-[88%] max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out ${
             isMenuOpen ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
           } ${z.drawer}`}
         >
@@ -96,21 +105,25 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
-          <nav className="flex flex-col px-6 pt-4" aria-label="Mobile navigation">
+          <nav className="flex flex-col px-4 py-4" aria-label="Mobile navigation">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 href={item.path}
-                className="text-slate-900 text-base font-semibold py-4 border-b border-slate-100 transition-colors hover:text-purple-600"
+                className={`flex items-center justify-between rounded-xl px-4 py-3 text-[15px] font-semibold transition ${
+                  pathname === item.path ? 'bg-slate-900 text-white' : 'text-slate-900 hover:bg-slate-50'
+                }`}
                 onClick={() => {
                   setIsMenuOpen(false);
                 }}
+                data-analytics={`nav.mobile.${item.path}`}
               >
-                {item.label}
+                <span className="truncate">{item.label}</span>
+                <span className={`text-xs ${pathname === item.path ? 'text-white/70' : 'text-slate-400'}`}>›</span>
               </Link>
             ))}
           </nav>
-          <div className="mt-auto px-6 py-6 space-y-3">
+          <div className="mt-auto px-6 py-6 space-y-3 border-t border-slate-100 bg-slate-50/60">
             <AuthButtons />
             <p className="text-xs text-slate-500">
               {t('homeHeroSubtitle')}
@@ -119,39 +132,51 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
         </div>
       </div>
       <div
-        className={`w-full px-4 md:px-10 py-5 flex items-center justify-between transition-all duration-300 ${
-          scrolled ? 'bg-white/90 backdrop-blur shadow-md' : 'bg-transparent'
+        className={`w-full transition-all duration-300 ${
+          scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-slate-200/70 shadow-sm' : 'bg-transparent'
         }`}
       >
-        <div className="md:hidden">
-          <button className="text-slate-900 transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <XMarkIcon className="h-8 w-8" /> : <Bars3Icon className="h-8 w-8" />}
-          </button>
-        </div>
-        <div className="absolute left-0 right-0 flex justify-center md:justify-start md:static pointer-events-none md:pointer-events-auto">
-          <Link
-            href="/"
-            className="pointer-events-auto select-none font-extrabold tracking-tight text-2xl md:text-3xl text-slate-900"
-          >
+        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 md:px-10 md:py-5">
+          <div className="md:hidden">
+            <button
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-purple-200"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Open menu"
+              aria-expanded={isMenuOpen}
+            >
+              {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+            </button>
+          </div>
+
+          <Link href="/" className="select-none font-extrabold tracking-tight text-2xl text-slate-900 md:text-3xl" data-analytics="nav.home">
             PYET <span className="text-purple-600">DOKTORIN</span>
           </Link>
-        </div>
-        <nav className="hidden md:flex space-x-10 text-[15px] font-medium absolute left-1/2 -translate-x-1/2">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              className="text-slate-600 hover:text-purple-600 cursor-pointer transition-colors"
-              onClick={() => {
-                setIsMenuOpen(false);
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="hidden md:flex items-center space-x-4 ml-auto">
-          <AuthButtons />
+
+          <nav className="hidden flex-1 items-center justify-center md:flex" aria-label="Primary navigation">
+            <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 bg-white/70 px-1.5 py-1 shadow-sm backdrop-blur">
+              {navItems.map((item) => {
+                const active = pathname === item.path || (item.path !== '/' && pathname?.startsWith(`${item.path}/`));
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                      active
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                    data-analytics={`nav.desktop.${item.path}`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+
+          <div className="ml-auto hidden items-center gap-3 md:flex">
+            <AuthButtons />
+          </div>
         </div>
       </div>
     </header>

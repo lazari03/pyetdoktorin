@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import {
   getAnalyticsConsent,
-  getPersistedAnalyticsConsent,
+  getAnalyticsConsentCookie,
   setAnalyticsConsent,
   subscribeAnalyticsConsent,
 } from "@/presentation/utils/analyticsConsent";
@@ -18,6 +18,7 @@ export default function CookieConsentBanner() {
   const [consent, setConsent] = useState(() => getAnalyticsConsent());
   const [dismissed, setDismissed] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => subscribeAnalyticsConsent(setConsent), []);
 
@@ -53,14 +54,17 @@ export default function CookieConsentBanner() {
             <button
               type="button"
               className="btn btn-ghost btn-sm"
+              disabled={saving}
               onClick={async () => {
                 setSaveFailed(false);
+                setSaving(true);
                 try {
                   setAnalyticsConsent("denied");
                 } catch {}
-                let persisted = getPersistedAnalyticsConsent();
+                // Enterprise requirement: the choice must persist in a cookie (SSR-visible).
+                let cookie = getAnalyticsConsentCookie();
 
-                if (persisted === "unset") {
+                if (cookie === "unset") {
                   try {
                     await fetch("/api/consent", {
                       method: "POST",
@@ -68,13 +72,18 @@ export default function CookieConsentBanner() {
                       body: JSON.stringify({ analytics: "denied" }),
                     });
                   } catch {}
-                  persisted = getPersistedAnalyticsConsent();
+                  cookie = getAnalyticsConsentCookie();
                 }
 
-                if (persisted === "unset") return setSaveFailed(true);
+                if (cookie === "unset") {
+                  setSaveFailed(true);
+                  setSaving(false);
+                  return;
+                }
 
                 setConsent("denied");
-                return setDismissed(true);
+                setDismissed(true);
+                setSaving(false);
               }}
               data-analytics="consent.analytics.reject"
             >
@@ -83,14 +92,16 @@ export default function CookieConsentBanner() {
             <button
               type="button"
               className="btn btn-primary btn-sm"
+              disabled={saving}
               onClick={async () => {
                 setSaveFailed(false);
+                setSaving(true);
                 try {
                   setAnalyticsConsent("granted");
                 } catch {}
-                let persisted = getPersistedAnalyticsConsent();
+                let cookie = getAnalyticsConsentCookie();
 
-                if (persisted === "unset") {
+                if (cookie === "unset") {
                   try {
                     await fetch("/api/consent", {
                       method: "POST",
@@ -98,17 +109,22 @@ export default function CookieConsentBanner() {
                       body: JSON.stringify({ analytics: "granted" }),
                     });
                   } catch {}
-                  persisted = getPersistedAnalyticsConsent();
+                  cookie = getAnalyticsConsentCookie();
                 }
 
-                if (persisted === "unset") return setSaveFailed(true);
+                if (cookie === "unset") {
+                  setSaveFailed(true);
+                  setSaving(false);
+                  return;
+                }
 
                 setConsent("granted");
-                return setDismissed(true);
+                setDismissed(true);
+                setSaving(false);
               }}
               data-analytics="consent.analytics.accept"
             >
-              {t("acceptAnalytics", "Accept")}
+              {saving ? t("saving", "Saving…") : t("acceptAnalytics", "Accept")}
             </button>
           </div>
         </div>

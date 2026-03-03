@@ -104,6 +104,16 @@ export function getPersistedAnalyticsConsent(): AnalyticsConsentValue {
   return "unset";
 }
 
+/**
+ * Reads the consent value from the cookie only.
+ * This is the source-of-truth for SSR gating (layouts/middleware).
+ */
+export function getAnalyticsConsentCookie(): AnalyticsConsentValue {
+  const cookie = getCookieValue(ANALYTICS_CONSENT_COOKIE_NAME);
+  if (cookie === "granted" || cookie === "denied") return cookie;
+  return "unset";
+}
+
 export function getAnalyticsConsent(): AnalyticsConsentValue {
   const persisted = getPersistedAnalyticsConsent();
   if (persisted !== "unset") {
