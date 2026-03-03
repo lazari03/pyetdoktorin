@@ -30,27 +30,6 @@ module.exports = {
         key: 'Strict-Transport-Security',
         value: 'max-age=31536000; includeSubDomains; preload',
       });
-
-      // Start with REPORT-ONLY CSP to avoid breaking production while we migrate inline scripts/styles.
-      // Enable enforcement later once all scripts/styles are nonce/sha based.
-      const cspReportOnly = [
-        "default-src 'self'",
-        "base-uri 'self'",
-        "form-action 'self'",
-        // Next currently relies on inline styles/scripts in some paths; keep report-only for visibility.
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com",
-        "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob: https:",
-        "font-src 'self' data: https:",
-        "connect-src 'self' https: wss: http:",
-        // Allow embedding 100ms meeting (iframe) and any payment checkout that might require it.
-        "frame-src 'self' https:",
-        "object-src 'none'",
-        "report-to csp",
-        "report-uri /api/csp-report",
-      ].join('; ');
-      headers.push({ key: 'Content-Security-Policy-Report-Only', value: cspReportOnly });
-      headers.push({ key: 'Reporting-Endpoints', value: 'csp="/api/csp-report"' });
     }
 
     return [

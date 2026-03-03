@@ -10,6 +10,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { BackendError } from '@/network/backendClient';
 import { extractErrorCode, getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation/utils/errorMessages';
 import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
+import { VIDEO_ERROR_CODES } from '@/config/errorCodes';
 import { ROUTES } from '@/config/routes';
 
 type Props = {
@@ -24,6 +25,8 @@ type Props = {
 
 function isUnauthorized(error: unknown, code: string | null): boolean {
   if (code === APPOINTMENT_ERROR_CODES.Unauthorized) return true;
+  if (code === VIDEO_ERROR_CODES.AuthMissing) return true;
+  if (code === VIDEO_ERROR_CODES.AuthInvalid) return true;
   if (error instanceof BackendError && error.status === 401) return true;
   return false;
 }
@@ -62,6 +65,16 @@ export default function RequestStateGate({
     );
   }, [error, forbidden, t, unauthorized]);
 
+  const debugDetail = useMemo(() => {
+    if (!error) return null;
+    if (typeof error === 'string') return error;
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'object' && 'message' in error && typeof (error as { message?: unknown }).message === 'string') {
+      return (error as { message: string }).message;
+    }
+    return null;
+  }, [error]);
+
   useEffect(() => {
     if (!unauthorized) return;
     // Send to login and preserve return path (prevents pages from looking "blank" when tokens expire).
@@ -88,6 +101,9 @@ export default function RequestStateGate({
             {t('somethingWentWrong', 'Something went wrong')}
           </h1>
           <p className="text-sm text-gray-600">{message}</p>
+          {showDebug && debugDetail ? (
+            <p className="text-[11px] text-gray-400 break-words">detail: {debugDetail.slice(0, 240)}</p>
+          ) : null}
           {showDebug && code ? (
             <p className="text-[11px] text-gray-400">code: {code}</p>
           ) : null}
@@ -112,4 +128,3 @@ export default function RequestStateGate({
 
   return <>{children}</>;
 }
-

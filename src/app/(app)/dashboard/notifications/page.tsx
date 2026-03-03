@@ -20,7 +20,7 @@ function NotificationsPage() {
     isLoading,
     error,
     userRole,
-    pendingAppointments,
+    appointmentNotifications,
     prescriptionNotifications,
     handleDismissNotification,
     handleAppointmentAction,
@@ -33,10 +33,10 @@ function NotificationsPage() {
 
   const pagedAppointments = useMemo(() => {
     const start = page * pageSize;
-    return pendingAppointments.slice(start, start + pageSize);
-  }, [pendingAppointments, page]);
+    return appointmentNotifications.slice(start, start + pageSize);
+  }, [appointmentNotifications, page]);
 
-  const totalPages = Math.max(1, Math.ceil(pendingAppointments.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(appointmentNotifications.length / pageSize));
   const homeHref = useMemo(() => getRoleLandingPath(userRole), [userRole]);
 
   // The logic has been moved to useNotificationsLogic
@@ -44,13 +44,13 @@ function NotificationsPage() {
   useEffect(() => {
     if (!focusId) return;
     if (isLoading || !userRole) return;
-    const index = pendingAppointments.findIndex((appt) => appt.id === focusId);
+    const index = appointmentNotifications.findIndex((appt) => appt.id === focusId);
     if (index < 0) return;
     const desiredPage = Math.floor(index / pageSize);
     if (desiredPage !== page) {
       setPage(desiredPage);
     }
-  }, [focusId, isLoading, userRole, pendingAppointments, page, pageSize]);
+  }, [focusId, isLoading, userRole, appointmentNotifications, page, pageSize]);
 
   useEffect(() => {
     if (!focusId) return;
@@ -107,7 +107,7 @@ function NotificationsPage() {
     return <Loader label={t('loadingNotifications', 'Loading notifications...')} />;
   }
 
-  if (pendingAppointments.length === 0 && prescriptionNotifications.length === 0) {
+  if (appointmentNotifications.length === 0 && prescriptionNotifications.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-gray-500">
         <p className="mb-4">{t('noNewNotifications', 'No new notifications')}</p>
@@ -157,7 +157,7 @@ function NotificationsPage() {
             </span>
           </div>
           <div className="space-y-3">
-            {pagedAppointments.map((appointment: typeof pendingAppointments[number]) => {
+            {pagedAppointments.map((appointment: typeof appointmentNotifications[number]) => {
               const status = appointment.status?.toLowerCase();
               const chip =
                 status === 'accepted'
@@ -242,7 +242,7 @@ function NotificationsPage() {
                 </div>
               );
             })}
-            {pendingAppointments.length === 0 && (
+            {appointmentNotifications.length === 0 && (
               <p className="text-sm text-gray-500 py-4">{t('noNotifications') || 'No notifications yet.'}</p>
             )}
           </div>

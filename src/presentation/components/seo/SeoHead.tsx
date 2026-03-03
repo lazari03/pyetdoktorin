@@ -1,7 +1,10 @@
+import { headers } from 'next/headers';
+
 type JsonLd = Record<string, unknown>;
 
-export default function SeoHead({ schema }: { schema?: JsonLd | JsonLd[] }) {
+export default async function SeoHead({ schema }: { schema?: JsonLd | JsonLd[] }) {
   if (!schema) return null;
+  const nonce = (await headers()).get('x-nonce') || '';
   const items = Array.isArray(schema) ? schema : [schema];
   return (
     <>
@@ -9,6 +12,7 @@ export default function SeoHead({ schema }: { schema?: JsonLd | JsonLd[] }) {
         <script
           key={`schema-${index}`}
           type="application/ld+json"
+          nonce={nonce || undefined}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
         />
       ))}

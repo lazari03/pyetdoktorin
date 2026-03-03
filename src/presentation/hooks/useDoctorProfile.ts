@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Doctor } from '@/domain/entities/Doctor';
 import { useDI } from '@/context/DIContext';
 
@@ -6,26 +6,31 @@ import { useDI } from '@/context/DIContext';
 export const useDoctorProfile = (id: string) => {
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<unknown>(null);
   const { getDoctorProfileUseCase } = useDI();
 
-  useEffect(() => {
-    const fetchDoctor = async () => {
-      try {
-        const profile = await getDoctorProfileUseCase.execute(id);
-        if (profile) {
-          setDoctor(profile);
-        } else {
-          setError('Doctor not found');
-        }
-      } catch {
-        setError('Failed to fetch doctor data');
-      } finally {
-        setLoading(false);
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const profile = await getDoctorProfileUseCase.execute(id);
+      if (profile) {
+        setDoctor(profile);
+      } else {
+        setDoctor(null);
+        setError(new Error('Doctor not found'));
       }
-    };
-    fetchDoctor();
-  }, [id, getDoctorProfileUseCase]);
+    } catch (err) {
+      setDoctor(null);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [getDoctorProfileUseCase, id]);
 
-  return { doctor, loading, error };
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { doctor, loading, error, refresh };
 };

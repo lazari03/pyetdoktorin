@@ -5,6 +5,8 @@ import { GenericTable, Column, RowAction } from '@/presentation/components/Gener
 import { useTranslation } from 'react-i18next';
 import '@i18n';
 import { UserRole } from '@/domain/entities/UserRole';
+import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
+import { ADMIN_PATHS } from '@/navigation/paths';
 
 type TableUser = {
   id: string;
@@ -69,34 +71,41 @@ export function UsersTable() {
     }
   }, [debounced, searchUsers, searchQuery]);
 
-  if (error) return <div className="text-red-600">{error}</div>;
-
   // When page changes via pagination controls, request server-side page and scroll-to-top handled by GenericTable
   const handlePageChange = (p: number) => {
     loadUsersPage(p);
   };
   return (
-    <div>
-      <div className="mb-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); }}
-          placeholder={t('search')}
-          className="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-full text-sm"
+    <RequestStateGate
+      loading={loading && users.length === 0}
+      error={error ? new Error(error) : null}
+      onRetry={() => loadUsers()}
+      homeHref={ADMIN_PATHS.root}
+      loadingLabel={t('loading')}
+      analyticsPrefix="admin.users"
+    >
+      <div>
+        <div className="mb-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); }}
+            placeholder={t('search')}
+            className="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-full text-sm"
+          />
+        </div>
+        <GenericTable
+          data={users}
+          columns={columns}
+          actions={actions}
+          loading={loading}
+          emptyText={t('noRecordsFound')}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          total={total}
         />
       </div>
-      <GenericTable
-        data={users}
-        columns={columns}
-        actions={actions}
-        loading={loading}
-        emptyText={t('noRecordsFound')}
-        page={page}
-        pageSize={pageSize}
-        onPageChange={handlePageChange}
-        total={total}
-      />
-    </div>
+    </RequestStateGate>
   );
 }

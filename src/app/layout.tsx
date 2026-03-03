@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { cookies } from "next/headers";
-import HeadNonce from "./HeadNonce";
+import { cookies, headers } from "next/headers";
 import { getSiteUrl } from "./seo";
 import { LANGUAGE_COOKIE_NAME } from "@/config/cookies";
 
@@ -79,10 +78,11 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = (await cookies()).get(LANGUAGE_COOKIE_NAME)?.value || 'al';
+  const nonce = (await headers()).get('x-nonce') || '';
   return (
     <html lang={lang} data-theme="light">
       <head>
-        <HeadNonce />
+        {nonce ? <meta name="csp-nonce" content={nonce} /> : null}
       </head>
       <body className="min-h-screen bg-white text-slate-900 antialiased">
         {children}

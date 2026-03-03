@@ -13,6 +13,11 @@ const tryParseJson = (value: string): { error?: unknown } | null => {
 
 export const extractErrorCode = (error: unknown): string | null => {
   if (!error || typeof error !== 'object') {
+    if (typeof error === 'string') {
+      const parsed = tryParseJson(error);
+      if (parsed && typeof parsed.error === 'string') return parsed.error;
+      return CODE_PATTERN.test(error) ? error : null;
+    }
     if (error instanceof Error) {
       return extractErrorCode(error.message);
     }

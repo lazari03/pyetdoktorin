@@ -56,6 +56,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   delete headers.host;
   delete headers.connection;
   delete headers['content-length'];
+  // Prevent conditional requests that can return 304 and lead to stale UI data in dashboards.
+  delete headers['if-none-match'];
+  delete headers['if-modified-since'];
+  delete headers['if-match'];
+  delete headers['if-unmodified-since'];
+  delete headers['if-range'];
 
   const body: ArrayBuffer | undefined =
     method === 'GET' || method === 'HEAD' || method === 'OPTIONS' ? undefined : await readRawBody(req);

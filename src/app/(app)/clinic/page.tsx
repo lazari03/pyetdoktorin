@@ -11,6 +11,7 @@ import { DoctorEarningsCard } from '@/presentation/components/dashboard/DoctorEa
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from '@/config/paywallConfig';
 import { CLINIC_PATHS } from '@/navigation/paths';
 import { UserRole } from '@/domain/entities/UserRole';
+import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 
 function calculateClinicEarnings(bookings: ClinicBooking[]) {
   const payoutPercentage = DOCTOR_PAYOUT_RATE;
@@ -77,7 +78,7 @@ function calculateClinicEarnings(bookings: ClinicBooking[]) {
 export default function ClinicDashboardPage() {
   const { user, role } = useAuth();
   const { t } = useTranslation();
-  const { bookings, loading } = useClinicBookings({ clinicId: user?.uid });
+  const { bookings, loading, error, refresh } = useClinicBookings({ clinicId: user?.uid });
   const earningsData = useMemo(() => calculateClinicEarnings(bookings), [bookings]);
   const recentPatients = useMemo<RecentPatient[]>(() => {
     const dictionary = bookings.reduce<Record<string, RecentPatient>>((acc, booking) => {
@@ -104,7 +105,15 @@ export default function ClinicDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RequestStateGate
+      loading={loading && bookings.length === 0}
+      error={error}
+      onRetry={refresh}
+      homeHref={CLINIC_PATHS.root}
+      loadingLabel={t('loading')}
+      analyticsPrefix="clinic.dashboard"
+    >
+      <div className="space-y-6">
       <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
         <h1 className="text-2xl font-bold text-gray-900">{t('clinicDashboard') || 'Clinic dashboard'}</h1>
         <p className="text-sm text-gray-600">{t('clinicDashboardDescription') || 'Monitor bookings and performance'}</p>
@@ -187,6 +196,7 @@ export default function ClinicDashboardPage() {
           ))}
         </div>
       </section>
-    </div>
+      </div>
+    </RequestStateGate>
   );
 }

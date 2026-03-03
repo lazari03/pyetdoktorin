@@ -11,7 +11,7 @@ interface Options {
 export function useClinicBookings({ clinicId, patientId }: Options) {
   const [bookings, setBookings] = useState<ClinicBooking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
 
   const fetchBookings = useCallback(async () => {
     setLoading(true);
@@ -24,8 +24,7 @@ export function useClinicBookings({ clinicId, patientId }: Options) {
       const response = await backendFetch<{ items: ClinicBooking[] }>(`/api/clinics/bookings${query}`);
       setBookings(response.items);
     } catch (err) {
-      console.error(err);
-      setError('Failed to load bookings');
+      setError(err);
     } finally {
       setLoading(false);
     }

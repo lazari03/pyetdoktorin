@@ -867,6 +867,7 @@
   "notificationsLoadFailed": "Nuk arritëm të ngarkojmë njoftimet për momentin.",
   "cookieBannerTitle": "Cookies & analytics",
   "cookieBannerBody": "Përdorim cookies opsionale për analitika për të kuptuar përdorimin dhe për ta përmirësuar produktin. Mund t’i pranosh ose t’i refuzosh.",
+  "cookieBannerSaveFailed": "Nuk arritëm të ruajmë zgjedhjen tuaj. Ju lutemi aktivizoni cookies/ruajtjen për këtë faqe dhe provoni përsëri.",
   "acceptAnalytics": "Prano",
   "rejectAnalytics": "Refuzo",
   "somethingWentWrong": "Diçka shkoi keq",

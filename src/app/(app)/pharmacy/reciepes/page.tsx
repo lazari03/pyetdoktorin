@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import { fetchPrescriptions, updatePrescriptionStatus } from '@/network/prescriptions';
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
+import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { PHARMACY_PATHS } from "@/navigation/paths";
+import { UserRole } from "@/domain/entities/UserRole";
 
 type Reciepe = {
   id: string;
@@ -20,40 +23,47 @@ type Reciepe = {
 };
 
 export default function PharmacyReciepesPage() {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const { t } = useTranslation();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const { user } = useAuth();
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+
+  const load = useCallback(async () => {
+    if (!user?.uid) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetchPrescriptions();
+      const mapped = (response.items || [])
+        .filter((r) => (!r.pharmacyId || !user.uid) ? true : r.pharmacyId === user.uid)
+        .map((r) => ({
+          id: r.id || `${r.pharmacyId ?? ''}${r.createdAt}`,
+          patient: r.patientName,
+          doctor: r.doctorName || "",
+          title: r.title || t("reciepeTitleDoctor") || "Reciepe",
+          medicines: Array.isArray(r.medicines) ? r.medicines.join(', ') : String(r.medicines ?? ''),
+          dosage: r.dosage || "",
+          createdAt: new Date(r.createdAt).toISOString().split("T")[0],
+          status: (r.status as Reciepe["status"]) || "pending",
+          signatureDataUrl: r.signatureDataUrl,
+        }));
+      setReciepes(mapped);
+      setActiveId((prev) => prev || mapped[0]?.id || null);
+    } catch (err) {
+      setReciepes([]);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [t, user?.uid]);
 
   useEffect(() => {
-    const load = async () => {
-      if (!user?.uid) return;
-      try {
-        const response = await fetchPrescriptions();
-        const mapped = (response.items || [])
-          .filter((r) => (!r.pharmacyId || !user.uid) ? true : r.pharmacyId === user.uid)
-          .map((r) => ({
-            id: r.id || `${r.pharmacyId ?? ''}${r.createdAt}`,
-            patient: r.patientName,
-            doctor: r.doctorName || "",
-            title: r.title || t("reciepeTitleDoctor") || "Reciepe",
-            medicines: Array.isArray(r.medicines) ? r.medicines.join(', ') : String(r.medicines ?? ''),
-            dosage: r.dosage || "",
-            createdAt: new Date(r.createdAt).toISOString().split("T")[0],
-            status: (r.status as Reciepe["status"]) || "pending",
-            signatureDataUrl: r.signatureDataUrl,
-          }));
-        setReciepes(mapped);
-        setActiveId((prev) => prev || mapped[0]?.id || null);
-      } catch {
-        setReciepes([]);
-      }
-    };
     load();
-  }, [user?.uid, t]);
+  }, [load]);
 
-  if (role !== "pharmacy") return <RedirectingModal show />;
+  if (role !== UserRole.Pharmacy) return <RedirectingModal show />;
 
   const active = reciepes.find((r) => r.id === activeId) || reciepes[0];
   const handleStatus = async (id: string, status: "accepted" | "rejected") => {
@@ -71,8 +81,16 @@ export default function PharmacyReciepesPage() {
   };
 
   return (
-    <div className="min-h-screen py-6 px-3">
-      <div className="max-w-5xl mx-auto space-y-4">
+    <RequestStateGate
+      loading={loading && reciepes.length === 0}
+      error={error}
+      onRetry={load}
+      homeHref={PHARMACY_PATHS.root}
+      loadingLabel={t('loading')}
+      analyticsPrefix="pharmacy.reciepes"
+    >
+      <div className="min-h-screen py-6 px-3">
+        <div className="max-w-5xl mx-auto space-y-4">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-purple-600 font-semibold">{t("secureAccessEyebrow") || "Secure access"}</p>
           <h1 className="text-2xl font-bold text-gray-900">{t("pharmacyReciepesTitle") || "Reciepes"}</h1>
@@ -150,6 +168,7 @@ export default function PharmacyReciepesPage() {
           </section>
         </div>
       </div>
-    </div>
+      </div>
+    </RequestStateGate>
   );
 }

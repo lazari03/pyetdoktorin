@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { z } from "@/config/zIndex";
 
 export type ToastVariant = "success" | "error" | "info";
 
@@ -84,7 +85,7 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="fixed bottom-4 right-4 z-[999] flex w-[min(92vw,380px)] flex-col gap-2"
+        className={`fixed bottom-4 right-4 ${z.toast} flex w-[min(92vw,380px)] flex-col gap-2`}
         aria-live="polite"
         aria-relevant="additions removals"
       >
@@ -119,4 +120,3 @@ export function useToast() {
   if (!ctx) throw new Error("useToast must be used within ToastProvider");
   return ctx;
 }
-

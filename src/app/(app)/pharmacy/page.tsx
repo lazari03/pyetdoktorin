@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
@@ -8,8 +8,10 @@ import Link from "next/link";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import { UserRole } from "@/domain/entities/UserRole";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
-import { DASHBOARD_PATHS } from "@/navigation/paths";
+import { getRoleNotificationsPath } from "@/navigation/roleRoutes";
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
+import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { PHARMACY_PATHS } from "@/navigation/paths";
 
 type PharmacyNotification = {
   id: string;
@@ -36,6 +38,9 @@ export default function PharmacyDashboardPage() {
   const { t } = useTranslation();
   const { getReciepesByPharmacyUseCase, updateReciepeStatusUseCase } = useDI();
   const [reciepes, setReciepes] = useState<PharmacyReciepe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+  const notificationsHref = getRoleNotificationsPath(role) || PHARMACY_PATHS.notifications;
 
   const notifications: PharmacyNotification[] = useMemo(() => {
     return reciepes.slice(0, 5).map((r) => ({
@@ -47,34 +52,35 @@ export default function PharmacyDashboardPage() {
     }));
   }, [reciepes, t]);
 
-  useEffect(() => {
-    if (role === UserRole.Pharmacy) return;
-  }, [role]);
+  const load = useCallback(async () => {
+    if (!user?.uid) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getReciepesByPharmacyUseCase.execute(user.uid);
+      const mapped = (response || []).map((r: ReciepePayload) => ({
+        id: r.id || `${r.pharmacyId ?? ""}${r.createdAt ?? ""}`,
+        patient: r.patientName,
+        doctor: r.doctorName || "",
+        title: r.title || t("reciepeTitleDoctor") || "Reciepe",
+        medicines: Array.isArray(r.medicines) ? r.medicines.join(", ") : String(r.medicines ?? ""),
+        dosage: r.dosage || "",
+        createdAt: new Date(r.createdAt ?? Date.now()).toISOString().split("T")[0],
+        status: (r.status as PharmacyReciepe["status"]) || "pending",
+        signatureDataUrl: r.signatureDataUrl,
+      }));
+      setReciepes(mapped);
+    } catch (err) {
+      setReciepes([]);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [getReciepesByPharmacyUseCase, t, user?.uid]);
 
   useEffect(() => {
-    const load = async () => {
-      if (!user?.uid) return;
-      try {
-        const response = await getReciepesByPharmacyUseCase.execute(user.uid);
-        const mapped = (response || [])
-          .map((r: ReciepePayload) => ({
-            id: r.id || `${r.pharmacyId ?? ''}${r.createdAt ?? ''}`,
-            patient: r.patientName,
-            doctor: r.doctorName || "",
-            title: r.title || t("reciepeTitleDoctor") || "Reciepe",
-            medicines: Array.isArray(r.medicines) ? r.medicines.join(', ') : String(r.medicines ?? ''),
-            dosage: r.dosage || "",
-            createdAt: new Date(r.createdAt ?? Date.now()).toISOString().split("T")[0],
-            status: (r.status as PharmacyReciepe["status"]) || "pending",
-            signatureDataUrl: r.signatureDataUrl,
-          }));
-        setReciepes(mapped);
-      } catch {
-        setReciepes([]);
-      }
-    };
     load();
-  }, [user?.uid, t, getReciepesByPharmacyUseCase]);
+  }, [load]);
 
   if (role !== UserRole.Pharmacy) return <RedirectingModal show />;
 
@@ -96,108 +102,146 @@ export default function PharmacyDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen py-6 px-3">
-      <div className="max-w-6xl mx-auto space-y-4">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-purple-600 font-semibold">{t("secureAccessEyebrow") || "Secure access"}</p>
-          <h1 className="text-2xl font-bold text-gray-900">{t("pharmacyDashboardTitle") || "Pharmacy dashboard"}</h1>
-          <p className="text-sm text-gray-600">{t("pharmacyDashboardSubtitle") || "Monitor orders, prescriptions, and fulfilment safely."}</p>
-        </div>
+    <RequestStateGate
+      loading={loading && reciepes.length === 0}
+      error={error}
+      onRetry={load}
+      homeHref={PHARMACY_PATHS.root}
+      loadingLabel={t("loading")}
+      analyticsPrefix="pharmacy.dashboard"
+    >
+      <div className="min-h-screen py-6 px-3">
+        <div className="max-w-6xl mx-auto space-y-4">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs uppercase tracking-[0.2em] text-purple-600 font-semibold">
+              {t("secureAccessEyebrow") || "Secure access"}
+            </p>
+            <h1 className="text-2xl font-bold text-gray-900">{t("pharmacyDashboardTitle") || "Pharmacy dashboard"}</h1>
+            <p className="text-sm text-gray-600">
+              {t("pharmacyDashboardSubtitle") || "Monitor orders, prescriptions, and fulfilment safely."}
+            </p>
+          </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <StatCard
-            label={t("pendingReciepes") || "Pending prescriptions"}
-            value={pendingCount.toString()}
-            helper={t("awaitingFulfillment") || "Awaiting fulfillment"}
-          />
-          <StatCard
-            label={t("notificationsLabel") || "Notifications"}
-            value={notifications.length.toString()}
-            helper={t("today") || "Today"}
-          />
-          <StatCard
-            label={t("processedReciepes") || "Processed reciepes"}
-            value={processedCount.toString()}
-            helper={t("processedReciepesHelper") || "Completed or rejected prescriptions"}
-          />
-        </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <StatCard
+              label={t("pendingReciepes") || "Pending prescriptions"}
+              value={pendingCount.toString()}
+              helper={t("awaitingFulfillment") || "Awaiting fulfillment"}
+            />
+            <StatCard
+              label={t("notificationsLabel") || "Notifications"}
+              value={notifications.length.toString()}
+              helper={t("today") || "Today"}
+            />
+            <StatCard
+              label={t("processedReciepes") || "Processed reciepes"}
+              value={processedCount.toString()}
+              helper={t("processedReciepesHelper") || "Completed or rejected prescriptions"}
+            />
+          </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <section className="lg:col-span-2 bg-white rounded-3xl border border-purple-50 shadow-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{t("reciepeInbox") || "Prescription inbox"}</p>
-                <p className="text-xs text-gray-600">{t("reciepeInboxSubtitle") || "Latest prescriptions to dispense"}</p>
-              </div>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {reciepes.map((r) => (
-                <div key={r.id} className="py-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
-                    <p className="text-xs text-gray-600 truncate">{r.patient} • {r.doctor}</p>
-                    <p className="text-[11px] text-gray-500">{r.createdAt}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      r.status === "accepted"
-                        ? "bg-green-50 text-green-700"
-                        : r.status === "rejected"
-                        ? "bg-red-50 text-red-700"
-                        : "bg-amber-50 text-amber-700"
-                    }`}>
-                      {t(r.status)}
-                    </span>
-                    {r.status === "pending" && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => markReciepe(r.id, "accepted")}
-                          className="inline-flex items-center rounded-full border border-green-500 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-500 hover:text-white"
-                        >
-                          {t("markCompleted") || "Accept"}
-                        </button>
-                        <button
-                          onClick={() => markReciepe(r.id, "rejected")}
-                          className="inline-flex items-center rounded-full border border-red-500 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-500 hover:text-white"
-                        >
-                          {t("reject") || "Reject"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <section className="lg:col-span-2 bg-white rounded-3xl border border-purple-50 shadow-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{t("reciepeInbox") || "Prescription inbox"}</p>
+                  <p className="text-xs text-gray-600">{t("reciepeInboxSubtitle") || "Latest prescriptions to dispense"}</p>
                 </div>
-              ))}
-            </div>
-          </section>
-
-	          <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-4 space-y-3 h-full">
-	            <div className="flex items-center justify-between">
-	              <div>
-	                <p className="text-sm font-semibold text-gray-900">{t("notificationsLabel") || "Notifications"}</p>
-	                <p className="text-xs text-gray-600">{t("pharmacyNotificationsSubtitle") || "Orders and prescription updates"}</p>
-	              </div>
-	              <Link href={DASHBOARD_PATHS.notifications} className="text-xs text-purple-600 hover:underline">
-	                {t("viewAll") || "View all"}
-	              </Link>
-	            </div>
-	            <ul className="space-y-2 max-h-80 overflow-auto">
-              {notifications.map((n) => (
-                <li key={n.id} className="p-3 rounded-2xl border border-gray-100 bg-gray-50">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{n.title}</p>
-                      <p className="text-xs text-gray-600 truncate">{n.detail}</p>
-                      <p className="text-[11px] text-gray-500">{n.date}</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {reciepes.length === 0 ? (
+                  <div className="py-10 text-center text-sm text-gray-500">{t("noReciepes") || "No reciepes found."}</div>
+                ) : (
+                  reciepes.map((r) => (
+                    <div key={r.id} className="py-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
+                        <p className="text-xs text-gray-600 truncate">
+                          {r.patient} • {r.doctor}
+                        </p>
+                        <p className="text-[11px] text-gray-500">{r.createdAt}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            r.status === "accepted"
+                              ? "bg-green-50 text-green-700"
+                              : r.status === "rejected"
+                                ? "bg-red-50 text-red-700"
+                                : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {t(r.status)}
+                        </span>
+                        {r.status === "pending" ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => markReciepe(r.id, "accepted")}
+                              className="inline-flex items-center rounded-full border border-green-500 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-500 hover:text-white"
+                            >
+                              {t("markCompleted") || "Accept"}
+                            </button>
+                            <button
+                              onClick={() => markReciepe(r.id, "rejected")}
+                              className="inline-flex items-center rounded-full border border-red-500 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-500 hover:text-white"
+                            >
+                              {t("reject") || "Reject"}
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
-                    <span className={`h-2 w-2 mt-1 rounded-full ${n.status === "action" ? "bg-amber-500" : "bg-purple-400"}`} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
+                  ))
+                )}
+              </div>
+            </section>
+
+            <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-4 space-y-3 h-full">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{t("notificationsLabel") || "Notifications"}</p>
+                  <p className="text-xs text-gray-600">{t("pharmacyNotificationsSubtitle") || "Orders and prescription updates"}</p>
+                </div>
+                <Link
+                  href={notificationsHref}
+                  className="text-xs text-purple-600 hover:underline"
+                  data-analytics="pharmacy.notifications.view_all"
+                >
+                  {t("viewAll") || "View all"}
+                </Link>
+              </div>
+              <ul className="space-y-2 max-h-80 overflow-auto">
+                {notifications.length === 0 ? (
+                  <li className="py-10 text-center text-sm text-gray-500">{t("noNotifications") || "No notifications yet"}</li>
+                ) : (
+                  notifications.map((n) => (
+                    <li key={n.id}>
+                      <Link
+                        href={`${notificationsHref}?focus=${encodeURIComponent(n.id)}`}
+                        className="block p-3 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition"
+                        data-analytics="pharmacy.notifications.open"
+                        data-analytics-id={n.id}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{n.title}</p>
+                            <p className="text-xs text-gray-600 truncate">{n.detail}</p>
+                            <p className="text-[11px] text-gray-500">{n.date}</p>
+                          </div>
+                          <span
+                            className={`h-2 w-2 mt-1 rounded-full ${n.status === "action" ? "bg-amber-500" : "bg-purple-400"}`}
+                          />
+                        </div>
+                      </Link>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </section>
+          </div>
         </div>
       </div>
-    </div>
+    </RequestStateGate>
   );
 }
 

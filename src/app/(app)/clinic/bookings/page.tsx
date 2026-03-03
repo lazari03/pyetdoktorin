@@ -3,13 +3,16 @@
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useClinicBookings } from '@/presentation/hooks/useClinicBookings';
+import { CLINIC_PATHS } from '@/navigation/paths';
+import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
+import { UserRole } from '@/domain/entities/UserRole';
 
 export default function ClinicBookingsPage() {
   const { user, role } = useAuth();
   const { t } = useTranslation();
-  const { bookings, loading, updateStatus } = useClinicBookings({ clinicId: user?.uid });
+  const { bookings, loading, error, refresh, updateStatus } = useClinicBookings({ clinicId: user?.uid });
 
-  if (role !== 'clinic') {
+  if (role !== UserRole.Clinic) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center text-gray-600">{t('accessDenied') || 'Access denied'}</div>
@@ -18,7 +21,15 @@ export default function ClinicBookingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RequestStateGate
+      loading={loading && bookings.length === 0}
+      error={error}
+      onRetry={refresh}
+      homeHref={CLINIC_PATHS.root}
+      loadingLabel={t('loading')}
+      analyticsPrefix="clinic.bookings"
+    >
+      <div className="space-y-6">
       <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
         <h1 className="text-2xl font-bold text-gray-900">{t('clinicBookings') || 'Clinic bookings'}</h1>
         <p className="text-sm text-gray-600">{t('clinicBookingsSubtitle') || 'Manage incoming booking requests'}</p>
@@ -99,6 +110,7 @@ export default function ClinicBookingsPage() {
           </tbody>
         </table>
       </div>
-    </div>
+      </div>
+    </RequestStateGate>
   );
 }

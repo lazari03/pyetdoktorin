@@ -8,6 +8,10 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBL
 
 export default function AnalyticsScripts() {
   const [consent, setConsent] = useState(() => getAnalyticsConsent());
+  const [nonce] = useState(() => {
+    if (typeof document === "undefined") return "";
+    return document.querySelector('meta[name="csp-nonce"]')?.getAttribute("content") || "";
+  });
 
   useEffect(() => subscribeAnalyticsConsent(setConsent), []);
 
@@ -35,8 +39,12 @@ export default function AnalyticsScripts() {
 
   return (
     <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
-      <Script id="gtag-init" strategy="afterInteractive">
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+        strategy="afterInteractive"
+        nonce={nonce || undefined}
+      />
+      <Script id="gtag-init" strategy="afterInteractive" nonce={nonce || undefined}>
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
@@ -48,4 +56,3 @@ export default function AnalyticsScripts() {
     </>
   );
 }
-

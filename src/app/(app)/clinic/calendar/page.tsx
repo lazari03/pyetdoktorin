@@ -7,11 +7,12 @@ import { useClinicBookings } from '@/presentation/hooks/useClinicBookings';
 import { format } from 'date-fns';
 import { CLINIC_PATHS } from '@/navigation/paths';
 import { UserRole } from '@/domain/entities/UserRole';
+import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 
 export default function ClinicCalendarPage() {
   const { user, role } = useAuth();
   const { t } = useTranslation();
-  const { bookings, loading } = useClinicBookings({ clinicId: user?.uid });
+  const { bookings, loading, error, refresh } = useClinicBookings({ clinicId: user?.uid });
 
   if (role !== UserRole.Clinic) {
     return (
@@ -30,7 +31,15 @@ export default function ClinicCalendarPage() {
   const sortedDates = Object.keys(grouped).sort();
 
   return (
-    <div className="space-y-6">
+    <RequestStateGate
+      loading={loading && bookings.length === 0}
+      error={error}
+      onRetry={refresh}
+      homeHref={CLINIC_PATHS.root}
+      loadingLabel={t('loading')}
+      analyticsPrefix="clinic.calendar"
+    >
+      <div className="space-y-6">
       <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('clinicCalendar') || 'Clinic calendar'}</h1>
@@ -84,6 +93,7 @@ export default function ClinicCalendarPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </RequestStateGate>
   );
 }

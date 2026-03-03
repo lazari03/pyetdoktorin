@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
@@ -12,12 +12,14 @@ import { UserRole } from '@/domain/entities/UserRole';
 import AppointmentConfirmation from '@/presentation/components/appointment/AppointmentConfirmation';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
+import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 
 export default function ClinicsPage() {
   const { t } = useTranslation();
   const { user, role } = useAuth();
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
   const [note, setNote] = useState('');
   const [preferredDate, setPreferredDate] = useState('');
@@ -29,20 +31,24 @@ export default function ClinicsPage() {
   const userPhone = (user as { phoneNumber?: string } | null)?.phoneNumber ?? '';
   const userDisplayName = user?.name || userEmail.split('@')[0] || 'Patient';
 
-  useEffect(() => {
-    const loadClinics = async () => {
-      try {
-        const response = await backendFetch<{ items: Clinic[] }>('/api/clinics/private', { method: 'GET' });
-        setClinics(response.items ?? []);
-      } catch (error) {
-        console.error('Failed to load clinics', error);
-        setClinics([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadClinics();
+  const loadClinics = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await backendFetch<{ items: Clinic[] }>('/api/clinics/private', { method: 'GET' });
+      setClinics(response.items ?? []);
+    } catch (err) {
+      console.error('Failed to load clinics', err);
+      setClinics([]);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadClinics();
+  }, [loadClinics]);
 
   const canBook = role === UserRole.Patient;
 
@@ -104,84 +110,96 @@ export default function ClinicsPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-        <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('privateClinics') || 'Private Clinics'}</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              {t('privateClinicsSubtitle') || 'Choose a clinic and send a booking request'}
-            </p>
+    <RequestStateGate
+      loading={loading && clinics.length === 0}
+      error={error}
+      onRetry={loadClinics}
+      homeHref={DASHBOARD_PATHS.root}
+      loadingLabel={t('loading')}
+      analyticsPrefix="dashboard.clinics"
+    >
+      <div className="min-h-screen">
+        <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+          <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{t('privateClinics') || 'Private Clinics'}</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {t('privateClinicsSubtitle') || 'Choose a clinic and send a booking request'}
+              </p>
+            </div>
+            <Link
+              href={DASHBOARD_PATHS.clinicsHistory}
+              className="text-sm font-semibold text-purple-600 hover:underline"
+              data-analytics="dashboard.clinics.view_requests"
+            >
+              {t('viewRequests') || 'View requests'}
+            </Link>
           </div>
-          <Link
-            href={DASHBOARD_PATHS.clinicsHistory}
-            className="text-sm font-semibold text-purple-600 hover:underline"
-          >
-            {t('viewRequests') || 'View requests'}
-          </Link>
-        </div>
 
-        {loading ? (
-          <div className="text-center py-10 text-gray-500">{t('loading') || 'Loading...'}</div>
-        ) : clinics.length === 0 ? (
-          <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center">
-            <p className="text-lg font-semibold text-gray-900">
-              {t('noClinicsAvailable') || 'No clinics available yet'}
-            </p>
-            <p className="text-sm text-gray-600 mt-1">
-              {t('noClinicsAvailableSubtitle') || 'Please check back later.'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {clinics.map((clinic) => (
-              <div key={clinic.id} className="bg-white rounded-2xl shadow-md border border-purple-50 overflow-hidden flex flex-col">
-                {clinic.imageUrl && (
-                  <div className="relative h-40 w-full">
-                    <Image src={clinic.imageUrl} alt={clinic.name} fill className="object-cover" />
+          {clinics.length === 0 ? (
+            <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center">
+              <p className="text-lg font-semibold text-gray-900">
+                {t('noClinicsAvailable') || 'No clinics available yet'}
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                {t('noClinicsAvailableSubtitle') || 'Please check back later.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2">
+              {clinics.map((clinic) => (
+                <div
+                  key={clinic.id}
+                  className="bg-white rounded-2xl shadow-md border border-purple-50 overflow-hidden flex flex-col"
+                >
+                  {clinic.imageUrl ? (
+                    <div className="relative h-40 w-full">
+                      <Image src={clinic.imageUrl} alt={clinic.name} fill className="object-cover" />
+                    </div>
+                  ) : null}
+                  <div className="p-5 flex flex-col gap-3 flex-1">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">{clinic.name}</h2>
+                      <p className="text-sm text-gray-500">{clinic.address}</p>
+                    </div>
+                    <p className="text-sm text-gray-600">{clinic.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {clinic.specialties.map((spec) => (
+                        <span key={spec} className="px-3 py-1 rounded-full text-xs bg-purple-50 text-purple-700">
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p>{clinic.phone}</p>
+                      <p>{clinic.email}</p>
+                    </div>
+                    <button
+                      className="mt-auto inline-flex justify-center items-center rounded-full bg-purple-600 text-white text-sm font-semibold px-4 py-2 hover:bg-purple-500 transition"
+                      onClick={() => {
+                        setSelectedClinic(clinic);
+                      }}
+                      data-analytics={`dashboard.clinics.book.${clinic.id}`}
+                    >
+                      {t('bookClinic') || 'Book this clinic'}
+                    </button>
                   </div>
-                )}
-                <div className="p-5 flex flex-col gap-3 flex-1">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">{clinic.name}</h2>
-                    <p className="text-sm text-gray-500">{clinic.address}</p>
-                  </div>
-                  <p className="text-sm text-gray-600">{clinic.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {clinic.specialties.map((spec) => (
-                      <span key={spec} className="px-3 py-1 rounded-full text-xs bg-purple-50 text-purple-700">
-                        {spec}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    <p>{clinic.phone}</p>
-                    <p>{clinic.email}</p>
-                  </div>
-                  <button
-                    className="mt-auto inline-flex justify-center items-center rounded-full bg-purple-600 text-white text-sm font-semibold px-4 py-2 hover:bg-purple-500 transition"
-                    onClick={() => {
-                      setSelectedClinic(clinic);
-                    }}
-                  >
-                    {t('bookClinic') || 'Book this clinic'}
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-        {feedback && (
-          <div
-            className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
-              feedback.type === 'success'
-                ? 'bg-green-50 border-green-100 text-green-700'
-                : 'bg-red-50 border-red-100 text-red-700'
-            }`}
-          >
-            {feedback.text}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+          {feedback ? (
+            <div
+              className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
+                feedback.type === 'success'
+                  ? 'bg-green-50 border-green-100 text-green-700'
+                  : 'bg-red-50 border-red-100 text-red-700'
+              }`}
+            >
+              {feedback.text}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {selectedClinic && (
@@ -242,6 +260,6 @@ export default function ClinicsPage() {
       {showConfirmation && (
         <AppointmentConfirmation onClose={() => setShowConfirmation(false)} />
       )}
-    </div>
+    </RequestStateGate>
   );
 }

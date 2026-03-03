@@ -102,6 +102,28 @@ yarn dev
 
 The development server will start at [http://localhost:3000](http://localhost:3000).
 
+## Troubleshooting
+
+### Blank page / chunks failing to load / `Cannot find module './####.js'` (Next.js)
+
+If you see errors like:
+- `Error: Cannot find module './8548.js'` (from `.next/server/webpack-runtime.js`), or
+- the browser fails to load `/_next/static/chunks/*` and the UI is blank,
+
+your local build output is usually stale/corrupted (or you have cached old assets).
+
+Fix:
+
+```bash
+# stop the dev server first (Ctrl+C)
+npm run clean
+npm run dev
+```
+
+Tip: prefer `npm run dev:clean` when you hit any `/_next/static/*` 404s or `Cannot find module './####.js'` errors.
+
+If it happens in production after a deploy, do a hard refresh and ensure any service worker is disabled/cleared (this repo unregisters SWs by default unless `NEXT_PUBLIC_ENABLE_SERVICE_WORKER=true`).
+
 ## Building for Production
 
 To create a production build:
@@ -146,6 +168,23 @@ Make sure these files are properly configured before building or deploying.
 Paddle checkout redirects back to:
 `/dashboard/appointments?paid=<appointmentId>`.
 
+### Contact form email (website)
+The website contact form posts to `POST /api/contact/send-email` (Next.js route handler).
+
+Set one of the following configurations:
+- **Recommended SMTP**: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (optional: `SMTP_SECURE=true`).
+- **Service-based (e.g. Gmail)**: `SMTP_SERVICE=gmail` + `SMTP_USER` + `SMTP_PASS` (or legacy `CONTACT_EMAIL_USER` + `CONTACT_EMAIL_PASS`).
+
+Optional:
+- `CONTACT_EMAIL_TO` (defaults to `info@pyetdoktorin.al`)
+- `CONTACT_EMAIL_FROM` / `MAIL_FROM` (defaults to `CONTACT_EMAIL_TO`)
+
+Security note: in production, set `SITE_URL` / `NEXT_PUBLIC_SITE_URL` so the route can validate the `Origin` header.
+
+### Cookies
+- `NEXT_PUBLIC_COOKIE_DOMAIN` / `COOKIE_DOMAIN` (optional): set to something like `.pyetdoktorin.al` if you use both `www` and apex domains and want cookies (language/consent) to persist across subdomains. Do **not** set this for `localhost`.
+  - If unset, the app will try a conservative best-effort inference (works for `www` ↔ apex, but cannot persist across unrelated domains by browser design).
+
 ## Deployment
 
 1. First, build the project using production environment:
@@ -167,6 +206,7 @@ Paddle checkout redirects back to:
 ## Available Scripts
 
 - `npm run dev` - Start development server
+- `npm run clean` - Remove `.next` / `.turbo` caches (fixes stale chunk issues)
 - `npm run build` - Create a production build
 - `npm run build:prod` - Create a production build with production env variables
 - `npm run start` - Start production server

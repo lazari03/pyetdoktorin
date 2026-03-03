@@ -44,6 +44,7 @@ export default function AnalyticsConsentControl() {
       <div className="mt-3 flex items-center gap-2">
         <button
           id={id}
+          type="button"
           className="btn btn-ghost btn-sm"
           onClick={() => setAnalyticsConsent("denied")}
           disabled={consent === "denied"}
@@ -52,6 +53,7 @@ export default function AnalyticsConsentControl() {
           {t("rejectAnalytics", { defaultValue: "Reject" })}
         </button>
         <button
+          type="button"
           className="btn btn-primary btn-sm"
           onClick={() => setAnalyticsConsent("granted")}
           disabled={consent === "granted"}

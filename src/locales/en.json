@@ -867,6 +867,7 @@
   "notificationsLoadFailed": "We could not load your notifications right now.",
   "cookieBannerTitle": "Cookies & analytics",
   "cookieBannerBody": "We use optional analytics cookies to understand usage and improve the product. You can accept or decline.",
+  "cookieBannerSaveFailed": "We couldn’t save your preference. Please enable cookies/storage for this site and try again.",
   "acceptAnalytics": "Accept",
   "rejectAnalytics": "Reject",
   "somethingWentWrong": "Something went wrong",

@@ -14,6 +14,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential } from "firebase/auth";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
+import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
 
 type Reciepe = {
   id: string;
@@ -37,6 +38,8 @@ export default function DoctorReciepePage() {
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [pharmacies, setPharmacies] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [form, setForm] = useState<Omit<Reciepe, "id" | "date">>({
     patientId: "",
     patient: "",
@@ -70,52 +73,56 @@ export default function DoctorReciepePage() {
     signatureDataUrl: p.signatureDataUrl,
   }), [t]);
 
-  useEffect(() => {
-    const loadPatients = async () => {
-      try {
-        const response = await fetchAdminUsers({ role: UserRole.Patient, pageSize: 500 });
-        const pts = (response.items || []).map((u: Record<string, unknown>) => ({
-          id: String(u.id ?? u.uid ?? ''),
-          name: `${(u.name as string | undefined) ?? ''} ${(u.surname as string | undefined) ?? ''}`.trim() || (u.email as string | undefined) || 'Unknown',
-        }));
-        setPatients(pts);
-      } catch {
-        setPatients([]);
-      }
-    };
-    loadPatients();
-  }, []);
+  const loadAll = useCallback(async () => {
+    if (!user?.uid) return;
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [patientsResponse, pharmaciesResponse, profile, issued] = await Promise.all([
+        fetchAdminUsers({ role: UserRole.Patient, pageSize: 500 }),
+        fetchAdminUsers({ role: UserRole.Pharmacy, pageSize: 200 }),
+        getUserProfileUseCase.execute(user.uid),
+        getReciepesByDoctorUseCase.execute(user.uid),
+      ]);
+
+      const pts = (patientsResponse.items || []).map((u: Record<string, unknown>) => ({
+        id: String(u.id ?? u.uid ?? ''),
+        name:
+          `${(u.name as string | undefined) ?? ''} ${(u.surname as string | undefined) ?? ''}`.trim() ||
+          (u.email as string | undefined) ||
+          'Unknown',
+      }));
+      setPatients(pts);
+
+      const phs = (pharmaciesResponse.items || []).map((entry: Record<string, unknown>) => ({
+        id: String(entry.id ?? ''),
+        name:
+          (entry.pharmacyName as string | undefined) ||
+          `${(entry.name as string | undefined) ?? ''} ${(entry.surname as string | undefined) ?? ''}`.trim() ||
+          'Pharmacy',
+      }));
+      setPharmacies(phs);
+
+      setSavedSignatureUrl(profile?.signatureDataUrl || '');
+      setSignatureLoaded(true);
+
+      const mapped = (issued || []).map(toReciepe);
+      setReciepes(mapped);
+    } catch (err) {
+      setPatients([]);
+      setPharmacies([]);
+      setReciepes([]);
+      setSavedSignatureUrl('');
+      setSignatureLoaded(true);
+      setLoadError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [getReciepesByDoctorUseCase, getUserProfileUseCase, toReciepe, user?.uid]);
 
   useEffect(() => {
-    const loadPharmacies = async () => {
-      try {
-        const response = await fetchAdminUsers({ role: UserRole.Pharmacy, pageSize: 200 });
-        const mapped = (response.items || []).map((entry: Record<string, unknown>) => ({
-          id: String(entry.id ?? ''),
-          name: (entry.pharmacyName as string | undefined) || `${(entry.name as string | undefined) ?? ''} ${(entry.surname as string | undefined) ?? ''}`.trim() || 'Pharmacy',
-        }));
-        setPharmacies(mapped);
-      } catch {
-        setPharmacies([]);
-      }
-    };
-    loadPharmacies();
-  }, []);
-
-  useEffect(() => {
-    const loadSignature = async () => {
-      if (!user?.uid) return;
-      try {
-        const profile = await getUserProfileUseCase.execute(user.uid);
-        setSavedSignatureUrl(profile?.signatureDataUrl || "");
-      } catch {
-        setSavedSignatureUrl("");
-      } finally {
-        setSignatureLoaded(true);
-      }
-    };
-    loadSignature();
-  }, [user?.uid, getUserProfileUseCase]);
+    loadAll();
+  }, [loadAll]);
 
   const filteredPatients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -298,126 +305,124 @@ export default function DoctorReciepePage() {
     w.print();
   };
 
-  useEffect(() => {
-    const loadReciepes = async () => {
-      if (!user?.uid) return;
-      try {
-        const response = await getReciepesByDoctorUseCase.execute(user.uid);
-        const mapped = (response || []).map(toReciepe);
-        setReciepes(mapped);
-      } catch {
-        setReciepes([]);
-      }
-    };
-    loadReciepes();
-  }, [user?.uid, toReciepe, getReciepesByDoctorUseCase]);
-
   if (role !== UserRole.Doctor) {
     return <RedirectingModal show />;
   }
 
   return (
-    <div className="min-h-screen py-6 px-3">
-      <Modal isOpen={showIssuedModal} onClose={() => setShowIssuedModal(false)}>
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900">
-            {t("reciepeIssuedTitle") || "Reciepe issued"}
-          </h3>
-          <p className="text-sm text-gray-600">
-            {t("reciepeIssuedBody") || "The reciepe has been issued successfully."}
-          </p>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowIssuedModal(false)}
-              className="inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
-            >
-              {t("close") || "Close"}
-            </button>
-          </div>
-        </div>
-      </Modal>
-      <div className="max-w-5xl mx-auto space-y-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">{t("secureAccessEyebrow") || "Secure access"}</p>
-          <h1 className="text-2xl font-bold text-gray-900">{t("reciepeTitleDoctor") || "Reciepe"}</h1>
-          <p className="text-sm text-gray-600">{t("reciepeSubtitleDoctor") || "Issue prescriptions and keep a clear record for your patients."}</p>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("reciepeList") || "Issued reciepes"}</h2>
-            <div className="space-y-3">
-              {reciepes.map((r) => (
-                <div key={r.id} className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="font-semibold text-gray-900 truncate">{r.title}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-gray-500">{r.date}</span>
-                      {r.status && (
-                        <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                          r.status === "accepted"
-                            ? "bg-green-50 text-green-700"
-                            : r.status === "rejected"
-                            ? "bg-red-50 text-red-700"
-                            : "bg-amber-50 text-amber-700"
-                        }`}>
-                          {t(r.status)}
-                        </span>
-                      )}
-                      <button
-                        onClick={() => downloadPdf(r)}
-                        className="text-[11px] text-purple-600 hover:underline"
-                      >
-                        {t("download") || "Download"}
-                      </button>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600">{t("patient")}: {r.patient}</p>
-                  <p className="text-xs text-gray-700">{t("medicinesLabel") || "Medicines"}: {r.medicines}</p>
-                  <p className="text-xs text-gray-700">{t("dosageLabel") || "Dosage"}: {r.dosage}</p>
-                  {r.notes && <p className="text-xs text-gray-600 mt-1">{r.notes}</p>}
-                </div>
-              ))}
+    <RequestStateGate
+      loading={loading && reciepes.length === 0}
+      error={loadError}
+      onRetry={loadAll}
+      homeHref={DASHBOARD_PATHS.root}
+      loadingLabel={t("loading")}
+      analyticsPrefix="dashboard.reciepe"
+    >
+      <div className="min-h-screen py-6 px-3">
+        <Modal isOpen={showIssuedModal} onClose={() => setShowIssuedModal(false)}>
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {t("reciepeIssuedTitle") || "Reciepe issued"}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {t("reciepeIssuedBody") || "The reciepe has been issued successfully."}
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowIssuedModal(false)}
+                className="inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
+              >
+                {t("close") || "Close"}
+              </button>
             </div>
-          </section>
+          </div>
+        </Modal>
+        <div className="max-w-5xl mx-auto space-y-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">{t("secureAccessEyebrow") || "Secure access"}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t("reciepeTitleDoctor") || "Reciepe"}</h1>
+            <p className="text-sm text-gray-600">{t("reciepeSubtitleDoctor") || "Issue prescriptions and keep a clear record for your patients."}</p>
+          </div>
 
-          <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("newReciepe") || "New reciepe"}</h2>
-            <form className="space-y-3" onSubmit={handleSubmit}>
-              {submitError && (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                  {submitError}
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t("patientName")}</label>
-                <input
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t("searchByName") || "Search by name"}
-                />
-                {search.trim().length >= 4 && (
-                  <div className="mt-2 max-h-32 overflow-auto rounded-xl bg-white">
-                    {filteredPatients.map((p) => (
-                      <button
-                        type="button"
-                        key={p.id}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${form.patientId === p.id ? "bg-purple-50 font-semibold" : ""}`}
-                        onClick={() => {
-                          setForm((f) => ({ ...f, patientId: p.id, patient: p.name }));
-                          setSearch(p.name);
-                        }}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                    {filteredPatients.length === 0 && (
-                      <p className="px-3 py-2 text-xs text-gray-500">{t("noResults") || "No patients found"}</p>
-                    )}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("reciepeList") || "Issued reciepes"}</h2>
+              <div className="space-y-3">
+                {reciepes.length === 0 ? (
+                  <p className="text-sm text-gray-500 py-4">{t("noReciepes") || "No reciepes found."}</p>
+                ) : (
+                  reciepes.map((r) => (
+                    <div key={r.id} className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <p className="font-semibold text-gray-900 truncate">{r.title}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-gray-500">{r.date}</span>
+                          {r.status ? (
+                            <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                              r.status === "accepted"
+                                ? "bg-green-50 text-green-700"
+                                : r.status === "rejected"
+                                  ? "bg-red-50 text-red-700"
+                                  : "bg-amber-50 text-amber-700"
+                            }`}>
+                              {t(r.status)}
+                            </span>
+                          ) : null}
+                          <button
+                            onClick={() => downloadPdf(r)}
+                            className="text-[11px] text-purple-600 hover:underline"
+                          >
+                            {t("download") || "Download"}
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600">{t("patient")}: {r.patient}</p>
+                      <p className="text-xs text-gray-700">{t("medicinesLabel") || "Medicines"}: {r.medicines}</p>
+                      <p className="text-xs text-gray-700">{t("dosageLabel") || "Dosage"}: {r.dosage}</p>
+                      {r.notes ? <p className="text-xs text-gray-600 mt-1">{r.notes}</p> : null}
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+
+            <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("newReciepe") || "New reciepe"}</h2>
+              <form className="space-y-3" onSubmit={handleSubmit}>
+                {submitError && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    {submitError}
                   </div>
                 )}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">{t("patientName")}</label>
+                  <input
+                    className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t("searchByName") || "Search by name"}
+                  />
+                  {search.trim().length >= 4 && (
+                    <div className="mt-2 max-h-32 overflow-auto rounded-xl bg-white">
+                      {filteredPatients.map((p) => (
+                        <button
+                          type="button"
+                          key={p.id}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${form.patientId === p.id ? "bg-purple-50 font-semibold" : ""}`}
+                          onClick={() => {
+                            setForm((f) => ({ ...f, patientId: p.id, patient: p.name }));
+                            setSearch(p.name);
+                          }}
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                      {filteredPatients.length === 0 && (
+                        <p className="px-3 py-2 text-xs text-gray-500">{t("noResults") || "No patients found"}</p>
+                      )}
+                    </div>
+                  )}
                 {search.trim().length < 4 && (
                   <p className="px-1 py-1 text-[11px] text-gray-500 mt-1">{t("typeMoreToSearch") || "Type at least 4 characters"}</p>
                 )}
@@ -572,5 +577,6 @@ export default function DoctorReciepePage() {
         </div>
       </div>
     </div>
+    </RequestStateGate>
   );
 }

@@ -2,16 +2,16 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Loader from "@/presentation/components/Loader/Loader";
 import { auth } from "@/config/firebaseconfig";
 import { useTranslation } from "react-i18next";
 import { VIDEO_ERROR_CODES } from "@/config/errorCodes";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
+import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
 
 export default function VideoSessionPage() {
   const [loading, setLoading] = useState(true);
   const [roomCode, setRoomCode] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fullscreenModeRef = useRef<"native" | "css" | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -19,13 +19,18 @@ export default function VideoSessionPage() {
   const searchParams = useSearchParams();
   const sessionToken = searchParams?.get("session") || null;
   const { t } = useTranslation();
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let isActive = true;
     const fetchRoomCode = async () => {
+      setLoading(true);
+      setError(null);
+      setRoomCode(null);
+
       if (!sessionToken) {
         if (!isActive) return;
-        setError("missingSession");
+        setError(VIDEO_ERROR_CODES.MissingParams);
         setLoading(false);
         return;
       }
@@ -34,7 +39,7 @@ export default function VideoSessionPage() {
         const currentUser = auth.currentUser;
         if (!currentUser) {
           if (!isActive) return;
-          setError("sessionExpired");
+          setError(VIDEO_ERROR_CODES.AuthMissing);
           setLoading(false);
           return;
         }
@@ -49,21 +54,22 @@ export default function VideoSessionPage() {
           body: JSON.stringify({ sessionToken }),
         });
 
-        const payload = await response.json();
-        if (!response.ok || !payload.roomCode) {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !(payload as { roomCode?: unknown }).roomCode) {
           if (!isActive) return;
-          setError(payload.error || 'unauthorized');
+          const maybeError = (payload as { error?: unknown }).error;
+          setError(typeof maybeError === 'string' ? maybeError : VIDEO_ERROR_CODES.AuthInvalid);
           setLoading(false);
           return;
         }
 
         if (!isActive) return;
-        setRoomCode(payload.roomCode);
+        setRoomCode(String((payload as { roomCode: string }).roomCode));
         setLoading(false);
       } catch (err) {
         console.error('Failed to validate session', err);
         if (!isActive) return;
-        setError('validationFailed');
+        setError(VIDEO_ERROR_CODES.GenericFailed);
         setLoading(false);
       }
     };
@@ -72,7 +78,7 @@ export default function VideoSessionPage() {
     return () => {
       isActive = false;
     };
-  }, [sessionToken]);
+  }, [attempt, sessionToken]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -112,14 +118,6 @@ export default function VideoSessionPage() {
   }, [roomCode]);
 
   useEffect(() => {
-    if (error && !roomCode) {
-      const timer = setTimeout(() => router.replace(DASHBOARD_PATHS.root), 2000);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [error, roomCode, router]);
-
-  useEffect(() => {
     if (typeof document === "undefined") return;
     const previousOverflow = document.body.style.overflow;
     if (isFullscreen) {
@@ -131,26 +129,6 @@ export default function VideoSessionPage() {
     document.body.style.overflow = previousOverflow;
     return undefined;
   }, [isFullscreen]);
-
-  if (loading) {
-    return <Loader />;
-  }
-
-  if (!roomCode) {
-    const errorCopy =
-      error === VIDEO_ERROR_CODES.AuthInvalid || error === VIDEO_ERROR_CODES.AuthMissing
-        ? t("videoSessionExpiredCopy")
-        : t("videoSessionFailedCopy");
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="rounded-2xl bg-white shadow-lg p-8 text-center max-w-md">
-          <p className="text-sm text-gray-700">
-            {errorCopy}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   const requestFullscreen = async () => {
     const el = containerRef.current;
@@ -183,61 +161,72 @@ export default function VideoSessionPage() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-6">
-      <div
-        ref={containerRef}
-        className={isFullscreen ? "fixed inset-0 z-50 bg-black" : "mx-auto w-full max-w-5xl space-y-4"}
-      >
-        {isFullscreen && (
-          <button
-            type="button"
-            onClick={exitFullscreen}
-            className="absolute top-4 right-4 z-50 rounded-full bg-purple-600 text-white px-4 py-2 text-xs font-semibold shadow-lg hover:bg-purple-700"
+    <RequestStateGate
+      loading={loading}
+      error={error}
+      onRetry={() => setAttempt((v) => v + 1)}
+      homeHref={DASHBOARD_PATHS.root}
+      loadingLabel={t("loading")}
+      analyticsPrefix="dashboard.video_session"
+    >
+      {roomCode ? (
+        <div className="min-h-screen bg-gray-50 px-4 py-6">
+          <div
+            ref={containerRef}
+            className={isFullscreen ? "fixed inset-0 z-50 bg-black" : "mx-auto w-full max-w-5xl space-y-4"}
           >
-            {t("videoSessionExitFullscreen")}
-          </button>
-        )}
-        {!isFullscreen && (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
-                {t("videoSessionEyebrow")}
-              </p>
-              <h1 className="text-2xl font-semibold text-gray-900">
-                {t("videoSessionTitle")}
-              </h1>
-              <p className="text-sm text-gray-600">
-                {t("videoSessionSubtitle")}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
+            {isFullscreen && (
               <button
                 type="button"
-                onClick={requestFullscreen}
-                className="inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
+                onClick={exitFullscreen}
+                className="absolute top-4 right-4 z-50 rounded-full bg-purple-600 text-white px-4 py-2 text-xs font-semibold shadow-lg hover:bg-purple-700"
               >
-                {t("videoSessionFullscreen")}
+                {t("videoSessionExitFullscreen")}
               </button>
-              <button
-                type="button"
-                onClick={() => router.replace(DASHBOARD_PATHS.root)}
-                className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
-              >
-                {t("videoSessionBackToDashboard")}
-              </button>
+            )}
+            {!isFullscreen && (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+                    {t("videoSessionEyebrow")}
+                  </p>
+                  <h1 className="text-2xl font-semibold text-gray-900">
+                    {t("videoSessionTitle")}
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    {t("videoSessionSubtitle")}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={requestFullscreen}
+                    className="inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
+                  >
+                    {t("videoSessionFullscreen")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.replace(DASHBOARD_PATHS.root)}
+                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    {t("videoSessionBackToDashboard")}
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className={isFullscreen ? "h-full w-full" : "rounded-2xl overflow-hidden border border-gray-200 bg-black shadow-lg"}>
+              <iframe
+                src={`https://pyetdoktorin-videoconf-1921.app.100ms.live/meeting/${roomCode}`}
+                title="100ms Video Call"
+                allow="camera; microphone; fullscreen; display-capture"
+                allowFullScreen
+                className={isFullscreen ? "h-full w-full" : "h-[70vh] w-full"}
+              />
             </div>
           </div>
-        )}
-        <div className={isFullscreen ? "h-full w-full" : "rounded-2xl overflow-hidden border border-gray-200 bg-black shadow-lg"}>
-          <iframe
-            src={`https://pyetdoktorin-videoconf-1921.app.100ms.live/meeting/${roomCode}`}
-            title="100ms Video Call"
-            allow="camera; microphone; fullscreen; display-capture"
-            allowFullScreen
-            className={isFullscreen ? "h-full w-full" : "h-[70vh] w-full"}
-          />
         </div>
-      </div>
-    </div>
+      ) : null}
+    </RequestStateGate>
   );
 }

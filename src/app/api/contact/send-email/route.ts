@@ -23,7 +23,79 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
+function isValidEmail(email: string): boolean {
+  // Basic sanity check (avoid over-restrictive validation).
+  if (!email || email.length > 254) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function getAllowedOrigins(): string[] {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
+  const origins = new Set<string>();
+  if (siteUrl) {
+    try {
+      origins.add(new URL(siteUrl).origin);
+    } catch {
+      // ignore malformed env value
+    }
+  }
+  if (process.env.NODE_ENV !== "production") {
+    origins.add("http://localhost:3000");
+    origins.add("http://127.0.0.1:3000");
+  }
+  return Array.from(origins);
+}
+
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return true; // allow non-browser clients or same-origin calls without header
+  const allowed = getAllowedOrigins();
+  return allowed.includes(origin);
+}
+
+function getEmailTransportConfig() {
+  // Prefer generic SMTP config. Fallback to a service-based transport (e.g. Gmail).
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = Number(process.env.SMTP_PORT ?? "587") || 587;
+  const smtpSecure = (process.env.SMTP_SECURE ?? "").toLowerCase() === "true" || smtpPort === 465;
+  const smtpUser = process.env.SMTP_USER || process.env.CONTACT_EMAIL_USER || "";
+  const smtpPass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD || process.env.CONTACT_EMAIL_PASS || "";
+  const smtpService = process.env.SMTP_SERVICE; // e.g. "gmail"
+
+  if (smtpHost) {
+    return {
+      kind: "smtp" as const,
+      config: {
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpSecure,
+        auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
+      },
+      smtpUser,
+      smtpPass,
+    };
+  }
+
+  if (smtpService || smtpUser) {
+    return {
+      kind: "service" as const,
+      config: {
+        service: smtpService || "gmail",
+        auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
+      },
+      smtpUser,
+      smtpPass,
+    };
+  }
+
+  return { kind: "none" as const, config: null, smtpUser, smtpPass };
+}
+
 export async function POST(req: Request) {
+  const origin = req.headers.get("origin");
+  if (!isOriginAllowed(origin)) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
   const forwardedFor = req.headers.get("x-forwarded-for");
   const ip = (forwardedFor?.split(",")[0] || req.headers.get("x-real-ip") || "unknown").trim();
   const now = Date.now();
@@ -51,25 +123,26 @@ export async function POST(req: Request) {
   if (!name || !email || !message) {
     return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
   }
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ message: "Invalid email address" }, { status: 400 });
+  }
 
   const toEmail = process.env.CONTACT_EMAIL_TO || "info@pyetdoktorin.al";
-  const smtpUser = process.env.CONTACT_EMAIL_USER || toEmail;
-  const smtpPass = process.env.CONTACT_EMAIL_PASS;
+  const fromEmail = process.env.CONTACT_EMAIL_FROM || process.env.MAIL_FROM || toEmail;
+  const transport = getEmailTransportConfig();
 
-  if (!smtpUser || !smtpPass) {
+  if (transport.kind === "none" || !transport.smtpUser || !transport.smtpPass) {
+    const hint =
+      process.env.NODE_ENV === "production"
+        ? undefined
+        : "Set SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS (recommended) or CONTACT_EMAIL_USER/CONTACT_EMAIL_PASS.";
     return NextResponse.json(
-      { message: "Email service is not configured" },
-      { status: 500 }
+      { message: "Email service is not configured", hint },
+      { status: 503 }
     );
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  });
+  const transporter = nodemailer.createTransport(transport.config as nodemailer.TransportOptions);
 
   const finalSubject =
     subject ||
@@ -100,7 +173,7 @@ export async function POST(req: Request) {
 
   try {
     await transporter.sendMail({
-      from: `Pyet Doktorin <${smtpUser}>`,
+      from: `Pyet Doktorin <${fromEmail}>`,
       to: toEmail,
       replyTo: email,
       subject: finalSubject,
