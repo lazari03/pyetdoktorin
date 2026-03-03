@@ -8,6 +8,7 @@
     "dev:clean": "npm run clean && npm run dev",
     "dev:turbopack": "NODE_OPTIONS='--max-old-space-size=8192' next dev --turbopack",
     "dev:lowmem": "next dev",
+    "env:check": "node tools/env-check.js",
     "build": "next build",
     "build:clean": "npm run clean && npm run build",
     "build:secure": "next build && node tools/obfuscate-server.js",

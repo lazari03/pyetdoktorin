@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { getClientIp, rateLimit } from "@/app/api/_lib/rateLimit";
+import { getOrCreateRequestId } from "@/app/api/_lib/requestId";
 
 export const runtime = "nodejs";
 
@@ -13,7 +15,6 @@ type ContactPayload = {
 
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAX = 5;
-const rateBucket = new Map<string, { count: number; resetAt: number }>();
 
 const escapeHtml = (value: string) =>
   value
@@ -91,28 +92,29 @@ function getEmailTransportConfig() {
 }
 
 export async function POST(req: Request) {
+  const requestId = getOrCreateRequestId(req);
   const origin = req.headers.get("origin");
   if (!isOriginAllowed(origin)) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    const res = NextResponse.json({ message: "Forbidden", requestId }, { status: 403 });
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  const ip = (forwardedFor?.split(",")[0] || req.headers.get("x-real-ip") || "unknown").trim();
-  const now = Date.now();
-  const bucket = rateBucket.get(ip);
-  if (!bucket || bucket.resetAt < now) {
-    rateBucket.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
-  } else if (bucket.count >= RATE_MAX) {
-    return NextResponse.json({ message: "Too many requests. Please try again later." }, { status: 429 });
-  } else {
-    bucket.count += 1;
+  const ip = getClientIp(req);
+  const limit = rateLimit({ key: `contact:${ip}`, windowMs: RATE_WINDOW_MS, max: RATE_MAX });
+  if (!limit.allowed) {
+    const res = NextResponse.json({ message: "Too many requests. Please try again later.", requestId }, { status: 429 });
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 
   let payload: ContactPayload;
   try {
     payload = await req.json();
   } catch {
-    return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    const res = NextResponse.json({ message: "Invalid request body", requestId }, { status: 400 });
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 
   const name = (payload.name || "").trim().slice(0, 100);
@@ -121,10 +123,14 @@ export async function POST(req: Request) {
   const subject = (payload.subject || "").trim().slice(0, 140);
   const source = (payload.source || "").trim().slice(0, 120);
   if (!name || !email || !message) {
-    return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
+    const res = NextResponse.json({ message: "Missing required fields", requestId }, { status: 400 });
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
   if (!isValidEmail(email)) {
-    return NextResponse.json({ message: "Invalid email address" }, { status: 400 });
+    const res = NextResponse.json({ message: "Invalid email address", requestId }, { status: 400 });
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 
   const toEmail = process.env.CONTACT_EMAIL_TO || "info@pyetdoktorin.al";
@@ -137,7 +143,7 @@ export async function POST(req: Request) {
         ? undefined
         : "Set SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS (recommended) or CONTACT_EMAIL_USER/CONTACT_EMAIL_PASS.";
     return NextResponse.json(
-      { message: "Email service is not configured", hint },
+      { message: "Email service is not configured", hint, requestId },
       { status: 503 }
     );
   }
@@ -180,11 +186,13 @@ export async function POST(req: Request) {
       text,
       html,
     });
-    return NextResponse.json({ ok: true });
+    const res = NextResponse.json({ ok: true, requestId });
+    res.headers.set("x-request-id", requestId);
+    return res;
   } catch {
-    return NextResponse.json(
-      { message: "Failed to send email" },
-      { status: 500 }
-    );
+    console.error("[contact.send-email] Failed to send", { requestId });
+    const res = NextResponse.json({ message: "Failed to send email", requestId }, { status: 500 });
+    res.headers.set("x-request-id", requestId);
+    return res;
   }
 }

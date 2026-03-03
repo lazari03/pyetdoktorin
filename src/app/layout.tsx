@@ -79,10 +79,12 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = (await cookies()).get(LANGUAGE_COOKIE_NAME)?.value || 'al';
   const nonce = (await headers()).get('x-nonce') || '';
+  const requestId = (await headers()).get('x-request-id') || '';
   return (
     <html lang={lang} data-theme="light">
       <head>
         {nonce ? <meta name="csp-nonce" content={nonce} /> : null}
+        {requestId ? <meta name="request-id" content={requestId} /> : null}
       </head>
       <body className="min-h-screen bg-white text-slate-900 antialiased">
         {children}

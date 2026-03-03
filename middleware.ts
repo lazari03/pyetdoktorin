@@ -16,6 +16,15 @@ function createNonce(bytes = 16) {
   return btoa(binary);
 }
 
+function createRequestId(): string {
+  // crypto.randomUUID is supported in modern runtimes; fallback to a nonce-like token.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return createNonce(18);
+}
+
 function buildCsp({ nonce, reportOnly }: { nonce: string; reportOnly: boolean }): string {
   const directives: string[] = [
     "default-src 'self'",
@@ -47,10 +56,13 @@ function buildCsp({ nonce, reportOnly }: { nonce: string; reportOnly: boolean })
 
 export function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
+  const requestId = req.headers.get('x-request-id')?.trim() || createRequestId();
   const forwardedProto = req.headers.get('x-forwarded-proto');
   if (process.env.NODE_ENV === 'production' && forwardedProto === 'http') {
     url.protocol = 'https:';
-    return NextResponse.redirect(url, 308);
+    const res = NextResponse.redirect(url, 308);
+    res.headers.set('x-request-id', requestId);
+    return res;
   }
   const rawRole = req.cookies.get(AUTH_COOKIE_NAMES.userRole)?.value;
   const role = normalizeRole(rawRole);
@@ -76,7 +88,9 @@ export function middleware(req: NextRequest) {
     } else {
       url.pathname = `${ROUTES.DASHBOARD}${url.pathname}`;
     }
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    res.headers.set('x-request-id', requestId);
+    return res;
   }
 
   // Redirect authenticated users away from auth pages
@@ -84,7 +98,9 @@ export function middleware(req: NextRequest) {
   // Require both auth token AND role cookie to reduce false positives from stale tokens
   if (hasSession && role && (url.pathname === ROUTES.LOGIN || url.pathname === ROUTES.REGISTER)) {
     url.pathname = getRoleLandingPath(role);
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    res.headers.set('x-request-id', requestId);
+    return res;
   }
 
   // Enforce idle timeout for any protected area if we have a timestamp.
@@ -93,6 +109,7 @@ export function middleware(req: NextRequest) {
     url.pathname = ROUTES.LOGIN;
     url.searchParams.set('reason', 'idle-timeout');
     const res = NextResponse.redirect(url);
+    res.headers.set('x-request-id', requestId);
     // Clear session cookies
     res.cookies.set(AUTH_COOKIE_NAMES.session, '', { path: '/', maxAge: 0, httpOnly: true, secure: secureCookie });
     res.cookies.set(AUTH_COOKIE_NAMES.userRole, '', { path: '/', maxAge: 0, httpOnly: true, secure: secureCookie });
@@ -105,14 +122,18 @@ export function middleware(req: NextRequest) {
     // If admin tries to access dashboard, redirect them to admin home
     if (hasSession && role === UserRole.Admin) {
       url.pathname = ROUTES.ADMIN;
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
 
     // Redirect immediately if no auth token
     if (!hasSession) {
       url.pathname = ROUTES.LOGIN;
       url.searchParams.set('from', req.nextUrl.pathname);
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
 
     // Allow while role is loading client-side (avoid redirect loops right after login).
@@ -120,12 +141,16 @@ export function middleware(req: NextRequest) {
       // Allow both doctors and patients to view doctor profiles
       if (url.pathname.startsWith(`${ROUTES.DASHBOARD}/doctor`) && !(role === UserRole.Doctor || role === UserRole.Patient)) {
         url.pathname = ROUTES.DASHBOARD;
-        return NextResponse.redirect(url);
+        const res = NextResponse.redirect(url);
+        res.headers.set('x-request-id', requestId);
+        return res;
       }
       // Patient-only routes
       if (url.pathname.startsWith(`${ROUTES.DASHBOARD}/search`) && role !== UserRole.Patient) {
         url.pathname = ROUTES.DASHBOARD;
-        return NextResponse.redirect(url);
+        const res = NextResponse.redirect(url);
+        res.headers.set('x-request-id', requestId);
+        return res;
       }
     }
   }
@@ -135,14 +160,18 @@ export function middleware(req: NextRequest) {
     if (!hasSession) {
       url.pathname = ROUTES.LOGIN;
       url.searchParams.set('from', req.nextUrl.pathname);
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
     // Allow while role is loading client-side (avoid redirect loops right after login).
     if (!role) {
       // fall through
     } else if (role !== UserRole.Clinic) {
       url.pathname = getRoleLandingPath(role);
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
   }
 
@@ -151,14 +180,18 @@ export function middleware(req: NextRequest) {
     if (!hasSession) {
       url.pathname = ROUTES.LOGIN;
       url.searchParams.set('from', req.nextUrl.pathname);
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
     // Allow while role is loading client-side (avoid redirect loops right after login).
     if (!role) {
       // fall through
     } else if (role !== UserRole.Pharmacy) {
       url.pathname = getRoleLandingPath(role);
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
   }
 
@@ -167,14 +200,18 @@ export function middleware(req: NextRequest) {
     if (!hasSession) {
       url.pathname = ROUTES.LOGIN;
       url.searchParams.set('from', req.nextUrl.pathname);
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
     // Allow while role is loading client-side (avoid redirect loops right after login).
     if (!role) {
       // fall through
     } else if (role !== UserRole.Admin) {
       url.pathname = getRoleLandingPath(role);
-      return NextResponse.redirect(url);
+      const res = NextResponse.redirect(url);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
   }
 
@@ -183,6 +220,7 @@ export function middleware(req: NextRequest) {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-language', lang);
   requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('x-request-id', requestId);
 
   const res = NextResponse.next({
     request: {
@@ -191,6 +229,7 @@ export function middleware(req: NextRequest) {
   });
   res.headers.set('x-language', lang);
   res.headers.set('x-nonce', nonce);
+  res.headers.set('x-request-id', requestId);
 
   if (process.env.NODE_ENV === 'production') {
     const reportOnly = buildCsp({ nonce, reportOnly: true });

@@ -9,6 +9,7 @@ import CookieConsentBanner from '@/presentation/components/CookieConsentBanner/C
 import ToastProvider from '@/presentation/components/Toast/ToastProvider';
 import AnalyticsScripts from '@/app/analytics/AnalyticsScripts';
 import Analytics from '@/app/analytics/Analytics';
+import ClientErrorReporter from '@/presentation/components/ClientErrorReporter/ClientErrorReporter';
 
 export default function AppProviders({ children }: { children: React.ReactNode }) {
   function SessionActivityHost() {
@@ -54,6 +55,7 @@ export default function AppProviders({ children }: { children: React.ReactNode }
       <AuthProvider>
         <ToastProvider>
           <SessionActivityHost />
+          <ClientErrorReporter />
           <CookieConsentBanner />
           <Suspense fallback={null}>
             <AnalyticsScripts />
@@ -65,4 +67,3 @@ export default function AppProviders({ children }: { children: React.ReactNode }
     </DIProvider>
   );
 }
-

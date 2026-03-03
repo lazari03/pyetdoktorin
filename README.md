@@ -185,6 +185,13 @@ Security note: in production, set `SITE_URL` / `NEXT_PUBLIC_SITE_URL` so the rou
 - `NEXT_PUBLIC_COOKIE_DOMAIN` / `COOKIE_DOMAIN` (optional): set to something like `.pyetdoktorin.al` if you use both `www` and apex domains and want cookies (language/consent) to persist across subdomains. Do **not** set this for `localhost`.
   - If unset, the app will try a conservative best-effort inference (works for `www` ↔ apex, but cannot persist across unrelated domains by browser design).
 
+### Observability (client errors)
+The app posts runtime client errors to `POST /api/client-error` (same-origin, rate-limited) and includes a `requestId` to help correlate logs.
+
+By default it logs to stdout only. To persist errors in a log sink, set one of:
+- **Better Stack (Logtail)**: `BETTERSTACK_SOURCE_TOKEN` (or `LOGTAIL_SOURCE_TOKEN`) and optionally `CLIENT_ERROR_SINKS=betterstack`
+- **Datadog Logs**: `DATADOG_API_KEY` and optionally `DATADOG_SITE` (default `datadoghq.com`), `DATADOG_SERVICE`, `DATADOG_TAGS`, plus `CLIENT_ERROR_SINKS=datadog`
+
 ## Deployment
 
 1. First, build the project using production environment:
@@ -207,6 +214,7 @@ Security note: in production, set `SITE_URL` / `NEXT_PUBLIC_SITE_URL` so the rou
 
 - `npm run dev` - Start development server
 - `npm run clean` - Remove `.next` / `.turbo` caches (fixes stale chunk issues)
+- `npm run env:check` - Validate important environment variables (recommended before deploy)
 - `npm run build` - Create a production build
 - `npm run build:prod` - Create a production build with production env variables
 - `npm run start` - Start production server

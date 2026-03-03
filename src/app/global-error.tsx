@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '@/config/routes';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
+import { reportClientError } from '@/presentation/utils/errorReporting';
 
 export default function GlobalError({
   error,
@@ -14,17 +15,19 @@ export default function GlobalError({
   reset: () => void;
 }) {
   const { t } = useTranslation();
+  const [errorId] = useState(() => reportClientError({ type: 'react_error_boundary', error, digest: error?.digest }));
 
   useEffect(() => {
     try {
       trackAnalyticsEvent('app_global_error_boundary', {
         message: error?.message,
         digest: error?.digest,
+        errorId,
       });
     } catch {
       // ignore analytics failures
     }
-  }, [error]);
+  }, [error, errorId]);
 
   const showDebug = process.env.NODE_ENV !== 'production';
 
@@ -42,6 +45,11 @@ export default function GlobalError({
             <p className="text-sm text-gray-600">
               {t('tryAgainCopy', 'Please try again. If this keeps happening, contact support.')}
             </p>
+            {errorId ? (
+              <p className="text-xs text-gray-500">
+                {t('errorReference', 'Reference')}: <span className="font-mono">{errorId}</span>
+              </p>
+            ) : null}
             {showDebug ? (
               <pre className="text-[11px] text-gray-500 whitespace-pre-wrap break-words rounded-2xl bg-gray-50 border border-gray-100 p-3">
                 {String(error?.message ?? error)}

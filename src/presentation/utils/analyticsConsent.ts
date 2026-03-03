@@ -5,6 +5,7 @@ export type AnalyticsConsentValue = "granted" | "denied" | "unset";
 const CONSENT_EVENT = "analytics_consent_changed";
 const CONSENT_STORAGE_KEY = ANALYTICS_CONSENT_COOKIE_NAME;
 const CONSENT_SESSION_KEY = `${ANALYTICS_CONSENT_COOKIE_NAME}_session`;
+const CONSENT_TTL_SECONDS = 60 * 60 * 24;
 let memoryConsent: AnalyticsConsentValue = "unset";
 let memoryExpiresAt = 0;
 
@@ -19,9 +20,6 @@ function getCookieValue(name: string): string | null {
 
 function parseStoredConsent(raw: string | null): Exclude<AnalyticsConsentValue, "unset"> | null {
   if (!raw) return null;
-  // Backward compat: old versions stored the raw string without an expiry.
-  // Treat that as expired so consent re-prompts according to the current policy.
-  if (raw === "granted" || raw === "denied") return null;
 
   try {
     const parsed = JSON.parse(raw) as Partial<StoredConsentPayload>;
@@ -37,7 +35,14 @@ function parseStoredConsent(raw: string | null): Exclude<AnalyticsConsentValue, 
 function getStorageValue(name: string): Exclude<AnalyticsConsentValue, "unset"> | null {
   if (typeof window === "undefined") return null;
   try {
-    return parseStoredConsent(window.localStorage.getItem(name));
+    const raw = window.localStorage.getItem(name);
+    // Migration: older versions stored just the raw string without an expiry.
+    // Keep the preference but rewrite it with the current TTL policy.
+    if (raw === "granted" || raw === "denied") {
+      setStorage(name, raw, CONSENT_TTL_SECONDS);
+      return raw;
+    }
+    return parseStoredConsent(raw);
   } catch {
     return null;
   }
@@ -46,7 +51,12 @@ function getStorageValue(name: string): Exclude<AnalyticsConsentValue, "unset"> 
 function getSessionValue(name: string): Exclude<AnalyticsConsentValue, "unset"> | null {
   if (typeof window === "undefined") return null;
   try {
-    return parseStoredConsent(window.sessionStorage.getItem(name));
+    const raw = window.sessionStorage.getItem(name);
+    if (raw === "granted" || raw === "denied") {
+      setSession(name, raw, CONSENT_TTL_SECONDS);
+      return raw;
+    }
+    return parseStoredConsent(raw);
   } catch {
     return null;
   }
@@ -114,7 +124,7 @@ export function hasAnalyticsConsent(): boolean {
   return getAnalyticsConsent() === "granted";
 }
 
-export function setAnalyticsConsent(value: Exclude<AnalyticsConsentValue, "unset">, maxAgeSeconds = 60 * 60 * 24) {
+export function setAnalyticsConsent(value: Exclude<AnalyticsConsentValue, "unset">, maxAgeSeconds = CONSENT_TTL_SECONDS) {
   memoryConsent = value;
   memoryExpiresAt = Date.now() + maxAgeSeconds * 1000;
   setCookie(ANALYTICS_CONSENT_COOKIE_NAME, value, maxAgeSeconds);
