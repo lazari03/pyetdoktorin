@@ -5,7 +5,6 @@ import { Suspense, useEffect } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { DIProvider, useDI } from '@/context/DIContext';
 import { useSessionActivity } from '@/presentation/hooks/useSessionActivity';
-import CookieConsentBanner from '@/presentation/components/CookieConsentBanner/CookieConsentBanner';
 import ToastProvider from '@/presentation/components/Toast/ToastProvider';
 import AnalyticsScripts from '@/app/analytics/AnalyticsScripts';
 import Analytics from '@/app/analytics/Analytics';
@@ -56,7 +55,6 @@ export default function AppProviders({ children }: { children: React.ReactNode }
         <ToastProvider>
           <SessionActivityHost />
           <ClientErrorReporter />
-          <CookieConsentBanner />
           <Suspense fallback={null}>
             <AnalyticsScripts />
             <Analytics />

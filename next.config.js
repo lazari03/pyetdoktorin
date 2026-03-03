@@ -61,6 +61,11 @@ module.exports = {
     ];
   },
   webpack: (config, { isServer, dev }) => {
+    // Dev stability: avoid webpack filesystem cache corruption (missing `*.pack.gz` / missing chunk modules)
+    // by disabling persistent caching in development.
+    if (dev) {
+      config.cache = false;
+    }
     if (!dev && !isServer && WebpackObfuscator) {
       config.plugins.push(
         new WebpackObfuscator(

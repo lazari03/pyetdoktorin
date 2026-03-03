@@ -971,7 +971,6 @@
   "profilePictureUploadConfigMissing": "Ngarkimi nuk është konfiguruar. Kontaktoni mbështetjen.",
   "profilePictureUploadInvalidType": "Lloj i pambështetur skedari. Ju lutemi ngarkoni një imazh.",
   "profilePictureUploadMissing": "Nuk është zgjedhur skedar. Ju lutemi zgjidhni një imazh.",
-  // removed duplicate "passwordResetEmailSent"
   "passwordResetEmailFailed": "Dështoi dërgimi i adresës elektronike për rivendosjen e fjalëkalimit. Ju lutemi provoni përsëri.",
   "profileUpdateSuccess": "Profili u përditësua me sukses!",
   "profileUpdateFailed": "Dështoi përditësimi i profilit!",

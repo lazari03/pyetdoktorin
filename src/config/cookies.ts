@@ -40,11 +40,22 @@ function isIpHost(hostname: string): boolean {
  */
 export function getCookieDomain(hostname?: string): string | undefined {
   const configured = ENV_COOKIE_DOMAIN.trim();
-  if (configured) return configured;
-
   const host =
     hostname ??
     (typeof window !== 'undefined' ? window.location.hostname : undefined);
+
+  if (configured) {
+    // Safety: only apply an explicit cookie domain if it matches the current host.
+    // This prevents common misconfigurations where `.env.local` contains a production cookie domain
+    // (e.g. `.pyetdoktorin.al`) which would cause cookies to silently not persist on `localhost`.
+    if (!host) return configured;
+    const normalizedHost = host.toLowerCase();
+    const normalizedDomain = configured.toLowerCase().replace(/^\.+/, '');
+    if (normalizedHost === normalizedDomain || normalizedHost.endsWith(`.${normalizedDomain}`)) {
+      return configured.startsWith('.') ? configured : `.${configured}`;
+    }
+    return undefined;
+  }
 
   if (!host) return undefined;
   const normalized = host.toLowerCase();
