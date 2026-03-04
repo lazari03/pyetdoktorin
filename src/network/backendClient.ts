@@ -31,6 +31,19 @@ const parseBackendError = (text: string): BackendErrorPayload | null => {
   }
 };
 
+async function readResponseTextSafe(response: Response): Promise<string> {
+  try {
+    return await response.text();
+  } catch (error) {
+    const contentType = response.headers.get('content-type') || '';
+    const contentEncoding = response.headers.get('content-encoding') || '';
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Failed to decode backend response body (${message}). content-type="${contentType}" content-encoding="${contentEncoding}"`,
+    );
+  }
+}
+
 async function waitForCurrentUser(timeoutMs = 3000, intervalMs = 120) {
   if (auth.currentUser) return auth.currentUser;
   const start = Date.now();
@@ -124,7 +137,7 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
     throw new Error('Network error: ' + (err instanceof Error ? err.message : String(err)));
   }
   if (!response.ok) {
-    const text = await response.text();
+    const text = await readResponseTextSafe(response);
 
     // If the /api/backend proxy route isn't available (common in some deploy setups),
     // Next may return an HTML 404 page. Fall back to calling the backend directly.
@@ -159,6 +172,6 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
     const detail = typeof payload?.detail === 'string' ? payload.detail : undefined;
     throw new BackendError(message, response.status, code, detail);
   }
-  const text = await response.text();
+  const text = await readResponseTextSafe(response);
   return text ? (JSON.parse(text) as T) : ({} as T);
 }

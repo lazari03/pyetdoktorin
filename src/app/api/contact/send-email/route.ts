@@ -16,14 +16,6 @@ type ContactPayload = {
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAX = 5;
 
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
 function isValidEmail(email: string): boolean {
   // Basic sanity check (avoid over-restrictive validation).
   if (!email || email.length > 254) return false;
@@ -154,17 +146,6 @@ export async function POST(req: Request) {
     subject ||
     `New contact message${name ? ` from ${name}` : ""}`;
 
-  const html = `
-    <div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;">
-      <h2 style="margin:0 0 12px;">New Contact Message</h2>
-      <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-      <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-      ${source ? `<p><strong>Source:</strong> ${escapeHtml(source)}</p>` : ""}
-      <p><strong>Message:</strong></p>
-      <p style="white-space:pre-wrap;">${escapeHtml(message)}</p>
-    </div>
-  `;
-
   const text = [
     "New Contact Message",
     `Name: ${name}`,
@@ -184,7 +165,6 @@ export async function POST(req: Request) {
       replyTo: email,
       subject: finalSubject,
       text,
-      html,
     });
     const res = NextResponse.json({ ok: true, requestId });
     res.headers.set("x-request-id", requestId);

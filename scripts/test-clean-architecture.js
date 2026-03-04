@@ -28,6 +28,18 @@ const expectedStructure = {
 
 let allTestsPassed = true;
 
+function resolveInDir(baseDir, relativePath) {
+  if (typeof relativePath !== 'string') throw new Error('Invalid path');
+  // Basic traversal guard (this script should never walk outside the intended directory).
+  if (relativePath.includes('\0')) throw new Error('Invalid path');
+  const base = path.resolve(baseDir) + path.sep;
+  const resolved = path.resolve(baseDir, relativePath);
+  if (!resolved.startsWith(base)) {
+    throw new Error(`Blocked path traversal: ${relativePath}`);
+  }
+  return resolved;
+}
+
 function checkDirectory(dirPath, expectedFiles) {
   console.log(`📁 Checking ${dirPath}`);
   
@@ -41,7 +53,8 @@ function checkDirectory(dirPath, expectedFiles) {
   let allFilesExist = true;
 
   expectedFiles.forEach(file => {
-    const filePath = path.join(dirPath, file);
+    // Expected files are allowlisted in this script; still resolve safely to avoid accidental traversal.
+    const filePath = resolveInDir(dirPath, file);
     if (fs.existsSync(filePath)) {
       console.log(`  ✅ ${file}`);
     } else {
@@ -85,7 +98,7 @@ try {
   
   let domainViolations = 0;
   domainFiles.forEach(file => {
-    const filePath = path.join('src/clean/src/domain', file);
+    const filePath = resolveInDir('src/clean/src/domain', file);
     const content = fs.readFileSync(filePath, 'utf8');
     
     if (content.includes('../infrastructure') || content.includes('../presentation')) {
@@ -108,7 +121,7 @@ try {
   
   let useCaseViolations = 0;
   useCaseFiles.forEach(file => {
-    const filePath = path.join('src/clean/src/application/use-cases', file);
+    const filePath = resolveInDir('src/clean/src/application/use-cases', file);
     const content = fs.readFileSync(filePath, 'utf8');
     
     if (content.includes('../presentation')) {

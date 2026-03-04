@@ -29,6 +29,30 @@ import { API_ENDPOINTS } from '@/config/routes';
 import { VIDEO_ERROR_CODES } from '@/config/errorCodes';
 const HMS_BASE_URL = API_ENDPOINTS.HMS_BASE_URL;
 
+function getHmsBase(): URL {
+  // Ensure `new URL(relative, base)` preserves any base path like `/v2/`.
+  const base = HMS_BASE_URL.endsWith('/') ? HMS_BASE_URL : `${HMS_BASE_URL}/`;
+  return new URL(base);
+}
+
+function isSafeId(value: unknown, { min = 6, max = 128 } = {}): value is string {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (trimmed.length < min || trimmed.length > max) return false;
+  // Firestore/100ms IDs are typically URL-safe. Block traversal/separators/schemes.
+  if (trimmed.includes('..')) return false;
+  if (/[\\/]/.test(trimmed)) return false;
+  if (trimmed.includes('://')) return false;
+  return /^[A-Za-z0-9_-]+$/.test(trimmed);
+}
+
+function normalizeRole(value: unknown): 'doctor' | 'patient' | null {
+  if (typeof value !== 'string') return null;
+  const role = value.trim().toLowerCase();
+  if (role === 'doctor' || role === 'patient') return role;
+  return null;
+}
+
 async function syncPaymentIfPossible(appointmentId: string, idToken: string) {
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL ||
@@ -84,12 +108,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: VIDEO_ERROR_CODES.MissingParams });
   }
 
+  const safeRole = normalizeRole(role);
+  if (!safeRole) {
+    return res.status(400).json({ error: VIDEO_ERROR_CODES.MissingParams });
+  }
+  if (!isSafeId(room_id)) {
+    return res.status(400).json({ error: VIDEO_ERROR_CODES.MissingParams });
+  }
+
   if (user_id !== authenticatedUserId) {
     const auditService = new SecurityAuditService();
     await auditService.logVideoAccessAttempt({
       userId: authenticatedUserId,
       appointmentId: room_id,
-      role,
+      role: safeRole,
       success: false,
       reason: 'user_mismatch',
       ip: req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress,
@@ -177,7 +209,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const expectedRole = isDoctor ? 'doctor' : 'patient';
-  if (role !== expectedRole) {
+  if (safeRole !== expectedRole) {
     return res.status(403).json({ error: VIDEO_ERROR_CODES.RoleNotAllowed });
   }
 
@@ -237,9 +269,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.error('100ms create room failed', createRoomRaw);
         return res.status(createRoomRes.status).json({ error: VIDEO_ERROR_CODES.GenericFailed });
       }
-      actualRoomId = createRoomData.id;
+      const createdRoomId = typeof createRoomData.id === 'string' ? createRoomData.id : null;
+      if (!createdRoomId) {
+        console.error('100ms create room missing id', createRoomRaw);
+        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed });
+      }
+      actualRoomId = createdRoomId;
       // --- Create room codes for all roles in the room at once ---
-      const createCodesRes = await fetch(`${HMS_BASE_URL}/room-codes/room/${actualRoomId}`, {
+      const createCodesUrl = new URL(`room-codes/room/${encodeURIComponent(String(actualRoomId))}`, getHmsBase());
+      const createCodesRes = await fetch(createCodesUrl.toString(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +300,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await new Promise((r) => setTimeout(r, 2000));
     } else {
       // Fetch the room details to ensure it exists
-      const getRoomRes = await fetch(`${HMS_BASE_URL}/rooms/${room_id}`, {
+      const getRoomUrl = new URL(`rooms/${encodeURIComponent(room_id)}`, getHmsBase());
+      const getRoomRes = await fetch(getRoomUrl.toString(), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${managementToken}`
@@ -279,11 +318,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.error('100ms get room failed', getRoomRaw);
         return res.status(getRoomRes.status).json({ error: VIDEO_ERROR_CODES.GenericFailed });
       }
-      actualRoomId = getRoomData.id;
+      const existingRoomId = typeof getRoomData.id === 'string' ? getRoomData.id : null;
+      if (!existingRoomId) {
+        console.error('100ms get room missing id', getRoomRaw);
+        return res.status(500).json({ error: VIDEO_ERROR_CODES.GenericFailed });
+      }
+      actualRoomId = existingRoomId;
       // --- Automate room code creation for both doctor and patient roles for existing rooms ---
       const rolesToEnsure = ['doctor', 'patient'];
       for (const r of rolesToEnsure) {
-        const getCodeRes = await fetch(`${HMS_BASE_URL}/room-codes/room/${actualRoomId}?role=${r}&enabled=true`, {
+        const getCodeUrl = new URL(`room-codes/room/${encodeURIComponent(String(actualRoomId))}`, getHmsBase());
+        getCodeUrl.searchParams.set('role', r);
+        getCodeUrl.searchParams.set('enabled', 'true');
+        const getCodeRes = await fetch(getCodeUrl.toString(), {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${managementToken}`
@@ -319,7 +366,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Always fetch the room code for the given room and role
     let roomCode = null;
-    const getRoomCodesRes = await fetch(`${HMS_BASE_URL}/room-codes/room/${actualRoomId}?role=${role}&enabled=true`, {
+    const getRoomCodesUrl = new URL(`room-codes/room/${encodeURIComponent(String(actualRoomId))}`, getHmsBase());
+    getRoomCodesUrl.searchParams.set('role', safeRole);
+    getRoomCodesUrl.searchParams.set('enabled', 'true');
+    const getRoomCodesRes = await fetch(getRoomCodesUrl.toString(), {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${managementToken}`
@@ -337,7 +387,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     roomCode = Array.isArray(roomCodesArr) && roomCodesArr.length > 0 ? roomCodesArr[0].code : null;
     if (!roomCode) {
       // Try to fetch all room codes for this room and pick the first enabled one with a code format like 'efg-mqpc-zbb'
-      const getAllRoomCodesRes = await fetch(`${HMS_BASE_URL}/room-codes/room/${actualRoomId}`, {
+      const getAllRoomCodesUrl = new URL(`room-codes/room/${encodeURIComponent(String(actualRoomId))}`, getHmsBase());
+      const getAllRoomCodesRes = await fetch(getAllRoomCodesUrl.toString(), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${managementToken}`
@@ -368,7 +419,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
           body: JSON.stringify({
             room_id: actualRoomId,
-            role,
+            role: safeRole,
             enabled: true
           })
         });

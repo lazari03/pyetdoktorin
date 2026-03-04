@@ -18,7 +18,8 @@ export async function resetUserPassword(email: string) {
 // Centralized authentication service
 
 function getSiteOrigin(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://pyetdoktorin.al');
+  if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin;
+  return process.env.NEXT_PUBLIC_SITE_URL || 'https://pyetdoktorin.al';
 }
 
 async function establishServerSession(idToken: string): Promise<void> {

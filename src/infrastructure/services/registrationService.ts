@@ -14,7 +14,10 @@ export class RegistrationService implements IRegistrationService {
     const user = userCredential.user;
 
     try {
-      const origin = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://pyetdoktorin.al');
+      const origin =
+        typeof window !== 'undefined' && window.location?.origin
+          ? window.location.origin
+          : process.env.NEXT_PUBLIC_SITE_URL || 'https://pyetdoktorin.al';
       await sendEmailVerification(user, { url: `${origin}/verify-email?next=%2Fdashboard`, handleCodeInApp: true });
     } catch (e) {
       console.warn('Failed to send verification email', e);

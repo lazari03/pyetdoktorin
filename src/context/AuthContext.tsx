@@ -39,9 +39,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 
       if (currentUser) {
+        let resolvedEmailVerified = currentUser.emailVerified === true;
+        try {
+          // Email verification status can be stale until we reload the user.
+          if (currentUser.email && !resolvedEmailVerified) {
+            await currentUser.reload();
+            resolvedEmailVerified = currentUser.emailVerified === true;
+          }
+        } catch {
+          // ignore reload failures
+        }
+
         setIsAuthenticated(true);
         setUid(currentUser.uid); // Set `uid`
-        setEmailVerified(currentUser.emailVerified === true);
+        setEmailVerified(resolvedEmailVerified);
         try {
           // Fetch the user's role from Firestore
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
@@ -59,12 +70,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             setRole(null);
             setUser(null);
-            setEmailVerified(currentUser.emailVerified === true);
+            setEmailVerified(resolvedEmailVerified);
           }
         } catch {
           setRole(null);
           setUser(null);
-          setEmailVerified(currentUser.emailVerified === true);
+          setEmailVerified(resolvedEmailVerified);
         }
       } else {
         setIsAuthenticated(false);

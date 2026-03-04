@@ -13,6 +13,22 @@ const backendBaseUrl =
 
 const normalizeBaseUrl = (base: string) => base.replace(/\/$/, '');
 
+function looksLikeJsonText(payload: Buffer): boolean {
+  let i = 0;
+  // UTF-8 BOM
+  if (payload.length >= 3 && payload[0] === 0xef && payload[1] === 0xbb && payload[2] === 0xbf) i = 3;
+  while (i < payload.length) {
+    const b = payload[i];
+    // whitespace (space/tab/newline/cr)
+    if (b === 0x20 || b === 0x09 || b === 0x0a || b === 0x0d) {
+      i += 1;
+      continue;
+    }
+    return b === 0x7b /* { */ || b === 0x5b /* [ */;
+  }
+  return false;
+}
+
 async function readRawBody(req: NextApiRequest): Promise<ArrayBuffer> {
   const chunks: Buffer[] = [];
   await new Promise<void>((resolve, reject) => {
@@ -56,6 +72,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   delete headers.host;
   delete headers.connection;
   delete headers['content-length'];
+  // Avoid proxying compressed payloads since Node fetch may transparently decode them.
+  // If we forward a decoded body while also forwarding `content-encoding`, browsers can fail to decode.
+  headers['accept-encoding'] = 'identity';
   // Prevent conditional requests that can return 304 and lead to stale UI data in dashboards.
   delete headers['if-none-match'];
   delete headers['if-modified-since'];
@@ -88,10 +107,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.status(backendRes.status);
 
+  const contentType = backendRes.headers.get('content-type') || '';
+  const contentEncoding = backendRes.headers.get('content-encoding') || '';
+  const arrayBuffer = await backendRes.arrayBuffer();
+  const payload = Buffer.from(arrayBuffer);
+  const shouldStripEncoding = Boolean(contentEncoding) && (contentType.includes('application/json') || contentType.includes('text/')) && looksLikeJsonText(payload);
+
   // Copy headers (preserve multi-value Set-Cookie).
   backendRes.headers.forEach((value, key) => {
     if (key.toLowerCase() === 'set-cookie') return;
     if (key.toLowerCase() === 'transfer-encoding') return;
+    if (key.toLowerCase() === 'content-encoding' && shouldStripEncoding) return;
+    if (key.toLowerCase() === 'content-length') return;
     if (key.toLowerCase() === 'etag') return;
     if (key.toLowerCase() === 'cache-control') return;
     res.setHeader(key, value);
@@ -109,6 +136,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (single) res.setHeader('Set-Cookie', single);
   }
 
-  const arrayBuffer = await backendRes.arrayBuffer();
-  res.send(Buffer.from(arrayBuffer));
+  res.setHeader('Content-Length', String(payload.byteLength));
+  res.send(payload);
 }

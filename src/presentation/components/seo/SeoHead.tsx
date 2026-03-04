@@ -13,8 +13,9 @@ export default async function SeoHead({ schema }: { schema?: JsonLd | JsonLd[] }
           key={`schema-${index}`}
           type="application/ld+json"
           nonce={nonce || undefined}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
-        />
+        >
+          {JSON.stringify(item)}
+        </script>
       ))}
     </>
   );

@@ -23,7 +23,8 @@ function sanitizeNextPath(value: string | null | undefined): string | null {
 }
 
 function getSiteOrigin(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://pyetdoktorin.al');
+  if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin;
+  return process.env.NEXT_PUBLIC_SITE_URL || 'https://pyetdoktorin.al';
 }
 
 export default function VerifyEmailPage() {
