@@ -11,6 +11,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   uid: string | null; // Add `uid` property
   user: { uid: string; name: string; email?: string; phoneNumber?: string } | null;
+  emailVerified: boolean;
   role: UserRole | null;
   loading: boolean;
 }
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   uid: null, 
   user: null,
+  emailVerified: false,
   role: null, // Set default to null
   loading: true,
 });
@@ -27,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uid, setUid] = useState<string | null>(null); // Add state for `uid`
   const [user, setUser] = useState<{ uid: string; name: string; email?: string; phoneNumber?: string } | null>(null);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [role, setRole] = useState<UserRole | null>(null); // Fix type here
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (currentUser) {
         setIsAuthenticated(true);
         setUid(currentUser.uid); // Set `uid`
+        setEmailVerified(currentUser.emailVerified === true);
         try {
           // Fetch the user's role from Firestore
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
@@ -55,16 +59,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             setRole(null);
             setUser(null);
+            setEmailVerified(currentUser.emailVerified === true);
           }
         } catch {
           setRole(null);
           setUser(null);
+          setEmailVerified(currentUser.emailVerified === true);
         }
       } else {
         setIsAuthenticated(false);
         setUid(null); // Reset `uid`
         setUser(null);
         setRole(null);
+        setEmailVerified(false);
       }
 
       setLoading(false);
@@ -74,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, uid, user, role, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated, uid, user, emailVerified, role, loading }}>
       {children}
     </AuthContext.Provider>
   );

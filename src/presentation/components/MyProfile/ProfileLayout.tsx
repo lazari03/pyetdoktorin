@@ -70,7 +70,7 @@ export function ProfileLayout(props: Props) {
           </div>
         </header>
 
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="grid items-start gap-5 lg:grid-cols-3">
           <section className="lg:col-span-2 bg-white rounded-3xl border border-purple-50 shadow-lg p-6">
             <MyProfileForm
               formData={formData}

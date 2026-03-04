@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -20,10 +24,24 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@i18n": ["./src/i18n/i18n"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@i18n": [
+        "./src/i18n/i18n"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/components/footerSection.jsx"],
-  "exclude": ["node_modules", "backend/**"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    "src/app/components/footerSection.jsx",
+    ".next-dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "backend/**"
+  ]
 }

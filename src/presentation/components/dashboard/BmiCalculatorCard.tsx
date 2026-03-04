@@ -40,9 +40,9 @@ export function BmiCalculatorCard() {
   const barPercent = bmi ? Math.min(100, Math.max(0, ((bmi - 10) / 30) * 100)) : 0;
 
   return (
-    <section className="bg-white rounded-2xl shadow-md border border-purple-50 h-full flex flex-col overflow-hidden">
+    <section className="card-premium card-premium-hover h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-purple-50 px-5 py-3 flex items-center gap-2 border-b border-purple-100">
+      <div className="bg-purple-50/70 px-5 py-3 flex items-center gap-2 border-b border-purple-100/80">
         <CalculatorIcon className="h-4 w-4 text-purple-600" />
         <p className="text-xs font-semibold uppercase tracking-wide text-purple-600">
           {t("bmiCalculator")}

@@ -13,6 +13,14 @@ function rm(target) {
   }
 }
 
-rm('.next');
-rm('.turbo');
+const args = new Set(process.argv.slice(2));
+const wantsAll = args.has('--all');
+const wantsDev = args.has('--dev');
+const wantsBuild = args.has('--build');
 
+const cleanBuild = wantsAll || wantsBuild || (!wantsDev && !wantsAll && !wantsBuild);
+const cleanDev = wantsAll || wantsDev;
+
+if (cleanBuild) rm('.next');
+if (cleanDev) rm('.next-dev');
+rm('.turbo');

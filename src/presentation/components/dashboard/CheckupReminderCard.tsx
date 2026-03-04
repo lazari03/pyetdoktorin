@@ -14,7 +14,7 @@ export function CheckupReminderCard({ className = "" }: Props) {
   const displayDate = tempDate || lastCheckupDate;
 
   return (
-    <section className={`bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col gap-4 ${className}`}>
+    <section className={`card-premium card-premium-hover p-4 sm:p-5 h-full flex flex-col gap-4 ${className}`}>
       <div>
         <p className="text-sm font-semibold text-gray-900">{t("checkupReminder") ?? "Check-up reminder"}</p>
         <p className="text-xs text-gray-600 mt-1">
@@ -30,21 +30,21 @@ export function CheckupReminderCard({ className = "" }: Props) {
           type="date"
           value={displayDate || ""}
           onChange={(e) => setTempDate(e.target.value)}
-          className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+          className="input bg-white"
           disabled={loading || saving}
         />
         <button
           type="button"
           onClick={() => tempDate && saveDate(tempDate)}
           disabled={!tempDate || saving}
-          className="inline-flex items-center rounded-full border border-purple-500 px-4 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-500 hover:text-white transition-colors disabled:opacity-50"
+          className="btn btn-primary btn-xs w-full sm:w-auto"
         >
           {saving ? t("saving") ?? "Saving..." : t("saveDate") ?? "Save date"}
         </button>
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>
 
-      <div className="mt-auto bg-purple-50 border border-purple-100 rounded-xl p-4">
+      <div className="mt-auto bg-purple-50/70 border border-purple-100/80 rounded-2xl p-4">
         <p className="text-xs font-semibold text-purple-700">
           {t("nextCheckup") ?? "Next check-up"}
         </p>

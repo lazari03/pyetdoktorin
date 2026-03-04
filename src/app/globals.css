@@ -52,6 +52,65 @@ textarea:focus-visible {
   box-shadow: var(--shadow-soft);
 }
 
+.card-premium {
+  border-radius: var(--radius-card);
+  background: linear-gradient(180deg, rgba(var(--surface), 0.94), rgba(var(--surface-muted), 0.88));
+  border: 1px solid rgba(var(--border), 0.55);
+  box-shadow: var(--shadow-soft), var(--shadow-card);
+}
+
+@supports (backdrop-filter: blur(10px)) {
+  .card-premium {
+    background: linear-gradient(180deg, rgba(var(--surface), 0.78), rgba(var(--surface-muted), 0.7));
+    backdrop-filter: blur(10px);
+  }
+}
+
+.card-premium-hover {
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1),
+    box-shadow 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@media (hover: hover) {
+  .card-premium-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-soft), 0 18px 60px rgba(15, 23, 42, 0.12);
+  }
+}
+
+/* Accent variants (used to differentiate dashboard cards). */
+.card-accent {
+  position: relative;
+  overflow: hidden;
+  --card-accent: 124 58 237; /* purple-600 default */
+}
+
+.card-accent::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 90% 0%, rgba(var(--card-accent), 0.14), transparent 55%);
+  pointer-events: none;
+}
+
+.card-accent::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(var(--card-accent), 0.9), rgba(var(--card-accent), 0));
+  pointer-events: none;
+}
+
+.card-accent-purple { --card-accent: 124 58 237; }  /* purple-600 */
+.card-accent-indigo { --card-accent: 99 102 241; }  /* indigo-500 */
+.card-accent-violet { --card-accent: 139 92 246; }  /* violet-500 */
+.card-accent-emerald { --card-accent: 16 185 129; } /* emerald-500 */
+.card-accent-rose { --card-accent: 244 63 94; }     /* rose-500 */
+.card-accent-slate { --card-accent: 71 85 105; }    /* slate-600 */
+
 .card-body {
   @apply p-6;
 }

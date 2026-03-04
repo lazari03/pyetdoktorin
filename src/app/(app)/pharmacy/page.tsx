@@ -12,6 +12,7 @@ import { getRoleNotificationsPath } from "@/navigation/roleRoutes";
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
 import { PHARMACY_PATHS } from "@/navigation/paths";
+import { DashboardTutorialGate } from "@/presentation/components/dashboard/DashboardTutorialGate";
 
 type PharmacyNotification = {
   id: string;
@@ -110,6 +111,7 @@ export default function PharmacyDashboardPage() {
       loadingLabel={t("loading")}
       analyticsPrefix="pharmacy.dashboard"
     >
+      {user?.uid ? <DashboardTutorialGate userId={user.uid} role={role} /> : null}
       <div className="min-h-screen py-6 px-3">
         <div className="max-w-6xl mx-auto space-y-4">
           <div className="flex flex-col gap-1">

@@ -28,6 +28,12 @@ export function requireAuth(requiredRoles?: UserRole[]) {
       } else {
         return res.status(401).json({ error: 'Missing authentication credentials' });
       }
+
+      // Enforce email verification for email-based accounts.
+      if ((decoded as { email?: string; email_verified?: boolean }).email && (decoded as { email_verified?: boolean }).email_verified !== true) {
+        return res.status(403).json({ error: 'Email not verified' });
+      }
+
       const normalizeRole = (raw: unknown): UserRole | null => {
         if (typeof raw !== 'string') return null;
         const normalized = raw.toLowerCase();

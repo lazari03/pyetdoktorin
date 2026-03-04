@@ -41,7 +41,7 @@ export function HeroCard({
   const showJoin = Boolean(onJoin && !showPay && !showWaiting && !showProcessing);
 
   return (
-    <section className="bg-white rounded-3xl shadow-lg overflow-hidden border border-purple-50">
+    <section className="card-premium card-premium-hover overflow-hidden">
       <div className="relative min-h-[220px] flex items-end">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.25),transparent_45%)]" />

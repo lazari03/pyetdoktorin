@@ -81,6 +81,18 @@ export function middleware(req: NextRequest) {
     url.pathname.startsWith(ROUTES.PHARMACY) ||
     url.pathname.startsWith(ROUTES.ADMIN);
 
+  // Avoid polluting app routes with auth-return query params.
+  // (These params are only meaningful on /login and /register.)
+  if (isProtectedPath) {
+    const from = url.searchParams.get('from');
+    if (from && from === url.pathname) {
+      url.searchParams.delete('from');
+      const res = NextResponse.redirect(url);
+      res.headers.set('x-request-id', requestId);
+      return res;
+    }
+  }
+
   // Redirect authenticated users from public doctor URLs to the dashboard profile view
   if (hasSession && isDoctorPublicPath) {
     if (url.pathname === '/doctor' || url.pathname === '/doctor/') {
@@ -98,6 +110,9 @@ export function middleware(req: NextRequest) {
   // Require both auth token AND role cookie to reduce false positives from stale tokens
   if (hasSession && role && (url.pathname === ROUTES.LOGIN || url.pathname === ROUTES.REGISTER)) {
     url.pathname = getRoleLandingPath(role);
+    url.searchParams.delete('from');
+    url.searchParams.delete('next');
+    url.searchParams.delete('reason');
     const res = NextResponse.redirect(url);
     res.headers.set('x-request-id', requestId);
     return res;
@@ -130,7 +145,11 @@ export function middleware(req: NextRequest) {
     // Redirect immediately if no auth token
     if (!hasSession) {
       url.pathname = ROUTES.LOGIN;
-      url.searchParams.set('from', req.nextUrl.pathname);
+      const returnTo = req.nextUrl.clone();
+      returnTo.searchParams.delete('from');
+      returnTo.searchParams.delete('next');
+      returnTo.searchParams.delete('reason');
+      url.searchParams.set('from', returnTo.pathname + returnTo.search);
       const res = NextResponse.redirect(url);
       res.headers.set('x-request-id', requestId);
       return res;
@@ -159,7 +178,11 @@ export function middleware(req: NextRequest) {
   if (url.pathname.startsWith(ROUTES.CLINIC)) {
     if (!hasSession) {
       url.pathname = ROUTES.LOGIN;
-      url.searchParams.set('from', req.nextUrl.pathname);
+      const returnTo = req.nextUrl.clone();
+      returnTo.searchParams.delete('from');
+      returnTo.searchParams.delete('next');
+      returnTo.searchParams.delete('reason');
+      url.searchParams.set('from', returnTo.pathname + returnTo.search);
       const res = NextResponse.redirect(url);
       res.headers.set('x-request-id', requestId);
       return res;
@@ -179,7 +202,11 @@ export function middleware(req: NextRequest) {
   if (url.pathname.startsWith(ROUTES.PHARMACY)) {
     if (!hasSession) {
       url.pathname = ROUTES.LOGIN;
-      url.searchParams.set('from', req.nextUrl.pathname);
+      const returnTo = req.nextUrl.clone();
+      returnTo.searchParams.delete('from');
+      returnTo.searchParams.delete('next');
+      returnTo.searchParams.delete('reason');
+      url.searchParams.set('from', returnTo.pathname + returnTo.search);
       const res = NextResponse.redirect(url);
       res.headers.set('x-request-id', requestId);
       return res;
@@ -199,7 +226,11 @@ export function middleware(req: NextRequest) {
   if (url.pathname.startsWith(ROUTES.ADMIN)) {
     if (!hasSession) {
       url.pathname = ROUTES.LOGIN;
-      url.searchParams.set('from', req.nextUrl.pathname);
+      const returnTo = req.nextUrl.clone();
+      returnTo.searchParams.delete('from');
+      returnTo.searchParams.delete('next');
+      returnTo.searchParams.delete('reason');
+      url.searchParams.set('from', returnTo.pathname + returnTo.search);
       const res = NextResponse.redirect(url);
       res.headers.set('x-request-id', requestId);
       return res;

@@ -16,23 +16,25 @@ import MissingRole from '@/presentation/components/MissingRole/MissingRole';
 import { useDashboardGuard } from '@/navigation/useDashboardGuard';
 import { getDashboardNavDefs, getDashboardProfileMenuDefs } from '@/navigation/navConfig';
 import SectionShell from '@/presentation/components/SectionShell/SectionShell';
+import EmailVerificationRequiredModal from '@/presentation/components/auth/EmailVerificationRequiredModal';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  const { role, loading, isAuthenticated, user } = useAuth();
+  const { role, loading, isAuthenticated, user, emailVerified } = useAuth();
   const { logoutSessionUseCase, logoutServerUseCase } = useDI();
   const initializeAppointments = useInitializeAppointments();
   const { redirecting } = useDashboardGuard({ loading, isAuthenticated, role, pathname });
 
   const initializedRef = useRef(false);
   useEffect(() => {
+    if (!emailVerified) return;
     if (!initializedRef.current && isAuthenticated && role && user && initializeAppointments) {
       if (role !== UserRole.Doctor && role !== UserRole.Patient) return;
       initializeAppointments(role);
       initializedRef.current = true;
     }
-  }, [isAuthenticated, role, user, initializeAppointments]);
+  }, [emailVerified, isAuthenticated, role, user, initializeAppointments]);
 
   const nav = useNavigationCoordinator();
 
@@ -58,6 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return <MissingRole onLogout={handleLogoutClick} />;
   }
 
+  const verificationRequired = isAuthenticated && !emailVerified;
   const navDefs = getDashboardNavDefs(role);
   const profileMenuDefs = getDashboardProfileMenuDefs(role);
 
@@ -101,7 +104,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Link>
       }
     >
-      {children}
+      {verificationRequired ? null : children}
+      <EmailVerificationRequiredModal isOpen={verificationRequired} onLogout={handleLogoutClick} />
     </SectionShell>
   );
 }

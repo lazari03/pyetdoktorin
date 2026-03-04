@@ -12,7 +12,7 @@ type ActivityCardProps = {
 
 export function ActivityCard({ score, stats, note, actionLabel, onAction }: ActivityCardProps) {
   return (
-    <section className="bg-white rounded-3xl shadow-lg p-5 border border-purple-50 flex flex-col gap-4">
+    <section className="card-premium card-premium-hover p-4 sm:p-5 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <p className="text-sm font-semibold text-gray-900">Activity score</p>
@@ -37,7 +37,7 @@ export function ActivityCard({ score, stats, note, actionLabel, onAction }: Acti
       </div>
 
       {note && (
-        <div className="bg-purple-50 border border-purple-100 rounded-2xl p-3 text-sm text-gray-800">
+        <div className="bg-purple-50/70 border border-purple-100/80 rounded-2xl p-3 text-sm text-gray-800">
           <p>{note}</p>
           {actionLabel && (
             <button className="text-purple-600 font-semibold text-xs mt-2 hover:underline" onClick={onAction}>

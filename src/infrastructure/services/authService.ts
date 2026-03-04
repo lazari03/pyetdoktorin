@@ -1,4 +1,4 @@
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, updateEmail } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, updateEmail, sendEmailVerification } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/config/firebaseconfig';
@@ -17,6 +17,78 @@ export async function resetUserPassword(email: string) {
 }
 // Centralized authentication service
 
+function getSiteOrigin(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://pyetdoktorin.al');
+}
+
+async function establishServerSession(idToken: string): Promise<void> {
+  const sessionUrl = '/api/backend/api/auth/session';
+  const res = await fetch(sessionUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    redirect: 'manual',
+    body: JSON.stringify({ idToken }),
+  });
+  if (!res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    const bodyText = await res.text();
+    if (contentType.includes('application/json')) {
+      try {
+        const parsed = JSON.parse(bodyText) as { error?: string };
+        throw new Error(parsed?.error || 'Failed to establish session');
+      } catch {
+        // fall through to plain text
+      }
+    }
+    throw new Error(bodyText || 'Failed to establish session');
+  }
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const body = await res.text();
+    console.error('Session API returned non-JSON response', res.status, contentType, body.slice(0, 200));
+    throw new Error('Failed to establish session');
+  }
+  const payload = (await res.json()) as { ok?: boolean; role?: string; error?: string };
+  if (!payload?.ok) {
+    throw new Error(payload?.error || 'Failed to establish session');
+  }
+}
+
+export async function sendVerificationEmail(params?: { continueUrl?: string }): Promise<void> {
+  const authInstance = getAuth();
+  const currentUser = authInstance.currentUser;
+  if (!currentUser) {
+    throw new Error('User not authenticated');
+  }
+  const origin = getSiteOrigin();
+  const continueUrl = params?.continueUrl ?? `${origin}/verify-email`;
+  await sendEmailVerification(currentUser, { url: continueUrl, handleCodeInApp: true });
+}
+
+export async function establishSessionForCurrentUser(): Promise<void> {
+  const authInstance = getAuth();
+  const currentUser = authInstance.currentUser;
+  if (!currentUser) {
+    throw new Error('User not authenticated');
+  }
+  if (currentUser.email && currentUser.emailVerified !== true) {
+    throw new Error('Email not verified');
+  }
+  const idToken = await currentUser.getIdToken(true);
+  await establishServerSession(idToken);
+}
+
+export async function establishSessionForCurrentUserAllowUnverified(): Promise<void> {
+  const authInstance = getAuth();
+  const currentUser = authInstance.currentUser;
+  if (!currentUser) {
+    throw new Error('User not authenticated');
+  }
+  const idToken = await currentUser.getIdToken(true);
+  await establishServerSession(idToken);
+}
+
 // Check if user is authenticated
 export const isAuthenticated = (callback: (authState: { userId: string | null; error: string | null }) => void) => {
     const authInstance = getAuth();
@@ -30,7 +102,10 @@ export const isAuthenticated = (callback: (authState: { userId: string | null; e
 };
 
 // Login function
-export const login = async (email: string, password: string): Promise<{ user: User; role: UserRole }> => {
+export const login = async (
+  email: string,
+  password: string
+): Promise<{ user: User; role: UserRole; emailVerified: boolean }> => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
@@ -40,38 +115,11 @@ export const login = async (email: string, password: string): Promise<{ user: Us
         const role = userDoc.exists() ? normalizeRole(userDoc.data()?.role) : UserRole.Patient;
         const resolvedRole = role ?? UserRole.Patient;
 
-        // Get ID token and send to server to create an HttpOnly session cookie
+        const emailVerified = user.emailVerified === true;
+
+        // Establish server session for app navigation (API access is still blocked server-side until verified).
         const idToken = await user.getIdToken(true);
-        const sessionUrl = '/api/backend/api/auth/session';
-        const res = await fetch(sessionUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            redirect: 'manual',
-            body: JSON.stringify({ idToken }),
-        });
-        if (!res.ok) {
-            const body = await res.text();
-            console.error('Session API error', res.status, body);
-            throw new Error(body || 'Failed to establish session');
-        }
-        // Guard against misrouted redirects returning HTML (e.g. Next redirects /api/* to /blog).
-        const contentType = res.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-            const body = await res.text();
-            console.error('Session API returned non-JSON response', res.status, contentType, body.slice(0, 200));
-            throw new Error('Failed to establish session');
-        }
-        try {
-            const payload = (await res.json()) as { ok?: boolean; role?: string; error?: string };
-            if (!payload?.ok) {
-                console.error('Session API returned unexpected payload', payload);
-                throw new Error(payload?.error || 'Failed to establish session');
-            }
-        } catch (parseError) {
-            console.error('Failed to parse Session API response', parseError);
-            throw new Error('Failed to establish session');
-        }
+        await establishServerSession(idToken);
 
         // Refresh token to pull updated custom claims (role/admin) after session is established
         try {
@@ -80,10 +128,11 @@ export const login = async (email: string, password: string): Promise<{ user: Us
             console.warn('Failed to refresh token after session setup', refreshError);
         }
 
-        return { user, role: resolvedRole };
+        return { user, role: resolvedRole, emailVerified };
     } catch (error) {
         console.error('Login error:', error); // Log the actual error object
-        throw new Error('Failed to log in');
+        const message = error instanceof Error ? error.message : 'Failed to log in';
+        throw new Error(message || 'Failed to log in');
     }
 };
 

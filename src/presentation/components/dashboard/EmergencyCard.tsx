@@ -8,9 +8,9 @@ export function EmergencyCard() {
   const { t } = useTranslation();
 
   return (
-    <section className="bg-white rounded-2xl shadow-md border border-purple-50 h-full flex flex-col overflow-hidden">
+    <section className="card-premium card-premium-hover h-full flex flex-col overflow-hidden">
       {/* Header strip */}
-      <div className="bg-red-50 px-5 py-3 flex items-center gap-2 border-b border-red-100">
+      <div className="bg-red-50/70 px-5 py-3 flex items-center gap-2 border-b border-red-100/80">
         <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
         <p className="text-xs font-semibold uppercase tracking-wide text-red-600">
           {t("emergencyServices")}

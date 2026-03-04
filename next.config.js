@@ -8,11 +8,15 @@ try {
 }
 
 module.exports = {
+  // Keep dev output isolated from production builds to avoid `.next` corruption
+  // when running `next dev` and `next build` (or cleanup) around the same time.
+  // You can override with `NEXT_DIST_DIR`.
+  distDir: process.env.NEXT_DIST_DIR || (process.env.NODE_ENV === 'production' ? '.next' : '.next-dev'),
   images: {
-    domains: [
-      'tailwindcss.com',
-      'pyetdoktorin-storage.fra1.digitaloceanspaces.com',
-      'images.unsplash.com',
+    remotePatterns: [
+      { protocol: 'https', hostname: 'tailwindcss.com' },
+      { protocol: 'https', hostname: 'pyetdoktorin-storage.fra1.digitaloceanspaces.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
   productionBrowserSourceMaps: false,

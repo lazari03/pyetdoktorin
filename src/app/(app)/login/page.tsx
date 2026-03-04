@@ -4,12 +4,23 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
 
+function sanitizeNextPath(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('/')) return null;
+  if (trimmed.startsWith('//')) return null;
+  if (trimmed.includes('://')) return null;
+  return trimmed;
+}
+
 function LoginPageContent() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,10 +44,13 @@ function LoginPageContent() {
         throw new Error(t('offlineError'));
       }
       const result = await loginUseCase.execute(email, password);
-      const target = getRoleLandingPath(result?.role);
+      const next = sanitizeNextPath(searchParams?.get('next'));
+      const from = sanitizeNextPath(searchParams?.get('from'));
+      const target = next || from || getRoleLandingPath(result?.role);
       window.location.replace(target);
     } catch (err) {
-      setErrorMsg(t('unknownError'));
+      const msg = err instanceof Error ? err.message : null;
+      setErrorMsg(msg || t('unknownError'));
       console.error('Login error:', err);
     } finally {
       setLoading(false);

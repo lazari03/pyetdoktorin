@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { ROUTES } from '@/config/routes';
+import { DASHBOARD_PATHS } from '@/navigation/paths';
+import { establishSessionForCurrentUserAllowUnverified } from '@/infrastructure/services/authService';
 
 function RegisterPageInner() {
     const { t } = useTranslation();
@@ -22,7 +24,6 @@ function RegisterPageInner() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [showModal, setShowModal] = useState(false); // State to control modal visibility
     const nav = useNavigationCoordinator();
     const { registerUserUseCase } = useDI();
 
@@ -50,11 +51,8 @@ function RegisterPageInner() {
                 role: formData.role,
             });
 
-            setShowModal(true);
-            setTimeout(() => {
-                setShowModal(false);
-                nav.toLogin();
-            }, 3000);
+            await establishSessionForCurrentUserAllowUnverified();
+            nav.replacePath(DASHBOARD_PATHS.root);
         } catch (error) {
             setError(
                 error instanceof Error
@@ -209,15 +207,6 @@ function RegisterPageInner() {
           {t('onlyNeededData') || 'We only collect what’s needed for your clinician.'}
         </div>
 
-        {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-            <div className="bg-white p-6 rounded-2xl shadow-lg text-center space-y-2">
-              <h3 className="text-2xl font-bold">{t('registrationSuccessful')}</h3>
-              <p className="text-gray-700">{t('redirectToLoginShortly')}</p>
-            </div>
-          </div>
-        )}
       </AuthShell>
     );
 }

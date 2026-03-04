@@ -16,6 +16,8 @@ import { DoctorEarningsCard, MonthlyEarning } from "@/presentation/components/da
 import { NotificationCard } from "@/presentation/components/dashboard/NotificationCard";
 import { EmergencyCard } from "@/presentation/components/dashboard/EmergencyCard";
 import { BmiCalculatorCard } from "@/presentation/components/dashboard/BmiCalculatorCard";
+import { DoctorQuickActionsCard } from "@/presentation/components/dashboard/DoctorQuickActionsCard";
+import { DashboardTutorialGate } from "@/presentation/components/dashboard/DashboardTutorialGate";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
@@ -221,6 +223,7 @@ export default function Dashboard() {
       loadingLabel={t("loading")}
       analyticsPrefix="dashboard"
     >
+      {user?.uid ? <DashboardTutorialGate userId={user.uid} role={effectiveRole} /> : null}
       <div className="min-h-screen">
         <RedirectingModal show={vm.showRedirecting} />
         <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10 space-y-6">
@@ -294,6 +297,10 @@ export default function Dashboard() {
                 <BmiCalculatorCard />
               </div>
             )}
+
+            {effectiveRole === UserRole.Doctor && (
+              <DoctorQuickActionsCard appointments={vm.filteredAppointments} />
+            )}
           </div>
 
           {/* Right column: Notifications */}
@@ -304,8 +311,8 @@ export default function Dashboard() {
 
         <div className="grid gap-4 lg:grid-cols-3">
           {/* Recent Doctors/Patients Section */}
-          <section className="bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-3">
+          <section className="card-premium card-premium-hover card-accent card-accent-purple p-4 sm:p-5 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-semibold text-gray-900">
                 {effectiveRole === UserRole.Doctor 
                   ? (t("recentPatients") ?? "Recent Patients")
@@ -331,10 +338,10 @@ export default function Dashboard() {
               monthlyHistory={earningsData.monthlyHistory}
             />
           ) : (
-            <CheckupReminderCard />
+            <CheckupReminderCard className="card-accent card-accent-indigo" />
           )}
 
-          <section className="bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col gap-4">
+          <section className="card-premium card-premium-hover card-accent card-accent-violet p-4 sm:p-5 h-full flex flex-col gap-4">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-semibold text-gray-900">{t("visits") ?? "Visits"}</p>
@@ -343,15 +350,15 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl border border-purple-100 bg-purple-50 px-3 py-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="rounded-2xl border border-purple-100/80 bg-purple-50/70 px-4 py-3">
                 <p className="text-[11px] uppercase tracking-wide text-purple-600 font-semibold">{t("pendingActions") ?? "Pending actions"}</p>
                 <p className="text-lg font-semibold text-purple-800">
                   {vm.filteredAppointments.filter((a) => a.status?.toLowerCase?.() === "pending").length}
                 </p>
                 <p className="text-[11px] text-purple-700/80">{t("pendingActionsCopy") ?? "Awaiting confirmation or payment."}</p>
               </div>
-              <div className="rounded-xl border border-gray-200 px-3 py-3">
+              <div className="rounded-2xl border border-gray-200/70 bg-white/60 px-4 py-3">
                 <p className="text-[11px] uppercase tracking-wide text-gray-600 font-semibold">{t("upcoming") ?? "Upcoming"}</p>
                 <p className="text-lg font-semibold text-gray-900">
                   {vm.filteredAppointments.filter((a) => !vm.isAppointmentPast(a)).length}
@@ -362,12 +369,12 @@ export default function Dashboard() {
           </section>
         </div>
 
-        <section className="bg-white rounded-3xl shadow-lg p-4 border border-purple-50">
-          <div className="flex items-center justify-between mb-3">
+        <section className="card-premium card-accent card-accent-slate overflow-hidden">
+          <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <h2 className="text-base font-semibold text-gray-900">
               {t("yourAppointments")}
             </h2>
-	            <Link href={DASHBOARD_PATHS.appointments} className="text-xs text-purple-600 hover:underline">
+	            <Link href={DASHBOARD_PATHS.appointments} className="text-xs font-semibold text-purple-700 hover:text-purple-800">
 	              {t("viewAll")}
 	            </Link>
 	          </div>
@@ -378,6 +385,7 @@ export default function Dashboard() {
             handleJoinCall={handleJoinCall}
             handlePayNow={vm.handlePayNow}
             maxRows={5}
+            variant="embedded"
           />
         </section>
       </div>

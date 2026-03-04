@@ -12,10 +12,11 @@ import { useSessionStore } from '@/store/sessionStore';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 import Loader from '@/presentation/components/Loader/Loader';
 import SectionShell from '@/presentation/components/SectionShell/SectionShell';
+import EmailVerificationRequiredModal from '@/presentation/components/auth/EmailVerificationRequiredModal';
 
 export default function ClinicLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { role, loading, isAuthenticated, user } = useAuth();
+  const { role, loading, isAuthenticated, user, emailVerified } = useAuth();
   const { logoutSessionUseCase, logoutServerUseCase } = useDI();
   const nav = useNavigationCoordinator();
   const logout = useSessionStore((s) => s.logout);
@@ -35,6 +36,9 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
       .slice(0, 2)
       .toUpperCase() || 'CL';
 
+  const verificationRequired = isAuthenticated && !emailVerified;
+  const handleLogoutClick = () => logout('manual', logoutSessionUseCase, logoutServerUseCase);
+
   return (
     <SectionShell
       sectionId="clinic"
@@ -47,11 +51,12 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
       onNavigate={(href) => nav.pushPath(href)}
       onMenuAction={(actionId) => {
         if (actionId === 'logout') {
-          logout('manual', logoutSessionUseCase, logoutServerUseCase);
+          handleLogoutClick();
         }
       }}
     >
-      {children}
+      {verificationRequired ? null : children}
+      <EmailVerificationRequiredModal isOpen={verificationRequired} onLogout={handleLogoutClick} />
     </SectionShell>
   );
 }

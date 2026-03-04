@@ -12,6 +12,7 @@ import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from '@/config/paywallConfi
 import { CLINIC_PATHS } from '@/navigation/paths';
 import { UserRole } from '@/domain/entities/UserRole';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
+import { DashboardTutorialGate } from '@/presentation/components/dashboard/DashboardTutorialGate';
 
 function calculateClinicEarnings(bookings: ClinicBooking[]) {
   const payoutPercentage = DOCTOR_PAYOUT_RATE;
@@ -113,6 +114,7 @@ export default function ClinicDashboardPage() {
       loadingLabel={t('loading')}
       analyticsPrefix="clinic.dashboard"
     >
+      {user?.uid ? <DashboardTutorialGate userId={user.uid} role={role} /> : null}
       <div className="space-y-6">
       <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
         <h1 className="text-2xl font-bold text-gray-900">{t('clinicDashboard') || 'Clinic dashboard'}</h1>

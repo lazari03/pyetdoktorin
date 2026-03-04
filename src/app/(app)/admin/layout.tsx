@@ -12,11 +12,12 @@ import RedirectingModal from '@/presentation/components/RedirectingModal/Redirec
 import { UserRole } from '@/domain/entities/UserRole';
 import Loader from '@/presentation/components/Loader/Loader';
 import SectionShell from '@/presentation/components/SectionShell/SectionShell';
+import EmailVerificationRequiredModal from '@/presentation/components/auth/EmailVerificationRequiredModal';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  const { role, loading, isAuthenticated, user } = useAuth();
+  const { role, loading, isAuthenticated, user, emailVerified } = useAuth();
   const { logoutSessionUseCase, logoutServerUseCase } = useDI();
   const nav = useNavigationCoordinator();
   const logout = useSessionStore((s) => s.logout);
@@ -36,6 +37,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .slice(0, 2)
       .toUpperCase() || 'AD';
 
+  const verificationRequired = isAuthenticated && !emailVerified;
+  const handleLogoutClick = () => logout('manual', logoutSessionUseCase, logoutServerUseCase);
+
   return (
     <SectionShell
       sectionId="admin"
@@ -48,11 +52,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       onNavigate={(href) => nav.pushPath(href)}
       onMenuAction={(actionId) => {
         if (actionId === 'logout') {
-          logout('manual', logoutSessionUseCase, logoutServerUseCase);
+          handleLogoutClick();
         }
       }}
     >
-      {children}
+      {verificationRequired ? null : children}
+      <EmailVerificationRequiredModal isOpen={verificationRequired} onLogout={handleLogoutClick} />
     </SectionShell>
   );
 }

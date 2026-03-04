@@ -6,6 +6,8 @@ import { useToast } from "./ToastProvider";
 import { UserRole } from "@/domain/entities/UserRole";
 import { useClinicBookings } from "@/presentation/hooks/useClinicBookings";
 import { useTranslation } from "react-i18next";
+import { z } from "@/config/zIndex";
+import { UserCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import "@i18n";
 
 export function UserSidepanel() {
@@ -54,22 +56,24 @@ export function UserSidepanel() {
     }
   }, [user]);
 
-  // Allow page scroll; close panel on outside click
   useEffect(() => {
     if (!isPanelOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (panelRef.current && !panelRef.current.contains(target)) {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
         selectUser(null);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isPanelOpen, selectUser]);
 
-  const panelClass = `fixed right-0 top-0 h-screen w-full sm:w-[520px] md:w-[640px] bg-white shadow-2xl p-0 font-app rounded-l-2xl transition-transform duration-300 ease-out ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`;
+  const panelClass = `fixed right-0 top-0 h-[100dvh] w-full sm:w-[520px] md:w-[640px] bg-white shadow-2xl p-0 font-app rounded-l-2xl overflow-hidden flex flex-col ${z.drawer}`;
 
   const save = async () => {
     try {
@@ -124,23 +128,51 @@ export function UserSidepanel() {
   };
 
   if (!isPanelOpen) return null;
+  const closePanel = () => selectUser(null);
   return (
     <>
-      <aside ref={panelRef} className={panelClass} aria-hidden={false} tabIndex={0}>
-        {/* Header */}
-  <div className="sticky top-0 flex items-center justify-between border-b bg-white px-4 py-3 rounded-tl-2xl">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-purple-600">👤</span>
-            <h3 className="text-base sm:text-lg font-semibold">Edit User</h3>
+      <div className={`fixed inset-0 ${z.drawer}`} role="dialog" aria-modal="true" aria-label={t("editUser") || "Edit user"}>
+        <div className={`absolute inset-0 bg-black/40 ${z.backdrop}`} onClick={closePanel} aria-hidden="true" />
+        <aside
+          ref={panelRef}
+          className={panelClass}
+          tabIndex={-1}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          {/* Header */}
+	          <div className="shrink-0 flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-purple-800 via-purple-700 to-purple-600 px-4 py-3">
+	            <div className="flex items-center gap-2 min-w-0">
+	              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white">
+	                <UserCircleIcon className="h-6 w-6" aria-hidden />
+	              </span>
+              <h3 className="text-base sm:text-lg font-semibold text-white truncate">
+                {t("editUser") || "Edit user"}
+              </h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="h-9 w-9 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+                onClick={closePanel}
+                aria-label={t("close") || "Close"}
+              >
+                <XMarkIcon className="h-5 w-5" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded-full bg-white text-purple-700 hover:bg-purple-50 disabled:opacity-60 font-semibold text-sm"
+                disabled={loading}
+                onClick={save}
+              >
+                {t("save") || "Save"}
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 rounded-full border border-gray-300 hover:bg-gray-100" onClick={() => selectUser(null)} aria-label="Close sidebar">Close</button>
-            <button className="px-4 py-1.5 rounded-full bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-60" disabled={loading} onClick={save}>Save</button>
-          </div>
-        </div>
 
-        {/* Body */}
-        <div className="px-4 py-4 overflow-y-auto h-[calc(100vh-60px)]">
+          {/* Body */}
+          <div className="flex-1 px-4 py-4 overflow-y-auto">
         {error && <div className="mb-3 rounded-md bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
           {user && user.role === UserRole.Doctor && user.approvalStatus === 'pending' && (
             <div className="mb-3 flex items-center justify-between">
@@ -267,10 +299,10 @@ export function UserSidepanel() {
               {/* Utilities */}
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <button className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-60" disabled={loading} onClick={save}>Save changes</button>
-                  <button className="px-4 py-2 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-100" disabled={loading} onClick={() => selectUser(null)}>Cancel</button>
-                  <button className="px-4 py-2 rounded-full border border-red-300 text-red-600 hover:bg-red-50" disabled={loading} onClick={() => { if (user && confirm('Delete this user?')) deleteUser(user.id); }}>Delete user</button>
-                </div>
+	                  <button className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-60" disabled={loading} onClick={save}>Save changes</button>
+	                  <button className="px-4 py-2 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-100" disabled={loading} onClick={closePanel}>Cancel</button>
+	                  <button className="px-4 py-2 rounded-full border border-red-300 text-red-600 hover:bg-red-50" disabled={loading} onClick={() => { if (user && confirm('Delete this user?')) deleteUser(user.id); }}>Delete user</button>
+	                </div>
 
                 <div className="mt-2 rounded-xl border bg-gray-50 p-3">
                   <div className="flex items-center justify-between">
@@ -288,10 +320,11 @@ export function UserSidepanel() {
                   )}
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </aside>
+	            </div>
+	          )}
+	        </div>
+        </aside>
+      </div>
     </>
   );
 }

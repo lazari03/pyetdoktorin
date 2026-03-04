@@ -4,6 +4,7 @@ import "@/i18n/i18n";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { ShieldCheckIcon } from "@heroicons/react/24/outline";
 import {
   getAnalyticsConsent,
   getAnalyticsConsentCookie,
@@ -25,35 +26,41 @@ export default function CookieConsentBanner() {
   if (dismissed || consent !== "unset") return null;
 
   return (
-    <div className={`fixed bottom-4 left-4 right-4 ${z.notification}`}>
-      <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white/95 backdrop-blur px-4 py-4 shadow-xl">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-900">
-              {t("cookieBannerTitle", "Cookies & analytics")}
-            </p>
-            <p className="text-xs text-slate-600 mt-1">
-              {t(
-                "cookieBannerBody",
-                "We use optional analytics cookies to understand usage and improve the product. You can accept or decline."
-              )}{" "}
-              <Link href={ROUTES.PRIVACY} className="text-purple-700 hover:underline">
-                {t("privacyPolicy", "Privacy policy")}
-              </Link>
-            </p>
-            {saveFailed ? (
-              <p className="text-xs text-red-600 mt-2">
-                {t(
-                  "cookieBannerSaveFailed",
-                  "We couldn’t save your preference. Please enable cookies/storage for this site and try again."
-                )}
+    <div className={`fixed inset-x-0 bottom-0 ${z.notification} px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4`}>
+      <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200/70 bg-white/80 backdrop-blur-xl shadow-2xl ring-1 ring-black/5">
+        <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
+              <ShieldCheckIcon className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900">
+                {t("cookieBannerTitle", "Cookies & analytics")}
               </p>
-            ) : null}
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                {t(
+                  "cookieBannerBody",
+                  "We use optional analytics cookies to understand usage and improve the product. You can accept or decline."
+                )}{" "}
+                <Link href={ROUTES.PRIVACY} className="font-semibold text-purple-700 hover:underline">
+                  {t("privacyPolicy", "Privacy policy")}
+                </Link>
+              </p>
+              {saveFailed ? (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {t(
+                    "cookieBannerSaveFailed",
+                    "We couldn’t save your preference. Please enable cookies/storage for this site and try again."
+                  )}
+                </p>
+              ) : null}
+            </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+
+          <div className="flex items-center gap-2 sm:shrink-0">
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm border border-slate-200 bg-white/70 hover:bg-white"
               disabled={saving}
               onClick={async () => {
                 setSaveFailed(false);

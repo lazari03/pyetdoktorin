@@ -8,9 +8,9 @@ export class LoginUseCase {
     private analytics?: IAnalyticsService
   ) {}
 
-  async execute(email: string, password: string): Promise<{ role: UserRole }> {
+  async execute(email: string, password: string): Promise<{ role: UserRole; emailVerified: boolean }> {
     const result = await this.authLoginService.login(email, password);
     this.analytics?.track('user_logged_in', { email: email.split('@')[0] + '@***' });
-    return { role: result.role };
+    return { role: result.role, emailVerified: result.emailVerified };
   }
 }

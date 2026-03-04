@@ -256,73 +256,87 @@ export default function SectionShell({
         </div>
       )}
 
-      <header className="hidden md:block">
-        <div className="flex items-center justify-between px-10 py-6 relative shadow-lg bg-gradient-to-r from-purple-700 via-purple-600 to-purple-500 text-white rounded-b-2xl border-b border-purple-400/40">
-          {desktopLeftNode}
+      <header className={`hidden md:block sticky top-0 ${z.navbar}`}>
+        <div className="relative border-b border-white/10 bg-gradient-to-r from-purple-800 via-purple-700 to-purple-600 text-white shadow-md">
+          <div className="pointer-events-none absolute inset-0 opacity-70 [background:radial-gradient(circle_at_15%_15%,rgba(255,255,255,0.18),transparent_45%),radial-gradient(circle_at_85%_0%,rgba(56,189,248,0.12),transparent_40%)]" />
+          <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-6 px-10 py-4">
+            {desktopLeftNode}
 
-          <nav className="flex items-center gap-3 text-sm font-semibold text-white/85">
-            {renderedNav.map((item) => {
-              const active = activePath === item.href;
-              return (
-                <button
-                  key={item.href}
-                  onClick={() => handleNavigate(item.href)}
-                  className={`px-3 py-2 rounded-full transition-colors ${
-                    active ? 'bg-white/25 text-white shadow-sm' : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
-                  }`}
-                  data-analytics={`${sectionId}.nav.${item.key}`}
+            <nav className="flex flex-1 items-center justify-center" aria-label="Primary navigation">
+              <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/10 p-1 shadow-sm backdrop-blur">
+                {renderedNav.map((item) => {
+                  const active = activePath === item.href;
+                  return (
+                    <button
+                      key={item.href}
+                      type="button"
+                      onClick={() => handleNavigate(item.href)}
+                      aria-current={active ? 'page' : undefined}
+                      className={`relative rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-white/35 ${
+                        active ? 'text-white' : 'text-white/85 hover:text-white'
+                      } after:content-[''] after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-[2px] after:rounded-full after:transition-opacity ${
+                        active ? 'after:bg-white after:opacity-100' : 'after:bg-white after:opacity-0 hover:after:opacity-30'
+                      }`}
+                      data-analytics={`${sectionId}.nav.${item.key}`}
+                    >
+                      {item.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </nav>
+
+            <div className="relative flex items-center justify-end w-24" ref={desktopProfileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setProfileMenuOpen((open) => !open)}
+                className="h-9 w-9 rounded-full border border-white/15 bg-white/10 text-xs font-semibold text-white flex items-center justify-center shadow-sm backdrop-blur hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/35"
+                data-analytics={`${sectionId}.profile.toggle`}
+              >
+                {initials}
+              </button>
+              {profileMenuOpen && (
+                <div
+                  className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-slate-200/70 py-2 text-sm text-slate-900 ${z.maximum}`}
                 >
-                  {item.name}
-                </button>
-              );
-            })}
-          </nav>
+                  {renderedProfileMenu.map((entry) => {
+                    if (entry.kind === 'divider') {
+                      return <div key={entry.key} className="my-2 border-t border-slate-100" />;
+                    }
 
-          <div className="relative flex items-center justify-end w-24" ref={desktopProfileMenuRef}>
-            <button
-              onClick={() => setProfileMenuOpen((open) => !open)}
-              className="h-9 w-9 rounded-full bg-white text-xs font-semibold text-purple-600 flex items-center justify-center shadow"
-              data-analytics={`${sectionId}.profile.toggle`}
-            >
-              {initials}
-            </button>
-            {profileMenuOpen && (
-              <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-100 py-2 text-sm ${z.dropdown}`}>
-                {renderedProfileMenu.map((entry) => {
-                  if (entry.kind === 'divider') {
-                    return <div key={entry.key} className="my-2 border-t border-gray-100" />;
-                  }
+                    if (entry.kind === 'action') {
+                      return (
+                        <button
+                          key={entry.key}
+                          type="button"
+                          onClick={() => handleAction(entry.actionId)}
+                          className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                          data-analytics={entry.analyticsId}
+                        >
+                          {menuIcon({ iconKey: entry.iconKey, sectionId })}
+                          <span className="font-medium">{entry.name}</span>
+                        </button>
+                      );
+                    }
 
-                  if (entry.kind === 'action') {
                     return (
-                      <button
+                      <Link
                         key={entry.key}
-                        onClick={() => handleAction(entry.actionId)}
-                        className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                        href={entry.href}
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="w-full px-4 py-2.5 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
                         data-analytics={entry.analyticsId}
                       >
                         {menuIcon({ iconKey: entry.iconKey, sectionId })}
                         <span className="font-medium">{entry.name}</span>
-                      </button>
+                      </Link>
                     );
-                  }
-
-                  return (
-                    <Link
-                      key={entry.key}
-                      href={entry.href}
-                      onClick={() => setProfileMenuOpen(false)}
-                      className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-                      data-analytics={entry.analyticsId}
-                    >
-                      {menuIcon({ iconKey: entry.iconKey, sectionId })}
-                      <span className="font-medium">{entry.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
+                  })}
+                </div>
+              )}
+            </div>
           </div>
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/30 to-transparent" />
         </div>
       </header>
 
