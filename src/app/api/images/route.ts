@@ -11,7 +11,7 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
             return await fetch(url, options);
         } catch (err) {
             lastError = err;
-            console.error(`Image fetch attempt ${attempt + 1} failed:`, err);
+            console.error("Image fetch attempt failed", { attempt: attempt + 1, err });
             if (attempt < retries - 1) {
                 await new Promise((res) => setTimeout(res, delay));
             }
@@ -26,13 +26,13 @@ type LocalImage = {
 };
 
 async function loadLocalImage(key: string): Promise<LocalImage | null> {
-    const publicDir = path.join(process.cwd(), "public", "website");
+    const publicDir = `${process.cwd()}/public/website`;
     const candidates = key.includes(".")
         ? [key]
         : [`${key}.svg`, `${key}.png`, `${key}.jpg`, `${key}.jpeg`];
 
     for (const filename of candidates) {
-        const filePath = path.join(publicDir, filename);
+        const filePath = `${publicDir}/${filename}`;
         try {
             const buffer = await fs.readFile(filePath);
             const ext = path.extname(filename).toLowerCase();

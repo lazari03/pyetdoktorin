@@ -19,7 +19,14 @@ function requireEnv(name: string): string | null {
   return value;
 }
 
-// Configure AWS SDK for DigitalOcean Spaces
+function resolveBucketName(raw: string | null): string | null {
+  if (!raw) return null;
+  // Guard against accidentally passing a URL here (NEXT_PUBLIC_STORAGE_BUCKET can be a base URL elsewhere).
+  if (raw.includes('://') || raw.includes('/')) return null;
+  return raw;
+}
+
+// Configure AWS SDK for DigitalOcean Spaces (S3-compatible)
 function createS3Client(region: string, accessKey: string, secretKey: string) {
   const endpoint = `${region}.digitaloceanspaces.com`;
   const spacesEndpoint = new AWS.Endpoint(endpoint);
@@ -131,8 +138,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const bucket =
-      requireEnv('DO_SPACES_BUCKET') ||
-      requireEnv('NEXT_PUBLIC_STORAGE_BUCKET');
+      resolveBucketName(requireEnv('DO_SPACES_BUCKET')) ||
+      resolveBucketName(requireEnv('NEXT_PUBLIC_STORAGE_BUCKET'));
     const accessKey = requireEnv('DO_SPACES_KEY');
     const secretKey = requireEnv('DO_SPACES_SECRET');
     const region = requireEnv('DO_SPACES_REGION') || 'fra1';
@@ -161,13 +168,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Upload directly to Spaces from the server
 
-    await s3.upload({
-      Bucket: bucket,
-      Key: key,
-      Body: fileContent,
-      ContentType: mimeType,
-      ACL: 'public-read',
-    }).promise();
+    await s3
+      .upload({
+        Bucket: bucket,
+        Key: key,
+        Body: fileContent,
+        ContentType: mimeType,
+        ACL: 'public-read',
+      })
+      .promise();
 
     const publicUrl = `https://${bucket}.${region}.digitaloceanspaces.com/${key}`;
     

@@ -13,9 +13,17 @@ type StoredConsentPayload = { v: Exclude<AnalyticsConsentValue, "unset">; exp: n
 
 function getCookieValue(name: string): string | null {
   if (typeof document === "undefined") return null;
-  // Cookie separators are usually "; " but some environments omit the space.
-  const match = document.cookie.match(new RegExp("(?:^|;\\s*)" + name + "=([^;]*)"));
-  return match ? decodeURIComponent(match[1]) : null;
+  const prefix = `${name}=`;
+  const raw = document.cookie || "";
+  if (!raw) return null;
+  const parts = raw.split(";");
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (trimmed.startsWith(prefix)) {
+      return decodeURIComponent(trimmed.slice(prefix.length));
+    }
+  }
+  return null;
 }
 
 function parseStoredConsent(raw: string | null): Exclude<AnalyticsConsentValue, "unset"> | null {

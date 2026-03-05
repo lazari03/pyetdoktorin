@@ -108,21 +108,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.status(backendRes.status);
 
   const contentType = backendRes.headers.get('content-type') || '';
-  const contentEncoding = backendRes.headers.get('content-encoding') || '';
   const arrayBuffer = await backendRes.arrayBuffer();
   const payload = Buffer.from(arrayBuffer);
-  const shouldStripEncoding = Boolean(contentEncoding) && (contentType.includes('application/json') || contentType.includes('text/')) && looksLikeJsonText(payload);
-
-  // Copy headers (preserve multi-value Set-Cookie).
-  backendRes.headers.forEach((value, key) => {
-    if (key.toLowerCase() === 'set-cookie') return;
-    if (key.toLowerCase() === 'transfer-encoding') return;
-    if (key.toLowerCase() === 'content-encoding' && shouldStripEncoding) return;
-    if (key.toLowerCase() === 'content-length') return;
-    if (key.toLowerCase() === 'etag') return;
-    if (key.toLowerCase() === 'cache-control') return;
-    res.setHeader(key, value);
-  });
 
   // Avoid browser caching for authenticated API data (prevents 304/stale lists in dashboards).
   res.setHeader('Cache-Control', 'no-store');
@@ -136,6 +123,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (single) res.setHeader('Set-Cookie', single);
   }
 
-  res.setHeader('Content-Length', String(payload.byteLength));
-  res.send(payload);
+  // This proxy is intended for JSON API responses only.
+  // Avoid streaming arbitrary backend payloads to the browser to prevent reflected HTML/XSS risks.
+  const isJson = contentType.toLowerCase().includes('application/json') || looksLikeJsonText(payload);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+  if (backendRes.status === 204) {
+    res.end();
+    return;
+  }
+
+  if (!isJson) {
+    const detail =
+      process.env.NODE_ENV !== 'production'
+        ? { contentType, sample: payload.toString('utf8').slice(0, 200) }
+        : { contentType };
+    res.status(502).json({ error: 'Unexpected backend response type', ...detail });
+    return;
+  }
+
+  const text = payload.toString('utf8');
+  if (!text) {
+    res.json({});
+    return;
+  }
+
+  try {
+    res.json(JSON.parse(text));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(502).json({
+      error: 'Invalid JSON from backend',
+      detail: process.env.NODE_ENV !== 'production' ? { message } : undefined,
+    });
+  }
 }

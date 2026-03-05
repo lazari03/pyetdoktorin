@@ -13,12 +13,20 @@ function getAppOrigin(): string {
   return 'http://localhost:3000';
 }
 
-export async function POST(_req: Request) {
+export async function POST(req: Request) {
   const target = new URL('/api/backend/api/auth/logout', getAppOrigin());
-  return fetch(target, { method: 'POST' });
+  const cookie = req.headers.get('cookie');
+  return fetch(target, {
+    method: 'POST',
+    headers: cookie ? { cookie } : undefined,
+  });
 }
 
-export async function OPTIONS(_req: Request) {
+export async function OPTIONS(req: Request) {
   const target = new URL('/api/backend/api/auth/logout', getAppOrigin());
-  return fetch(target, { method: 'OPTIONS' });
+  const cookie = req.headers.get('cookie');
+  return fetch(target, {
+    method: 'OPTIONS',
+    headers: cookie ? { cookie } : undefined,
+  });
 }

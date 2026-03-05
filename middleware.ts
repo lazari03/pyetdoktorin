@@ -26,17 +26,17 @@ function createRequestId(): string {
 }
 
 function buildCsp({ nonce, reportOnly }: { nonce: string; reportOnly: boolean }): string {
-  const directives: string[] = [
-    "default-src 'self'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    // Report-only first; enforcement can be enabled later once all inline scripts/styles are migrated.
-    // Keep unsafe-inline/eval for now to avoid breaking Next.js/runtime behavior.
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com`,
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data: https:",
-    "connect-src 'self' https: wss: http:",
+	  const directives: string[] = [
+	    "default-src 'self'",
+	    "base-uri 'self'",
+	    "form-action 'self'",
+	    // Report-only first; enforcement can be enabled later once all inline scripts/styles are migrated.
+	    // Keep unsafe-inline/eval for now to avoid breaking Next.js/runtime behavior.
+	    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com`,
+	    "style-src 'self' 'unsafe-inline'",
+	    "img-src 'self' data: blob: https:",
+	    "font-src 'self' data: https:",
+	    "connect-src 'self' https: wss: http:",
     "frame-src 'self' https:",
     "object-src 'none'",
     "report-uri /api/csp-report",
@@ -108,7 +108,17 @@ export function middleware(req: NextRequest) {
   // Redirect authenticated users away from auth pages
   // Admins should land on /admin, others on /dashboard
   // Require both auth token AND role cookie to reduce false positives from stale tokens
-  if (hasSession && role && (url.pathname === ROUTES.LOGIN || url.pathname === ROUTES.REGISTER)) {
+  // If the user is being sent to /login with a `reason` (e.g. manual logout / idle timeout),
+  // allow the auth page to render even if cookies haven't been cleared yet.
+  const authReason = url.searchParams.get('reason');
+  const allowAuthPageWhileTransitioning =
+    authReason === 'manual' ||
+    authReason === 'idle-timeout' ||
+    authReason === 'logout' ||
+    url.searchParams.has('from') ||
+    url.searchParams.has('next');
+
+  if (hasSession && role && (url.pathname === ROUTES.LOGIN || url.pathname === ROUTES.REGISTER) && !allowAuthPageWhileTransitioning) {
     url.pathname = getRoleLandingPath(role);
     url.searchParams.delete('from');
     url.searchParams.delete('next');

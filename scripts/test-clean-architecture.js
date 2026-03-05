@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const path = require('path');
 
 console.log('🔍 Testing Clean Architecture Implementation...\n');
 
@@ -28,16 +27,20 @@ const expectedStructure = {
 
 let allTestsPassed = true;
 
-function resolveInDir(baseDir, relativePath) {
+function joinPath(baseDir, relativePath) {
   if (typeof relativePath !== 'string') throw new Error('Invalid path');
-  // Basic traversal guard (this script should never walk outside the intended directory).
   if (relativePath.includes('\0')) throw new Error('Invalid path');
-  const base = path.resolve(baseDir) + path.sep;
-  const resolved = path.resolve(baseDir, relativePath);
-  if (!resolved.startsWith(base)) {
+  if (relativePath.startsWith('/') || relativePath.startsWith('\\')) throw new Error('Invalid path');
+  if (relativePath.includes(':')) throw new Error('Invalid path');
+
+  const normalized = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
+  const segments = normalized.split('/').filter(Boolean);
+  if (segments.some((seg) => seg === '..')) {
     throw new Error(`Blocked path traversal: ${relativePath}`);
   }
-  return resolved;
+
+  const cleanBase = String(baseDir).replace(/[\\/]+$/, '');
+  return `${cleanBase}/${segments.join('/')}`;
 }
 
 function checkDirectory(dirPath, expectedFiles) {
@@ -54,7 +57,7 @@ function checkDirectory(dirPath, expectedFiles) {
 
   expectedFiles.forEach(file => {
     // Expected files are allowlisted in this script; still resolve safely to avoid accidental traversal.
-    const filePath = resolveInDir(dirPath, file);
+    const filePath = joinPath(dirPath, file);
     if (fs.existsSync(filePath)) {
       console.log(`  ✅ ${file}`);
     } else {
@@ -73,7 +76,7 @@ function checkDirectory(dirPath, expectedFiles) {
 
 // Run tests
 Object.keys(expectedStructure).forEach(layer => {
-  const layerPath = path.join('src/clean/src', layer);
+  const layerPath = `src/clean/src/${layer}`;
   console.log(`\n🏗️  Testing ${layer.toUpperCase()} layer:`);
   
   if (!fs.existsSync(layerPath)) {
@@ -83,7 +86,7 @@ Object.keys(expectedStructure).forEach(layer => {
   }
 
   Object.keys(expectedStructure[layer]).forEach(subdir => {
-    const subdirPath = path.join(layerPath, subdir);
+    const subdirPath = `${layerPath}/${subdir}`;
     checkDirectory(subdirPath, expectedStructure[layer][subdir]);
   });
 });
@@ -98,7 +101,7 @@ try {
   
   let domainViolations = 0;
   domainFiles.forEach(file => {
-    const filePath = resolveInDir('src/clean/src/domain', file);
+    const filePath = joinPath('src/clean/src/domain', file);
     const content = fs.readFileSync(filePath, 'utf8');
     
     if (content.includes('../infrastructure') || content.includes('../presentation')) {
@@ -121,7 +124,7 @@ try {
   
   let useCaseViolations = 0;
   useCaseFiles.forEach(file => {
-    const filePath = resolveInDir('src/clean/src/application/use-cases', file);
+    const filePath = joinPath('src/clean/src/application/use-cases', file);
     const content = fs.readFileSync(filePath, 'utf8');
     
     if (content.includes('../presentation')) {

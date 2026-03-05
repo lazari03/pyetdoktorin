@@ -51,11 +51,16 @@ function validateJsonFile(filePath) {
 }
 
 function main() {
-  const localesDir = path.join(process.cwd(), "src", "locales");
+  const localesDir = `${process.cwd()}/src/locales`;
   const files = fs
     .readdirSync(localesDir)
     .filter((f) => f.endsWith(".json"))
-    .map((f) => path.join(localesDir, f))
+    .map((f) => {
+      if (f.includes("/") || f.includes("\\")) {
+        throw new Error(`Unexpected locale filename: ${f}`);
+      }
+      return localesDir + path.sep + f;
+    })
     .sort();
 
   if (files.length === 0) {
@@ -84,4 +89,3 @@ function main() {
 }
 
 main();
-

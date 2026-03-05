@@ -75,7 +75,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, de
     } catch (err) {
       lastError = err;
       // Log error details for diagnostics
-      console.error(`Fetch attempt ${attempt + 1} failed:`, err);
+      console.error('Fetch attempt failed', { attempt: attempt + 1, err });
       if (attempt < retries - 1) {
         await new Promise((res) => setTimeout(res, delay));
       }
