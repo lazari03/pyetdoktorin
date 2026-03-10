@@ -22,6 +22,53 @@ import type { MenuEntryDef, NavItemDef } from '@/navigation/navConfig';
 export type AppSectionId = 'dashboard' | 'admin' | 'clinic' | 'pharmacy';
 export type MenuActionId = Extract<MenuEntryDef, { kind: 'action' }>['actionId'];
 
+function sectionHomeHref(sectionId: AppSectionId): string {
+  switch (sectionId) {
+    case 'admin':
+      return '/admin';
+    case 'clinic':
+      return '/clinic';
+    case 'pharmacy':
+      return '/pharmacy';
+    case 'dashboard':
+    default:
+      return '/dashboard';
+  }
+}
+
+function AppWordmark({
+  tone,
+  pharmacyMark,
+}: {
+  tone: 'light' | 'dark';
+  pharmacyMark?: boolean;
+}) {
+  const wordmarkClassName =
+    tone === 'dark'
+      ? 'text-white/95 uppercase tracking-[0.42em] font-semibold text-sm'
+      : 'text-purple-700 uppercase tracking-[0.26em] font-semibold text-sm';
+
+  const markClassName =
+    tone === 'dark'
+      ? 'border-white/15 bg-white/10 text-white/95'
+      : 'border-purple-200 bg-purple-50 text-purple-700';
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className={`select-none ${wordmarkClassName}`}>PYETDOKTORIN</span>
+      {pharmacyMark ? (
+        <span
+          aria-hidden="true"
+          className={`inline-flex h-5 w-5 items-center justify-center rounded-full border text-[12px] font-bold leading-none ${markClassName}`}
+          title="+"
+        >
+          +
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 function menuIcon({
   iconKey,
   sectionId,
@@ -65,8 +112,6 @@ export default function SectionShell({
   initials,
   onNavigate,
   onMenuAction,
-  mobileTitleKey,
-  mobileTitleFallback,
   mobileCenter,
   desktopLeft,
   children,
@@ -142,12 +187,24 @@ export default function SectionShell({
     onMenuAction(actionId);
   };
 
+  const homeHref = sectionHomeHref(sectionId);
+
   const profileButtonClassName =
     sectionId === 'dashboard'
       ? 'h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center'
       : 'h-8 w-8 rounded-full bg-purple-600 text-xs font-semibold text-white flex items-center justify-center';
 
-  const desktopLeftNode = desktopLeft ?? <div className="w-24" />;
+  const desktopLeftNode =
+    desktopLeft ?? (
+      <Link
+        href={homeHref}
+        className="inline-flex items-center"
+        aria-label="Pyet Doktorin"
+        data-analytics={`${sectionId}.brand.home`}
+      >
+        <AppWordmark tone="dark" pharmacyMark={sectionId === 'pharmacy'} />
+      </Link>
+    );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -167,12 +224,16 @@ export default function SectionShell({
         </button>
 
         <div className="flex-1 flex justify-center">
-          {mobileCenter ??
-            (mobileTitleKey ? (
-              <span className="text-sm font-semibold text-gray-900">
-                {t(mobileTitleKey, { defaultValue: mobileTitleFallback ?? mobileTitleKey })}
-              </span>
-            ) : null)}
+          {mobileCenter ?? (
+            <Link
+              href={homeHref}
+              className="inline-flex items-center"
+              aria-label="Pyet Doktorin"
+              data-analytics={`${sectionId}.brand.home`}
+            >
+              <AppWordmark tone="light" pharmacyMark={sectionId === 'pharmacy'} />
+            </Link>
+          )}
         </div>
 
         <div className="relative z-[200]" ref={mobileProfileMenuRef}>

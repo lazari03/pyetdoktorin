@@ -7,6 +7,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import type { UserProfileData } from '@/application/ports/IUserProfileService';
 
 const DASHBOARD_TUTORIAL_VERSION = 1;
+const FORCE_TUTORIAL = process.env.NEXT_PUBLIC_FORCE_TUTORIAL === 'true';
 
 type Props = {
   userId: string;
@@ -34,10 +35,10 @@ export function DashboardTutorialGate({ userId, role }: Props) {
       try {
         const profile = await getUserProfileUseCase.execute(userId);
         if (!active) return;
-        setOpen(!hasSeenTutorial(profile));
+        setOpen(FORCE_TUTORIAL || !hasSeenTutorial(profile));
       } catch {
         if (!active) return;
-        setOpen(false);
+        setOpen(FORCE_TUTORIAL);
       } finally {
         if (active) setChecked(true);
       }
@@ -49,6 +50,7 @@ export function DashboardTutorialGate({ userId, role }: Props) {
 
   const complete = async () => {
     setOpen(false);
+    if (FORCE_TUTORIAL) return;
     try {
       await updateUserProfileUseCase.execute(userId, {
         dashboardTutorialSeen: true,

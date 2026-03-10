@@ -9,6 +9,7 @@ import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { getAppointmentErrorMessage } from '@/presentation/utils/errorMessages';
+import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 
 export default function useNewAppointment() {
   const {
@@ -115,6 +116,23 @@ export default function useNewAppointment() {
         preferredDate: appointmentData.preferredDate!,
         preferredTime: appointmentData.preferredTime,
         note: notes,
+      });
+      void notifyFormSubmission({
+        formType: 'appointment_request',
+        source: 'new_appointment',
+        subject: `Appointment request: ${appointmentData.doctorName}`,
+        replyTo: user.email || undefined,
+        data: {
+          doctorId: appointmentData.doctorId,
+          doctorName: appointmentData.doctorName,
+          patientId: appointmentData.patientId,
+          patientName: appointmentData.patientName,
+          patientEmail: user.email || '',
+          appointmentType,
+          preferredDate: appointmentData.preferredDate || '',
+          preferredTime: appointmentData.preferredTime,
+          notes,
+        },
       });
       trackAnalyticsEvent('appointment_booking_success', {
         doctorId: appointmentData.doctorId,

@@ -6,6 +6,7 @@ import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import { useTranslation } from "react-i18next";
 import { BackendError } from "@/network/backendClient";
 import { useToast } from "@/presentation/components/Toast/ToastProvider";
+import { notifyFormSubmission } from "@/presentation/utils/formNotifications";
 
 export const useMyProfile = () => {
   const { t } = useTranslation();
@@ -182,6 +183,29 @@ export const useMyProfile = () => {
 
       trackAnalyticsEvent("profile_update_attempt");
       await updateUserProfileUseCase.execute(userId, formData);
+      void notifyFormSubmission({
+        formType: "profile_update",
+        source: "my_profile",
+        subject: `Profile updated: ${formData.name || user?.name || userId}`,
+        replyTo: formData.email || user?.email || undefined,
+        data: {
+          userId,
+          role: role || "",
+          name: formData.name,
+          surname: formData.surname,
+          email: formData.email,
+          phoneNumber: formData.phoneNumber,
+          about: formData.about,
+          specializations: formData.specializations,
+          education: formData.education,
+          preferredLanguage: formData.preferredLanguage,
+          timeZone: formData.timeZone,
+          emergencyContactName: formData.emergencyContactName,
+          emergencyContactPhone: formData.emergencyContactPhone,
+          profilePicture: formData.profilePicture ? "[uploaded profile picture]" : "",
+          signatureDataUrl: formData.signatureDataUrl ? "[saved signature]" : "",
+        },
+      });
       trackAnalyticsEvent("profile_update_success");
       toast({
         variant: "success",

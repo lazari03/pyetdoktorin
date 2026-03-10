@@ -227,19 +227,35 @@ export default function VerifyEmailPage() {
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 flex items-start gap-3">
-            <div className="mt-0.5 h-9 w-9 rounded-full bg-white text-amber-700 border border-amber-200 flex items-center justify-center shadow-sm">
-              <span className="text-lg font-semibold">!</span>
+          {localVerified ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 flex items-start gap-3">
+              <div className="mt-0.5 h-9 w-9 rounded-full bg-white text-emerald-700 border border-emerald-200 flex items-center justify-center shadow-sm">
+                <CheckCircleIcon className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-emerald-900">
+                  {t('verifyEmailVerifiedTitle', { defaultValue: 'Email verified' })}
+                </p>
+                <p className="text-xs text-emerald-800">
+                  {t('verifyEmailVerifiedSubtitle', { defaultValue: 'You can continue to the platform.' })}
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-800">
-                {t('verifyEmailBannerTitle', { defaultValue: 'Verification required' })}
-              </p>
-              <p className="text-xs text-amber-700">
-                {t('verifyEmailBannerBody', { defaultValue: 'Open the verification link we sent to your email to unlock the platform.' })}
-              </p>
+          ) : (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 flex items-start gap-3">
+              <div className="mt-0.5 h-9 w-9 rounded-full bg-white text-amber-700 border border-amber-200 flex items-center justify-center shadow-sm">
+                <span className="text-lg font-semibold">!</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-amber-800">
+                  {t('verifyEmailBannerTitle', { defaultValue: 'Verification required' })}
+                </p>
+                <p className="text-xs text-amber-700">
+                  {t('verifyEmailBannerBody', { defaultValue: 'Open the verification link we sent to your email to unlock the platform.' })}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {notice ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
@@ -253,17 +269,21 @@ export default function VerifyEmailPage() {
           ) : null}
 
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-            <button
-              type="button"
-              className="btn btn-outline w-full sm:w-auto"
-              onClick={resend}
-              disabled={busy || Date.now() < resendCooldownUntil}
-            >
-              <ArrowPathIcon className="h-4 w-4" aria-hidden />
-              <span className="ml-2">
-                {t('verifyEmailResend', { defaultValue: 'Resend email' })}
-              </span>
-            </button>
+            {!localVerified ? (
+              <button
+                type="button"
+                className="btn btn-outline w-full sm:w-auto"
+                onClick={resend}
+                disabled={busy || Date.now() < resendCooldownUntil}
+              >
+                <ArrowPathIcon className="h-4 w-4" aria-hidden />
+                <span className="ml-2">
+                  {t('verifyEmailResend', { defaultValue: 'Resend email' })}
+                </span>
+              </button>
+            ) : (
+              <div className="hidden sm:block" />
+            )}
 
             <button
               type="button"
@@ -278,7 +298,9 @@ export default function VerifyEmailPage() {
           </div>
 
           <p className="text-xs text-slate-500">
-            {t('verifyEmailHint', { defaultValue: 'Tip: If the email is missing, check Spam/Junk. Verification can take a few seconds.' })}
+            {localVerified
+              ? t('verifyEmailVerifiedHint', { defaultValue: 'You’re all set. If you still see a warning elsewhere, refresh the page.' })
+              : t('verifyEmailHint', { defaultValue: 'Tip: If the email is missing, check Spam/Junk. Verification can take a few seconds.' })}
           </p>
         </div>
       </Card>

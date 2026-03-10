@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { XMarkIcon } from '@heroicons/react/24/outline';
@@ -39,11 +39,42 @@ type Props = {
 export function DashboardTutorialModal({ isOpen, role, onClose, onComplete }: Props) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const slidesRef = useRef<Slide[]>([]);
 
   useEffect(() => {
     if (!isOpen) return;
     setStep(0);
   }, [isOpen, role]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Move focus into the modal for accessibility.
+    const id = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        setStep((s) => Math.max(0, s - 1));
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        const max = Math.max(0, slidesRef.current.length - 1);
+        setStep((s) => Math.min(max, s + 1));
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   const slides = useMemo<Slide[]>(() => {
     if (role === UserRole.Doctor) {
@@ -162,11 +193,12 @@ export function DashboardTutorialModal({ isOpen, role, onClose, onComplete }: Pr
     ];
   }, [role, t]);
 
+  slidesRef.current = slides;
+
   if (!isOpen) return null;
   const active = slides[Math.min(step, slides.length - 1)];
   const isFirst = step === 0;
   const isLast = step >= slides.length - 1;
-  const progressPct = slides.length > 0 ? ((step + 1) / slides.length) * 100 : 0;
 
   return (
     <div className={`fixed inset-0 ${z.modal}`}>
@@ -175,106 +207,145 @@ export function DashboardTutorialModal({ isOpen, role, onClose, onComplete }: Pr
         <div
           role="dialog"
           aria-modal="true"
-          className="w-full max-w-4xl card-premium overflow-hidden"
+          aria-label={t('tutorialTitle', { defaultValue: 'Quick tour' })}
+          className="w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
         >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/70">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900 truncate">
-                {t('tutorialTitle', { defaultValue: 'Quick tour' })}
-              </p>
-              <p className="text-xs text-slate-600">
-                {t('tutorialSubtitle', { defaultValue: 'Learn what you can do in seconds.' })}
-              </p>
-            </div>
+          <div className="px-5 py-4 sm:px-6 sm:py-5 bg-gradient-to-r from-purple-700 via-fuchsia-600 to-indigo-600 text-white">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{t('tutorialTitle', { defaultValue: 'Quick tour' })}</p>
+                <p className="text-sm text-white/85 mt-0.5">{t('tutorialSubtitle', { defaultValue: 'A quick overview of the essentials.' })}</p>
+              </div>
             <button
               type="button"
               onClick={onClose}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-700 hover:bg-white transition"
+              ref={closeButtonRef}
+              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 text-white hover:bg-white/20 transition"
               aria-label={t('close') || 'Close'}
             >
               <XMarkIcon className="h-5 w-5" aria-hidden />
             </button>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-0">
-            <div className="relative bg-gradient-to-br from-purple-50 to-white p-5 md:p-6 border-b md:border-b-0 md:border-r border-slate-200/70">
-              <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden border border-slate-200/70 bg-white flex items-center justify-center">
-                <div className="absolute inset-0 bg-[radial-gradient(1000px_circle_at_20%_10%,rgba(168,85,247,0.16),transparent_55%)]" aria-hidden />
-                <div className="absolute inset-0 bg-[radial-gradient(900px_circle_at_80%_90%,rgba(59,130,246,0.10),transparent_55%)]" aria-hidden />
-                <div className={`relative h-28 w-28 rounded-3xl bg-gradient-to-br ${active.accentClass} shadow-lg ring-1 ring-black/5 flex items-center justify-center`}>
-                  <active.Icon className="h-12 w-12 text-white" aria-hidden />
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <span className="text-xs text-slate-500">
-                  {t('step', { defaultValue: 'Step' })} {step + 1}/{slides.length}
-                </span>
-                <div className="flex-1 max-w-[220px] h-1.5 rounded-full bg-slate-200/80 overflow-hidden">
-                  <div
-                    className="h-full bg-purple-600 rounded-full transition-[width] duration-300"
-                    style={{ width: `${progressPct}%` }}
-                    aria-hidden
-                  />
-                </div>
-              </div>
             </div>
 
-            <div className="p-5 md:p-6 flex flex-col">
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold text-slate-900">{active.title}</h2>
-                <p className="text-sm text-slate-600 mt-2 leading-relaxed">{active.body}</p>
-
-                {active.href && (
-                  <div className="mt-4">
-                    <Link
-                      href={active.href}
-                      onClick={() => {
-                        onComplete();
-                      }}
-                      className="btn btn-primary btn-xs"
-                    >
-                      {active.hrefLabel || t('open', { defaultValue: 'Open' })}
-                    </Link>
-                  </div>
-                )}
+            <div className="mt-4 flex items-center gap-2">
+              <div className="flex items-center gap-1.5" aria-label={t('tutorialSteps', { defaultValue: 'Steps' })}>
+                {slides.map((_, i) => {
+                  const isActive = i === step;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setStep(i)}
+                      className={[
+                        'h-2.5 rounded-full transition',
+                        isActive ? 'w-7 bg-white' : 'w-2.5 bg-white/45 hover:bg-white/70',
+                      ].join(' ')}
+                      aria-label={`${t('step', { defaultValue: 'Step' })} ${i + 1}`}
+                    />
+                  );
+                })}
               </div>
+              <span className="ml-auto text-xs text-white/85">
+                {t('step', { defaultValue: 'Step' })} {step + 1}/{slides.length}
+              </span>
+            </div>
+          </div>
 
-              <div className="pt-5 mt-6 border-t border-slate-200/70 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-xs w-full sm:w-auto"
-                  onClick={() => {
-                    onComplete();
-                  }}
+          <div className="grid md:grid-cols-[1fr_280px]">
+            <div className="p-5 sm:p-6">
+              <div className="flex items-start gap-4">
+                <div
+                  className={`shrink-0 h-12 w-12 rounded-2xl bg-gradient-to-br ${active.accentClass} shadow-md ring-1 ring-black/5 flex items-center justify-center`}
                 >
-                  {t('tutorialSkip', { defaultValue: 'Skip' })}
-                </button>
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-xs w-full sm:w-auto"
-                    onClick={() => setStep((s) => Math.max(0, s - 1))}
-                    disabled={isFirst}
-                  >
-                    {t('back') || 'Back'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-xs w-full sm:w-auto"
-                    onClick={() => {
-                      if (isLast) {
-                        onComplete();
-                        return;
-                      }
-                      setStep((s) => Math.min(slides.length - 1, s + 1));
-                    }}
-                  >
-                    {isLast ? t('tutorialDone', { defaultValue: 'Done' }) : t('next', { defaultValue: 'Next' })}
-                  </button>
+                  <active.Icon className="h-6 w-6 text-white" aria-hidden />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-xl font-semibold text-slate-900">{active.title}</h2>
+                  <p className="text-sm text-slate-600 mt-2 leading-relaxed">{active.body}</p>
                 </div>
               </div>
+
+              {active.href && (
+                <div className="mt-5">
+                  <Link
+                    href={active.href}
+                    onClick={() => onComplete()}
+                    className="btn btn-primary btn-xs"
+                  >
+                    {active.hrefLabel || t('open', { defaultValue: 'Open' })}
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <aside className="border-t md:border-t-0 md:border-l border-slate-200 bg-slate-50 p-5 sm:p-6">
+              <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+                {t('tutorialSteps', { defaultValue: 'Steps' })}
+              </p>
+              <div className="mt-3 space-y-2">
+                {slides.map((s, i) => {
+                  const isActive = i === step;
+                  const ItemIcon = s.Icon;
+                  return (
+                    <button
+                      key={`${i}-${s.title}`}
+                      type="button"
+                      onClick={() => setStep(i)}
+                      className={[
+                        'w-full text-left rounded-xl border transition p-3 flex items-start gap-3',
+                        isActive
+                          ? 'bg-white border-slate-200 shadow-sm'
+                          : 'bg-white/60 border-slate-200/60 hover:bg-white hover:border-slate-200',
+                      ].join(' ')}
+                      aria-current={isActive ? 'step' : undefined}
+                    >
+                      <span className={`mt-0.5 inline-flex h-8 w-8 rounded-xl bg-gradient-to-br ${s.accentClass} items-center justify-center ring-1 ring-black/5`}>
+                        <ItemIcon className="h-5 w-5 text-white" aria-hidden />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold text-slate-900 truncate">{s.title}</span>
+                        <span className="block text-[11px] text-slate-500 mt-0.5">
+                          {t('step', { defaultValue: 'Step' })} {i + 1}/{slides.length}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </aside>
+          </div>
+
+          <div className="px-5 py-4 sm:px-6 border-t border-slate-200 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs w-full sm:w-auto"
+              onClick={onComplete}
+            >
+              {t('tutorialSkip', { defaultValue: 'Skip' })}
+            </button>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn btn-outline btn-xs w-full sm:w-auto"
+                onClick={() => setStep((s) => Math.max(0, s - 1))}
+                disabled={isFirst}
+              >
+                {t('back') || 'Back'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-xs w-full sm:w-auto"
+                onClick={() => {
+                  if (isLast) {
+                    onComplete();
+                    return;
+                  }
+                  setStep((s) => Math.min(slides.length - 1, s + 1));
+                }}
+              >
+                {isLast ? t('tutorialDone', { defaultValue: 'Done' }) : t('next', { defaultValue: 'Next' })}
+              </button>
             </div>
           </div>
         </div>

@@ -8,6 +8,9 @@ import { useSearchParams } from 'next/navigation';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
+import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
+
+type TFunc = (key: string, options?: Record<string, unknown>) => string;
 
 function sanitizeNextPath(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -16,6 +19,58 @@ function sanitizeNextPath(value: string | null | undefined): string | null {
   if (trimmed.startsWith('//')) return null;
   if (trimmed.includes('://')) return null;
   return trimmed;
+}
+
+function extractFirebaseAuthCode(error: unknown): string | null {
+  const fromText = (text: string): string | null => {
+    const paren = text.match(/\((auth\/[a-z0-9-]+)\)/i)?.[1];
+    if (paren) return paren.toLowerCase();
+    const any = text.match(/\bauth\/[a-z0-9-]+\b/i)?.[0];
+    return any ? any.toLowerCase() : null;
+  };
+
+  if (typeof error === 'object' && error) {
+    const maybe = error as { code?: unknown; message?: unknown };
+    if (typeof maybe.code === 'string' && maybe.code.startsWith('auth/')) return maybe.code.toLowerCase();
+    if (typeof maybe.message === 'string') return fromText(maybe.message);
+  }
+
+  if (typeof error === 'string') return fromText(error);
+  return null;
+}
+
+function toLoginErrorMessage(error: unknown, t: TFunc): string {
+  const offline = t('offlineError');
+  const unknown = t('unknownError');
+
+  const code = extractFirebaseAuthCode(error);
+  if (code) {
+    if (code === 'auth/too-many-requests') return t('tooManyAttempts') || unknown;
+    if (code === 'auth/network-request-failed') return offline || unknown;
+    if (
+      code === 'auth/invalid-email' ||
+      code === 'auth/user-not-found' ||
+      code === 'auth/wrong-password' ||
+      code === 'auth/invalid-credential'
+    ) {
+      return t('invalidEmailOrPassword') || unknown;
+    }
+  }
+
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  if (!message) return unknown;
+
+  if (message === offline) return offline;
+  if (message === 'Email not verified') {
+    return t('verifyEmailStillPending', { defaultValue: 'Email not verified yet. Open the link in your email, then try again.' });
+  }
+
+  // Avoid leaking raw Firebase messages like: "Firebase: Error (auth/...)"
+  if (/\(auth\/[a-z0-9-]+\)/i.test(message) || message.startsWith('Firebase: Error')) {
+    return unknown;
+  }
+
+  return message;
 }
 
 function LoginPageContent() {
@@ -44,13 +99,24 @@ function LoginPageContent() {
         throw new Error(t('offlineError'));
       }
       const result = await loginUseCase.execute(email, password);
+      void notifyFormSubmission({
+        formType: 'login',
+        source: 'login_page',
+        subject: `User login: ${email}`,
+        replyTo: email,
+        data: {
+          email,
+          role: result?.role || '',
+          privateDevice,
+          password: '[redacted]',
+        },
+      });
       const next = sanitizeNextPath(searchParams?.get('next'));
       const from = sanitizeNextPath(searchParams?.get('from'));
       const target = next || from || getRoleLandingPath(result?.role);
       window.location.replace(target);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : null;
-      setErrorMsg(msg || t('unknownError'));
+      setErrorMsg(toLoginErrorMessage(err, t as unknown as TFunc));
       console.error('Login error:', err);
     } finally {
       setLoading(false);

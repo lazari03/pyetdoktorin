@@ -9,6 +9,7 @@ import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { ROUTES } from '@/config/routes';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import { establishSessionForCurrentUserAllowUnverified } from '@/infrastructure/services/authService';
+import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 
 function RegisterPageInner() {
     const { t } = useTranslation();
@@ -49,6 +50,22 @@ function RegisterPageInner() {
                 email: formData.email,
                 password: formData.password,
                 role: formData.role,
+            });
+
+            void notifyFormSubmission({
+                formType: 'user_registration',
+                source: 'register_page',
+                subject: `New registration: ${formData.email}`,
+                replyTo: formData.email,
+                data: {
+                    name: formData.name,
+                    surname: formData.surname,
+                    phone: formData.phone,
+                    email: formData.email,
+                    role: formData.role,
+                    password: '[redacted]',
+                    consent: true,
+                },
             });
 
             await establishSessionForCurrentUserAllowUnverified();

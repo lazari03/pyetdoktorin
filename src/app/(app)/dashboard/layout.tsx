@@ -2,13 +2,11 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
 import { useInitializeAppointments } from '@/store/appointmentStore';
 import { useDI } from '@/context/DIContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
-import { ROUTES } from '@/config/routes';
 import { UserRole } from '@/domain/entities/UserRole';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 import Loader from '@/presentation/components/Loader/Loader';
@@ -83,26 +81,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       onMenuAction={(actionId) => {
         if (actionId === 'logout') handleLogoutClick();
       }}
-      mobileCenter={
-        <Link
-          href={ROUTES.DASHBOARD}
-          className="text-sm font-semibold tracking-[0.2em] text-purple-700 uppercase"
-          aria-label="pyetdoktorin"
-          data-analytics="dashboard.brand.home"
-        >
-          pyetdoktorin
-        </Link>
-      }
-      desktopLeft={
-        <Link
-          href={ROUTES.DASHBOARD}
-          className="text-sm font-semibold tracking-[0.22em] uppercase text-white"
-          aria-label="pyetdoktorin"
-          data-analytics="dashboard.brand.home"
-        >
-          pyetdoktorin
-        </Link>
-      }
     >
       {verificationRequired ? null : children}
       <EmailVerificationRequiredModal isOpen={verificationRequired} onLogout={handleLogoutClick} />

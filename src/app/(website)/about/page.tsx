@@ -41,11 +41,12 @@ export default async function AboutPage() {
         </div>
 
         <svg
-          className="absolute bottom-0 left-0 w-full"
+          className="absolute inset-x-0 -bottom-px block h-[72px] w-full pointer-events-none"
           height="60"
           viewBox="0 0 1440 60"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
         >
           <path fill="#fff" d="M0,0 C480,60 960,0 1440,60 L1440,60 L0,60 Z" />
         </svg>
@@ -79,11 +80,11 @@ export default async function AboutPage() {
 
             <div className="md:w-1/2 w-full flex justify-center order-1 md:order-2">
               <Image
-                src="/img/logo.png"
+                src="/og/pyet-doktorin.svg"
                 alt={t("PyetDoktorinLogoAlt")}
-                width={224}
-                height={224}
-                className="w-56 h-56 object-contain rounded-2xl bg-white p-4"
+                width={420}
+                height={420}
+                className="w-80 h-80 md:w-[26rem] md:h-[26rem] object-contain rounded-2xl bg-white p-4"
                 priority
               />
             </div>
@@ -93,11 +94,11 @@ export default async function AboutPage() {
           <section className="flex flex-col md:flex-row items-center gap-10 md:gap-20">
             <div className="md:w-1/2 w-full flex justify-center mb-6 md:mb-0">
               <Image
-                src="https://pyetdoktorin-storage.fra1.digitaloceanspaces.com/img/pexels-karolina-grabowska-7195123.jpg"
+                src="/website/hero1.svg"
                 alt={t("aboutTeamImageAlt")}
-                width={448}
-                height={224}
-                className="w-full max-w-md h-56 object-cover rounded-2xl"
+                width={420}
+                height={320}
+                className="w-full max-w-md h-72 object-contain rounded-2xl bg-white p-4"
                 priority
               />
             </div>

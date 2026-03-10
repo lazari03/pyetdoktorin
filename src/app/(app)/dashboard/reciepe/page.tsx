@@ -15,6 +15,7 @@ import Image from "next/image";
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential } from "firebase/auth";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { notifyFormSubmission } from "@/presentation/utils/formNotifications";
 
 type Reciepe = {
   id: string;
@@ -195,6 +196,25 @@ export default function DoctorReciepePage() {
         notes: form.notes,
         title: form.title,
         signatureDataUrl: savedSignatureUrl,
+      });
+      void notifyFormSubmission({
+        formType: 'prescription_issued',
+        source: 'doctor_reciepe_page',
+        subject: `Prescription issued for ${form.patient}`,
+        replyTo: user?.email || undefined,
+        data: {
+          doctorId: user?.uid || '',
+          doctorName: user?.name || '',
+          doctorEmail: user?.email || '',
+          patientId: form.patientId,
+          patientName: form.patient,
+          pharmacyId: form.pharmacyId || '',
+          pharmacyName: form.pharmacy || '',
+          title: form.title,
+          medicines: medicineList,
+          dosage: form.dosage,
+          notes: form.notes || '',
+        },
       });
       setReciepes((prev) => [toReciepe(created), ...prev]);
       setForm({ patientId: '', patient: '', pharmacyId: '', pharmacy: '', title: '', medicines: '', dosage: '', notes: '' });

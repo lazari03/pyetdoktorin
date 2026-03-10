@@ -8,6 +8,7 @@ import { Card } from '@/presentation/ui/Card';
 import { Input } from '@/presentation/ui/Input';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
 import { ROUTES } from '@/config/routes';
+import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -19,6 +20,15 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     try {
       await resetUserPasswordUseCase.execute(email);
+      void notifyFormSubmission({
+        formType: 'forgot_password',
+        source: 'forgot_password_page',
+        subject: `Password reset requested: ${email}`,
+        replyTo: email,
+        data: {
+          email,
+        },
+      });
       setSubmitted(true);
       toast({ variant: 'success', message: 'Password reset email sent. Check your inbox.' });
     } catch {

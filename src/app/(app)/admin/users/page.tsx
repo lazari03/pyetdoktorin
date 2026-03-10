@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useAdminStore } from '@/store/adminStore';
 import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
+import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 
 const DEFAULT_FORM = {
   name: '',
@@ -50,6 +51,20 @@ function AdminUsersContent() {
         password: form.password,
         phone: form.phone.trim() || undefined,
         role: form.role,
+      });
+      void notifyFormSubmission({
+        formType: 'admin_user_create',
+        source: 'admin_users_page',
+        subject: `Managed user created: ${form.email.trim()}`,
+        replyTo: form.email.trim(),
+        data: {
+          name: form.name.trim(),
+          surname: form.surname.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          role: form.role,
+          password: '[redacted]',
+        },
       });
       showToast(t('userCreated') || 'User created', 'success');
       setForm(DEFAULT_FORM);

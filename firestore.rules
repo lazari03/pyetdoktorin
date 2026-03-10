@@ -6,66 +6,142 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Email verification gate for "using the platform" actions.
+    // Note: do NOT require this for initial registration writes (users + doctor_registration notification),
+    // otherwise newly created accounts can't store their profile until after verification.
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
     function isAdmin() {
       return isSignedIn() && (request.auth.token.admin == true || request.auth.token.role == "admin");
     }
 
-    // Users collection
-    match /users/{userId} {
-      // Allow reads only for the user themself or admins
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-
-      // Allow user to write own doc OR allow admins to write any user doc
-      allow write: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Doctors subcollection under users
-    match /users/{userId}/doctors/{doctorId} {
-      // Allow reads for all
-      allow read: if true;
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).changedKeys();
+    }
 
-      // Only admins can write doctor profiles
+    // -------------------------
+    // Users (private profile)
+    // -------------------------
+    match /users/{userId} {
+      // Self can read their profile even if unverified (needed for onboarding); admins can read/list.
+      allow get: if isSelf(userId) || isAdmin();
+      allow list: if isAdmin();
+
+      // Registration creates the user doc before email is verified.
+      allow create: if isSelf(userId)
+        && request.resource.data.email is string
+        && request.resource.data.role is string
+        && request.resource.data.role in ["patient", "doctor", "pharmacy"];
+
+      // After verification, users can update non-privileged fields only.
+      // Admins can update any fields.
+      allow update: if isAdmin() || (
+        isEmailVerified() && isSelf(userId) &&
+        // Never let clients change these fields.
+        !changedKeys().hasAny(["role", "approvalStatus", "createdAt", "email"])
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------
+    // Doctors public profile
+    // -------------------------
+    // Store only public, non-sensitive data here (bio, specialization, profile picture).
+    match /users/{userId}/doctors/{doctorId} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Appointments collection
+    // -------------------------
+    // Appointments
+    // -------------------------
     match /appointments/{appointmentId} {
-      // Allow reads only to patient, doctor, or admin
-      allow read: if isAdmin() ||
-        (isSignedIn() &&
-         (resource.data.patientId == request.auth.uid || resource.data.doctorId == request.auth.uid));
+      function isParticipant() {
+        return isEmailVerified() &&
+          (resource.data.patientId == request.auth.uid || resource.data.doctorId == request.auth.uid);
+      }
 
-      // Allow creation if authenticated and patientId matches, or admin
-      allow create: if (isSignedIn() && request.resource.data.patientId == request.auth.uid) || isAdmin();
+      allow get, list: if isAdmin() || isParticipant();
 
-      // Allow update if authenticated and patient/doctor matches,
-      // and patientId/doctorId are not changed, or admin
-      allow update: if isAdmin() || (
-        isSignedIn() &&
-        (request.auth.uid == resource.data.patientId || request.auth.uid == resource.data.doctorId) &&
-        request.resource.data.patientId == resource.data.patientId &&
-        request.resource.data.doctorId == resource.data.doctorId
+      // Patients can create appointments for themselves only after email verification.
+      allow create: if isAdmin() || (
+        isEmailVerified() &&
+        request.resource.data.patientId == request.auth.uid &&
+        request.resource.data.doctorId is string &&
+        request.resource.data.status == "pending" &&
+        // Clients must not mark appointments as paid.
+        (!request.resource.data.keys().hasAny(["isPaid"]) || request.resource.data.isPaid == false) &&
+        // Basic shape validation (prevents abuse with huge/invalid payloads)
+        request.resource.data.appointmentType is string &&
+        request.resource.data.preferredDate is string &&
+        request.resource.data.preferredTime is string &&
+        (request.resource.data.createdAt is string || request.resource.data.createdAt is int || request.resource.data.createdAt is timestamp)
       );
 
-      // Allow delete for admins only
+      // Updates:
+      // - patient: can adjust notes + preferred date/time + dismissedBy
+      // - doctor: can set status + room fields + dismissedBy
+      // - admin: can do anything
+      allow update: if isAdmin() || (
+        isParticipant() &&
+        // Never allow changing core identifiers
+        request.resource.data.patientId == resource.data.patientId &&
+        request.resource.data.doctorId == resource.data.doctorId &&
+        !changedKeys().hasAny(["isPaid", "paymentStatus", "paymentStartedAt", "createdAt"]) &&
+        (
+          (
+            request.auth.uid == resource.data.patientId &&
+            changedKeys().hasOnly(["notes", "note", "preferredDate", "preferredTime", "dismissedBy"])
+          ) ||
+          (
+            request.auth.uid == resource.data.doctorId &&
+            changedKeys().hasOnly(["status", "roomId", "roomCode", "dismissedBy"]) &&
+            request.resource.data.status in ["pending", "accepted", "rejected", "completed", "finished"]
+          )
+        )
+      );
+
       allow delete: if isAdmin();
     }
 
-    // Notifications collection
+    // -------------------------
+    // Notifications
+    // -------------------------
     match /notifications/{notificationId} {
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
-      allow write: if (isSignedIn() && request.auth.uid == request.resource.data.userId) || isAdmin();
-      allow delete: if isAdmin();
+      // Admin inbox + allow users to read their own notifications once verified.
+      allow get, list: if isAdmin() || (isEmailVerified() && request.auth.uid == resource.data.userId);
+
+      // Allow creating only the doctor registration notification from the client during signup.
+      // This is allowed even when email is not verified yet.
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.type == "doctor_registration" &&
+        request.resource.data.status == "pending";
+
+      // Only admins can update/delete notifications (prevents users from mutating their approval flow).
+      allow update, delete: if isAdmin();
     }
 
-    // Prescriptions / recipe collection
+    // -------------------------
+    // Prescriptions / recipe
+    // -------------------------
     match /recipe/{reciepeId} {
-      // Doctors create prescriptions for patients and target pharmacies
-      allow create: if isSignedIn() && request.resource.data.doctorId == request.auth.uid;
+      // Doctors create prescriptions for patients and target pharmacies (requires verified email).
+      allow create: if isAdmin() || (
+        isEmailVerified() &&
+        request.resource.data.doctorId == request.auth.uid
+      );
 
-      // Reads allowed to doctor, patient, or destination pharmacy (and admins)
-      allow read: if isAdmin() ||
-        (isSignedIn() && (
+      // Reads allowed to doctor, patient, or destination pharmacy (and admins), only after verification.
+      allow get, list: if isAdmin() ||
+        (isEmailVerified() && (
           resource.data.doctorId == request.auth.uid ||
           resource.data.patientId == request.auth.uid ||
           resource.data.pharmacyId == request.auth.uid
@@ -74,15 +150,15 @@ service cloud.firestore {
       // Updates only by issuing doctor (or admin) and immutable core references
       // Doctor can update; pharmacy can update status only; IDs immutable
       allow update: if isAdmin() || (
-        isSignedIn() &&
+        isEmailVerified() &&
         (
-          // doctor updating
+          // doctor updating (ids immutable)
           (resource.data.doctorId == request.auth.uid &&
            request.resource.data.patientId == resource.data.patientId &&
            request.resource.data.doctorId == resource.data.doctorId &&
            request.resource.data.pharmacyId == resource.data.pharmacyId)
           ||
-          // pharmacy updating status only
+          // pharmacy updating status only (ids immutable)
           (resource.data.pharmacyId == request.auth.uid &&
            request.resource.data.patientId == resource.data.patientId &&
            request.resource.data.doctorId == resource.data.doctorId &&
@@ -91,8 +167,14 @@ service cloud.firestore {
         )
       );
 
-      // No deletes except admin
       allow delete: if isAdmin();
+    }
+
+    // -------------------------
+    // Deny by default
+    // -------------------------
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

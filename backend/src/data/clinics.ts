@@ -7,7 +7,7 @@ export const clinicsCatalog = [
     specialties: ['Cardiology', 'Dermatology', 'Pediatrics'],
     phone: '+355 69 123 4567',
     email: 'contact@auroraclinic.al',
-    imageUrl: '/images/clinics/aurora.jpg',
+    imageUrl: '/website/hero1.svg',
   },
   {
     id: 'clinic-harbor',
@@ -17,7 +17,7 @@ export const clinicsCatalog = [
     specialties: ['Family Medicine', 'Laboratory', 'Nutrition'],
     phone: '+355 68 987 6543',
     email: 'hello@harborclinic.al',
-    imageUrl: '/images/clinics/harbor.jpg',
+    imageUrl: '/website/dashboard.svg',
   },
   {
     id: 'clinic-prime',
@@ -27,6 +27,6 @@ export const clinicsCatalog = [
     specialties: ['Orthopedics', 'Physical Therapy', 'Radiology'],
     phone: '+355 67 222 3344',
     email: 'info@primecare.al',
-    imageUrl: '/images/clinics/prime.jpg',
+    imageUrl: '/website/child1.svg',
   },
 ];
