@@ -69,6 +69,7 @@ export interface NewAppointmentViewModelResult {
   // Time slots (filtered for visibility)
   visibleTimeSlots: TimeSlot[];
   minDate: string;
+  availabilityLoading: boolean;
 
   // Form state
   isSubmitting: boolean;
@@ -105,6 +106,7 @@ export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
     submitError,
     clearSubmitError,
     availableTimes,
+    availabilityLoading,
   } = useNewAppointment();
 
   const nav = useNavigationCoordinator();
@@ -210,6 +212,7 @@ export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
     // Time slots
     visibleTimeSlots,
     minDate,
+    availabilityLoading,
 
     // Form state
     isSubmitting,

@@ -45,8 +45,40 @@ const normalizeStatus = (status?: string): AppointmentStatus => {
   return 'pending';
 };
 
+export const normalizePreferredTime = (preferredTime: string): string => {
+  const trimmed = preferredTime.trim();
+  const simpleMatch = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (simpleMatch) {
+    const [, hoursPart, minutesPart] = simpleMatch;
+    if (!hoursPart || !minutesPart) {
+      return trimmed;
+    }
+    const hours = Number(hoursPart);
+    const minutes = Number(minutesPart);
+    if (!Number.isNaN(hours) && !Number.isNaN(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+  }
+
+  const ampmMatch = trimmed.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
+  if (ampmMatch) {
+    const [, hoursPart, minutesPart, periodPart] = ampmMatch;
+    if (!hoursPart || !minutesPart || !periodPart) {
+      return trimmed;
+    }
+    let hours = Number(hoursPart);
+    const minutes = Number(minutesPart);
+    const period = periodPart.toUpperCase();
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  return trimmed;
+};
+
 const buildSlotId = (doctorId: string, preferredDate: string, preferredTime: string) => {
-  const raw = `${doctorId}__${preferredDate}__${preferredTime}`;
+  const raw = `${doctorId}__${preferredDate}__${normalizePreferredTime(preferredTime)}`;
   return raw.replace(/[^a-zA-Z0-9_-]/g, '_');
 };
 

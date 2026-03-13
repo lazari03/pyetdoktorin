@@ -12,6 +12,8 @@ import clinicsRouter from '@/routes/clinics';
 import paddleRouter from '@/routes/paddle';
 import statsRouter from '@/routes/stats';
 import notificationsRouter from '@/routes/notifications';
+import availabilityRouter from '@/routes/availability';
+import doctorsRouter from '@/routes/doctors';
 import { createRateLimiter } from '@/middleware/rateLimit';
 
 const app = express();
@@ -65,6 +67,8 @@ app.use('/api/clinics', readLimiter);
 app.use('/api/prescriptions', readLimiter);
 app.use('/api/notifications', readLimiter);
 app.use('/api/stats', readLimiter);
+app.use('/api/availability', readLimiter);
+app.use('/api/doctors', readLimiter);
 app.use('/api/paddle', paddleRouter);
 app.use(express.json());
 app.use(cookieParser());
@@ -81,6 +85,8 @@ app.use('/api/prescriptions', prescriptionsRouter);
 app.use('/api/clinics', clinicsRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/availability', availabilityRouter);
+app.use('/api/doctors', doctorsRouter);
 
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   // Ensure CORS headers are present on error responses so the browser

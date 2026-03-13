@@ -158,6 +158,11 @@ export default function NewAppointmentStepper() {
 											<label className="block text-sm font-medium mb-2 text-gray-700">
 												{t('preferredTime')}
 											</label>
+											{vm.availabilityLoading && (
+												<div className="mb-2 text-xs text-teal-700">
+													{t('checkingAvailability') || 'Checking live availability...'}
+												</div>
+											)}
 											<div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
 												{vm.visibleTimeSlots.length === 0 && (
 													<div className="col-span-full text-xs text-gray-400">

@@ -31,6 +31,12 @@ export function getDashboardNavDefs(role: UserRole): NavItemDef[] {
           fallback: "Calendar",
         },
         {
+          key: "availability",
+          href: DASHBOARD_PATHS.doctorAvailability,
+          labelKey: "availability",
+          fallback: "Availability",
+        },
+        {
           key: "reciepe",
           href: DASHBOARD_PATHS.reciepe,
           labelKey: "reciepeTitleDoctor",
@@ -136,6 +142,15 @@ export function getDashboardProfileMenuDefs(role: UserRole): MenuEntryDef[] {
       fallback: "Earnings",
       analyticsId: "dashboard.profile.earnings",
       iconKey: "earnings",
+    });
+    base.push({
+      kind: "link",
+      key: "availability",
+      href: DASHBOARD_PATHS.doctorAvailability,
+      labelKey: "availability",
+      fallback: "Availability",
+      analyticsId: "dashboard.profile.availability",
+      iconKey: "calendar",
     });
   }
 

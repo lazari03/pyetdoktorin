@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { getAppointmentErrorMessage } from '@/presentation/utils/errorMessages';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
+import { getResolvedAvailabilitySlots } from '@/network/availability';
 
 export default function useNewAppointment() {
   const {
@@ -32,6 +33,7 @@ export default function useNewAppointment() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [patientName, setPatientName] = useState<string>('');
   const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>();
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -41,16 +43,22 @@ export default function useNewAppointment() {
   }, [user?.name]);
 
   useEffect(() => {
-    if (preferredDate) {
+    let active = true;
+
+    const buildFallbackTimes = () => {
+      if (!preferredDate) {
+        setAvailableTimes([]);
+        return;
+      }
+
       const now = new Date();
       const selectedDate = startOfDay(new Date(preferredDate));
       const times: { time: string; disabled: boolean }[] = [];
 
-      for (let minutes = 0; minutes < 24 * 60; minutes += 30) {
+      for (let minutes = 9 * 60; minutes < 17 * 60; minutes += 30) {
         const time = addMinutes(selectedDate, minutes);
         const formattedTime = format(time, 'hh:mm a');
         const isDisabled = isSameDay(time, now) && isBefore(time, now);
-
         times.push({
           time: formattedTime,
           disabled: isDisabled,
@@ -58,10 +66,38 @@ export default function useNewAppointment() {
       }
 
       setAvailableTimes(times);
-    } else {
-      setAvailableTimes([]);
-    }
-  }, [preferredDate]);
+    };
+
+    const loadAvailability = async () => {
+      if (!preferredDate || !selectedDoctor?.id) {
+        setAvailableTimes([]);
+        return;
+      }
+
+      setAvailabilityLoading(true);
+      try {
+        const slots = await getResolvedAvailabilitySlots(selectedDoctor.id, preferredDate);
+        if (!active) return;
+        setAvailableTimes(
+          slots.map((slot) => ({
+            time: format(new Date(`2000-01-01T${slot.time}:00`), 'hh:mm a'),
+            disabled: slot.booked || slot.past,
+          })),
+        );
+      } catch {
+        if (!active) return;
+        buildFallbackTimes();
+      } finally {
+        if (active) setAvailabilityLoading(false);
+      }
+    };
+
+    void loadAvailability();
+
+    return () => {
+      active = false;
+    };
+  }, [preferredDate, selectedDoctor?.id]);
 
   const handleSubmit = async (
     e: React.FormEvent,
@@ -185,5 +221,6 @@ export default function useNewAppointment() {
     clearSubmitError: () => setSubmitError(null),
     patientName,
     availableTimes,
+    availabilityLoading,
   };
 }

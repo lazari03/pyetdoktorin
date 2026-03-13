@@ -47,6 +47,13 @@ export function DoctorQuickActionsCard({ appointments }: Props) {
       tone: 'bg-indigo-50 text-indigo-700 border-indigo-100',
     },
     {
+      key: 'availability',
+      label: t('availability') || 'Availability',
+      href: DASHBOARD_PATHS.doctorAvailability,
+      Icon: CalendarDaysIcon,
+      tone: 'bg-teal-50 text-teal-700 border-teal-100',
+    },
+    {
       key: 'appointments',
       label: (t('appointments') || 'Appointments').replace(/^\w/, (c) => c.toUpperCase()),
       href: DASHBOARD_PATHS.appointments,
@@ -91,7 +98,7 @@ export function DoctorQuickActionsCard({ appointments }: Props) {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
         {actions.map(({ key, label, href, Icon, tone }) => (
           <Link
             key={key}
@@ -111,4 +118,3 @@ export function DoctorQuickActionsCard({ appointments }: Props) {
     </section>
   );
 }
-

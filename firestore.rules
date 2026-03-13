@@ -25,6 +25,41 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).changedKeys();
     }
 
+    function isDoctorSelf(userId) {
+      return isEmailVerified() &&
+        isSelf(userId) &&
+        exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.role == "doctor";
+    }
+
+    function isPharmacySelf(userId) {
+      return isEmailVerified() &&
+        isSelf(userId) &&
+        exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.role == "pharmacy";
+    }
+
+    function isPatientSelf(userId) {
+      return isEmailVerified() &&
+        isSelf(userId) &&
+        exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.role == "patient";
+    }
+
+    function userHasRole(userId, role) {
+      return userId is string &&
+        exists(/databases/$(database)/documents/users/$(userId)) &&
+        get(/databases/$(database)/documents/users/$(userId)).data.role == role;
+    }
+
+    function isApprovedDoctor(userId) {
+      return userHasRole(userId, "doctor") &&
+        (
+          !get(/databases/$(database)/documents/users/$(userId)).data.keys().hasAny(["approvalStatus"]) ||
+          get(/databases/$(database)/documents/users/$(userId)).data.approvalStatus == "approved"
+        );
+    }
+
     // -------------------------
     // Users (private profile)
     // -------------------------
@@ -35,16 +70,94 @@ service cloud.firestore {
 
       // Registration creates the user doc before email is verified.
       allow create: if isSelf(userId)
+        && request.resource.data.keys().hasOnly([
+          "name",
+          "surname",
+          "phoneNumber",
+          "email",
+          "role",
+          "approvalStatus",
+          "createdAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.surname is string
         && request.resource.data.email is string
         && request.resource.data.role is string
-        && request.resource.data.role in ["patient", "doctor", "pharmacy"];
+        && request.resource.data.role in ["patient", "doctor", "pharmacy"]
+        && (!request.resource.data.keys().hasAny(["phoneNumber"]) || request.resource.data.phoneNumber is string)
+        && (request.resource.data.createdAt is string || request.resource.data.createdAt is int || request.resource.data.createdAt is timestamp)
+        && (
+          (request.resource.data.role == "doctor" && request.resource.data.approvalStatus == "pending") ||
+          (request.resource.data.role != "doctor" && !request.resource.data.keys().hasAny(["approvalStatus"]))
+        );
 
       // After verification, users can update non-privileged fields only.
       // Admins can update any fields.
       allow update: if isAdmin() || (
         isEmailVerified() && isSelf(userId) &&
+        request.resource.data.keys().hasOnly([
+          "name",
+          "surname",
+          "phone",
+          "phoneNumber",
+          "email",
+          "role",
+          "approvalStatus",
+          "createdAt",
+          "createdBy",
+          "updatedAt",
+          "about",
+          "bio",
+          "specialization",
+          "specializations",
+          "education",
+          "profilePicture",
+          "patientNotes",
+          "allergies",
+          "chronicConditions",
+          "lastCheckupDate",
+          "nextCheckupDueDate",
+          "emergencyContactName",
+          "emergencyContactPhone",
+          "preferredLanguage",
+          "timeZone",
+          "communicationPreference",
+          "shareSummaryConsent",
+          "signatureDataUrl",
+          "dashboardTutorialSeen",
+          "dashboardTutorialVersion",
+          "dashboardTutorialSeenAt"
+        ]) &&
+        (!request.resource.data.keys().hasAny(["name"]) || request.resource.data.name is string) &&
+        (!request.resource.data.keys().hasAny(["surname"]) || request.resource.data.surname is string) &&
+        (!request.resource.data.keys().hasAny(["phone"]) || request.resource.data.phone is string) &&
+        (!request.resource.data.keys().hasAny(["phoneNumber"]) || request.resource.data.phoneNumber is string) &&
+        (!request.resource.data.keys().hasAny(["about"]) || request.resource.data.about is string) &&
+        (!request.resource.data.keys().hasAny(["bio"]) || request.resource.data.bio is string) &&
+        (!request.resource.data.keys().hasAny(["specialization"]) || request.resource.data.specialization is string) &&
+        (!request.resource.data.keys().hasAny(["specializations"]) || request.resource.data.specializations is list) &&
+        (!request.resource.data.keys().hasAny(["education"]) || request.resource.data.education is list) &&
+        (!request.resource.data.keys().hasAny(["profilePicture"]) || request.resource.data.profilePicture is string) &&
+        (!request.resource.data.keys().hasAny(["patientNotes"]) || request.resource.data.patientNotes is string) &&
+        (!request.resource.data.keys().hasAny(["allergies"]) || request.resource.data.allergies is string) &&
+        (!request.resource.data.keys().hasAny(["chronicConditions"]) || request.resource.data.chronicConditions is string) &&
+        (!request.resource.data.keys().hasAny(["lastCheckupDate"]) || request.resource.data.lastCheckupDate is string) &&
+        (!request.resource.data.keys().hasAny(["nextCheckupDueDate"]) || request.resource.data.nextCheckupDueDate is string) &&
+        (!request.resource.data.keys().hasAny(["emergencyContactName"]) || request.resource.data.emergencyContactName is string) &&
+        (!request.resource.data.keys().hasAny(["emergencyContactPhone"]) || request.resource.data.emergencyContactPhone is string) &&
+        (!request.resource.data.keys().hasAny(["preferredLanguage"]) || request.resource.data.preferredLanguage is string) &&
+        (!request.resource.data.keys().hasAny(["timeZone"]) || request.resource.data.timeZone is string) &&
+        (
+          !request.resource.data.keys().hasAny(["communicationPreference"]) ||
+          request.resource.data.communicationPreference in ["video", "voice", "chat"]
+        ) &&
+        (!request.resource.data.keys().hasAny(["shareSummaryConsent"]) || request.resource.data.shareSummaryConsent is bool) &&
+        (!request.resource.data.keys().hasAny(["signatureDataUrl"]) || request.resource.data.signatureDataUrl is string) &&
+        (!request.resource.data.keys().hasAny(["dashboardTutorialSeen"]) || request.resource.data.dashboardTutorialSeen is bool) &&
+        (!request.resource.data.keys().hasAny(["dashboardTutorialVersion"]) || request.resource.data.dashboardTutorialVersion is int) &&
+        (!request.resource.data.keys().hasAny(["dashboardTutorialSeenAt"]) || request.resource.data.dashboardTutorialSeenAt is string) &&
         // Never let clients change these fields.
-        !changedKeys().hasAny(["role", "approvalStatus", "createdAt", "email"])
+        !changedKeys().hasAny(["role", "approvalStatus", "createdAt", "email", "createdBy", "updatedAt"])
       );
 
       allow delete: if isAdmin();
@@ -60,6 +173,74 @@ service cloud.firestore {
     }
 
     // -------------------------
+    // Doctor availability
+    // -------------------------
+    match /availability/{doctorId} {
+      allow get: if isAdmin() || isDoctorSelf(doctorId);
+      allow list: if isAdmin();
+
+      allow create: if isAdmin() || (
+        isDoctorSelf(doctorId) &&
+        request.resource.data.keys().hasOnly([
+          "doctorId",
+          "weeklySchedule",
+          "dateOverrides",
+          "slotDurationMinutes",
+          "bufferMinutes",
+          "timezone",
+          "presetId",
+          "updatedAt"
+        ]) &&
+        request.resource.data.doctorId == doctorId &&
+        request.resource.data.weeklySchedule is list &&
+        request.resource.data.dateOverrides is list &&
+        request.resource.data.weeklySchedule.size() <= 14 &&
+        request.resource.data.dateOverrides.size() <= 90 &&
+        request.resource.data.slotDurationMinutes is int &&
+        request.resource.data.slotDurationMinutes >= 15 &&
+        request.resource.data.slotDurationMinutes <= 120 &&
+        request.resource.data.bufferMinutes is int &&
+        request.resource.data.bufferMinutes >= 0 &&
+        request.resource.data.bufferMinutes <= 60 &&
+        request.resource.data.timezone is string &&
+        request.resource.data.presetId in ["balanced", "focused", "extended"] &&
+        request.resource.data.updatedAt is string &&
+        request.resource.data.weeklySchedule.size() >= 1
+      );
+
+      allow update: if isAdmin() || (
+        isDoctorSelf(doctorId) &&
+        request.resource.data.keys().hasOnly([
+          "doctorId",
+          "weeklySchedule",
+          "dateOverrides",
+          "slotDurationMinutes",
+          "bufferMinutes",
+          "timezone",
+          "presetId",
+          "updatedAt"
+        ]) &&
+        request.resource.data.doctorId == doctorId &&
+        request.resource.data.weeklySchedule is list &&
+        request.resource.data.dateOverrides is list &&
+        request.resource.data.weeklySchedule.size() <= 14 &&
+        request.resource.data.dateOverrides.size() <= 90 &&
+        request.resource.data.slotDurationMinutes is int &&
+        request.resource.data.slotDurationMinutes >= 15 &&
+        request.resource.data.slotDurationMinutes <= 120 &&
+        request.resource.data.bufferMinutes is int &&
+        request.resource.data.bufferMinutes >= 0 &&
+        request.resource.data.bufferMinutes <= 60 &&
+        request.resource.data.timezone is string &&
+        request.resource.data.presetId in ["balanced", "focused", "extended"] &&
+        request.resource.data.updatedAt is string &&
+        request.resource.data.weeklySchedule.size() >= 1
+      );
+
+      allow delete: if isAdmin() || isDoctorSelf(doctorId);
+    }
+
+    // -------------------------
     // Appointments
     // -------------------------
     match /appointments/{appointmentId} {
@@ -72,16 +253,44 @@ service cloud.firestore {
 
       // Patients can create appointments for themselves only after email verification.
       allow create: if isAdmin() || (
-        isEmailVerified() &&
+        isPatientSelf(request.auth.uid) &&
+        request.resource.data.keys().hasOnly([
+          "doctorId",
+          "doctorName",
+          "patientId",
+          "patientName",
+          "appointmentType",
+          "preferredDate",
+          "preferredTime",
+          "notes",
+          "note",
+          "isPaid",
+          "createdAt",
+          "status"
+        ]) &&
+        request.resource.data.keys().hasAll([
+          "doctorId",
+          "patientId",
+          "appointmentType",
+          "preferredDate",
+          "preferredTime",
+          "createdAt",
+          "status"
+        ]) &&
         request.resource.data.patientId == request.auth.uid &&
         request.resource.data.doctorId is string &&
+        isApprovedDoctor(request.resource.data.doctorId) &&
         request.resource.data.status == "pending" &&
         // Clients must not mark appointments as paid.
         (!request.resource.data.keys().hasAny(["isPaid"]) || request.resource.data.isPaid == false) &&
         // Basic shape validation (prevents abuse with huge/invalid payloads)
+        (!request.resource.data.keys().hasAny(["doctorName"]) || request.resource.data.doctorName is string) &&
+        (!request.resource.data.keys().hasAny(["patientName"]) || request.resource.data.patientName is string) &&
         request.resource.data.appointmentType is string &&
         request.resource.data.preferredDate is string &&
         request.resource.data.preferredTime is string &&
+        (!request.resource.data.keys().hasAny(["notes"]) || request.resource.data.notes is string) &&
+        (!request.resource.data.keys().hasAny(["note"]) || request.resource.data.note is string) &&
         (request.resource.data.createdAt is string || request.resource.data.createdAt is int || request.resource.data.createdAt is timestamp)
       );
 
@@ -94,13 +303,22 @@ service cloud.firestore {
         // Never allow changing core identifiers
         request.resource.data.patientId == resource.data.patientId &&
         request.resource.data.doctorId == resource.data.doctorId &&
+        (!request.resource.data.keys().hasAny(["notes"]) || request.resource.data.notes is string) &&
+        (!request.resource.data.keys().hasAny(["note"]) || request.resource.data.note is string) &&
+        (!request.resource.data.keys().hasAny(["preferredDate"]) || request.resource.data.preferredDate is string) &&
+        (!request.resource.data.keys().hasAny(["preferredTime"]) || request.resource.data.preferredTime is string) &&
+        (!request.resource.data.keys().hasAny(["dismissedBy"]) || request.resource.data.dismissedBy is map) &&
+        (!request.resource.data.keys().hasAny(["roomId"]) || request.resource.data.roomId is string) &&
+        (!request.resource.data.keys().hasAny(["roomCode"]) || request.resource.data.roomCode is string) &&
         !changedKeys().hasAny(["isPaid", "paymentStatus", "paymentStartedAt", "createdAt"]) &&
         (
           (
+            isPatientSelf(request.auth.uid) &&
             request.auth.uid == resource.data.patientId &&
             changedKeys().hasOnly(["notes", "note", "preferredDate", "preferredTime", "dismissedBy"])
           ) ||
           (
+            isDoctorSelf(request.auth.uid) &&
             request.auth.uid == resource.data.doctorId &&
             changedKeys().hasOnly(["status", "roomId", "roomCode", "dismissedBy"]) &&
             request.resource.data.status in ["pending", "accepted", "rejected", "completed", "finished"]
@@ -121,7 +339,34 @@ service cloud.firestore {
       // Allow creating only the doctor registration notification from the client during signup.
       // This is allowed even when email is not verified yet.
       allow create: if isSignedIn() &&
+        request.auth.token.email_verified != true &&
+        isSelf(request.resource.data.userId) &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "doctor" &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approvalStatus == "pending" &&
+        request.resource.data.keys().hasOnly([
+          "type",
+          "userId",
+          "name",
+          "surname",
+          "email",
+          "createdAt",
+          "status"
+        ]) &&
+        request.resource.data.keys().hasAll([
+          "type",
+          "userId",
+          "name",
+          "surname",
+          "email",
+          "createdAt",
+          "status"
+        ]) &&
         request.resource.data.userId == request.auth.uid &&
+        request.resource.data.name is string &&
+        request.resource.data.surname is string &&
+        request.resource.data.email is string &&
+        (request.resource.data.createdAt is string || request.resource.data.createdAt is int || request.resource.data.createdAt is timestamp) &&
         request.resource.data.type == "doctor_registration" &&
         request.resource.data.status == "pending";
 
@@ -135,8 +380,50 @@ service cloud.firestore {
     match /recipe/{reciepeId} {
       // Doctors create prescriptions for patients and target pharmacies (requires verified email).
       allow create: if isAdmin() || (
-        isEmailVerified() &&
-        request.resource.data.doctorId == request.auth.uid
+        isDoctorSelf(request.auth.uid) &&
+        request.resource.data.keys().hasOnly([
+          "doctorId",
+          "doctorName",
+          "patientId",
+          "patientName",
+          "pharmacyId",
+          "pharmacyName",
+          "medicines",
+          "dosage",
+          "notes",
+          "title",
+          "signatureDataUrl",
+          "status",
+          "createdAt",
+          "statusUpdatedAt"
+        ]) &&
+        request.resource.data.keys().hasAll([
+          "doctorId",
+          "doctorName",
+          "patientId",
+          "patientName",
+          "medicines",
+          "status",
+          "createdAt",
+          "statusUpdatedAt"
+        ]) &&
+        request.resource.data.doctorId == request.auth.uid &&
+        request.resource.data.doctorName is string &&
+        request.resource.data.patientId is string &&
+        userHasRole(request.resource.data.patientId, "patient") &&
+        request.resource.data.patientName is string &&
+        request.resource.data.medicines is list &&
+        request.resource.data.medicines.size() > 0 &&
+        request.resource.data.medicines.size() <= 50 &&
+        (!request.resource.data.keys().hasAny(["pharmacyId"]) || (request.resource.data.pharmacyId is string && userHasRole(request.resource.data.pharmacyId, "pharmacy"))) &&
+        (!request.resource.data.keys().hasAny(["pharmacyName"]) || request.resource.data.pharmacyName is string) &&
+        (!request.resource.data.keys().hasAny(["dosage"]) || request.resource.data.dosage is string) &&
+        (!request.resource.data.keys().hasAny(["notes"]) || request.resource.data.notes is string) &&
+        (!request.resource.data.keys().hasAny(["title"]) || request.resource.data.title is string) &&
+        (!request.resource.data.keys().hasAny(["signatureDataUrl"]) || request.resource.data.signatureDataUrl is string) &&
+        request.resource.data.status == "pending" &&
+        (request.resource.data.createdAt is string || request.resource.data.createdAt is int || request.resource.data.createdAt is timestamp) &&
+        (request.resource.data.statusUpdatedAt is string || request.resource.data.statusUpdatedAt is int || request.resource.data.statusUpdatedAt is timestamp)
       );
 
       // Reads allowed to doctor, patient, or destination pharmacy (and admins), only after verification.
@@ -151,18 +438,49 @@ service cloud.firestore {
       // Doctor can update; pharmacy can update status only; IDs immutable
       allow update: if isAdmin() || (
         isEmailVerified() &&
+        request.resource.data.keys().hasOnly([
+          "doctorId",
+          "doctorName",
+          "patientId",
+          "patientName",
+          "pharmacyId",
+          "pharmacyName",
+          "medicines",
+          "dosage",
+          "notes",
+          "title",
+          "signatureDataUrl",
+          "status",
+          "createdAt",
+          "statusUpdatedAt"
+        ]) &&
+        (!request.resource.data.keys().hasAny(["doctorName"]) || request.resource.data.doctorName is string) &&
+        (!request.resource.data.keys().hasAny(["patientName"]) || request.resource.data.patientName is string) &&
+        (!request.resource.data.keys().hasAny(["pharmacyName"]) || request.resource.data.pharmacyName is string) &&
+        (!request.resource.data.keys().hasAny(["medicines"]) || (request.resource.data.medicines is list && request.resource.data.medicines.size() > 0 && request.resource.data.medicines.size() <= 50)) &&
+        (!request.resource.data.keys().hasAny(["dosage"]) || request.resource.data.dosage is string) &&
+        (!request.resource.data.keys().hasAny(["notes"]) || request.resource.data.notes is string) &&
+        (!request.resource.data.keys().hasAny(["title"]) || request.resource.data.title is string) &&
+        (!request.resource.data.keys().hasAny(["signatureDataUrl"]) || request.resource.data.signatureDataUrl is string) &&
+        (!request.resource.data.keys().hasAny(["statusUpdatedAt"]) || request.resource.data.statusUpdatedAt is int || request.resource.data.statusUpdatedAt is string || request.resource.data.statusUpdatedAt is timestamp) &&
         (
           // doctor updating (ids immutable)
-          (resource.data.doctorId == request.auth.uid &&
-           request.resource.data.patientId == resource.data.patientId &&
-           request.resource.data.doctorId == resource.data.doctorId &&
-           request.resource.data.pharmacyId == resource.data.pharmacyId)
-          ||
-          // pharmacy updating status only (ids immutable)
-          (resource.data.pharmacyId == request.auth.uid &&
+          (isDoctorSelf(request.auth.uid) &&
+           resource.data.doctorId == request.auth.uid &&
            request.resource.data.patientId == resource.data.patientId &&
            request.resource.data.doctorId == resource.data.doctorId &&
            request.resource.data.pharmacyId == resource.data.pharmacyId &&
+           request.resource.data.createdAt == resource.data.createdAt &&
+           changedKeys().hasOnly(["medicines", "dosage", "notes", "title", "signatureDataUrl"]))
+          ||
+          // pharmacy updating status only (ids immutable)
+          (isPharmacySelf(request.auth.uid) &&
+           resource.data.pharmacyId == request.auth.uid &&
+           request.resource.data.patientId == resource.data.patientId &&
+           request.resource.data.doctorId == resource.data.doctorId &&
+           request.resource.data.pharmacyId == resource.data.pharmacyId &&
+           request.resource.data.createdAt == resource.data.createdAt &&
+           changedKeys().hasOnly(["status", "statusUpdatedAt"]) &&
            request.resource.data.status in ["accepted", "rejected"])
         )
       );
