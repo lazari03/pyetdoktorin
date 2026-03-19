@@ -24,6 +24,7 @@ export const ADMIN_PATHS = {
   notifications: `${ROUTES.ADMIN}/notifications`,
   reports: `${ROUTES.ADMIN}/reports`,
   profile: `${ROUTES.ADMIN}/profile`,
+  blog: `${ROUTES.ADMIN}/blog`,
 } as const;
 
 export function dashboardDoctorProfilePath(doctorId: string) {

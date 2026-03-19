@@ -82,7 +82,7 @@ export function getAdminNavDefs(): NavItemDef[] {
     { key: "users", href: ADMIN_PATHS.users, labelKey: "users", fallback: "Users" },
     { key: "notifications", href: ADMIN_PATHS.notifications, labelKey: "notifications", fallback: "Notifications" },
     { key: "reports", href: ADMIN_PATHS.reports, labelKey: "reports", fallback: "Reports" },
-  ];
+    { key: "blog", href: ADMIN_PATHS.blog, labelKey: "blog", fallback: "Blog" },];
 }
 
 export function getClinicNavDefs(): NavItemDef[] {

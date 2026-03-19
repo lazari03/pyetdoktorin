@@ -8,6 +8,8 @@ try {
 }
 
 module.exports = {
+  serverExternalPackages: ['firebase-admin', '@google-cloud/firestore', 'google-auth-library'],
+
   // Keep dev output isolated from production builds to avoid `.next` corruption
   // when running `next dev` and `next build` (or cleanup) around the same time.
   // You can override with `NEXT_DIST_DIR`.

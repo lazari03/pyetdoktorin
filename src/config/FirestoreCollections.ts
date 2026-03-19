@@ -3,4 +3,5 @@ export const FirestoreCollections = {
   Doctors: 'doctors',
   Appointments: 'appointments',
   Notifications: 'notifications',
+  Blog: 'blog',
 };
