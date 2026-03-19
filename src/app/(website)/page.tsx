@@ -8,7 +8,7 @@ import WebsiteStatsStrip from "@/presentation/components/website/WebsiteStatsStr
 import WebsiteCta from "@/presentation/components/website/WebsiteCta";
 import { getServerTranslations } from "@/i18n/serverTranslations";
 import SeoHead from "@/presentation/components/seo/SeoHead";
-import { buildMedicalOrganizationSchema, buildMedicalWebPageSchema, buildMetadata, SEO_KEYWORDS_AL } from "@/app/seo";
+import { buildMedicalOrganizationSchema, buildMedicalWebPageSchema, buildMetadata, buildWebSiteSchema, SEO_KEYWORDS_AL } from "@/app/seo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildMetadata({
@@ -25,6 +25,7 @@ export default async function Home() {
       <SeoHead
         schema={[
           buildMedicalOrganizationSchema(),
+          buildWebSiteSchema(),
           buildMedicalWebPageSchema({
             title: t("homeMetaTitle"),
             description: t("homeMetaDescription"),

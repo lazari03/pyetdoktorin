@@ -27,6 +27,8 @@ export const ROUTES = {
   PHARMACY: '/pharmacy',
   CLINIC: '/clinic',
   DASHBOARD: '/dashboard',
+  SPECIALTIES: '/specialitete',
+  CITIES: '/qytetet',
 };
 
 export const API_ENDPOINTS = {

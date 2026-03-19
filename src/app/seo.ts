@@ -164,3 +164,64 @@ export function buildFaqSchema(faqs: Array<{ question: string; answer: string }>
     })),
   };
 }
+
+export function buildWebSiteSchema(): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Pyet Doktorin",
+    url: SITE_URL,
+    inLanguage: "sq-AL",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/doctors?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+}
+
+export function buildBreadcrumbSchema(
+  items: Array<{ name: string; path: string }>
+): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: `${SITE_URL}${item.path}`,
+    })),
+  };
+}
+
+export function buildSpecialtyPageSchema({
+  specialty,
+  description,
+  path,
+}: {
+  specialty: string;
+  description: string;
+  path: string;
+}): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "MedicalWebPage",
+    name: specialty,
+    description,
+    url: `${SITE_URL}${path}`,
+    inLanguage: "sq-AL",
+    about: {
+      "@type": "MedicalSpecialty",
+      name: specialty,
+    },
+    provider: {
+      "@type": "MedicalOrganization",
+      name: "Pyet Doktorin",
+      url: SITE_URL,
+    },
+  };
+}
