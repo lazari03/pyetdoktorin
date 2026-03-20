@@ -39,6 +39,7 @@ const emptyForm = {
   tag: TAGS[0],
   status: "draft" as BlogPost["status"],
   author: "Ekipi i Pyet Doktorin",
+  keywords: "",
 };
 
 export default function AdminBlogPage() {
@@ -86,6 +87,7 @@ export default function AdminBlogPage() {
       tag: post.tag,
       status: post.status,
       author: post.author,
+      keywords: post.keywords?.join(", ") ?? "",
     });
     setEditingId(post.id);
     setMode("edit");
@@ -104,9 +106,11 @@ export default function AdminBlogPage() {
     setSaving(true);
     try {
       if (mode === "create") {
-        await createBlogPost({ ...form, slug: form.slug || slugify(form.title) });
+        const keywords = form.keywords.split(",").map((k) => k.trim()).filter(Boolean);
+        await createBlogPost({ ...form, slug: form.slug || slugify(form.title), keywords });
       } else if (mode === "edit" && editingId) {
-        await updateBlogPost(editingId, form);
+        const keywords = form.keywords.split(",").map((k) => k.trim()).filter(Boolean);
+        await updateBlogPost(editingId, { ...form, keywords });
       }
       await load();
       setMode("list");
@@ -215,6 +219,23 @@ export default function AdminBlogPage() {
                   value={form.author}
                   onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
                   placeholder="Ekipi i Pyet Doktorin"
+                  className="w-full"
+                />
+              </div>
+
+
+              {/* Keywords */}
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Keywords{" "}
+                  <span className="text-gray-400 font-normal">
+                    (comma separated, for Google)
+                  </span>
+                </label>
+                <Input
+                  value={form.keywords}
+                  onChange={(e) => setForm((f) => ({ ...f, keywords: e.target.value }))}
+                  placeholder="mjek online, kardiolog tiranë, shëndet zemre"
                   className="w-full"
                 />
               </div>

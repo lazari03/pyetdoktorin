@@ -5,12 +5,9 @@ import WebsiteSection from "@/presentation/components/website/WebsiteSection";
 import WebsiteCta from "@/presentation/components/website/WebsiteCta";
 import SeoHead from "@/presentation/components/seo/SeoHead";
 import Link from "next/link";
+import { buildMetadata, buildMedicalWebPageSchema, buildBreadcrumbSchema } from "@/app/seo";
 import {
-  buildMetadata,
-  buildMedicalWebPageSchema,
-  buildBreadcrumbSchema,
-} from "@/app/seo";
-import { getBlogPostBySlugServer as getBlogPostBySlug,
+  getBlogPostBySlugServer as getBlogPostBySlug,
   getPublishedBlogPostsServer as getPublishedBlogPosts,
 } from "@/infrastructure/services/blogServiceServer";
 
@@ -29,10 +26,17 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await getBlogPostBySlug(slug).catch(() => null);
   if (!post) return {};
+
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://pyetdoktorin.al";
+  const canonical = `${SITE_URL}/blog/${post.slug}`;
+
   return buildMetadata({
     title: post.title,
     description: post.excerpt,
     path: `/blog/${post.slug}`,
+    keywords: post.keywords?.length
+      ? post.keywords
+      : [post.tag, "shëndet", "mjek online", "pyetdoktorin"],
   });
 }
 
@@ -45,6 +49,8 @@ export default async function BlogPostPage({
   const post = await getBlogPostBySlug(slug).catch(() => null);
   if (!post) notFound();
 
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://pyetdoktorin.al";
+
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -52,20 +58,27 @@ export default async function BlogPostPage({
     description: post.excerpt,
     datePublished: post.publishedAt ?? post.createdAt,
     dateModified: post.updatedAt,
+    url: `${SITE_URL}/blog/${post.slug}`,
+    inLanguage: "sq-AL",
     author: { "@type": "Organization", name: post.author },
     publisher: {
       "@type": "Organization",
       name: "Pyet Doktorin",
-      url: "https://pyetdoktorin.al",
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/og/pyet-doktorin.svg`,
+      },
     },
+    ...(post.keywords?.length ? { keywords: post.keywords.join(", ") } : {}),
   };
 
   const formattedDate = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString("sq-AL", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
     : "";
 
   return (
@@ -77,6 +90,7 @@ export default async function BlogPostPage({
             title: post.title,
             description: post.excerpt,
             path: `/blog/${post.slug}`,
+            keywords: post.keywords,
           }),
           buildBreadcrumbSchema([
             { name: "Kryefaqja", path: "/" },
@@ -88,7 +102,6 @@ export default async function BlogPostPage({
 
       <WebsiteSection>
         <div className="website-container max-w-3xl mx-auto">
-          {/* Back link */}
           <Link
             href="/blog"
             className="inline-flex items-center gap-1 text-sm text-purple-600 font-semibold mb-6 hover:underline"
@@ -96,7 +109,6 @@ export default async function BlogPostPage({
             ← Kthehu te Blog
           </Link>
 
-          {/* Meta */}
           <div className="flex items-center gap-3 flex-wrap text-sm text-slate-500 mb-4">
             <span className="font-semibold text-purple-600 uppercase tracking-wider text-xs">
               {post.tag}
@@ -107,17 +119,14 @@ export default async function BlogPostPage({
             <span>{post.author}</span>
           </div>
 
-          {/* Title */}
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
             {post.title}
           </h1>
 
-          {/* Excerpt */}
           <p className="text-lg text-slate-600 mb-8 border-l-4 border-purple-300 pl-4 italic">
             {post.excerpt}
           </p>
 
-          {/* Content */}
           <div className="prose prose-slate max-w-none space-y-4">
             {post.content
               .split(/\n\n+/)
@@ -129,6 +138,22 @@ export default async function BlogPostPage({
                   </p>
                 ) : null;
               })}
+          </div>
+
+          {/* Internal links — drives SEO and keeps users on site */}
+          <div className="mt-12 p-6 bg-purple-50 rounded-2xl">
+            <p className="text-sm font-semibold text-purple-700 mb-3">Shërbime të lidhura</p>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/konsulte-mjeku-online" className="text-sm text-purple-600 hover:underline font-medium">
+                Konsultë Mjeku Online →
+              </Link>
+              <Link href="/recete-elektronike" className="text-sm text-purple-600 hover:underline font-medium">
+                Recetë Elektronike →
+              </Link>
+              <Link href="/individuals" className="text-sm text-purple-600 hover:underline font-medium">
+                Gjej Mjekun Tënd →
+              </Link>
+            </div>
           </div>
         </div>
       </WebsiteSection>

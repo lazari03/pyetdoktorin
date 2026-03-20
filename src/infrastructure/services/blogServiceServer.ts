@@ -11,6 +11,7 @@ function docToBlogPost(id: string, data: Record<string, unknown>): BlogPost {
     tag: String(data.tag ?? ''),
     status: (data.status as BlogPost['status']) ?? 'draft',
     author: String(data.author ?? 'Ekipi i Pyet Doktorin'),
+    keywords: Array.isArray(data.keywords) ? (data.keywords as string[]) : [],
     createdAt: String(data.createdAt ?? ''),
     updatedAt: String(data.updatedAt ?? ''),
     publishedAt: data.publishedAt ? String(data.publishedAt) : undefined,
@@ -38,4 +39,28 @@ export async function getBlogPostBySlugServer(slug: string): Promise<BlogPost | 
   if (snap.empty) return null;
   const d = snap.docs[0];
   return docToBlogPost(d.id, d.data() as Record<string, unknown>);
+}
+
+export async function getAllPublishedSlugs(): Promise<string[]> {
+  const { db } = getAdmin();
+  const snap = await db
+    .collection('blog')
+    .where('status', '==', 'published')
+    .select('slug', 'publishedAt')
+    .get();
+  return snap.docs.map((d) => String(d.data().slug ?? ''));
+}
+
+export async function getAllPublishedPostsMeta(): Promise<{ slug: string; publishedAt?: string }[]> {
+  const { db } = getAdmin();
+  const snap = await db
+    .collection('blog')
+    .where('status', '==', 'published')
+    .orderBy('publishedAt', 'desc')
+    .select('slug', 'publishedAt')
+    .get();
+  return snap.docs.map((d) => ({
+    slug: String(d.data().slug ?? ''),
+    publishedAt: d.data().publishedAt ? String(d.data().publishedAt) : undefined,
+  }));
 }

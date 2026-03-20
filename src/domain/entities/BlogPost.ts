@@ -9,6 +9,7 @@ export interface BlogPost {
   tag: string;
   status: BlogStatus;
   author: string;
+  keywords?: string[];
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;

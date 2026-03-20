@@ -64,3 +64,4 @@ dist/
 # OS
 Thumbs.db
 .idea
+knip-report.json
