@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import { buildMetadata } from "@/app/seo";
 
-export const metadata: Metadata = buildMetadata({
+// Status page should not be indexed — it has no SEO value
+export const metadata: Metadata = {
   title: "Status | Pyet Doktorin",
-  description: "Live uptime, incidents, and platform status for Pyet Doktorin.",
-  path: "/status",
-});
+  description: "Live uptime and platform status for Pyet Doktorin.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function StatusLayout({ children }: { children: React.ReactNode }) {
   return children;
