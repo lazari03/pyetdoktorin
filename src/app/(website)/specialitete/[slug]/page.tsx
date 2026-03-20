@@ -243,7 +243,12 @@ export default async function SpecialtyPage({
         </div>
       </WebsiteSection>
 
-      <WebsiteCta />
+      <WebsiteCta
+        title={`Rezervo Vizitë me ${specialty.label}`}
+        subtitle={specialty.description}
+        primary={{ label: "Fillo Tani", href: "/register" }}
+        secondary={{ label: "Mëso Më Shumë", href: "/individuals" }}
+      />
     </WebsiteShell>
   );
 }

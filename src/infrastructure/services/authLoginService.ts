@@ -1,6 +1,5 @@
 import { IAuthLoginService } from '@/application/ports/IAuthLoginService';
 import { login } from '@/infrastructure/services/authService';
-import { testFirebaseConnection } from '@/infrastructure/firebaseTest';
 
 export class AuthLoginService implements IAuthLoginService {
   async login(email: string, password: string) {
@@ -9,6 +8,7 @@ export class AuthLoginService implements IAuthLoginService {
   }
 
   async testConnection(): Promise<void> {
-    await testFirebaseConnection();
+    // No-op: method required by interface but not used
+    return Promise.resolve();
   }
 }

@@ -27,8 +27,7 @@ export async function generateMetadata({
   const post = await getBlogPostBySlug(slug).catch(() => null);
   if (!post) return {};
 
-  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://pyetdoktorin.al";
-  const canonical = `${SITE_URL}/blog/${post.slug}`;
+  // const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://pyetdoktorin.al";
 
   return buildMetadata({
     title: post.title,

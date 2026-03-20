@@ -138,7 +138,12 @@ export default async function CityPage({
         </div>
       </WebsiteSection>
 
-      <WebsiteCta />
+      <WebsiteCta
+        title={`Rezervo Vizitë në ${city.label}`}
+        subtitle={`Platforma jonë lidh pacientët në ${city.label} me mjekët më të mirë. Rezervo online, paguaj vetëm pasi mjeku pranon vizitën.`}
+        primary={{ label: "Fillo Tani", href: "/register" }}
+        secondary={{ label: "Mëso Më Shumë", href: "/individuals" }}
+      />
     </WebsiteShell>
   );
 }
