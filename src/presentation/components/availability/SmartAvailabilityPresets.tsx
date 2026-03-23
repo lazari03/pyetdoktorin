@@ -26,8 +26,8 @@ export default function SmartAvailabilityPresets({ activePresetId, presets, onAp
             onClick={() => onApply(preset.id)}
             className={`rounded-3xl border p-4 text-left transition ${
               active
-                ? 'border-teal-400 bg-teal-50 shadow-sm'
-                : 'border-slate-200 bg-slate-50 hover:border-teal-200 hover:bg-white'
+                ? 'border-purple-300 bg-purple-50 shadow-[0_14px_30px_-22px_rgba(139,92,246,0.85)]'
+                : 'border-slate-200 bg-slate-50 hover:border-purple-200 hover:bg-white'
             }`}
           >
             <p className="text-sm font-semibold text-slate-900">{preset.label}</p>

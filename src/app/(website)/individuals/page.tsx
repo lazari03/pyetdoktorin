@@ -29,7 +29,7 @@ export default async function IndividualsPage() {
         subtitle={t("individualsHeroSubtitle")}
         primaryCta={{ label: t("individualsHeroPrimaryCta"), href: "/register" }}
         secondaryCta={{ label: t("individualsHeroSecondaryCta"), href: "/doctors" }}
-        imageSrc="/api/images?key=child1"
+        imageSrc="/website/child1.svg"
         imageAlt={t("individualsHeroImageAlt")}
         chip={t("individualsHeroChip")}
         metaText={t("individualsHeroMeta")}
@@ -88,7 +88,7 @@ export default async function IndividualsPage() {
               t("individualsSplitBullet2"),
               t("individualsSplitBullet3"),
             ]}
-            imageSrc="/api/images?key=avatar1"
+            imageSrc="/website/avatar1.svg"
             imageAlt={t("individualsSplitImageAlt")}
           />
         </div>

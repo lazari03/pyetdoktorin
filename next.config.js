@@ -89,10 +89,14 @@ module.exports = {
   },
 
   webpack: (config, { isServer, dev }) => {
+    const enableClientObfuscation = process.env.NEXT_ENABLE_CLIENT_OBFUSCATION === 'true';
+
     if (dev) {
       config.cache = false;
     }
-    if (!dev && !isServer && WebpackObfuscator) {
+    // Client-side obfuscation significantly increases bundle size and parse/compile time,
+    // which hurts Core Web Vitals and Lighthouse scores. Keep it opt-in for special builds only.
+    if (!dev && !isServer && enableClientObfuscation && WebpackObfuscator) {
       config.plugins.push(
         new WebpackObfuscator(
           {

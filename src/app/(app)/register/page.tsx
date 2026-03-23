@@ -17,6 +17,8 @@ function RegisterPageInner() {
         name: '',
         surname: '',
         phone: '',
+        address: '',
+        country: '',
         email: '',
         password: '',
         confirmPassword: '',
@@ -41,28 +43,37 @@ function RegisterPageInner() {
             return;
         }
 
+        setError('');
         setLoading(true);
         try {
-            await registerUserUseCase.execute({
-                name: formData.name,
-                surname: formData.surname,
-                phone: formData.phone,
-                email: formData.email,
+            const payload = {
+                name: formData.name.trim(),
+                surname: formData.surname.trim(),
+                phone: formData.phone.trim(),
+                address: formData.address.trim(),
+                country: formData.country.trim(),
+                email: formData.email.trim(),
                 password: formData.password,
                 role: formData.role,
+            };
+
+            await registerUserUseCase.execute({
+                ...payload,
             });
 
             void notifyFormSubmission({
                 formType: 'user_registration',
                 source: 'register_page',
-                subject: `New registration: ${formData.email}`,
-                replyTo: formData.email,
+                subject: `New registration: ${payload.email}`,
+                replyTo: payload.email,
                 data: {
-                    name: formData.name,
-                    surname: formData.surname,
-                    phone: formData.phone,
-                    email: formData.email,
-                    role: formData.role,
+                    name: payload.name,
+                    surname: payload.surname,
+                    phone: payload.phone,
+                    address: payload.address,
+                    country: payload.country,
+                    email: payload.email,
+                    role: payload.role,
                     password: '[redacted]',
                     consent: true,
                 },
@@ -83,13 +94,13 @@ function RegisterPageInner() {
 
     return (
       <AuthShell
-        eyebrow={t('secureAccessEyebrow') || 'Secure access'}
-        title={t('createCareAccount') || t('register')}
-        subtitle={t('onlyNeededData') || 'We only collect what’s needed for your clinician.'}
+        eyebrow={t('secureAccessEyebrow')}
+        title={t('createCareAccount')}
+        subtitle={t('onlyNeededData')}
         highlights={[
-          { title: t('secureHighlights1') || 'Medical-grade encryption', body: t('hipaaLine') || 'HIPAA-aware | Encrypted in transit' },
-          { title: t('secureHighlights2') || 'Consent-based sharing', body: t('consentLine') || 'We share only with your selected clinicians.' },
-          { title: t('secureHighlights3') || 'Role-based access control', body: t('loginSideSecure') || 'Access differs for patients and doctors.' },
+          { title: t('secureHighlights1'), body: t('hipaaLine') },
+          { title: t('secureHighlights2'), body: t('consentLine') },
+          { title: t('secureHighlights3'), body: t('loginSideSecure') },
         ]}
         rightCta={
           <div className="space-y-2">
@@ -158,6 +169,35 @@ function RegisterPageInner() {
             </div>
           </div>
 
+          <div className="grid sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2">
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('address')}</label>
+              <input
+                type="text"
+                name="address"
+                placeholder={t('yourAddress')}
+                autoComplete="street-address"
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.address}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-700">{t('country')}</label>
+              <input
+                type="text"
+                name="country"
+                placeholder={t('yourCountry')}
+                autoComplete="country-name"
+                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.country}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="block mb-1 text-xs font-medium text-gray-700">{t('password')}</label>
@@ -206,7 +246,7 @@ function RegisterPageInner() {
               required
               className="mt-1 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
             />
-            <span>{t('consentLine') || 'I consent to share my health info with my selected clinicians.'}</span>
+            <span>{t('consentLine')}</span>
           </label>
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -216,12 +256,12 @@ function RegisterPageInner() {
             className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={loading}
           >
-            {loading ? t('registering') : t('secureRegisterCta') || t('register')}
+            {loading ? t('registering') : t('secureRegisterCta')}
           </button>
         </form>
 
         <div className="text-center text-xs text-gray-500 mt-2">
-          {t('onlyNeededData') || 'We only collect what’s needed for your clinician.'}
+          {t('onlyNeededData')}
         </div>
 
       </AuthShell>

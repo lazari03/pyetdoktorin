@@ -6,7 +6,7 @@ import { useState } from "react";
 import Image from "next/image";
 
 // Use secure API endpoint for images
-const MAIN_IMAGE = "/api/images?key=hero1";
+const MAIN_IMAGE = "/website/hero1.svg";
 
 export default function HeroSection() {
   const nav = useNavigationCoordinator();

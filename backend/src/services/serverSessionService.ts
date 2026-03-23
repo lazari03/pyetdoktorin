@@ -7,6 +7,19 @@ import { AUTH_COOKIE_NAMES, AUTH_COOKIE_MAX_AGE_SECONDS, buildAuthCookie } from 
 export class FirebaseServerSessionService implements IServerSessionService {
   constructor(private readonly isProd: boolean) {}
 
+  private buildAccountName(data: Record<string, unknown>, emailFallback?: string, uidFallback?: string): string | undefined {
+    const fullName = [data.name, data.surname]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((value) => value.trim())
+      .join(' ');
+    if (fullName) return fullName;
+
+    const email = typeof data.email === 'string' && data.email.trim().length > 0 ? data.email.trim() : emailFallback;
+    if (email) return email;
+
+    return uidFallback;
+  }
+
   private buildCookies(sessionCookie: string, role: UserRole): string[] {
     const now = Date.now();
     return [
@@ -52,7 +65,8 @@ export class FirebaseServerSessionService implements IServerSessionService {
 
     const uid = decoded.uid;
     const userDoc = await admin.firestore().collection('users').doc(uid).get();
-    const role = this.normalizeRole(userDoc.data()?.role);
+    const userData = (userDoc.data() ?? {}) as Record<string, unknown>;
+    const role = this.normalizeRole(userData.role);
 
     if (role === UserRole.null || !Object.values(UserRole).includes(role)) {
       throw new SessionException('Role not approved', 403);
@@ -73,6 +87,16 @@ export class FirebaseServerSessionService implements IServerSessionService {
     return {
       role,
       cookies: this.buildCookies(sessionCookie, role),
+      userId: uid,
+      accountName: this.buildAccountName(
+        userData,
+        typeof userData.email === 'string' ? userData.email : decoded.email,
+        uid,
+      ),
+      accountEmail:
+        (typeof userData.email === 'string' && userData.email.trim().length > 0 ? userData.email : undefined) ||
+        decoded.email ||
+        undefined,
     };
   }
 }

@@ -1,4 +1,5 @@
 import type {
+  AvailabilityPreset,
   AvailabilityPresetId,
   AvailabilityTimeRange,
   DateOverride,
@@ -9,22 +10,21 @@ import type {
 
 const DEFAULT_TIMEZONE = "Europe/Tirane";
 
-type PresetConfig = {
-  id: AvailabilityPresetId;
-  label: string;
-  description: string;
-  slotDurationMinutes: number;
-  bufferMinutes: number;
-  weeklySchedule: WeeklySlot[];
-};
-
-const PRESETS: PresetConfig[] = [
+const DEFAULT_PRESETS: AvailabilityPreset[] = [
   {
     id: "balanced",
-    label: "Balanced week",
-    description: "Weekday availability with comfortable buffers between visits.",
+    label: {
+      en: "Balanced week",
+      al: "Javë e balancuar",
+    },
+    description: {
+      en: "Weekday availability with comfortable buffers between visits.",
+      al: "Disponueshmëri gjatë ditëve të javës me pushime të rehatshme mes vizitave.",
+    },
     slotDurationMinutes: 30,
     bufferMinutes: 10,
+    sortOrder: 10,
+    isDefault: true,
     weeklySchedule: [1, 2, 3, 4, 5].map((day) => ({
       day,
       startTime: "09:00",
@@ -33,10 +33,17 @@ const PRESETS: PresetConfig[] = [
   },
   {
     id: "focused",
-    label: "Focused consults",
-    description: "Fewer, longer sessions for higher-touch consultations.",
+    label: {
+      en: "Focused consults",
+      al: "Konsulta të fokusuara",
+    },
+    description: {
+      en: "Fewer, longer sessions for higher-touch consultations.",
+      al: "Më pak seanca, por më të gjata, për konsultime më të thelluara.",
+    },
     slotDurationMinutes: 45,
     bufferMinutes: 15,
+    sortOrder: 20,
     weeklySchedule: [1, 3, 5].map((day) => ({
       day,
       startTime: "10:00",
@@ -45,10 +52,17 @@ const PRESETS: PresetConfig[] = [
   },
   {
     id: "extended",
-    label: "Extended access",
-    description: "Broader hours for doctors who want more open booking coverage.",
+    label: {
+      en: "Extended access",
+      al: "Qasje e zgjeruar",
+    },
+    description: {
+      en: "Broader hours for doctors who want more open booking coverage.",
+      al: "Orar më i gjerë për mjekët që duan më shumë mbulim të rezervimeve.",
+    },
     slotDurationMinutes: 20,
     bufferMinutes: 5,
+    sortOrder: 30,
     weeklySchedule: [1, 2, 3, 4, 5, 6].map((day) => ({
       day,
       startTime: "08:00",
@@ -89,7 +103,10 @@ function normalizeWeeklySchedule(schedule: WeeklySlot[]): WeeklySlot[] {
     .filter((slot) => Number.isInteger(slot.day) && slot.day >= 0 && slot.day <= 6)
     .map((slot) => normalizeRange(slot))
     .filter((slot): slot is WeeklySlot => Boolean(slot))
-    .sort((a, b) => (a.day - b.day) || (timeToMinutes(a.startTime) - timeToMinutes(b.startTime)));
+    .sort(
+      (a, b) =>
+        a.day - b.day || timeToMinutes(a.startTime) - timeToMinutes(b.startTime),
+    );
 }
 
 function normalizeDateOverrides(overrides: DateOverride[]): DateOverride[] {
@@ -107,15 +124,33 @@ function normalizeDateOverrides(overrides: DateOverride[]): DateOverride[] {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function getAvailabilityPresets(): PresetConfig[] {
-  return PRESETS;
+function getEffectivePresets(
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
+): AvailabilityPreset[] {
+  return presets.length > 0 ? presets : DEFAULT_PRESETS;
+}
+
+function getDefaultPreset(
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
+): AvailabilityPreset {
+  const effectivePresets = getEffectivePresets(presets);
+  return effectivePresets.find((item) => item.isDefault) ?? effectivePresets[0]!;
+}
+
+export function getDefaultAvailabilityPresets(): AvailabilityPreset[] {
+  return DEFAULT_PRESETS;
 }
 
 export function createAvailabilityFromPreset(
   doctorId: string,
-  presetId: AvailabilityPresetId = "balanced",
+  presetId?: AvailabilityPresetId,
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
 ): DoctorAvailability {
-  const preset = PRESETS.find((item) => item.id === presetId) ?? PRESETS[0]!;
+  const effectivePresets = getEffectivePresets(presets);
+  const defaultPreset = getDefaultPreset(effectivePresets);
+  const preset =
+    effectivePresets.find((item) => item.id === presetId) ?? defaultPreset;
+
   return {
     doctorId,
     weeklySchedule: preset.weeklySchedule,
@@ -128,16 +163,25 @@ export function createAvailabilityFromPreset(
   };
 }
 
-export function createDefaultAvailability(doctorId: string): DoctorAvailability {
-  return createAvailabilityFromPreset(doctorId, "balanced");
+export function createDefaultAvailability(
+  doctorId: string,
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
+): DoctorAvailability {
+  return createAvailabilityFromPreset(
+    doctorId,
+    getDefaultPreset(presets).id,
+    presets,
+  );
 }
 
 export function normalizeAvailability(
   availability: DoctorAvailability,
   doctorId = availability.doctorId,
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
 ): DoctorAvailability {
-  const fallback = createDefaultAvailability(doctorId);
-  const presetId = PRESETS.some((item) => item.id === availability.presetId)
+  const effectivePresets = getEffectivePresets(presets);
+  const fallback = createDefaultAvailability(doctorId, effectivePresets);
+  const presetId = effectivePresets.some((item) => item.id === availability.presetId)
     ? availability.presetId
     : fallback.presetId;
 
@@ -146,11 +190,13 @@ export function normalizeAvailability(
     weeklySchedule: normalizeWeeklySchedule(availability.weeklySchedule || []),
     dateOverrides: normalizeDateOverrides(availability.dateOverrides || []),
     slotDurationMinutes:
-      Number.isFinite(availability.slotDurationMinutes) && availability.slotDurationMinutes >= 15
+      Number.isFinite(availability.slotDurationMinutes) &&
+      availability.slotDurationMinutes >= 15
         ? Math.min(120, Math.round(availability.slotDurationMinutes))
         : fallback.slotDurationMinutes,
     bufferMinutes:
-      Number.isFinite(availability.bufferMinutes) && availability.bufferMinutes >= 0
+      Number.isFinite(availability.bufferMinutes) &&
+      availability.bufferMinutes >= 0
         ? Math.min(60, Math.round(availability.bufferMinutes))
         : fallback.bufferMinutes,
     timezone: availability.timezone || fallback.timezone,
@@ -165,15 +211,42 @@ export function countWeeklyCapacity(availability: DoctorAvailability): number {
 
   return availability.weeklySchedule.reduce((total, slot) => {
     const minutes = timeToMinutes(slot.endTime) - timeToMinutes(slot.startTime);
-    return total + Math.max(0, Math.floor((minutes - availability.slotDurationMinutes) / step) + 1);
+    return (
+      total +
+      Math.max(
+        0,
+        Math.floor((minutes - availability.slotDurationMinutes) / step) + 1,
+      )
+    );
   }, 0);
 }
 
-export function findNextOpenDayLabel(availability: DoctorAvailability): string | null {
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const uniqueDays = Array.from(new Set(availability.weeklySchedule.map((slot) => slot.day))).sort((a, b) => a - b);
+function formatWeekday(
+  day: number,
+  locale = "en-US",
+  timeZone = DEFAULT_TIMEZONE,
+): string {
+  const referenceDate = new Date(Date.UTC(2024, 0, 7 + day, 12));
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    timeZone,
+  }).format(referenceDate);
+}
+
+export function findNextOpenDayLabel(
+  availability: DoctorAvailability,
+  locale = "en-US",
+): string | null {
+  const uniqueDays = Array.from(
+    new Set(availability.weeklySchedule.map((slot) => slot.day)),
+  ).sort((a, b) => a - b);
+
   if (uniqueDays.length === 0) return null;
-  return uniqueDays.map((day) => dayNames[day] || "").filter(Boolean).join(", ");
+
+  return uniqueDays
+    .map((day) => formatWeekday(day, locale, availability.timezone || DEFAULT_TIMEZONE))
+    .filter(Boolean)
+    .join(", ");
 }
 
 export function resolveSlotsForDate(
@@ -187,7 +260,9 @@ export function resolveSlotsForDate(
   if (override?.blocked) return [];
 
   const dateValue = new Date(`${date}T00:00:00`);
-  const day = Number.isNaN(dateValue.getTime()) ? new Date(date).getDay() : dateValue.getDay();
+  const day = Number.isNaN(dateValue.getTime())
+    ? new Date(date).getDay()
+    : dateValue.getDay();
   const ranges = (override?.slots && override.slots.length > 0
     ? override.slots
     : availability.weeklySchedule.filter((slot) => slot.day === day)) as AvailabilityTimeRange[];
@@ -199,9 +274,15 @@ export function resolveSlotsForDate(
   ranges.forEach((range) => {
     const start = timeToMinutes(range.startTime);
     const end = timeToMinutes(range.endTime);
-    for (let pointer = start; pointer + availability.slotDurationMinutes <= end; pointer += step) {
+    for (
+      let pointer = start;
+      pointer + availability.slotDurationMinutes <= end;
+      pointer += step
+    ) {
       const time = minutesToTime(pointer);
-      const past = Boolean(isToday && typeof nowMinutes === "number" && pointer <= nowMinutes);
+      const past = Boolean(
+        isToday && typeof nowMinutes === "number" && pointer <= nowMinutes,
+      );
       slots.push({
         time,
         booked: normalizedBooked.has(time),

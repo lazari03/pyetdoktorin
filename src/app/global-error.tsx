@@ -33,7 +33,7 @@ export default function GlobalError({
 
   return (
     <html lang="al">
-      <body className="min-h-screen bg-white text-slate-900 antialiased">
+      <body className="app-page-gradient min-h-screen text-slate-900 antialiased">
         <div className="min-h-screen py-10 px-4">
           <div className="mx-auto max-w-xl bg-white rounded-3xl shadow-lg border border-purple-50 p-6 space-y-4">
             <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">

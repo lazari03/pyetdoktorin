@@ -23,6 +23,7 @@ export const ADMIN_PATHS = {
   users: `${ROUTES.ADMIN}/users`,
   notifications: `${ROUTES.ADMIN}/notifications`,
   reports: `${ROUTES.ADMIN}/reports`,
+  security: `${ROUTES.ADMIN}/security`,
   profile: `${ROUTES.ADMIN}/profile`,
   blog: `${ROUTES.ADMIN}/blog`,
 } as const;

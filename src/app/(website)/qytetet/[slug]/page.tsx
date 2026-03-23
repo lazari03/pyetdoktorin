@@ -121,7 +121,7 @@ export default async function CityPage({
         subtitle={city.description}
         primaryCta={{ label: "Gjej Mjekun Tënd", href: "/individuals" }}
         secondaryCta={{ label: "Si Funksionon?", href: "/si-funksionon" }}
-        imageSrc="/api/images?key=hero1"
+        imageSrc="/website/hero1.svg"
         imageAlt={`Mjekë në ${city.label}`}
       />
 

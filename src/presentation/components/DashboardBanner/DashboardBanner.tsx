@@ -9,7 +9,7 @@ interface DashboardBannerProps {
   href?: string;
 }
 
-const bannerImageUrl = "/api/images?key=dashboard";
+const bannerImageUrl = "/website/dashboard.svg";
 
 export default function DashboardBanner({ href = DASHBOARD_PATHS.appointments }: DashboardBannerProps) {
   const { t } = useTranslation();

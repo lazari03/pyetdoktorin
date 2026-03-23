@@ -1,25 +1,34 @@
 "use client";
-import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
-import { useTranslation } from 'react-i18next';
-import '@i18n';
 import Link from 'next/link';
 import { Bars3Icon, XMarkIcon, ArrowRightOnRectangleIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { z } from '@/config/zIndex';
 
-export default function NavBar({ hasSession = false }: { hasSession?: boolean }) {
-  const nav = useNavigationCoordinator();
-  const { t } = useTranslation();
+export type NavBarItem = {
+  path: string;
+  label: string;
+};
+
+type NavBarLabels = {
+  menu: string;
+  goToDashboard: string;
+  signIn: string;
+  registerNow: string;
+  mobileDescription: string;
+};
+
+export default function NavBar({
+  hasSession = false,
+  navItems,
+  labels,
+}: {
+  hasSession?: boolean;
+  navItems: NavBarItem[];
+  labels: NavBarLabels;
+}) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? 'hidden' : '';
@@ -30,51 +39,36 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
     setIsMenuOpen(false);
   }, [pathname]);
 
-  const navItems = [
-    { path: '/si-funksionon', label: t('howItWorks') },
-    { path: '/services', label: t('services') },
-    { path: '/blog', label: t('blog') },
-    { path: '/pricing', label: t('pricing') },
-    { path: '/about', label: t('about') || t('aboutUs') },
-    { path: '/contact', label: t('contact') },
-  ].filter(item => item.label);
-
-  const AuthButtons = () =>
+  const AuthButtons = ({ mobile = false }: { mobile?: boolean }) =>
     (hasSession ? (
-      <button
-        className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-white text-sm font-semibold shadow-sm hover:bg-slate-800 transition focus:outline-none focus:ring-2 focus:ring-slate-400/40"
-        onClick={() => {
-          setIsMenuOpen(false);
-          nav.toDashboard();
-        }}
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/40"
+        onClick={() => mobile && setIsMenuOpen(false)}
         data-analytics="nav.goto_dashboard"
       >
-        {t('goToDashboard')}
-      </button>
+        {labels.goToDashboard}
+      </Link>
     ) : (
       <>
-        <button
+        <Link
+          href="/login"
           className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:border-slate-300 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
-          onClick={() => {
-            setIsMenuOpen(false);
-            nav.toLogin();
-          }}
+          onClick={() => mobile && setIsMenuOpen(false)}
           data-analytics="nav.sign_in"
         >
           <ArrowRightOnRectangleIcon className="h-4 w-4" />
-          {t('signIn')}
-        </button>
-        <button
+          {labels.signIn}
+        </Link>
+        <Link
+          href="/register"
           className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300"
-          onClick={() => {
-            setIsMenuOpen(false);
-            nav.toRegister();
-          }}
+          onClick={() => mobile && setIsMenuOpen(false)}
           data-analytics="nav.register"
         >
           <UserPlusIcon className="h-4 w-4" />
-          {t('registerNow')}
-        </button>
+          {labels.registerNow}
+        </Link>
       </>
     ));
 
@@ -94,7 +88,7 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
         >
           <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
             <div className="flex flex-col">
-              <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Menu</span>
+              <span className="text-xs uppercase tracking-[0.2em] text-slate-400">{labels.menu}</span>
               <span className="text-lg font-bold text-slate-900">Pyet Doktorin</span>
             </div>
             <button
@@ -116,6 +110,7 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
                 onClick={() => {
                   setIsMenuOpen(false);
                 }}
+                aria-current={pathname === item.path ? 'page' : undefined}
                 data-analytics={`nav.mobile.${item.path}`}
               >
                 <span className="truncate">{item.label}</span>
@@ -124,18 +119,14 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
             ))}
           </nav>
           <div className="mt-auto px-6 py-6 space-y-3 border-t border-slate-100 bg-slate-50/60">
-            <AuthButtons />
+            <AuthButtons mobile />
             <p className="text-xs text-slate-500">
-              {t('homeHeroSubtitle')}
+              {labels.mobileDescription}
             </p>
           </div>
         </div>
       </div>
-      <div
-        className={`w-full transition-all duration-300 ${
-          scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-slate-200/70 shadow-sm' : 'bg-transparent'
-        }`}
-      >
+      <div className="w-full border-b border-slate-200/70 bg-white/85 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 md:px-10 md:py-5">
           <div className="md:hidden">
             <button
@@ -165,6 +156,7 @@ export default function NavBar({ hasSession = false }: { hasSession?: boolean })
                         ? 'bg-slate-900 text-white shadow-sm'
                         : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                     }`}
+                    aria-current={active ? 'page' : undefined}
                     data-analytics={`nav.desktop.${item.path}`}
                   >
                     {item.label}

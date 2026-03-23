@@ -36,7 +36,7 @@ export default async function ReceteElektronikePage() {
         subtitle={t("eprescriptionHeroSubtitle")}
         primaryCta={{ label: t("eprescriptionHeroPrimaryCta"), href: "/register" }}
         secondaryCta={{ label: t("eprescriptionHeroSecondaryCta"), href: "/services" }}
-        imageSrc="/api/images?key=dashboard"
+        imageSrc="/website/dashboard.svg"
         imageAlt={t("eprescriptionHeroImageAlt")}
         chip={t("eprescriptionHeroChip")}
         metaText={t("eprescriptionHeroMeta")}
@@ -97,7 +97,7 @@ export default async function ReceteElektronikePage() {
               t("eprescriptionBenefit2"),
               t("eprescriptionBenefit3"),
             ]}
-            imageSrc="/api/images?key=child1"
+            imageSrc="/website/child1.svg"
             imageAlt={t("eprescriptionBenefitsImageAlt")}
             reverse
           />

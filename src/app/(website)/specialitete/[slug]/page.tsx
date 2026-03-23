@@ -215,7 +215,7 @@ export default async function SpecialtyPage({
         subtitle={specialty.heroSubtitle}
         primaryCta={{ label: "Rezervo Tani", href: "/register" }}
         secondaryCta={{ label: "Shiko Mjekët", href: "/individuals" }}
-        imageSrc="/api/images?key=hero1"
+        imageSrc="/website/hero1.svg"
         imageAlt={specialty.label}
       />
 

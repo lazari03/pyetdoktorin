@@ -1,8 +1,10 @@
 'use client';
 
 import type { DoctorAvailability } from '@/domain/entities/DoctorAvailability';
+import { useTranslation } from 'react-i18next';
+import { getAvailabilityDayLabel } from '@/presentation/utils/availabilityPresentation';
 
-const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 type Props = {
   availability: DoctorAvailability;
@@ -20,11 +22,15 @@ export default function WeeklyScheduleEditor({
   onSlotDurationChange,
   onBufferChange,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block text-sm text-slate-700">
-          <span className="mb-2 block font-medium">Visit length</span>
+          <span className="mb-2 block font-medium">
+            {t('availabilityVisitLength', { defaultValue: 'Visit length' })}
+          </span>
           <select
             value={availability.slotDurationMinutes}
             onChange={(event) => onSlotDurationChange(Number(event.target.value))}
@@ -32,14 +38,18 @@ export default function WeeklyScheduleEditor({
           >
             {[15, 20, 30, 45, 60].map((value) => (
               <option key={value} value={value}>
-                {value} minutes
+                {value} {t('availabilityMinutes', { defaultValue: 'minutes' })}
               </option>
             ))}
           </select>
         </label>
 
         <label className="block text-sm text-slate-700">
-          <span className="mb-2 block font-medium">Buffer between visits</span>
+          <span className="mb-2 block font-medium">
+            {t('availabilityBufferBetweenVisits', {
+              defaultValue: 'Buffer between visits',
+            })}
+          </span>
           <select
             value={availability.bufferMinutes}
             onChange={(event) => onBufferChange(Number(event.target.value))}
@@ -47,7 +57,7 @@ export default function WeeklyScheduleEditor({
           >
             {[0, 5, 10, 15, 20].map((value) => (
               <option key={value} value={value}>
-                {value} minutes
+                {value} {t('availabilityMinutes', { defaultValue: 'minutes' })}
               </option>
             ))}
           </select>
@@ -55,11 +65,12 @@ export default function WeeklyScheduleEditor({
       </div>
 
       <div className="space-y-3">
-        {DAY_LABELS.map((label, day) => {
+        {DAYS.map((day) => {
+          const label = getAvailabilityDayLabel(day, t);
           const slot = availability.weeklySchedule.find((entry) => entry.day === day);
           return (
             <div
-              key={label}
+              key={day}
               className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[1.1fr_0.8fr_0.8fr]"
             >
               <label className="flex items-center gap-3 text-sm font-medium text-slate-800">
@@ -73,7 +84,7 @@ export default function WeeklyScheduleEditor({
                       endTime: slot?.endTime || '17:00',
                     })
                   }
-                  className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                  className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
                 />
                 {label}
               </label>
@@ -82,6 +93,9 @@ export default function WeeklyScheduleEditor({
                 type="time"
                 value={slot?.startTime || '09:00'}
                 disabled={!slot}
+                aria-label={`${label} ${t('availabilityStartTime', {
+                  defaultValue: 'Start time',
+                })}`}
                 onChange={(event) =>
                   onChangeDay(day, {
                     enabled: true,
@@ -96,6 +110,9 @@ export default function WeeklyScheduleEditor({
                 type="time"
                 value={slot?.endTime || '17:00'}
                 disabled={!slot}
+                aria-label={`${label} ${t('availabilityEndTime', {
+                  defaultValue: 'End time',
+                })}`}
                 onChange={(event) =>
                   onChangeDay(day, {
                     enabled: true,

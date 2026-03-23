@@ -207,7 +207,7 @@ export default function SectionShell({
     );
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="app-page-gradient min-h-screen flex flex-col">
       <div
         className={`md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4 ${z.navbar}`}
       >

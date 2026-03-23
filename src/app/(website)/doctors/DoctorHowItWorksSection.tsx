@@ -1,3 +1,4 @@
+import "@/i18n/i18n";
 import { useTranslation } from 'react-i18next';
 import { UserPlusIcon, InboxArrowDownIcon, VideoCameraIcon, CurrencyEuroIcon, LifebuoyIcon } from '@heroicons/react/24/solid';
 

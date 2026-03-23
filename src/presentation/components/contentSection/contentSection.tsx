@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 export default function ContentSection() {
   const { t } = useTranslation();
   // Placeholder image and logo
-  const doctorImage = "/api/images?key=child1";
+  const doctorImage = "/website/child1.svg";
 
   return (
     <section className="relative min-h-[70vh] flex items-center justify-center bg-[#ede9fe] px-2 py-20 overflow-x-hidden">

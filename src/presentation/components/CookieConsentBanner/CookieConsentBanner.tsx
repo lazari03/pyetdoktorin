@@ -1,9 +1,7 @@
 "use client";
 
-import "@/i18n/i18n";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslation } from "react-i18next";
 import { ShieldCheckIcon } from "@heroicons/react/24/outline";
 import {
   getAnalyticsConsent,
@@ -14,8 +12,25 @@ import {
 import { ROUTES } from "@/config/routes";
 import { z } from "@/config/zIndex";
 
-export default function CookieConsentBanner() {
-  const { t } = useTranslation();
+type CookieConsentBannerProps = {
+  title: string;
+  body: string;
+  privacyPolicyLabel: string;
+  saveFailedMessage: string;
+  rejectLabel: string;
+  acceptLabel: string;
+  savingLabel: string;
+};
+
+export default function CookieConsentBanner({
+  title,
+  body,
+  privacyPolicyLabel,
+  saveFailedMessage,
+  rejectLabel,
+  acceptLabel,
+  savingLabel,
+}: CookieConsentBannerProps) {
   const [consent, setConsent] = useState(() => getAnalyticsConsent());
   const [dismissed, setDismissed] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -34,24 +49,16 @@ export default function CookieConsentBanner() {
               <ShieldCheckIcon className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900">
-                {t("cookieBannerTitle", "Cookies & analytics")}
-              </p>
+              <p className="text-sm font-semibold text-slate-900">{title}</p>
               <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                {t(
-                  "cookieBannerBody",
-                  "We use optional analytics cookies to understand usage and improve the product. You can accept or decline."
-                )}{" "}
+                {body}{" "}
                 <Link href={ROUTES.PRIVACY} className="font-semibold text-purple-700 hover:underline">
-                  {t("privacyPolicy", "Privacy policy")}
+                  {privacyPolicyLabel}
                 </Link>
               </p>
               {saveFailed ? (
                 <p className="mt-2 text-xs font-medium text-red-600">
-                  {t(
-                    "cookieBannerSaveFailed",
-                    "We couldn’t save your preference. Please enable cookies/storage for this site and try again."
-                  )}
+                  {saveFailedMessage}
                 </p>
               ) : null}
             </div>
@@ -94,7 +101,7 @@ export default function CookieConsentBanner() {
               }}
               data-analytics="consent.analytics.reject"
             >
-              {t("rejectAnalytics", "Reject")}
+              {saving ? savingLabel : rejectLabel}
             </button>
             <button
               type="button"
@@ -131,7 +138,7 @@ export default function CookieConsentBanner() {
               }}
               data-analytics="consent.analytics.accept"
             >
-              {saving ? t("saving", "Saving…") : t("acceptAnalytics", "Accept")}
+              {saving ? savingLabel : acceptLabel}
             </button>
           </div>
         </div>

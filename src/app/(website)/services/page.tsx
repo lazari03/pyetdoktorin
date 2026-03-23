@@ -36,7 +36,7 @@ export default async function ServicesPage() {
         subtitle={t("servicesHeroSubtitle")}
         primaryCta={{ label: t("servicesHeroPrimaryCta"), href: "/register" }}
         secondaryCta={{ label: t("servicesHeroSecondaryCta"), href: "/si-funksionon" }}
-        imageSrc="/api/images?key=child1"
+        imageSrc="/website/child1.svg"
         imageAlt={t("servicesHeroImageAlt")}
         chip={t("servicesHeroChip")}
         metaText={t("servicesHeroMeta")}
@@ -161,7 +161,7 @@ export default async function ServicesPage() {
               t("servicesPharmacyBullet2"),
               t("servicesPharmacyBullet3"),
             ]}
-            imageSrc="/api/images?key=dashboard"
+            imageSrc="/website/dashboard.svg"
             imageAlt={t("servicesPharmacyImageAlt")}
             reverse
           />

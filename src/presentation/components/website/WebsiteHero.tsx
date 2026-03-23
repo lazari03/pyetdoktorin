@@ -40,6 +40,8 @@ export default function WebsiteHero({
   cardClassName?: string;
   priority?: boolean;
 }) {
+  const usesSvgImage = imageSrc?.endsWith('.svg') ?? false;
+
   return (
     <section className={`website-hero ${className}`.trim()}>
       <div className="website-container">
@@ -64,9 +66,9 @@ export default function WebsiteHero({
             {metaText && (
               <div className="website-hero-meta">
                 <div className="website-avatars">
-                  <Image src="/api/images?key=avatar1" alt="" width={28} height={28} className="website-avatar" />
-                  <Image src="/api/images?key=avatar2" alt="" width={28} height={28} className="website-avatar" />
-                  <Image src="/api/images?key=avatar3" alt="" width={28} height={28} className="website-avatar" />
+                  <Image src="/website/avatar1.svg" alt="" width={28} height={28} className="website-avatar" unoptimized />
+                  <Image src="/website/avatar2.svg" alt="" width={28} height={28} className="website-avatar" unoptimized />
+                  <Image src="/website/avatar3.svg" alt="" width={28} height={28} className="website-avatar" unoptimized />
                 </div>
                 <span className="website-hero-meta-text">{metaText}</span>
               </div>
@@ -82,6 +84,7 @@ export default function WebsiteHero({
                   sizes="(max-width: 768px) 320px, 420px"
                   className="website-hero-image"
                   priority={priority}
+                  unoptimized={usesSvgImage}
                 />
                 {chip && <div className="website-hero-chip">{chip}</div>}
                 {floatingText && (

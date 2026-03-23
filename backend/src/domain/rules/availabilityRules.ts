@@ -1,4 +1,5 @@
 import type {
+  AvailabilityPreset,
   AvailabilityPresetId,
   AvailabilityTimeRange,
   DateOverride,
@@ -9,18 +10,21 @@ import type {
 
 const DEFAULT_TIMEZONE = 'Europe/Tirane';
 
-type PresetConfig = {
-  id: AvailabilityPresetId;
-  slotDurationMinutes: number;
-  bufferMinutes: number;
-  weeklySchedule: WeeklySlot[];
-};
-
-const PRESETS: PresetConfig[] = [
+const DEFAULT_PRESETS: AvailabilityPreset[] = [
   {
     id: 'balanced',
+    label: {
+      en: 'Balanced week',
+      al: 'Javë e balancuar',
+    },
+    description: {
+      en: 'Weekday availability with comfortable buffers between visits.',
+      al: 'Disponueshmëri gjatë ditëve të javës me pushime të rehatshme mes vizitave.',
+    },
     slotDurationMinutes: 30,
     bufferMinutes: 10,
+    sortOrder: 10,
+    isDefault: true,
     weeklySchedule: [1, 2, 3, 4, 5].map((day) => ({
       day,
       startTime: '09:00',
@@ -29,8 +33,17 @@ const PRESETS: PresetConfig[] = [
   },
   {
     id: 'focused',
+    label: {
+      en: 'Focused consults',
+      al: 'Konsulta të fokusuara',
+    },
+    description: {
+      en: 'Fewer, longer sessions for higher-touch consultations.',
+      al: 'Më pak seanca, por më të gjata, për konsultime më të thelluara.',
+    },
     slotDurationMinutes: 45,
     bufferMinutes: 15,
+    sortOrder: 20,
     weeklySchedule: [1, 3, 5].map((day) => ({
       day,
       startTime: '10:00',
@@ -39,8 +52,17 @@ const PRESETS: PresetConfig[] = [
   },
   {
     id: 'extended',
+    label: {
+      en: 'Extended access',
+      al: 'Qasje e zgjeruar',
+    },
+    description: {
+      en: 'Broader hours for doctors who want more open booking coverage.',
+      al: 'Orar më i gjerë për mjekët që duan më shumë mbulim të rezervimeve.',
+    },
     slotDurationMinutes: 20,
     bufferMinutes: 5,
+    sortOrder: 30,
     weeklySchedule: [1, 2, 3, 4, 5, 6].map((day) => ({
       day,
       startTime: '08:00',
@@ -75,7 +97,7 @@ function normalizeWeeklySchedule(schedule: WeeklySlot[]): WeeklySlot[] {
     .filter((slot) => Number.isInteger(slot.day) && slot.day >= 0 && slot.day <= 6)
     .map((slot) => normalizeRange(slot))
     .filter((slot): slot is WeeklySlot => Boolean(slot))
-    .sort((a, b) => (a.day - b.day) || (timeToMinutes(a.startTime) - timeToMinutes(b.startTime)));
+    .sort((a, b) => a.day - b.day || timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 }
 
 function normalizeDateOverrides(overrides: DateOverride[]): DateOverride[] {
@@ -93,11 +115,32 @@ function normalizeDateOverrides(overrides: DateOverride[]): DateOverride[] {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
+function getEffectivePresets(
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
+): AvailabilityPreset[] {
+  return presets.length > 0 ? presets : DEFAULT_PRESETS;
+}
+
+function getDefaultPreset(
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
+): AvailabilityPreset {
+  const effectivePresets = getEffectivePresets(presets);
+  return effectivePresets.find((item) => item.isDefault) ?? effectivePresets[0]!;
+}
+
+export function getDefaultAvailabilityPresets(): AvailabilityPreset[] {
+  return DEFAULT_PRESETS;
+}
+
 export function createAvailabilityFromPreset(
   doctorId: string,
-  presetId: AvailabilityPresetId = 'balanced',
+  presetId?: AvailabilityPresetId,
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
 ): DoctorAvailability {
-  const preset = PRESETS.find((item) => item.id === presetId) ?? PRESETS[0]!;
+  const effectivePresets = getEffectivePresets(presets);
+  const defaultPreset = getDefaultPreset(effectivePresets);
+  const preset = effectivePresets.find((item) => item.id === presetId) ?? defaultPreset;
+
   return {
     doctorId,
     weeklySchedule: preset.weeklySchedule,
@@ -110,16 +153,21 @@ export function createAvailabilityFromPreset(
   };
 }
 
-export function createDefaultAvailability(doctorId: string): DoctorAvailability {
-  return createAvailabilityFromPreset(doctorId, 'balanced');
+export function createDefaultAvailability(
+  doctorId: string,
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
+): DoctorAvailability {
+  return createAvailabilityFromPreset(doctorId, getDefaultPreset(presets).id, presets);
 }
 
 export function normalizeAvailability(
   availability: DoctorAvailability,
   doctorId = availability.doctorId,
+  presets: AvailabilityPreset[] = DEFAULT_PRESETS,
 ): DoctorAvailability {
-  const fallback = createDefaultAvailability(doctorId);
-  const presetId = PRESETS.some((item) => item.id === availability.presetId)
+  const effectivePresets = getEffectivePresets(presets);
+  const fallback = createDefaultAvailability(doctorId, effectivePresets);
+  const presetId = effectivePresets.some((item) => item.id === availability.presetId)
     ? availability.presetId
     : fallback.presetId;
 

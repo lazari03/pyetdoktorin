@@ -46,7 +46,7 @@ export default async function SiFunksiononPage() {
         subtitle={t("howHeroSubtitle")}
         primaryCta={{ label: t("howHeroPrimaryCta"), href: "/register" }}
         secondaryCta={{ label: t("howHeroSecondaryCta"), href: "/contact" }}
-        imageSrc="/api/images?key=hero1"
+        imageSrc="/website/hero1.svg"
         imageAlt={t("howHeroImageAlt")}
         chip={t("howHeroChip")}
         metaText={t("howHeroMeta")}
@@ -107,7 +107,7 @@ export default async function SiFunksiononPage() {
               t("howTrustBullet2"),
               t("howTrustBullet3"),
             ]}
-            imageSrc="/api/images?key=dashboard"
+            imageSrc="/website/dashboard.svg"
             imageAlt={t("howTrustImageAlt")}
             reverse
           />

@@ -1,17 +1,14 @@
-"use client";
-
 import Link from "next/link";
-import { useTranslation } from "react-i18next";
-import { setLanguageCookie } from "@/presentation/utils/clientCookies";
-import { useRouter } from "next/navigation";
+import FooterLanguageSelector from "./FooterLanguageSelector";
+import { getRequestLocale, getServerTranslations } from "@/i18n/serverTranslations";
 
-export default function FooterSection() {
-  const { t, i18n } = useTranslation();
-  const router = useRouter();
+export default async function FooterSection() {
+  const locale = await getRequestLocale();
+  const t = await getServerTranslations(locale);
   const year = new Date().getFullYear();
   const languages = [
-    { code: 'en', label: `🇺🇸 ${t('english') || 'English'}` },
-    { code: 'al', label: `🇦🇱 ${t('albanian') || 'Shqip'}` },
+    { code: 'en' as const, label: `🇺🇸 ${t('english') || 'English'}` },
+    { code: 'al' as const, label: `🇦🇱 ${t('albanian') || 'Shqip'}` },
   ];
 
   return (
@@ -24,26 +21,11 @@ export default function FooterSection() {
               {t('footerTagline')}
             </p>
             <div>
-              <label htmlFor="footer-lang" className="sr-only">
-                {t('language')}
-              </label>
-              <select
-                id="footer-lang"
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                value={i18n.language}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  i18n.changeLanguage(next);
-                  setLanguageCookie(next);
-                  router.refresh();
-                }}
-              >
-                {languages.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.label}
-                  </option>
-                ))}
-              </select>
+              <FooterLanguageSelector
+                currentLocale={locale}
+                label={t('language')}
+                options={languages}
+              />
             </div>
           </div>
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">

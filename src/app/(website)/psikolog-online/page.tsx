@@ -41,7 +41,7 @@ export default async function PsikologOnlinePage() {
         subtitle={t("psychHeroSubtitle")}
         primaryCta={{ label: t("psychHeroPrimaryCta"), href: "/register" }}
         secondaryCta={{ label: t("psychHeroSecondaryCta"), href: "/si-funksionon" }}
-        imageSrc="/api/images?key=hero1"
+        imageSrc="/website/hero1.svg"
         imageAlt={t("psychHeroImageAlt")}
         chip={t("psychHeroChip")}
         metaText={t("psychHeroMeta")}
@@ -102,7 +102,7 @@ export default async function PsikologOnlinePage() {
               t("psychStep2"),
               t("psychStep3"),
             ]}
-            imageSrc="/api/images?key=child1"
+            imageSrc="/website/child1.svg"
             imageAlt={t("psychStepsImageAlt")}
             reverse
           />

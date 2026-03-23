@@ -1,6 +1,26 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
+
+function parseServiceAccount(raw: string) {
+  let normalized = raw;
+
+  // Support dotenv-loaded JSON values that contain escaped quotes/newlines.
+  if (normalized.includes('\\"')) {
+    normalized = normalized
+      .replace(/\n/g, '\\n')
+      .replace(/\\"/g, '"');
+  }
+
+  const serviceAccount = JSON.parse(normalized) as Record<string, unknown>;
+  const privateKey = serviceAccount.private_key;
+  if (typeof privateKey === 'string' && !privateKey.includes('\n')) {
+    serviceAccount.private_key = privateKey.replace(/\\n/g, '\n');
+  }
+
+  return serviceAccount;
+}
+
 function initAdmin() {
   if (!getApps().length) {
     // Try to use FIREBASE_SERVICE_ACCOUNT JSON first
@@ -8,7 +28,7 @@ function initAdmin() {
     
     if (serviceAccountJson) {
       try {
-        const serviceAccount = JSON.parse(serviceAccountJson);
+        const serviceAccount = parseServiceAccount(serviceAccountJson);
         initializeApp({
           credential: cert(serviceAccount),
         });

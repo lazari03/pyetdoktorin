@@ -41,35 +41,35 @@ export function DoctorQuickActionsCard({ appointments }: Props) {
   const actions = [
     {
       key: 'calendar',
-      label: t('calendar') || 'Calendar',
+      label: t('calendar'),
       href: DASHBOARD_PATHS.doctorCalendar,
       Icon: CalendarDaysIcon,
       tone: 'bg-indigo-50 text-indigo-700 border-indigo-100',
     },
     {
       key: 'availability',
-      label: t('availability') || 'Availability',
+      label: t('availability'),
       href: DASHBOARD_PATHS.doctorAvailability,
       Icon: CalendarDaysIcon,
       tone: 'bg-teal-50 text-teal-700 border-teal-100',
     },
     {
       key: 'appointments',
-      label: (t('appointments') || 'Appointments').replace(/^\w/, (c) => c.toUpperCase()),
+      label: t('appointments').replace(/^\w/, (c) => c.toUpperCase()),
       href: DASHBOARD_PATHS.appointments,
       Icon: ClipboardDocumentListIcon,
       tone: 'bg-purple-50 text-purple-700 border-purple-100',
     },
     {
       key: 'earnings',
-      label: t('earnings') || 'Earnings',
+      label: t('earnings'),
       href: DASHBOARD_PATHS.earnings,
       Icon: CurrencyDollarIcon,
       tone: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     },
     {
       key: 'profile',
-      label: t('myProfile') || 'My profile',
+      label: t('myProfile'),
       href: DASHBOARD_PATHS.profile,
       Icon: UserCircleIcon,
       tone: 'bg-slate-50 text-slate-700 border-slate-200',
@@ -80,20 +80,20 @@ export function DoctorQuickActionsCard({ appointments }: Props) {
     <section className="card-premium card-premium-hover card-accent card-accent-emerald p-4 sm:p-5">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900">{t('quickActions') || 'Quick actions'}</p>
+          <p className="text-sm font-semibold text-gray-900">{t('quickActions')}</p>
           <p className="text-xs text-gray-600 mt-1">
-            {t('doctorQuickActionsSubtitle') || 'Shortcuts to manage your schedule and patients.'}
+            {t('doctorQuickActionsSubtitle')}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 sm:justify-end">
           <span className="inline-flex items-center rounded-full border border-gray-200 bg-white/70 px-3 py-1 text-[11px] font-semibold text-gray-700">
-            {t('today') || 'Today'}: {stats.dueToday}
+            {t('today')}: {stats.dueToday}
           </span>
           <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50/70 px-3 py-1 text-[11px] font-semibold text-amber-700">
-            {t('pending') || 'Pending'}: {stats.pendingRequests}
+            {t('pending')}: {stats.pendingRequests}
           </span>
           <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1 text-[11px] font-semibold text-rose-700">
-            {t('waitingForPayment') || 'Waiting for payment'}: {stats.pendingPayments}
+            {t('waitingForPayment')}: {stats.pendingPayments}
           </span>
         </div>
       </div>
@@ -111,7 +111,7 @@ export function DoctorQuickActionsCard({ appointments }: Props) {
               <Icon className="h-5 w-5" aria-hidden />
             </div>
             <p className="mt-3 text-sm font-semibold text-gray-900">{label}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{t('open') || 'Open'}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('open')}</p>
           </Link>
         ))}
       </div>

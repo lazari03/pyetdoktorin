@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Calendar as BigCalendar, Views, dateFnsLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import {
+  addDays,
   format,
   parse,
   startOfWeek,
@@ -17,6 +18,10 @@ import {
 import { enUS } from 'date-fns/locale/en-US';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
+import type {
+  AvailabilityTimeRange,
+  DoctorAvailability,
+} from '@/domain/entities/DoctorAvailability';
 
 const locales = { 'en-US': enUS };
 
@@ -30,6 +35,7 @@ const localizer = dateFnsLocalizer({
 
 interface CalendarProps {
     events: CalendarEvent[];
+    availability?: DoctorAvailability | null;
     onSelectEvent?: (event: CalendarEvent) => void;
 }
 
@@ -40,7 +46,28 @@ export type CalendarEvent = {
     resource?: unknown;
 };
 
-export default function Calendar({ events, onSelectEvent }: CalendarProps) {
+function combineDateAndTime(date: Date, time: string): Date {
+    const [hours = '0', minutes = '0'] = time.split(':');
+    const next = new Date(date);
+    next.setHours(Number(hours), Number(minutes), 0, 0);
+    return next;
+}
+
+function resolveAvailabilityRangesForDate(
+    availability: DoctorAvailability,
+    date: Date,
+): AvailabilityTimeRange[] {
+    const dateKey = format(date, 'yyyy-MM-dd');
+    const override = availability.dateOverrides.find((entry) => entry.date === dateKey);
+    if (override?.blocked) return [];
+    if (override?.slots && override.slots.length > 0) {
+        return override.slots;
+    }
+    const weekday = getDay(date);
+    return availability.weeklySchedule.filter((slot) => slot.day === weekday);
+}
+
+export default function Calendar({ events, availability, onSelectEvent }: CalendarProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const { t } = useTranslation();
 
@@ -54,10 +81,34 @@ export default function Calendar({ events, onSelectEvent }: CalendarProps) {
         ).length;
     }, [events, weekStart, weekEnd]);
 
+    const availabilityEvents = useMemo<CalendarEvent[]>(() => {
+        if (!availability) return [];
+
+        return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)).flatMap((date) => {
+            const dateKey = format(date, 'yyyy-MM-dd');
+            return resolveAvailabilityRangesForDate(availability, date).map((range) => ({
+                title: t('calendarAvailability', { defaultValue: 'Availability' }),
+                start: combineDateAndTime(date, range.startTime),
+                end: combineDateAndTime(date, range.endTime),
+                resource: {
+                    kind: 'availability',
+                    date: dateKey,
+                },
+            }));
+        });
+    }, [availability, weekStart, t]);
+
     const eventPropGetter = (event: CalendarEvent) => {
+        const resource = event?.resource as { kind?: string; status?: string } | undefined;
+        if (resource?.kind === 'availability') {
+            return {
+                className: 'availability-background-event',
+            };
+        }
+
         const end = event.end as Date | undefined;
         const eventIsPast = end ? isPast(end) : false;
-        const status = (event?.resource as { status?: string } | undefined)?.status?.toLowerCase?.();
+        const status = resource?.status?.toLowerCase?.();
 
         // Past → gray
         if (eventIsPast || status === 'completed' || status === 'rejected' || status === 'canceled') {
@@ -91,9 +142,13 @@ export default function Calendar({ events, onSelectEvent }: CalendarProps) {
                 <div className="flex items-center gap-3 flex-wrap">
                     {/* Legend */}
                     <div className="hidden sm:flex items-center gap-3 text-[11px] text-gray-500">
+                        <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-purple-400" />{t('calendarAvailability', { defaultValue: 'Availability' })}</span>
                         <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400" />{t('upcoming') || 'Upcoming'}</span>
                         <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400" />{t('pending') || 'Pending'}</span>
                         <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-gray-300" />{t('past') || 'Past'}</span>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-2 rounded-full bg-purple-50 border border-purple-100 px-3 py-2 text-xs font-semibold text-purple-700">
+                        {availabilityEvents.length} {t('availabilityWindows', { defaultValue: 'availability windows' })}
                     </div>
                     <div className="hidden sm:flex items-center gap-2 rounded-full bg-purple-50 border border-purple-100 px-3 py-2 text-xs font-semibold text-purple-700">
                         {weekCount} {t('sessions') || 'sessions'}
@@ -129,6 +184,7 @@ export default function Calendar({ events, onSelectEvent }: CalendarProps) {
                 <BigCalendar
                     localizer={localizer}
                     events={events}
+                    backgroundEvents={availabilityEvents}
                     defaultView={Views.WEEK}
                     views={[Views.WEEK]}
                     view={Views.WEEK}
@@ -184,6 +240,12 @@ export default function Calendar({ events, onSelectEvent }: CalendarProps) {
                     font-size: 11px;
                     line-height: 1.3;
                     transition: box-shadow 0.15s ease, transform 0.15s ease;
+                }
+                .calendar-theme .rbc-background-event.availability-background-event {
+                    background: linear-gradient(180deg, rgba(147, 51, 234, 0.16), rgba(168, 85, 247, 0.08));
+                    border: 1px dashed rgba(147, 51, 234, 0.28);
+                    border-radius: 14px;
+                    inset-inline: 4px;
                 }
                 .calendar-theme .rbc-event:hover {
                     box-shadow: 0 4px 12px rgba(0,0,0,0.15);

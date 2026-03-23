@@ -1,6 +1,5 @@
 'use client';
 
-import '@/i18n/i18n';
 import { Suspense } from 'react';
 import ToastProvider from '@/presentation/components/Toast/ToastProvider';
 import AnalyticsScripts from '@/app/analytics/AnalyticsScripts';

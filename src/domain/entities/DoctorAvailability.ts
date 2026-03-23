@@ -15,7 +15,23 @@ export interface DateOverride {
   slots?: AvailabilityTimeRange[];
 }
 
-export type AvailabilityPresetId = "balanced" | "focused" | "extended";
+export type AvailabilityPresetId = string;
+
+export interface AvailabilityPresetCopy {
+  en: string;
+  al: string;
+}
+
+export interface AvailabilityPreset {
+  id: AvailabilityPresetId;
+  label: AvailabilityPresetCopy;
+  description: AvailabilityPresetCopy;
+  slotDurationMinutes: number;
+  bufferMinutes: number;
+  weeklySchedule: WeeklySlot[];
+  sortOrder?: number;
+  isDefault?: boolean;
+}
 
 export interface DoctorAvailability {
   doctorId: string;

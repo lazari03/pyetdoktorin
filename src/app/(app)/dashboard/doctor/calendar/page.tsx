@@ -17,6 +17,8 @@ import { Appointment } from '@/domain/entities/Appointment';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
+import { availabilityService } from '@/infrastructure/services/availabilityServiceAdapter';
+import type { DoctorAvailability } from '@/domain/entities/DoctorAvailability';
 
 import type { CalendarEvent } from '../Calendar';
 
@@ -52,6 +54,9 @@ export default function DoctorCalendarPage() {
   const { toast } = useToast();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showRedirecting, setShowRedirecting] = useState(false);
+  const [availability, setAvailability] = useState<DoctorAvailability | null>(null);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
 
   // One-time fetch only if store is empty (e.g. direct navigation to this page)
   useEffect(() => {
@@ -59,6 +64,41 @@ export default function DoctorCalendarPage() {
       fetchAppointments(role);
     }
   }, [appointments.length, role, fetchAppointments]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAvailability = async () => {
+      if (role !== UserRole.Doctor) {
+        if (mounted) setAvailabilityLoading(false);
+        return;
+      }
+
+      setAvailabilityLoading(true);
+      setAvailabilityError(null);
+      try {
+        const nextAvailability = await availabilityService.getMyAvailability();
+        if (!mounted) return;
+        setAvailability(nextAvailability);
+      } catch (nextError) {
+        if (!mounted) return;
+        const message =
+          nextError instanceof Error
+            ? nextError.message
+            : t('availabilityLoadError', {
+                defaultValue: 'Failed to load availability.',
+              });
+        setAvailabilityError(message);
+      } finally {
+        if (mounted) setAvailabilityLoading(false);
+      }
+    };
+
+    void loadAvailability();
+    return () => {
+      mounted = false;
+    };
+  }, [role, t]);
 
   // Map stored appointments → calendar events (stable reference via useMemo)
   const events = useMemo<CalendarEvent[]>(() =>
@@ -79,6 +119,9 @@ export default function DoctorCalendarPage() {
   );
 
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
+    if ((event.resource as { kind?: string } | undefined)?.kind === 'availability') {
+      return;
+    }
     const appointment = event.resource as Appointment;
     if (appointment) setSelectedAppointment(appointment);
   }, []);
@@ -147,10 +190,29 @@ export default function DoctorCalendarPage() {
   return (
     <RoleGuard allowedRoles={[UserRole.Doctor]} fallbackPath={DASHBOARD_PATHS.root}>
       <RequestStateGate
-        loading={loading && appointments.length === 0}
-        error={error}
+        loading={(loading && appointments.length === 0) || availabilityLoading}
+        error={error || availabilityError}
         onRetry={() => {
           if (role) fetchAppointments(role);
+          setAvailabilityLoading(true);
+          setAvailabilityError(null);
+          availabilityService
+            .getMyAvailability()
+            .then((nextAvailability) => {
+              setAvailability(nextAvailability);
+            })
+            .catch((nextError) => {
+              const message =
+                nextError instanceof Error
+                  ? nextError.message
+                  : t('availabilityLoadError', {
+                      defaultValue: 'Failed to load availability.',
+                    });
+              setAvailabilityError(message);
+            })
+            .finally(() => {
+              setAvailabilityLoading(false);
+            });
         }}
         homeHref={DASHBOARD_PATHS.root}
         loadingLabel={t('loading')}
@@ -180,7 +242,11 @@ export default function DoctorCalendarPage() {
                 </p>
               </div>
             </header>
-            <Calendar events={events} onSelectEvent={handleSelectEvent} />
+            <Calendar
+              events={events}
+              availability={availability}
+              onSelectEvent={handleSelectEvent}
+            />
           </div>
 
           {selectedAppointment && (

@@ -29,7 +29,7 @@ export default async function ClinicsPage() {
         subtitle={t("clinicsHeroSubtitle")}
         primaryCta={{ label: t("clinicsHeroPrimaryCta"), href: "/contact" }}
         secondaryCta={{ label: t("clinicsHeroSecondaryCta"), href: "/individuals" }}
-        imageSrc="/api/images?key=avatar1"
+        imageSrc="/website/avatar1.svg"
         imageAlt={t("clinicsHeroImageAlt")}
         chip={t("clinicsHeroChip")}
         metaText={t("clinicsHeroMeta")}
@@ -86,7 +86,7 @@ export default async function ClinicsPage() {
               t("clinicsSplitBullet2"),
               t("clinicsSplitBullet3"),
             ]}
-            imageSrc="/api/images?key=dashboard"
+            imageSrc="/website/dashboard.svg"
             imageAlt={t("clinicsSplitImageAlt")}
             reverse
           />

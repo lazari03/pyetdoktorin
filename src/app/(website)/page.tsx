@@ -41,7 +41,7 @@ export default async function Home() {
         subtitle={t("homeHeroSubtitle")}
         primaryCta={{ label: t("homeHeroPrimaryCta"), href: "/register" }}
         secondaryCta={{ label: t("homeHeroSecondaryCta"), href: "/contact" }}
-        imageSrc="/api/images?key=hero1"
+        imageSrc="/website/hero1.svg"
         imageAlt={t("homeHeroImageAlt")}
         chip={t("homeHeroChip")}
         metaText={t("homeHeroMeta")}
@@ -126,7 +126,7 @@ export default async function Home() {
               t("homeSplitBullet2"),
               t("homeSplitBullet3"),
             ]}
-            imageSrc="/api/images?key=child1"
+            imageSrc="/website/child1.svg"
             imageAlt={t("homeSplitImageAlt")}
           />
         </div>

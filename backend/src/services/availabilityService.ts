@@ -6,17 +6,19 @@ import {
 import type { DoctorAvailability, ResolvedTimeSlot } from '@/domain/entities/DoctorAvailability';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { listAppointmentsForUser, normalizePreferredTime } from '@/services/appointmentsService';
+import { listAvailabilityPresets } from '@/services/availabilityPresetsService';
 import { UserRole } from '@/domain/entities/UserRole';
 
 const COLLECTION = 'availability';
 
 export async function getAvailabilityForDoctor(doctorId: string): Promise<DoctorAvailability> {
   const admin = getFirebaseAdmin();
+  const presets = await listAvailabilityPresets();
   const snapshot = await admin.firestore().collection(COLLECTION).doc(doctorId).get();
   if (!snapshot.exists) {
-    return createDefaultAvailability(doctorId);
+    return createDefaultAvailability(doctorId, presets);
   }
-  return normalizeAvailability(snapshot.data() as DoctorAvailability, doctorId);
+  return normalizeAvailability(snapshot.data() as DoctorAvailability, doctorId, presets);
 }
 
 export async function saveAvailabilityForDoctor(
@@ -24,6 +26,7 @@ export async function saveAvailabilityForDoctor(
   availability: DoctorAvailability,
 ): Promise<DoctorAvailability> {
   const admin = getFirebaseAdmin();
+  const presets = await listAvailabilityPresets();
   const normalized = normalizeAvailability(
     {
       ...availability,
@@ -31,6 +34,7 @@ export async function saveAvailabilityForDoctor(
       updatedAt: new Date().toISOString(),
     },
     doctorId,
+    presets,
   );
 
   await admin.firestore().collection(COLLECTION).doc(doctorId).set(normalized, { merge: true });

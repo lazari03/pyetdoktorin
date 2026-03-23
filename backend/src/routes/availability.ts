@@ -8,6 +8,7 @@ import {
   getResolvedAvailabilityForDoctor,
   saveAvailabilityForDoctor,
 } from '@/services/availabilityService';
+import { listAvailabilityPresets } from '@/services/availabilityPresetsService';
 
 const router = Router();
 
@@ -34,11 +35,21 @@ const saveAvailabilitySchema = z.object({
   slotDurationMinutes: z.number().int().min(15).max(120),
   bufferMinutes: z.number().int().min(0).max(60),
   timezone: z.string().min(1),
-  presetId: z.enum(['balanced', 'focused', 'extended']),
+  presetId: z.string().min(1),
 });
 
 const slotsQuerySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+router.get('/presets', requireAuth([UserRole.Doctor]), async (_req, res) => {
+  try {
+    const items = await listAvailabilityPresets();
+    res.json({ items });
+  } catch (error) {
+    console.error('Error fetching availability presets', error);
+    res.status(500).json({ message: 'Failed to load availability presets' });
+  }
 });
 
 router.get('/me', requireAuth([UserRole.Doctor]), async (req: AuthenticatedRequest, res) => {

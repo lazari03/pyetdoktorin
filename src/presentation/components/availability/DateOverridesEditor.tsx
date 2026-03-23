@@ -1,6 +1,8 @@
 'use client';
 
+import { PlusIcon } from '@heroicons/react/24/solid';
 import type { DateOverride } from '@/domain/entities/DoctorAvailability';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   overrides: DateOverride[];
@@ -10,25 +12,40 @@ type Props = {
 };
 
 export default function DateOverridesEditor({ overrides, onAdd, onChange, onRemove }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-900">Date exceptions</p>
-          <p className="text-sm text-slate-500">Block a specific day or open a custom one-off session window.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="max-w-md">
+          <p className="text-sm font-medium text-slate-900">
+            {t('availabilityDateExceptions', { defaultValue: 'Date exceptions' })}
+          </p>
+          <p className="text-sm text-slate-500">
+            {t('availabilityDateExceptionsHint', {
+              defaultValue: 'Block a specific day or open a custom one-off session window.',
+            })}
+          </p>
         </div>
         <button
           type="button"
           onClick={onAdd}
-          className="rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+          className="group inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-full border border-purple-200 bg-gradient-to-r from-purple-600 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_-18px_rgba(126,34,206,0.95)] transition-all hover:-translate-y-0.5 hover:from-purple-500 hover:to-violet-500 hover:shadow-[0_20px_34px_-18px_rgba(139,92,246,0.88)] focus:outline-none focus:ring-2 focus:ring-purple-200 focus:ring-offset-2 sm:w-auto sm:self-start"
         >
-          Add override
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 ring-1 ring-inset ring-white/25 transition-transform group-hover:scale-105">
+            <PlusIcon className="h-3.5 w-3.5" aria-hidden="true" />
+          </span>
+          <span className="whitespace-nowrap">
+            {t('availabilityAddOverride', { defaultValue: 'Add override' })}
+          </span>
         </button>
       </div>
 
       {overrides.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm text-slate-500">
-          No date overrides yet. Add one for vacations, holidays, or extra clinic hours.
+        <div className="rounded-3xl border border-dashed border-purple-200 bg-purple-50/50 px-5 py-6 text-sm text-slate-500">
+          {t('availabilityNoOverrides', {
+            defaultValue: 'No date overrides yet. Add one for vacations, holidays, or extra clinic hours.',
+          })}
         </div>
       ) : (
         <div className="space-y-3">
@@ -40,6 +57,7 @@ export default function DateOverridesEditor({ overrides, onAdd, onChange, onRemo
                   <input
                     type="date"
                     value={override.date}
+                    aria-label={t('availabilityDate', { defaultValue: 'Date' })}
                     onChange={(event) =>
                       onChange(index, {
                         ...override,
@@ -60,9 +78,9 @@ export default function DateOverridesEditor({ overrides, onAdd, onChange, onRemo
                           slots: event.target.checked ? [] : override.slots?.length ? override.slots : [{ startTime: '09:00', endTime: '12:00' }],
                         })
                       }
-                      className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                      className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
                     />
-                    Block day
+                    {t('availabilityBlockDay', { defaultValue: 'Block day' })}
                   </label>
 
                   <button
@@ -70,7 +88,7 @@ export default function DateOverridesEditor({ overrides, onAdd, onChange, onRemo
                     onClick={() => onRemove(index)}
                     className="text-sm font-semibold text-rose-600 hover:text-rose-700"
                   >
-                    Remove
+                    {t('availabilityRemoveOverride', { defaultValue: 'Remove' })}
                   </button>
                 </div>
 
@@ -79,6 +97,9 @@ export default function DateOverridesEditor({ overrides, onAdd, onChange, onRemo
                     <input
                       type="time"
                       value={slot?.startTime || '09:00'}
+                      aria-label={t('availabilityStartTime', {
+                        defaultValue: 'Start time',
+                      })}
                       onChange={(event) =>
                         onChange(index, {
                           ...override,
@@ -95,6 +116,9 @@ export default function DateOverridesEditor({ overrides, onAdd, onChange, onRemo
                     <input
                       type="time"
                       value={slot?.endTime || '12:00'}
+                      aria-label={t('availabilityEndTime', {
+                        defaultValue: 'End time',
+                      })}
                       onChange={(event) =>
                         onChange(index, {
                           ...override,

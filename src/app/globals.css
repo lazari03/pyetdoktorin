@@ -9,6 +9,8 @@
   --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06);
   --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.08);
   --radius-card: 1.5rem; /* 24px */
+  --app-page-gradient: radial-gradient(circle at top left, rgba(168, 85, 247, 0.12), transparent 32%),
+    linear-gradient(180deg, #f8f5ff 0%, #f8fafc 45%, #f8fafc 100%);
   /* Premium minimalist sans stack (no network font downloads required). */
   --font-sans: "SF Pro Display", "SF Pro Text", "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui,
     -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
@@ -20,7 +22,18 @@ html {
 }
 
 body {
-  @apply bg-white text-slate-900 font-sans antialiased;
+  @apply text-slate-900 font-sans antialiased;
+  background-color: #f8fafc;
+  background-image: var(--app-page-gradient);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.app-page-gradient {
+  background-color: #f8fafc;
+  background-image: var(--app-page-gradient);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 
 input,

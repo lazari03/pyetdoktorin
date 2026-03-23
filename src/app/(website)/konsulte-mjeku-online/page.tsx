@@ -36,7 +36,7 @@ export default async function KonsulteMjekuOnlinePage() {
         subtitle={t("onlineConsultHeroSubtitle")}
         primaryCta={{ label: t("onlineConsultHeroPrimaryCta"), href: "/register" }}
         secondaryCta={{ label: t("onlineConsultHeroSecondaryCta"), href: "/si-funksionon" }}
-        imageSrc="/api/images?key=hero1"
+        imageSrc="/website/hero1.svg"
         imageAlt={t("onlineConsultHeroImageAlt")}
         chip={t("onlineConsultHeroChip")}
         metaText={t("onlineConsultHeroMeta")}
@@ -97,7 +97,7 @@ export default async function KonsulteMjekuOnlinePage() {
               t("onlineConsultStep2Title"),
               t("onlineConsultStep3Title"),
             ]}
-            imageSrc="/api/images?key=dashboard"
+            imageSrc="/website/dashboard.svg"
             imageAlt={t("onlineConsultStepsImageAlt")}
             reverse
           />

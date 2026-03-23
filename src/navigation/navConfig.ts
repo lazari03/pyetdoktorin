@@ -82,6 +82,7 @@ export function getAdminNavDefs(): NavItemDef[] {
     { key: "users", href: ADMIN_PATHS.users, labelKey: "users", fallback: "Users" },
     { key: "notifications", href: ADMIN_PATHS.notifications, labelKey: "notifications", fallback: "Notifications" },
     { key: "reports", href: ADMIN_PATHS.reports, labelKey: "reports", fallback: "Reports" },
+    { key: "security", href: ADMIN_PATHS.security, labelKey: "securityLogs", fallback: "Security Logs" },
     { key: "blog", href: ADMIN_PATHS.blog, labelKey: "blog", fallback: "Blog" },];
 }
 

@@ -1,8 +1,19 @@
 import { backendFetch } from '@/network/backendClient';
-import type { DoctorAvailability, ResolvedTimeSlot } from '@/domain/entities/DoctorAvailability';
+import type {
+  AvailabilityPreset,
+  DoctorAvailability,
+  ResolvedTimeSlot,
+} from '@/domain/entities/DoctorAvailability';
 
 export async function getMyAvailability(): Promise<DoctorAvailability> {
   return backendFetch<DoctorAvailability>('/api/availability/me');
+}
+
+export async function getAvailabilityPresets(): Promise<AvailabilityPreset[]> {
+  const response = await backendFetch<{ items: AvailabilityPreset[] }>(
+    '/api/availability/presets',
+  );
+  return response.items ?? [];
 }
 
 export async function saveMyAvailability(

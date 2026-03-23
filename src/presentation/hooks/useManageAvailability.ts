@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type {
+  AvailabilityPreset,
   AvailabilityPresetId,
   DateOverride,
   DoctorAvailability,
@@ -8,11 +10,14 @@ import type {
 import {
   countWeeklyCapacity,
   createAvailabilityFromPreset,
-  findNextOpenDayLabel,
-  getAvailabilityPresets,
+  getDefaultAvailabilityPresets,
   normalizeAvailability,
 } from '@/domain/rules/availabilityRules';
 import { availabilityService } from '@/infrastructure/services/availabilityServiceAdapter';
+import {
+  getAvailabilityOpenDaysLabel,
+  getAvailabilityPresetCopy,
+} from '@/presentation/utils/availabilityPresentation';
 
 type DayPatch = {
   enabled: boolean;
@@ -21,6 +26,10 @@ type DayPatch = {
 };
 
 export function useManageAvailability(doctorId: string | null) {
+  const { t, i18n } = useTranslation();
+  const [presetDefinitions, setPresetDefinitions] = useState<AvailabilityPreset[]>(
+    getDefaultAvailabilityPresets(),
+  );
   const [availability, setAvailability] = useState<DoctorAvailability | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -32,17 +41,39 @@ export function useManageAvailability(doctorId: string | null) {
     setLoading(true);
     setError(null);
     try {
-      const data = await availabilityService.getMyAvailability();
-      setAvailability(normalizeAvailability(data, doctorId));
-      setSavedAt(data.updatedAt || null);
+      const [availabilityResult, presetsResult] = await Promise.all([
+        availabilityService.getMyAvailability(),
+        availabilityService.getPresets(),
+      ]);
+      const effectivePresets = presetsResult.length > 0
+        ? presetsResult
+        : getDefaultAvailabilityPresets();
+      setPresetDefinitions(effectivePresets);
+      setAvailability(
+        normalizeAvailability(availabilityResult, doctorId, effectivePresets),
+      );
+      setSavedAt(availabilityResult.updatedAt || null);
     } catch (err) {
-      const fallback = createAvailabilityFromPreset(doctorId, 'balanced');
+      const fallbackPresets = getDefaultAvailabilityPresets();
+      const fallback = createAvailabilityFromPreset(
+        doctorId,
+        undefined,
+        fallbackPresets,
+      );
+      setPresetDefinitions(fallbackPresets);
       setAvailability(fallback);
-      setError(err instanceof Error ? err.message : 'Failed to load availability');
+      setSavedAt(fallback.updatedAt || null);
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('availabilityLoadError', {
+              defaultValue: 'Failed to load availability.',
+            }),
+      );
     } finally {
       setLoading(false);
     }
-  }, [doctorId]);
+  }, [doctorId, i18n.resolvedLanguage, t]);
 
   useEffect(() => {
     void refresh();
@@ -51,64 +82,114 @@ export function useManageAvailability(doctorId: string | null) {
   const applyPreset = useCallback((presetId: AvailabilityPresetId) => {
     if (!doctorId) return;
     setAvailability((prev) => {
-      const next = createAvailabilityFromPreset(doctorId, presetId);
+      const next = createAvailabilityFromPreset(
+        doctorId,
+        presetId,
+        presetDefinitions,
+      );
       if (!prev) return next;
       return {
         ...next,
         dateOverrides: prev.dateOverrides,
       };
     });
-  }, [doctorId]);
+  }, [doctorId, presetDefinitions]);
 
   const updateWeeklyDay = useCallback((day: number, patch: DayPatch) => {
     setAvailability((prev) => {
       if (!prev) return prev;
       const withoutDay = prev.weeklySchedule.filter((slot) => slot.day !== day);
       const nextWeekly = patch.enabled
-        ? [...withoutDay, { day, startTime: patch.startTime, endTime: patch.endTime } as WeeklySlot]
+        ? [
+            ...withoutDay,
+            { day, startTime: patch.startTime, endTime: patch.endTime } as WeeklySlot,
+          ]
         : withoutDay;
-      return normalizeAvailability({ ...prev, weeklySchedule: nextWeekly }, prev.doctorId);
+      return normalizeAvailability(
+        { ...prev, weeklySchedule: nextWeekly },
+        prev.doctorId,
+        presetDefinitions,
+      );
     });
-  }, []);
+  }, [presetDefinitions]);
 
   const setSlotDurationMinutes = useCallback((value: number) => {
-    setAvailability((prev) => prev ? normalizeAvailability({ ...prev, slotDurationMinutes: value }, prev.doctorId) : prev);
-  }, []);
+    setAvailability((prev) =>
+      prev
+        ? normalizeAvailability(
+            { ...prev, slotDurationMinutes: value },
+            prev.doctorId,
+            presetDefinitions,
+          )
+        : prev,
+    );
+  }, [presetDefinitions]);
 
   const setBufferMinutes = useCallback((value: number) => {
-    setAvailability((prev) => prev ? normalizeAvailability({ ...prev, bufferMinutes: value }, prev.doctorId) : prev);
-  }, []);
+    setAvailability((prev) =>
+      prev
+        ? normalizeAvailability(
+            { ...prev, bufferMinutes: value },
+            prev.doctorId,
+            presetDefinitions,
+          )
+        : prev,
+    );
+  }, [presetDefinitions]);
 
   const addOverride = useCallback(() => {
     setAvailability((prev) => {
       if (!prev) return prev;
-      const baseDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const baseDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
       const suffix = prev.dateOverrides.length;
-      const date = suffix === 0 ? baseDate : new Date(Date.now() + (suffix + 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const date =
+        suffix === 0
+          ? baseDate
+          : new Date(Date.now() + (suffix + 1) * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .slice(0, 10);
       const override: DateOverride = {
         date,
         blocked: false,
         slots: [{ startTime: '09:00', endTime: '12:00' }],
       };
-      return normalizeAvailability({ ...prev, dateOverrides: [...prev.dateOverrides, override] }, prev.doctorId);
+      return normalizeAvailability(
+        { ...prev, dateOverrides: [...prev.dateOverrides, override] },
+        prev.doctorId,
+        presetDefinitions,
+      );
     });
-  }, []);
+  }, [presetDefinitions]);
 
   const updateOverride = useCallback((index: number, next: DateOverride) => {
     setAvailability((prev) => {
       if (!prev) return prev;
-      const dateOverrides = prev.dateOverrides.map((entry, entryIndex) => (entryIndex === index ? next : entry));
-      return normalizeAvailability({ ...prev, dateOverrides }, prev.doctorId);
+      const dateOverrides = prev.dateOverrides.map((entry, entryIndex) =>
+        entryIndex === index ? next : entry,
+      );
+      return normalizeAvailability(
+        { ...prev, dateOverrides },
+        prev.doctorId,
+        presetDefinitions,
+      );
     });
-  }, []);
+  }, [presetDefinitions]);
 
   const removeOverride = useCallback((index: number) => {
     setAvailability((prev) => {
       if (!prev) return prev;
-      const dateOverrides = prev.dateOverrides.filter((_, entryIndex) => entryIndex !== index);
-      return normalizeAvailability({ ...prev, dateOverrides }, prev.doctorId);
+      const dateOverrides = prev.dateOverrides.filter(
+        (_, entryIndex) => entryIndex !== index,
+      );
+      return normalizeAvailability(
+        { ...prev, dateOverrides },
+        prev.doctorId,
+        presetDefinitions,
+      );
     });
-  }, []);
+  }, [presetDefinitions]);
 
   const save = useCallback(async () => {
     if (!availability) return;
@@ -123,23 +204,38 @@ export function useManageAvailability(doctorId: string | null) {
         timezone: availability.timezone,
         presetId: availability.presetId,
       });
-      setAvailability(saved);
+      setAvailability(normalizeAvailability(saved, saved.doctorId, presetDefinitions));
       setSavedAt(saved.updatedAt);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save availability');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('availabilitySaveError', {
+              defaultValue: 'Failed to save availability.',
+            }),
+      );
       throw err;
     } finally {
       setSaving(false);
     }
-  }, [availability]);
+  }, [availability, i18n.resolvedLanguage, presetDefinitions, t]);
+
+  const presets = useMemo(
+    () =>
+      presetDefinitions.map((preset) => ({
+        ...preset,
+        ...getAvailabilityPresetCopy(preset, i18n.resolvedLanguage, t),
+      })),
+    [i18n.resolvedLanguage, presetDefinitions, t],
+  );
 
   const summary = useMemo(() => {
     if (!availability) return { weeklyCapacity: 0, openDays: null };
     return {
       weeklyCapacity: countWeeklyCapacity(availability),
-      openDays: findNextOpenDayLabel(availability),
+      openDays: getAvailabilityOpenDaysLabel(availability.weeklySchedule, t),
     };
-  }, [availability]);
+  }, [availability, i18n.resolvedLanguage, t]);
 
   return {
     availability,
@@ -147,7 +243,7 @@ export function useManageAvailability(doctorId: string | null) {
     saving,
     error,
     savedAt,
-    presets: getAvailabilityPresets(),
+    presets,
     summary,
     applyPreset,
     updateWeeklyDay,

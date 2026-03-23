@@ -17,6 +17,8 @@ export default function WebsiteSplitSection({
   imageAlt: string;
   reverse?: boolean;
 }) {
+  const usesSvgImage = imageSrc.endsWith('.svg');
+
   return (
     <div className={`website-split ${reverse ? 'reverse' : ''}`}>
       <div className="website-split-copy">
@@ -40,6 +42,7 @@ export default function WebsiteSplitSection({
             fill
             sizes="(max-width: 768px) 320px, 520px"
             className="website-media-image"
+            unoptimized={usesSvgImage}
           />
         </div>
       </div>

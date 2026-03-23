@@ -86,7 +86,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {nonce ? <meta name="csp-nonce" content={nonce} /> : null}
         {requestId ? <meta name="request-id" content={requestId} /> : null}
       </head>
-      <body className="min-h-screen bg-white text-slate-900 antialiased">
+      <body className="app-page-gradient min-h-screen text-slate-900 antialiased">
         {children}
       </body>
     </html>
