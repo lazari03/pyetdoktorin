@@ -68,6 +68,10 @@ export default function ContactForm() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1">{t('yourEmail')}</label>
                 <input id="email" {...register('email', { required: true })} type="email" placeholder="john@email.com" className="w-full px-4 py-3 rounded-lg border border-purple-100 text-gray-900 placeholder-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none text-base shadow-sm" />
               </div>
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Dëshiron konsultë</label>
+                <input id="deshironKonsulte" {...register('deshironKonsulte')} type="text" placeholder="Po/Jo" className="w-full px-4 py-3 rounded-lg border border-purple-100 text-gray-900 placeholder-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none text-base shadow-sm" />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{t('yourSubject') || 'Subject'}</label>

@@ -67,8 +67,15 @@ export default async function FooterSection() {
             </div>
           </div>
         </div>
-        <div className="mt-10 border-t border-slate-800 pt-6 text-xs text-slate-400">
-          &copy; {year} {t('companyName')}. {t('allRightsReserved')}
+        <div className="mt-10 border-t border-slate-800 pt-6 text-xs text-slate-400 flex flex-col gap-2">
+          <div className="flex flex-wrap gap-4 mb-2">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold border border-green-200">HTTPS</span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-semibold border border-blue-200">GDPR</span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs font-semibold border border-gray-200">Të dhënat nuk shiten</span>
+          </div>
+          <div>
+            &copy; {year} {t('companyName')}. {t('allRightsReserved')}
+          </div>
         </div>
       </div>
     </footer>

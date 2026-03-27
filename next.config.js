@@ -85,6 +85,8 @@ module.exports = {
       { source: "/na-kontaktoni",      destination: "/contact", permanent: true },
       { source: "/sherbime",           destination: "/services", permanent: true },
       { source: "/cmime",              destination: "/pricing", permanent: true },
+      // DigitalOcean duplicate URL 301 redirect
+      { source: "/", has: [{ type: "host", value: "pyetdoktorin.fra1.digitaloceanspaces.com" }], destination: "https://pyetdoktorin.al", permanent: true },
     ];
   },
 

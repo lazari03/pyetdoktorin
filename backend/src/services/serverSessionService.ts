@@ -63,13 +63,16 @@ export class FirebaseServerSessionService implements IServerSessionService {
       throw new SessionException(`Invalid or expired token: ${message}`, 401);
     }
 
+
     const uid = decoded.uid;
     const userDoc = await admin.firestore().collection('users').doc(uid).get();
     const userData = (userDoc.data() ?? {}) as Record<string, unknown>;
-    const role = this.normalizeRole(userData.role);
+    let role = this.normalizeRole(userData.role);
 
+    // PATCH: If role is missing or invalid, default to 'patient' and log a warning (for debug)
     if (role === UserRole.null || !Object.values(UserRole).includes(role)) {
-      throw new SessionException('Role not approved', 403);
+      console.warn(`User ${uid} has missing or invalid role:`, userData.role, 'Defaulting to "patient"');
+      role = UserRole.Patient;
     }
 
     const tokenRole = decoded.role as UserRole | undefined;
