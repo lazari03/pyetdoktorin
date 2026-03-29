@@ -23,7 +23,7 @@ function getSiteOrigin(): string {
 }
 
 async function establishServerSession(idToken: string): Promise<void> {
-  const sessionUrl = '/api/backend/api/auth/session';
+  const sessionUrl = '/api/auth/session';
   const res = await fetch(sessionUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

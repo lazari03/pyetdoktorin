@@ -1,26 +1,29 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-function getBackendOrigin(): string {
+function getBackendBaseUrl(): URL {
   const value =
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
     process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
     'http://localhost:4000';
 
   try {
-    return new URL(value).origin;
+    return new URL(value);
   } catch {
-    return 'http://localhost:4000';
+    return new URL('http://localhost:4000');
   }
 }
 
-function buildTargetUrl(req: Request, path: string[]): URL {
+function buildTargetUrl(backendBaseUrl: URL, req: Request, path: string[]): URL {
   const url = new URL(req.url);
   const pathname = path.map(encodeURIComponent).join('/');
   const normalizedPathname = pathname.startsWith('api/')
     ? `/${pathname}`
     : `/api/${pathname}`;
-  const target = new URL(`${normalizedPathname}${url.search}`, getBackendOrigin());
+  const target = new URL(backendBaseUrl.toString());
+  const normalizedBasePath = target.pathname.replace(/\/+$/, '');
+  target.pathname = `${normalizedBasePath}${normalizedPathname}`.replace(/\/{2,}/g, '/');
+  target.search = url.search;
   return target;
 }
 
@@ -51,7 +54,8 @@ function cloneResponseHeaders(upstream: Response): Headers {
 async function proxy(req: Request, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
   const method = req.method.toUpperCase();
-  const target = buildTargetUrl(req, path);
+  const backendBaseUrl = getBackendBaseUrl();
+  const target = buildTargetUrl(backendBaseUrl, req, path);
   const headers = cloneRequestHeaders(req);
   const init: RequestInit = {
     method,
