@@ -11,8 +11,8 @@ const {
   slugifyBlogTitle,
   buildCreateBlogPostPayload,
   buildUpdateBlogPostPayload,
-} = require("../src/services/blogService.ts");
-const { isClinicBookingStatus } = require("../src/services/clinicBookingsService.ts");
+} = require("../src/services/blogPayloads.ts");
+const { isClinicBookingStatus } = require("../src/services/clinicBookingStatus.ts");
 
 async function test(name, fn) {
   try {

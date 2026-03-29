@@ -1,6 +1,8 @@
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
+import { isClinicBookingStatus, type ClinicBookingStatus } from '@/services/clinicBookingStatus';
 
-export type ClinicBookingStatus = 'pending' | 'confirmed' | 'declined';
+export { isClinicBookingStatus };
+export type { ClinicBookingStatus };
 
 export interface ClinicBookingInput {
   clinicId: string;
@@ -20,11 +22,6 @@ export interface ClinicBooking extends ClinicBookingInput {
 }
 
 const COLLECTION = 'clinicBookings';
-const VALID_STATUSES: ClinicBookingStatus[] = ['pending', 'confirmed', 'declined'];
-
-export function isClinicBookingStatus(value: unknown): value is ClinicBookingStatus {
-  return typeof value === 'string' && VALID_STATUSES.includes(value as ClinicBookingStatus);
-}
 
 export async function createClinicBooking(input: ClinicBookingInput): Promise<ClinicBooking> {
   const admin = getFirebaseAdmin();
