@@ -1,0 +1,54 @@
+name: codeql
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 4 * * 1"
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Install backend
+        run: npm --prefix backend ci
+
+      - name: Build frontend
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: "ci"
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "ci"
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: "ci"
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "ci"
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "ci"
+          NEXT_PUBLIC_FIREBASE_APP_ID: "ci"
+          NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: "ci"
+          NEXT_PUBLIC_BACKEND_URL: "http://localhost:4000"
+          NEXT_PUBLIC_SITE_URL: "https://example.com"
+        run: npm run build
+
+      - name: Build backend
+        run: npm --prefix backend run build
+
+      - uses: github/codeql-action/analyze@v3

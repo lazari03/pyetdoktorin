@@ -59,7 +59,6 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
   const {
-    updateAppointmentUseCase,
     generateRoomCodeUseCase,
     handlePayNowUseCase,
   } = useDI();
@@ -167,15 +166,10 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         });
 
         const roomCode = data.roomCode || appointment.roomCode;
-        const roomId = data.room_id || appointment.roomId;
         const sessionToken = data.sessionToken;
 
         if (!roomCode || !sessionToken) {
           throw new Error(VIDEO_ERROR_CODES.GenericFailed);
-        }
-
-        if ((!appointment.roomCode || !appointment.roomId) && roomCode && roomId) {
-          await updateAppointmentUseCase.execute(appointmentId, { roomCode, roomId });
         }
 
         const joinUrl = dashboardVideoSessionUrl(sessionToken);
@@ -203,7 +197,6 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
       isAppointmentPast,
       setAuthStatus,
       t,
-      updateAppointmentUseCase,
       user,
       toast,
     ]

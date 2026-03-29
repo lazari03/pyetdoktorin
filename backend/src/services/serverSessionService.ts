@@ -1,6 +1,7 @@
 import { IServerSessionService, SessionCookiesResult } from '@/application/ports/IServerSessionService';
 import { SessionException } from '@/application/errors/SessionException';
 import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeUserRole } from '@/domain/rules/userRoleRules';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { AUTH_COOKIE_NAMES, AUTH_COOKIE_MAX_AGE_SECONDS, buildAuthCookie } from '@/config/cookies';
 
@@ -41,14 +42,6 @@ export class FirebaseServerSessionService implements IServerSessionService {
     ];
   }
 
-  private normalizeRole(raw: unknown): UserRole {
-    const value = typeof raw === 'string' ? raw.toLowerCase() : null;
-    if (value && Object.values(UserRole).includes(value as UserRole)) {
-      return value as UserRole;
-    }
-    return UserRole.Patient;
-  }
-
   async establishSession(idToken: string): Promise<SessionCookiesResult> {
     if (!idToken) {
       throw new SessionException('Missing idToken', 400);
@@ -67,12 +60,9 @@ export class FirebaseServerSessionService implements IServerSessionService {
     const uid = decoded.uid;
     const userDoc = await admin.firestore().collection('users').doc(uid).get();
     const userData = (userDoc.data() ?? {}) as Record<string, unknown>;
-    let role = this.normalizeRole(userData.role);
-
-    // PATCH: If role is missing or invalid, default to 'patient' and log a warning (for debug)
-    if (role === UserRole.null || !Object.values(UserRole).includes(role)) {
-      console.warn(`User ${uid} has missing or invalid role:`, userData.role, 'Defaulting to "patient"');
-      role = UserRole.Patient;
+    const role = normalizeUserRole(userData.role);
+    if (!role) {
+      throw new SessionException('Role not approved', 403);
     }
 
     const tokenRole = decoded.role as UserRole | undefined;

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
@@ -6,6 +7,10 @@ import { env } from '@/config/env';
 
 const router = Router();
 const DEFAULT_APPOINTMENT_PRICE = env.paywallAmountUsd;
+const topDoctorsQuerySchema = z.object({
+  limit: z.string().optional(),
+  metric: z.enum(['appointments', 'requests']).optional(),
+});
 
 function toMs(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -50,6 +55,62 @@ function normalizeMedicineName(raw: string): { key: string; label: string } | nu
 
   return { key, label: label || cleaned };
 }
+
+router.get('/admin/top-doctors', requireAuth([UserRole.Admin]), async (req: AuthenticatedRequest, res) => {
+  const parsed = topDoctorsQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'INVALID_QUERY', issues: parsed.error.issues });
+  }
+
+  try {
+    const admin = getFirebaseAdmin();
+    const db = admin.firestore();
+    const limit = Math.min(50, Math.max(1, parsePositiveInt(parsed.data.limit, 5)));
+    const metric = parsed.data.metric ?? 'appointments';
+    const appointmentsSnap = await db.collection('appointments').get();
+    const counts = new Map<string, number>();
+
+    appointmentsSnap.docs.forEach((doc) => {
+      const data = doc.data() as { doctorId?: unknown };
+      if (typeof data.doctorId !== 'string' || !data.doctorId.trim()) {
+        return;
+      }
+      counts.set(data.doctorId, (counts.get(data.doctorId) ?? 0) + 1);
+    });
+
+    const top = Array.from(counts.entries())
+      .map(([doctorId, count]) => ({ doctorId, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+
+    const doctorDocs = await Promise.all(
+      top.map(async ({ doctorId }) => {
+        const snapshot = await db.collection('users').doc(doctorId).get();
+        return [doctorId, (snapshot.data() ?? {}) as Record<string, unknown>] as const;
+      }),
+    );
+
+    const doctorMap = new Map(doctorDocs);
+    const items = top.map(({ doctorId, count }) => {
+      const data = doctorMap.get(doctorId) ?? {};
+      return {
+        doctor: {
+          id: doctorId,
+          email: typeof data.email === 'string' ? data.email : '',
+          role: UserRole.Doctor,
+          ...(typeof data.name === 'string' ? { name: data.name } : {}),
+          ...(typeof data.surname === 'string' ? { surname: data.surname } : {}),
+        },
+        count,
+      };
+    });
+
+    res.json({ metric, items });
+  } catch (error) {
+    console.error('Failed to load top doctor stats', error);
+    res.status(500).json({ error: 'Failed to load top doctor stats' });
+  }
+});
 
 router.get('/admin', requireAuth([UserRole.Admin]), async (_req: AuthenticatedRequest, res) => {
   try {

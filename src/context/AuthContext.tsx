@@ -1,11 +1,10 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth'; 
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../config/firebaseconfig'; // Import your Firestore config
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
+import { fetchCurrentUserProfile } from '@/network/currentUser';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -54,24 +53,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUid(currentUser.uid); // Set `uid`
         setEmailVerified(resolvedEmailVerified);
         try {
-          // Fetch the user's role from Firestore
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const normalizedRole = normalizeRole(userData.role);
-            setRole(normalizedRole);
-            setUser({
-              uid: currentUser.uid,
-              name: userData.name || currentUser.displayName || 'Unknown',
-              email: currentUser.email || userData.email,
-              phoneNumber: currentUser.phoneNumber || userData.phoneNumber,
-            });
-          } else {
-
-            setRole(null);
-            setUser(null);
-            setEmailVerified(resolvedEmailVerified);
-          }
+          const userData = await fetchCurrentUserProfile();
+          const normalizedRole = normalizeRole(userData.role);
+          setRole(normalizedRole);
+          setUser({
+            uid: currentUser.uid,
+            name: userData.name || currentUser.displayName || 'Unknown',
+            email: userData.email || currentUser.email || undefined,
+            phoneNumber: userData.phoneNumber || currentUser.phoneNumber || undefined,
+          });
+          setEmailVerified(
+            typeof userData.emailVerified === 'boolean'
+              ? userData.emailVerified
+              : resolvedEmailVerified,
+          );
         } catch {
           setRole(null);
           setUser(null);

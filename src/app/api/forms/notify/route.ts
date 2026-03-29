@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getClientIp, rateLimit } from "@/app/api/_lib/rateLimit";
+import { applyRateLimitHeaders, getClientIp, rateLimit } from "@/app/api/_lib/rateLimit";
 import { getOrCreateRequestId } from "@/app/api/_lib/requestId";
 import {
   getEmailConfigurationHint,
@@ -82,6 +82,7 @@ export async function POST(req: Request) {
   const limit = rateLimit({ key: `forms:${ip}`, windowMs: RATE_WINDOW_MS, max: RATE_MAX });
   if (!limit.allowed) {
     const res = NextResponse.json({ message: "Too many requests. Please try again later.", requestId }, { status: 429 });
+    applyRateLimitHeaders(res.headers, limit);
     res.headers.set("x-request-id", requestId);
     return res;
   }

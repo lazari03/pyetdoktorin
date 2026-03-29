@@ -1,10 +1,6 @@
 "use client";
 import React, { createContext, useContext } from 'react';
-import { FetchAppointmentsUseCase } from '@/application/fetchAppointmentsUseCase';
-import { SetAppointmentPaidUseCase } from '@/application/setAppointmentPaidUseCase';
 import { HandlePayNowUseCase } from '@/application/handlePayNowUseCase';
-import { CheckIfPastAppointmentUseCase } from '@/application/checkIfPastAppointmentUseCase';
-import { UpdateAppointmentUseCase } from '@/application/updateAppointmentUseCase';
 import { GenerateRoomCodeUseCase } from '@/application/generateRoomCodeUseCase';
 import { GetTopDoctorsByAppointmentsUseCase } from '@/application/getTopDoctorsByAppointmentsUseCase';
 import { GetTopDoctorsByRequestsUseCase } from '@/application/getTopDoctorsByRequestsUseCase';
@@ -26,13 +22,11 @@ import { GetReciepesByDoctorUseCase } from '@/application/getReciepesByDoctorUse
 import { GetReciepesByPatientUseCase } from '@/application/getReciepesByPatientUseCase';
 import { GetReciepesByPharmacyUseCase } from '@/application/getReciepesByPharmacyUseCase';
 import { UpdateReciepeStatusUseCase } from '@/application/updateReciepeStatusUseCase';
-import { FirebaseAppointmentRepository } from '@/infrastructure/repositories/FirebaseAppointmentRepository';
-import { FirebaseUserRepository } from '@/infrastructure/repositories/FirebaseUserRepository';
+import { CurrentUserRepository } from '@/infrastructure/repositories/CurrentUserRepository';
 import { FirebaseSessionRepository } from '@/infrastructure/repositories/FirebaseSessionRepository';
 import { AuthServiceAdapter } from '@/infrastructure/services/authServiceAdapter';
 import { UserProfileService } from '@/infrastructure/services/userProfileService';
 import { DoctorProfileService } from '@/infrastructure/services/doctorProfileService';
-import { AppointmentServiceAdapter } from '@/infrastructure/services/appointmentServiceAdapter';
 import { VideoSessionService } from '@/infrastructure/services/videoSessionService';
 import { AdminStatsServiceAdapter } from '@/infrastructure/services/adminStatsServiceAdapter';
 import { SessionService } from '@/infrastructure/services/sessionService';
@@ -47,11 +41,7 @@ import { AppointmentPaymentService } from '@/infrastructure/services/appointment
 import { PaymentCheckoutService } from '@/infrastructure/services/paymentCheckoutService';
 
 interface DIContextValue {
-  fetchAppointmentsUseCase: FetchAppointmentsUseCase;
-  setAppointmentPaidUseCase: SetAppointmentPaidUseCase;
   handlePayNowUseCase: HandlePayNowUseCase;
-  checkIfPastAppointmentUseCase: CheckIfPastAppointmentUseCase;
-  updateAppointmentUseCase: UpdateAppointmentUseCase;
   generateRoomCodeUseCase: GenerateRoomCodeUseCase;
   getTopDoctorsByAppointmentsUseCase: GetTopDoctorsByAppointmentsUseCase;
   getTopDoctorsByRequestsUseCase: GetTopDoctorsByRequestsUseCase;
@@ -78,13 +68,11 @@ interface DIContextValue {
 const DIContext = createContext<DIContextValue | undefined>(undefined);
 
 export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const appointmentRepo = new FirebaseAppointmentRepository();
-  const userRepo = new FirebaseUserRepository();
+  const userRepo = new CurrentUserRepository();
   const sessionRepo = new FirebaseSessionRepository();
   const authService = new AuthServiceAdapter();
   const userProfileService = new UserProfileService();
-  const doctorProfileService = new DoctorProfileService(userRepo);
-  const appointmentService = new AppointmentServiceAdapter();
+  const doctorProfileService = new DoctorProfileService();
   const videoSessionService = new VideoSessionService();
   const adminStatsService = new AdminStatsServiceAdapter();
   const sessionService = new SessionService();
@@ -97,11 +85,7 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const appointmentPaymentService = new AppointmentPaymentService();
   const paymentCheckoutService = new PaymentCheckoutService();
 
-  const fetchAppointmentsUseCase = new FetchAppointmentsUseCase(appointmentRepo);
-  const setAppointmentPaidUseCase = new SetAppointmentPaidUseCase(appointmentService);
   const handlePayNowUseCase = new HandlePayNowUseCase(appointmentPaymentService, paymentCheckoutService);
-  const checkIfPastAppointmentUseCase = new CheckIfPastAppointmentUseCase(appointmentService);
-  const updateAppointmentUseCase = new UpdateAppointmentUseCase(appointmentRepo);
   const generateRoomCodeUseCase = new GenerateRoomCodeUseCase(videoSessionService, analyticsService);
   const getTopDoctorsByAppointmentsUseCase = new GetTopDoctorsByAppointmentsUseCase(adminStatsService);
   const getTopDoctorsByRequestsUseCase = new GetTopDoctorsByRequestsUseCase(adminStatsService);
@@ -127,11 +111,7 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   return (
     <DIContext.Provider
       value={{
-        fetchAppointmentsUseCase,
-        setAppointmentPaidUseCase,
         handlePayNowUseCase,
-        checkIfPastAppointmentUseCase,
-        updateAppointmentUseCase,
         generateRoomCodeUseCase,
         getTopDoctorsByAppointmentsUseCase,
         getTopDoctorsByRequestsUseCase,

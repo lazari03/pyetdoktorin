@@ -2,11 +2,17 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { clinicsCatalog } from '@/data/clinics';
-import { createClinicBooking, listBookingsByClinic, listBookingsByPatient, listAllBookings, updateClinicBookingStatus, getClinicBookingById, type ClinicBookingStatus } from '@/services/clinicBookingsService';
+import { createClinicBooking, listBookingsByClinic, listBookingsByPatient, listAllBookings, updateClinicBookingStatus, getClinicBookingById, isClinicBookingStatus, type ClinicBookingStatus } from '@/services/clinicBookingsService';
 import { UserRole } from '@/domain/entities/UserRole';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { validateBody } from '@/routes/validation';
+import {
+  resolveSecurityAccountSummary,
+  type SecurityAccountSummary,
+  writeSecurityAuditLog,
+} from '@/services/securityAuditService';
+import { logRequestError } from '@/utils/logging';
 
 const router = Router();
 
@@ -23,6 +29,22 @@ const createBookingSchema = z.object({
 const updateBookingStatusSchema = z.object({
   status: z.string().min(1),
 });
+
+async function resolveActorSummary(req: AuthenticatedRequest): Promise<SecurityAccountSummary | undefined> {
+  if (!req.user) return undefined;
+  try {
+    const summary = await resolveSecurityAccountSummary(req.user.uid);
+    return {
+      ...summary,
+      role: summary.role ?? req.user.role,
+    };
+  } catch {
+    return {
+      userId: req.user.uid,
+      role: req.user.role,
+    };
+  }
+}
 
 router.get('/catalog', (_req, res) => {
   res.json({ items: clinicsCatalog });
@@ -102,8 +124,12 @@ router.patch('/bookings/:id/status', requireAuth([UserRole.Admin, UserRole.Clini
   const { id } = req.params as { id: string };
   const payload = validateBody(res, updateBookingStatusSchema, req.body, 'MISSING_STATUS');
   if (!payload) return;
-  const status = payload.status as ClinicBookingStatus;
+  if (!isClinicBookingStatus(payload.status)) {
+    return res.status(400).json({ error: 'INVALID_STATUS' });
+  }
+  const status: ClinicBookingStatus = payload.status;
   const user = (req as AuthenticatedRequest).user!;
+  const actor = await resolveActorSummary(req as AuthenticatedRequest);
   const booking = await getClinicBookingById(id);
   if (!booking) {
     return res.status(404).json({ error: 'Booking not found' });
@@ -111,8 +137,46 @@ router.patch('/bookings/:id/status', requireAuth([UserRole.Admin, UserRole.Clini
   if (user.role === UserRole.Clinic && booking.clinicId !== user.uid) {
     return res.status(403).json({ error: 'Forbidden' });
   }
-  await updateClinicBookingStatus(id, status);
-  res.json({ ok: true });
+  try {
+    await updateClinicBookingStatus(id, status);
+    try {
+      await writeSecurityAuditLog({
+        type: 'clinic_booking_status_updated',
+        success: true,
+        request: req,
+        user: actor,
+        metadata: {
+          bookingId: id,
+          clinicId: booking.clinicId,
+          patientId: booking.patientId,
+          status,
+        },
+      });
+    } catch (auditError) {
+      logRequestError('clinic_booking_audit_write_failed', req, auditError, { bookingId: id });
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    try {
+      await writeSecurityAuditLog({
+        type: 'clinic_booking_status_updated',
+        success: false,
+        request: req,
+        user: actor,
+        reason: error instanceof Error ? error.message : 'Failed to update clinic booking status',
+        metadata: {
+          bookingId: id,
+          clinicId: booking.clinicId,
+          patientId: booking.patientId,
+          status,
+        },
+      });
+    } catch (auditError) {
+      logRequestError('clinic_booking_audit_write_failed', req, auditError, { bookingId: id });
+    }
+    logRequestError('clinic_booking_status_update_failed', req, error, { bookingId: id });
+    res.status(500).json({ error: 'Failed to update booking status' });
+  }
 });
 
 export default router;

@@ -4,5 +4,4 @@ export enum UserRole {
   Patient = 'patient',
   Pharmacy = 'pharmacy',
   Clinic = 'clinic',
-  null = 'null',
 }

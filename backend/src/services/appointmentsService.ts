@@ -1,5 +1,6 @@
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { UserRole } from '@/domain/entities/UserRole';
+import { canListAppointmentsForRole } from '@/domain/rules/userRoleRules';
 import {
   AppointmentNotFoundError,
   InvalidAppointmentStatusError,
@@ -33,6 +34,26 @@ export interface Appointment extends AppointmentInput {
 
 const COLLECTION = 'appointments';
 const SLOT_COLLECTION = 'appointmentSlots';
+
+function getAppointmentQueryForRole(
+  baseCollection: FirebaseFirestore.CollectionReference,
+  uid: string,
+  role: UserRole,
+): FirebaseFirestore.Query {
+  if (!canListAppointmentsForRole(role)) {
+    throw new Error(`Unsupported appointment role: ${role}`);
+  }
+  switch (role) {
+    case UserRole.Admin:
+      return baseCollection;
+    case UserRole.Patient:
+      return baseCollection.where('patientId', '==', uid);
+    case UserRole.Doctor:
+      return baseCollection.where('doctorId', '==', uid);
+    default:
+      throw new Error(`Unsupported appointment role: ${role}`);
+  }
+}
 
 const normalizeStatus = (status?: string): AppointmentStatus => {
   const normalized = (status || '').toLowerCase();
@@ -86,14 +107,7 @@ export async function listAppointmentsForUser(uid: string, role: UserRole): Prom
   const admin = getFirebaseAdmin();
   const db = admin.firestore();
   const baseCollection = db.collection(COLLECTION);
-  let filteredQuery: FirebaseFirestore.Query = baseCollection;
-  if (role === UserRole.Patient) {
-    filteredQuery = filteredQuery.where('patientId', '==', uid);
-  } else if (role === UserRole.Doctor) {
-    filteredQuery = filteredQuery.where('doctorId', '==', uid);
-  } else if (role === UserRole.Clinic) {
-    filteredQuery = filteredQuery.where('clinicId', '==', uid);
-  }
+  const filteredQuery = getAppointmentQueryForRole(baseCollection, uid, role);
   const mapDocs = (docs: FirebaseFirestore.QueryDocumentSnapshot[]) =>
     docs.map((doc) => {
       const data = doc.data() as Appointment & { note?: string; notes?: string; status?: string };

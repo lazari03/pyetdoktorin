@@ -50,7 +50,7 @@ export default function DoctorCalendarPage() {
   const { user, role } = useAuth();
   const { appointments, loading, error, isAppointmentPast, fetchAppointments } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
-  const { updateAppointmentUseCase, generateRoomCodeUseCase } = useDI();
+  const { generateRoomCodeUseCase } = useDI();
   const { toast } = useToast();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showRedirecting, setShowRedirecting] = useState(false);
@@ -161,14 +161,9 @@ export default function DoctorCalendarPage() {
       });
 
       const roomCode = data.roomCode || appointment.roomCode;
-      const roomId = data.room_id || appointment.roomId;
       const sessionToken = data.sessionToken;
 
       if (!roomCode || !sessionToken) throw new Error('Missing room information from server');
-
-      if ((!appointment.roomCode || !appointment.roomId) && roomCode && roomId) {
-        await updateAppointmentUseCase.execute(appointmentId, { roomCode, roomId });
-      }
 
       trackAnalyticsEvent('appointment_join_success', { appointmentId, role: 'doctor' });
       window.location.href = dashboardVideoSessionUrl(sessionToken);
@@ -177,7 +172,7 @@ export default function DoctorCalendarPage() {
       const message = error instanceof Error ? error.message : 'An error occurred. Please try again.';
       toast({ variant: 'error', message });
     }
-  }, [appointments, isAppointmentPast, user, generateRoomCodeUseCase, updateAppointmentUseCase, setAuthStatus, t, toast]);
+  }, [appointments, isAppointmentPast, user, generateRoomCodeUseCase, setAuthStatus, t, toast]);
 
   const upcomingCount = useMemo(() =>
     events.filter(e => {

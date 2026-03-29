@@ -31,6 +31,12 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Install backend
+        run: npm --prefix backend ci
+
+      - name: Guard browser Firestore imports
+        run: npm run guard:no-browser-firestore
+
       - name: Lint
         run: npm run lint
 
@@ -42,3 +48,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Backend typecheck
+        run: npm --prefix backend run typecheck
+
+      - name: Backend tests
+        run: npm --prefix backend test
+
+      - name: Backend build
+        run: npm --prefix backend run build

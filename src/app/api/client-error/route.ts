@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getClientIp, rateLimit } from "@/app/api/_lib/rateLimit";
+import { applyRateLimitHeaders, getClientIp, rateLimit } from "@/app/api/_lib/rateLimit";
 import { getOrCreateRequestId } from "@/app/api/_lib/requestId";
 import { emitClientErrorEvent } from "@/app/api/_lib/logSink";
 
@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
   const limit = rateLimit({ key: `client-error:${ip}`, windowMs: 60_000, max: 30 });
   if (!limit.allowed) {
     const res = NextResponse.json({ ok: false, error: "RATE_LIMITED", requestId }, { status: 429 });
+    applyRateLimitHeaders(res.headers, limit);
     res.headers.set("x-request-id", requestId);
     return res;
   }

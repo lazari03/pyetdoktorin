@@ -1,9 +1,9 @@
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, updateEmail, sendEmailVerification } from 'firebase/auth';
 import type { User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/config/firebaseconfig';
+import { auth } from '@/config/firebaseconfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
+import { fetchCurrentUserProfile } from '@/network/currentUser';
 
 import { sendPasswordResetEmail } from "firebase/auth";
 
@@ -111,16 +111,14 @@ export const login = async (
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Retrieve user role from Firestore
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const role = userDoc.exists() ? normalizeRole(userDoc.data()?.role) : UserRole.Patient;
-        const resolvedRole = role ?? UserRole.Patient;
-
         const emailVerified = user.emailVerified === true;
 
         // Establish server session for app navigation (API access is still blocked server-side until verified).
         const idToken = await user.getIdToken(true);
         await establishServerSession(idToken);
+
+        const currentProfile = await fetchCurrentUserProfile();
+        const resolvedRole = normalizeRole(currentProfile.role) ?? UserRole.Patient;
 
         // Refresh token to pull updated custom claims (role/admin) after session is established
         try {
@@ -140,13 +138,11 @@ export const login = async (
 // Fetch user details function
 export async function fetchUserDetails(userId: string) {
     try {
-        const userDoc = await getDoc(doc(db, 'users', userId));
-        if (userDoc.exists()) {
-            return userDoc.data(); // Return user details
-        } else {
-
+        const currentProfile = await fetchCurrentUserProfile();
+        if (currentProfile.uid !== userId) {
             return null;
         }
+        return currentProfile;
     } catch {
         return null;
     }

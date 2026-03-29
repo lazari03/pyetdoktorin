@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import { env } from './config/env';
 import authRouter from '@/routes/auth';
+import blogRouter from '@/routes/blog';
 import usersRouter from '@/routes/users';
 import appointmentsRouter from '@/routes/appointments';
 import prescriptionsRouter from '@/routes/prescriptions';
@@ -16,6 +17,8 @@ import availabilityRouter from '@/routes/availability';
 import doctorsRouter from '@/routes/doctors';
 import securityLogsRouter from '@/routes/securityLogs';
 import { createRateLimiter } from '@/middleware/rateLimit';
+import { attachRequestContext } from '@/middleware/requestContext';
+import { logEvent, logRequestError } from '@/utils/logging';
 
 const app = express();
 
@@ -53,17 +56,19 @@ app.use(cors({
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+app.use(attachRequestContext);
 
-const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 150 });
-const writeLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 120 });
-const readLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 600 });
-const webhookLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 300 });
+const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 150, keyPrefix: 'auth' });
+const writeLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 120, keyPrefix: 'write' });
+const readLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 600, keyPrefix: 'read' });
+const webhookLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 300, keyPrefix: 'webhook' });
 
 app.use('/api/auth', authLimiter);
 app.use('/api/appointments', writeLimiter);
 app.use('/api/paddle/webhook', webhookLimiter);
 app.use('/api/paddle/sync', writeLimiter);
 app.use('/api/users', readLimiter);
+app.use('/api/blog', readLimiter);
 app.use('/api/clinics', readLimiter);
 app.use('/api/prescriptions', readLimiter);
 app.use('/api/notifications', readLimiter);
@@ -74,13 +79,23 @@ app.use('/api/security-logs', readLimiter);
 app.use('/api/paddle', paddleRouter);
 app.use(express.json());
 app.use(cookieParser());
-app.use(morgan('combined'));
+morgan.token('request-id', (req) => (req as express.Request).requestId ?? '-');
+app.use(morgan((tokens, req, res) => JSON.stringify({
+  event: 'http_request',
+  requestId: tokens['request-id']?.(req, res) ?? '-',
+  method: tokens.method?.(req, res) ?? 'UNKNOWN',
+  path: tokens.url?.(req, res) ?? '',
+  status: Number(tokens.status?.(req, res) || 0),
+  durationMs: Number(tokens['response-time']?.(req, res) || 0),
+  responseBytes: Number(tokens.res?.(req, res, 'content-length') || 0),
+})));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
 app.use('/api/auth', authRouter);
+app.use('/api/blog', blogRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/appointments', appointmentsRouter);
 app.use('/api/prescriptions', prescriptionsRouter);
@@ -102,10 +117,10 @@ app.use((err: unknown, req: express.Request, res: express.Response, _next: expre
       res.setHeader('Access-Control-Allow-Credentials', 'true');
     }
   }
-  console.error('Unhandled error', err);
+  logRequestError('unhandled_error', req, err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(env.port, () => {
-  console.log(`Backend listening on port ${env.port}`);
+  logEvent('info', 'backend_started', { port: env.port });
 });

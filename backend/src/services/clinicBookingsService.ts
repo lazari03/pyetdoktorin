@@ -20,6 +20,11 @@ export interface ClinicBooking extends ClinicBookingInput {
 }
 
 const COLLECTION = 'clinicBookings';
+const VALID_STATUSES: ClinicBookingStatus[] = ['pending', 'confirmed', 'declined'];
+
+export function isClinicBookingStatus(value: unknown): value is ClinicBookingStatus {
+  return typeof value === 'string' && VALID_STATUSES.includes(value as ClinicBookingStatus);
+}
 
 export async function createClinicBooking(input: ClinicBookingInput): Promise<ClinicBooking> {
   const admin = getFirebaseAdmin();
@@ -51,7 +56,7 @@ export async function listAllBookings(limit = 500): Promise<ClinicBooking[]> {
 }
 
 export async function updateClinicBookingStatus(id: string, status: ClinicBookingStatus): Promise<void> {
-  if (!['pending', 'confirmed', 'declined'].includes(status)) {
+  if (!isClinicBookingStatus(status)) {
     throw new Error('Invalid clinic booking status');
   }
   const admin = getFirebaseAdmin();

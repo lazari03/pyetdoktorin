@@ -1,101 +1,111 @@
-## Pyet Doktorin Backend Deployment Guide
+# Backend Deployment Guide
 
-This walk-through covers standing up the Express backend locally, in staging, and in production. It assumes the frontend lives in the repo root (`/`), while the backend is under `/backend`.
+This guide documents the supported current-stack deployment model for the Express backend in `backend/`.
 
-### 1. Environment Variables
+## Status
 
-Backend expects the following at runtime (see `backend/.env.example`):
+- Production-ready for the current single-service hosting model
+- Uses structured JSON logs with request IDs
+- Uses bounded in-memory rate limiting
+- Requires extra work for multi-instance hardening
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Port the Express server listens on (default `4000`). |
-| `FIREBASE_SERVICE_ACCOUNT` | JSON string for a Firebase service account with Auth + Firestore admin permissions. |
-| `PADDLE_ENV` | `sandbox` or `live` to match your Paddle Billing environment. |
-| `PADDLE_API_KEY` | Paddle API key (server-side, optional for future server calls). |
-| `PADDLE_WEBHOOK_SECRET` | Paddle webhook secret for signature verification. |
-| `PADDLE_WEBHOOK_URL` | Paddle webhook endpoint URL. |
-| `NEXT_PUBLIC_PAYWALL_AMOUNT_USD` | Amount (USD) displayed to patients; also used server-side when computing revenue. |
+## Runtime Requirements
 
-Frontend `.env` must include:
+- Node.js 20+
+- Firebase Admin credentials with Auth and Firestore access
+- HTTPS in front of the backend for production
+- Frontend configured with `NEXT_PUBLIC_BACKEND_URL` pointing to the backend origin
 
-```
-NEXT_PUBLIC_BACKEND_URL=http://localhost:4000 # or HTTPS endpoint in production
-```
+## Environment
 
-### 2. Local Development
+Use [`backend/.env.example`](../backend/.env.example) for local/staging and [`backend/.env.example.production`](../backend/.env.example.production) for production-style values.
 
-1. Install dependencies: `npm install` (root) and `npm --prefix backend install`.
-2. Start backend: `npm --prefix backend run dev` (hot reload).
-3. Start frontend: `npm run dev` (App Router).
+Required:
 
-- Ensure `NEXT_PUBLIC_BACKEND_URL` points to the backend dev server.
-- The frontend fetch helper (`backendFetch`) automatically includes Firebase auth tokens, so log into the frontend before hitting backend-protected pages.
+- `FIREBASE_SERVICE_ACCOUNT`
+- `FRONTEND_URL`
+- `CORS_ORIGINS`
 
-### 3. Production Build
+Recommended:
 
-1. Build backend: `npm --prefix backend run build` → outputs `backend/dist`.
-2. Start backend: `npm --prefix backend start` (runs `node dist/index.js`).
-3. Build frontend: `npm run build` followed by `npm start` (or deploy via Vercel).
+- `PAYWALL_AMOUNT_USD`
+- `PADDLE_ENV`
+- `PADDLE_API_KEY`
+- `PADDLE_WEBHOOK_SECRET`
+- `AUTH_COOKIE_MAX_AGE_SECONDS`
+- `RATE_LIMIT_MAX_BUCKETS`
 
-Systemd sample service (drop into `/etc/systemd/system/alo-backend.service`):
+## Build And Start
 
-```
-[Unit]
-Description=Pyet Doktorin Backend
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/opt/alo
-EnvironmentFile=/opt/alo/backend/.env
-ExecStart=/usr/bin/node dist/index.js
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
+```bash
+npm --prefix backend ci
+npm --prefix backend run typecheck
+npm --prefix backend test
+npm --prefix backend run build
+npm --prefix backend start
 ```
 
-Remember to run `npm install` + `npm run build` before enabling the service.
+The compiled server starts from `backend/dist/index.js`.
 
-### 4. Deployment Targets
+## Local Or Staging Bring-Up
 
-- **Render/Fly.io/Heroku**: Deploy `/backend` as a Node service. Use build command `npm install && npm run build` with start command `npm start`.
-- **Vercel**: Not ideal for long-running Express servers; instead, deploy to Vercel Edge for the frontend and host backend separately.
-- **Docker**: Create a multi-stage Dockerfile to compile TypeScript, e.g.
+1. Fill `backend/.env`.
+2. Start the backend with `npm --prefix backend run dev`.
+3. Start the frontend with `npm run dev`.
+4. Confirm the frontend points to the backend origin through `NEXT_PUBLIC_BACKEND_URL`.
 
-```
-FROM node:20-slim AS build
-WORKDIR /app
-COPY backend/package*.json ./
-RUN npm install
-COPY backend .
-RUN npm run build
+## Smoke Checks
 
-FROM gcr.io/distroless/nodejs20-debian12
-WORKDIR /app
-COPY --from=build /app/dist ./dist
-COPY backend/package*.json ./
-ENV NODE_ENV=production
-CMD ["dist/index.js"]
+After both services are running:
+
+```bash
+npm run smoke:current
 ```
 
-### 5. Observability & Operations
+The smoke script checks:
 
-- Logging: `morgan` is enabled by default; pipe stdout/stderr to your log collector (Datadog, Stackdriver, etc.).
-- Error Handling: Non-2xx responses include JSON bodies; consider adding Sentry/Axiom integration for deeper telemetry.
-- Monitoring: Track health via `/health` (returns JSON `{ status: 'ok', uptime }`).
-- Scaling: Add a reverse proxy (NGINX, Traefik) or load balancer when running multiple backend instances. Sticky sessions are not required because authentication uses Firebase ID tokens per request.
+- frontend home page reachability
+- backend `/health`
+- auth guard on `/api/users/me`
+- auth guard on `/api/blog`
 
-### 6. Frontend Integration Checklist
+## Observability Expectations
 
-1. Ensure `NEXT_PUBLIC_BACKEND_URL` is set for each environment (local, staging, prod).
-2. Configure Firebase web client to point at the same project the backend service account uses.
-3. Verify Paddle environment (sandbox vs. production) matches the backend config.
-4. Run `npm run lint` (frontend) and `npm --prefix backend run build` before deploying to catch type issues.
+- HTTP requests are logged as JSON with `requestId`
+- application errors log the same `requestId`
+- `/health` exposes a simple readiness signal
+- security audit events are persisted in Firestore for sensitive flows
 
-### 7. Remaining TODOs
+This is enough for the current stack, but not a full observability platform. Centralized log shipping, alerting, dashboards, and tracing are still future work.
 
-- Hook backend logs into centralized monitoring.
-- Add CI/CD workflow (GitHub Actions) to build/test both frontend and backend.
-- Automate secret management (e.g., Doppler, Vault) instead of committing `.env` files.
+## Rollback And Manual Recovery
+
+There is no deployment automation or automated rollback in this repo yet.
+
+Current manual rollback procedure:
+
+1. redeploy the previous known-good frontend artifact
+2. redeploy the previous known-good backend artifact or image
+3. rerun:
+
+```bash
+npm run smoke:current
+```
+
+4. verify `/health`, login/session establishment, admin user management, appointment listing, clinic booking updates, and admin blog CRUD
+
+## Hosting Notes
+
+- A checked-in `backend/Dockerfile` exists if you prefer container deployment.
+- A systemd-style service also works for VM deployments.
+- For multi-instance deployments, move rate limiting to a centralized system or the edge before claiming the setup hardened.
+
+## What This Guide Does Not Claim
+
+- enterprise SSO/SAML/OIDC
+- SCIM or tenant-aware authorization
+- centralized secrets management
+- rollout automation or automated rollback
+- enterprise-grade metrics, tracing, or incident response
+
+Those remain future scope beyond the current production-ready target.

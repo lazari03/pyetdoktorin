@@ -1,12 +1,14 @@
 import { IAdminStatsService } from '@/application/ports/IAdminStatsService';
-import { getTopDoctorsByAppointments, getTopDoctorsByRequests } from '@/infrastructure/queries/appointments';
+import { fetchTopDoctors } from '@/network/stats';
 
 export class AdminStatsServiceAdapter implements IAdminStatsService {
   async getTopDoctorsByAppointments(limit = 5) {
-    return getTopDoctorsByAppointments(limit);
+    const response = await fetchTopDoctors('appointments', limit);
+    return response.items;
   }
 
   async getTopDoctorsByRequests(limit = 5) {
-    return getTopDoctorsByRequests(limit);
+    const response = await fetchTopDoctors('requests', limit);
+    return response.items;
   }
 }

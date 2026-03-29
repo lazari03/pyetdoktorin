@@ -33,7 +33,7 @@ const updateStatusSchema = z.object({
   status: z.string().min(1),
 });
 
-router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
+router.get('/', requireAuth([UserRole.Patient, UserRole.Doctor, UserRole.Admin]), async (req: AuthenticatedRequest, res) => {
   try {
     const user = req.user!;
     const appointments = await listAppointmentsForUser(user.uid, user.role);

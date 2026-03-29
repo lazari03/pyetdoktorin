@@ -1,7 +1,6 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/config/firebaseconfig';
 import { IUserProfileService, UserProfileData } from '@/application/ports/IUserProfileService';
 import { auth } from '@/config/firebaseconfig';
+import { fetchCurrentUserProfile, updateCurrentUserProfile } from '@/network/currentUser';
 
 async function waitForCurrentUser(timeoutMs = 3000, intervalMs = 120) {
   if (auth.currentUser) return auth.currentUser;
@@ -21,13 +20,17 @@ async function getRequiredIdToken(): Promise<string> {
 
 export class UserProfileService implements IUserProfileService {
   async getProfile(userId: string): Promise<UserProfileData | null> {
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (!userDoc.exists()) return null;
-    return userDoc.data() as UserProfileData;
+    const profile = await fetchCurrentUserProfile();
+    if (profile.uid !== userId) return null;
+    return profile;
   }
 
   async updateProfile(userId: string, data: UserProfileData): Promise<void> {
-    await setDoc(doc(db, 'users', userId), data, { merge: true });
+    const currentUser = auth.currentUser ?? (await waitForCurrentUser(8000));
+    if (!currentUser || currentUser.uid !== userId) {
+      throw new Error('PROFILE_UPDATE_FORBIDDEN');
+    }
+    await updateCurrentUserProfile(data);
   }
 
   async uploadProfilePicture(userId: string, file: File): Promise<string> {

@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { UserRole } from '@/domain/entities/UserRole';
+import { normalizeUserRole } from '@/domain/rules/userRoleRules';
 import { AUTH_COOKIE_NAMES } from '@/config/cookies';
 
 export interface AuthenticatedRequest extends Request {
@@ -11,7 +12,11 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export function requireAuth(requiredRoles?: UserRole[]) {
+type RequireAuthOptions = {
+  allowUnverified?: boolean;
+};
+
+export function requireAuth(requiredRoles?: UserRole[], options?: RequireAuthOptions) {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const authHeader = req.headers.authorization;
@@ -30,23 +35,24 @@ export function requireAuth(requiredRoles?: UserRole[]) {
       }
 
       // Enforce email verification for email-based accounts.
-      if ((decoded as { email?: string; email_verified?: boolean }).email && (decoded as { email_verified?: boolean }).email_verified !== true) {
+      if (
+        options?.allowUnverified !== true &&
+        (decoded as { email?: string; email_verified?: boolean }).email &&
+        (decoded as { email_verified?: boolean }).email_verified !== true
+      ) {
         return res.status(403).json({ error: 'Email not verified' });
       }
 
-      const normalizeRole = (raw: unknown): UserRole | null => {
-        if (typeof raw !== 'string') return null;
-        const normalized = raw.toLowerCase();
-        return Object.values(UserRole).includes(normalized as UserRole) ? (normalized as UserRole) : null;
-      };
-
-      let role = normalizeRole(decoded.role);
+      const tokenRole = normalizeUserRole(decoded.role);
+      let role = tokenRole;
       if (!role) {
         const userDoc = await admin.firestore().collection('users').doc(decoded.uid).get();
-        const storedRole = normalizeRole(userDoc.data()?.role);
-        role = storedRole ?? UserRole.Patient;
-        // Backfill custom claims when missing or out of sync
-        if (storedRole && storedRole !== normalizeRole(decoded.role)) {
+        const storedRole = normalizeUserRole(userDoc.data()?.role);
+        if (!storedRole) {
+          return res.status(403).json({ error: 'Role not approved' });
+        }
+        role = storedRole;
+        if (storedRole !== tokenRole) {
           await admin.auth().setCustomUserClaims(decoded.uid, {
             role: storedRole,
             admin: storedRole === UserRole.Admin,

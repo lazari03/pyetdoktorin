@@ -6,7 +6,16 @@ export type SecurityAuditType =
   | 'session_established'
   | 'session_establishment_failed'
   | 'logout'
-  | 'video_access_attempt';
+  | 'video_access_attempt'
+  | 'user_registered'
+  | 'user_created'
+  | 'user_updated'
+  | 'user_deleted'
+  | 'user_reset_password'
+  | 'clinic_booking_status_updated'
+  | 'blog_post_created'
+  | 'blog_post_updated'
+  | 'blog_post_deleted';
 
 export type SecurityAccountSummary = {
   userId?: string | undefined;
@@ -21,6 +30,11 @@ export type SecurityAuditEntry = SecurityAccountSummary & {
   success: boolean;
   reason?: string | undefined;
   appointmentId?: string | undefined;
+  targetUserId?: string | undefined;
+  targetAccountName?: string | undefined;
+  targetAccountEmail?: string | undefined;
+  targetRole?: string | undefined;
+  metadata?: Record<string, unknown> | undefined;
   ipAddress?: string | undefined;
   forwardedFor?: string | undefined;
   userAgent?: string | undefined;
@@ -199,11 +213,14 @@ export async function writeSecurityAuditLog(params: {
   reason?: string | undefined;
   request: Request;
   user?: SecurityAccountSummary | undefined;
+  targetUser?: SecurityAccountSummary | undefined;
+  metadata?: Record<string, unknown> | undefined;
   appointmentId?: string | undefined;
 }): Promise<void> {
   const admin = getFirebaseAdmin();
   const client = extractSecurityClientContext(params.request);
   const user = params.user ?? {};
+  const targetUser = params.targetUser ?? {};
 
   await admin.firestore().collection('securityAuditLogs').add(omitUndefined({
     type: params.type,
@@ -214,6 +231,11 @@ export async function writeSecurityAuditLog(params: {
     accountName: normalizeString(user.accountName, 200),
     accountEmail: normalizeString(user.accountEmail, 200),
     role: normalizeString(user.role, 64),
+    targetUserId: normalizeString(targetUser.userId, 160),
+    targetAccountName: normalizeString(targetUser.accountName, 200),
+    targetAccountEmail: normalizeString(targetUser.accountEmail, 200),
+    targetRole: normalizeString(targetUser.role, 64),
+    metadata: params.metadata ? omitUndefined(params.metadata) : undefined,
     ...client,
     createdAt: new Date(),
   }));
@@ -269,6 +291,14 @@ export async function listSecurityAuditLogs(limit: number): Promise<SecurityAudi
         accountName,
         accountEmail,
         role,
+        targetUserId: normalizeString(data.targetUserId, 160),
+        targetAccountName: normalizeString(data.targetAccountName, 200),
+        targetAccountEmail: normalizeString(data.targetAccountEmail, 200),
+        targetRole: normalizeString(data.targetRole, 64),
+        metadata:
+          typeof data.metadata === 'object' && data.metadata !== null
+            ? (data.metadata as Record<string, unknown>)
+            : undefined,
         ipAddress: normalizeString(data.ipAddress ?? data.ip, 120),
         forwardedFor: normalizeString(data.forwardedFor, 500),
         userAgent: normalizeString(data.userAgent, 500),

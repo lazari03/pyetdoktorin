@@ -1,70 +1,65 @@
-# Production Readiness Plan
+# Current-Stack Production Readiness
 
-This document outlines how to evolve the Pyet Doktorin web application into a production-ready platform with a dedicated backend layer. It serves as the foundation for subsequent implementation work.
+This repo now targets an honest, current-stack production bar:
 
-## 1. Current Architecture Snapshot
+- Next.js frontend in the repo root
+- standalone Express backend in `backend/`
+- Firebase Auth retained as the auth system of record
+- current simple hosting model retained
 
-- **Frontend**: Next.js (App Router + legacy pages), client-heavy Firebase interactions.
-- **Auth**: Firebase Authentication; Next.js API route `/api/auth/session` issues cookies.
-- **Data**: Firestore accessed directly from the client, with Firestore rules guarding access.
-- **Payments**: Paddle Classic checkout triggered from the client.
-- **Admin tooling**: Next.js API routes for user provisioning, no centralized audit log.
+It should be described as production-ready on the current stack, not enterprise-ready.
 
-## 2. Target Architecture
+## Completed Hardening
 
-Introduce a backend layer (can be implemented as Next.js API routes or a separate Node service) that owns all sensitive flows.
+- Browser-executed privileged flows use backend APIs instead of direct `firebase/firestore` access.
+- Admin blog CRUD is backend-owned and audited.
+- Clinic booking status changes are backend-owned and audited.
+- Current-user profile reads and updates are backend-owned.
+- Backend logs are structured JSON and include `requestId`.
+- CI covers frontend lint/test/build, backend typecheck/test/build, security scans, and the browser Firestore import guard.
+- The repo includes a smoke script for the supported runtime model.
 
-### Backend Responsibilities
+## Verification Contract
 
-1. **Session & Auth**
-   - Verify Firebase ID tokens, issue signed HTTP-only session cookies.
-   - Rotate/refresh tokens and store session metadata (IP, UA, expiry).
-   - Enforce RBAC centrally (admin/clinic/pharmacy/doctor/patient).
+Static validation:
 
-2. **User Management**
-   - Admin endpoints to create/update/delete users of any role.
-   - Reset passwords, approve doctors, manage clinic/pharmacy metadata.
-   - Audit logging for every change.
+```bash
+npm run guard:no-browser-firestore
+npm run lint
+npm test
+npm run build
+npm --prefix backend run typecheck
+npm --prefix backend test
+npm --prefix backend run build
+```
 
-3. **Appointments & Prescriptions**
-   - CRUD operations behind authenticated APIs.
-   - Server-side validation of payloads, enforce invariants (e.g., patient owns appointment).
+Convenience wrapper:
 
-4. **Clinic Bookings**
-   - Accept booking requests from patients, queue for clinics.
-   - Provide admin/clinic dashboards via backend queries.
+```bash
+npm run verify:current-stack
+```
 
-5. **Payments & Payouts**
-   - Server-owned Paddle Classic webhook integration.
-   - Record transactions, doctor payouts, refund hooks.
+Runtime smoke checks:
 
-6. **Notifications & Analytics**
-   - Centralized event logging.
-   - Hooks for email/SMS/push providers.
+```bash
+npm run smoke:current
+```
 
-### Client Responsibilities
+## Operational Assumptions
 
-- Render UI, call backend APIs via fetch/Axios with credentials.
-- Store minimal derived state; no direct Firestore access.
+- Current supported deployment is a controlled frontend + backend deployment on the existing architecture.
+- Rate limiting is bounded but process-local. Multi-instance deployments need centralized throttling before they should be described as hardened.
+- Firebase Admin credentials are still required in both the backend and the Next.js server-only code paths that use Firebase Admin.
+- Audit logs are persisted for the hardened sensitive flows, but enterprise-wide governance controls are out of scope here.
 
-## 3. Phased Rollout
+## Explicit Non-Goals
 
-| Phase | Scope | Deliverables |
-|-------|-------|--------------|
-| 1 | Session hardening | Backend session service, cookie issuance, RBAC middleware |
-| 2 | User management APIs | Admin create/update/delete endpoints; client integration |
-| 3 | Payments & payouts | Secure Paddle webhook, transaction ledger |
-| 4 | Appointments & prescriptions | Backend CRUD, validation, logging |
-| 5 | Clinic bookings | Server-managed booking queue/workflows |
-| 6 | Monitoring & deployment | Structured logging, error tracking, CI/CD pipeline |
+This document does not claim:
 
-## 4. Immediate Next Steps
+- enterprise SSO/SAML/OIDC
+- SCIM provisioning
+- tenant-aware enterprise authorization
+- infrastructure-as-code or automated environment promotion
+- enterprise observability or compliance readiness
 
-1. **Finalize backend stack choice** – ✅ We now run a standalone Express service under `/backend`. Decide later whether to fold it into Next.js middleware or keep it independent.
-2. **Implement session service** – ✅ `backend/src/services/serverSessionService.ts` issues signed cookies once Firebase auth succeeds. `/api/auth/session` now proxies through the backend.
-3. **Abstract Firestore access** – ✅ Users, appointments, prescriptions, clinics, payments, and notifications now go through backend routes. A quick `grep -R 'firebase/firestore' src` should stay empty on the frontend.
-4. **Refactor frontend** – ✅ Admin lists, dashboards, prescriptions, pharmacy views, and notifications call the backend via `backendFetch`. Continue sweeping smaller hooks to remove legacy DI usage.
-5. **Add logging/metrics** – 🔄 Still pending. Backend currently uses `morgan` + console logs; we need structured logging (e.g., Winston) and monitoring hooks.
-6. **Document deployment** – ✅ Backend README + `docs/backend-deployment.md` include env vars, commands, and hosting guidance. Next step is CI/CD + secret rotation.
-
-This plan will evolve as each phase is completed. Subsequent commits will implement the backend APIs, client migrations, and deployment tooling described here.
+For that future scope, see [`docs/enterprise-readiness-backlog.md`](./enterprise-readiness-backlog.md).

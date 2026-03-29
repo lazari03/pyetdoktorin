@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
-import { useDI } from '@/context/DIContext';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 
 import type { Appointment } from '@/domain/entities/Appointment';
-import { UserRole } from '@/domain/entities/UserRole';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
+import { listAppointments } from '@/network/appointments';
 
 export default function UpcomingRequestsPage() {
   const [requests, setRequests] = useState<Appointment[]>([]);
@@ -17,17 +16,15 @@ export default function UpcomingRequestsPage() {
   const [error, setError] = useState<unknown>(null);
   const nav = useNavigationCoordinator();
   const { t } = useTranslation();
-  const { fetchAppointmentsUseCase } = useDI();
-  const { user, role, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      if (isAuthenticated && user && role) {
-        const isDoctor = role === UserRole.Doctor;
-        const allAppointments = await fetchAppointmentsUseCase.execute(user.uid, isDoctor);
-        const pendingRequests = allAppointments.filter((appt: Appointment) => appt.status === 'pending');
+      if (isAuthenticated && user) {
+        const allAppointments = await listAppointments();
+        const pendingRequests = allAppointments.items.filter((appt: Appointment) => appt.status === 'pending');
         setRequests(pendingRequests);
       } else {
         setRequests([]);
@@ -37,7 +34,7 @@ export default function UpcomingRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [fetchAppointmentsUseCase, isAuthenticated, role, user]);
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     void fetchRequests();

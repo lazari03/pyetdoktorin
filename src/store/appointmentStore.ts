@@ -5,7 +5,6 @@ import { APPOINTMENT_DURATION_MINUTES } from '../config/appointmentConfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { listAppointments } from '@/network/appointments';
 import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
-import { subscribeAppointmentsForDoctor, subscribeAppointmentsForUser } from '@/network/firebase/appointments';
 import { BackendError } from '@/network/backendClient';
 
 /**
@@ -23,6 +22,18 @@ function normalizeTo24h(time: string): string {
     return `${hours.toString().padStart(2, '0')}:${minutes}`;
   }
   return time; // already in HH:mm
+}
+
+function resolveAppointmentFetchError(error: unknown): string {
+  if (error instanceof BackendError) {
+    if (error.status === 401) {
+      return APPOINTMENT_ERROR_CODES.Unauthorized;
+    }
+    if (error.status === 403) {
+      return APPOINTMENT_ERROR_CODES.Forbidden;
+    }
+  }
+  return APPOINTMENT_ERROR_CODES.FetchFailed;
 }
 
 interface AppointmentState {
@@ -68,59 +79,60 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         isDoctor: typeof role === 'undefined' ? get().isDoctor : role === UserRole.Doctor,
       });
     } catch (error) {
-      if (error instanceof BackendError) {
-        if (error.status === 401) {
-          set({ error: APPOINTMENT_ERROR_CODES.Unauthorized, loading: false });
-          return;
-        }
-        if (error.status === 403) {
-          set({ error: APPOINTMENT_ERROR_CODES.Forbidden, loading: false });
-          return;
-        }
-      }
-      set({ error: APPOINTMENT_ERROR_CODES.FetchFailed, loading: false });
+      set({ error: resolveAppointmentFetchError(error), loading: false });
     }
   },
-  subscribeAppointments: (userId, role) => {
+  subscribeAppointments: (_userId, role) => {
     set({ loading: true, error: null, isDoctor: role === UserRole.Doctor });
-    const onChange = (appointments: Appointment[]) => {
-      set({ appointments, loading: false, error: null });
-    };
+    let disposed = false;
 
     const refreshFromBackend = async () => {
       try {
         const response = await listAppointments();
+        if (disposed) return;
         set({
           appointments: response.items,
           loading: false,
           error: null,
         });
       } catch (error) {
-        set({ loading: false, error: APPOINTMENT_ERROR_CODES.FetchFailed });
+        if (disposed) return;
+        set({ loading: false, error: resolveAppointmentFetchError(error) });
         console.warn('Backend appointments refresh failed', error);
       }
     };
 
-    // Hydrate immediately from the backend (source of truth) so users see new
-    // appointments even if the Firestore subscription fails or lags.
-    refreshFromBackend();
-    const refreshInterval = setInterval(refreshFromBackend, 30_000);
+    void refreshFromBackend();
+    const refreshInterval = window.setInterval(() => {
+      void refreshFromBackend();
+    }, 30_000);
 
-    const unsubscribe =
-      role === UserRole.Doctor
-        ? subscribeAppointmentsForDoctor(userId, onChange, (error) => {
-            set({ loading: false, error: APPOINTMENT_ERROR_CODES.FetchFailed });
-            console.warn('Firestore appointment subscription failed (doctor)', error);
-            refreshFromBackend();
-          })
-        : subscribeAppointmentsForUser(userId, onChange, (error) => {
-            set({ loading: false, error: APPOINTMENT_ERROR_CODES.FetchFailed });
-            console.warn('Firestore appointment subscription failed (patient)', error);
-            refreshFromBackend();
-          });
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshFromBackend();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      void refreshFromBackend();
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleWindowFocus);
+    }
+
     return () => {
+      disposed = true;
       clearInterval(refreshInterval);
-      unsubscribe();
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleWindowFocus);
+      }
     };
   },
   setAppointmentPaid: async (appointmentId, setAppointmentPaidUseCase) => setAppointmentPaidUseCase(appointmentId),

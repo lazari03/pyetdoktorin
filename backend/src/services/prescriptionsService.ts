@@ -1,5 +1,6 @@
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { UserRole } from '@/domain/entities/UserRole';
+import { canListPrescriptionsForRole } from '@/domain/rules/userRoleRules';
 
 export type PrescriptionStatus = 'pending' | 'accepted' | 'rejected';
 
@@ -26,6 +27,28 @@ export interface Prescription extends PrescriptionInput {
 
 const COLLECTION = 'recipe';
 
+function getPrescriptionQueryForRole(
+  baseCollection: FirebaseFirestore.CollectionReference,
+  uid: string,
+  role: UserRole,
+): FirebaseFirestore.Query {
+  if (!canListPrescriptionsForRole(role)) {
+    throw new Error(`Unsupported prescription role: ${role}`);
+  }
+  switch (role) {
+    case UserRole.Admin:
+      return baseCollection;
+    case UserRole.Doctor:
+      return baseCollection.where('doctorId', '==', uid);
+    case UserRole.Patient:
+      return baseCollection.where('patientId', '==', uid);
+    case UserRole.Pharmacy:
+      return baseCollection.where('pharmacyId', '==', uid);
+    default:
+      throw new Error(`Unsupported prescription role: ${role}`);
+  }
+}
+
 export async function createPrescription(input: PrescriptionInput): Promise<Prescription> {
   const admin = getFirebaseAdmin();
   const createdAt = Date.now();
@@ -51,14 +74,8 @@ export async function createPrescription(input: PrescriptionInput): Promise<Pres
 
 export async function listPrescriptionsForRole(uid: string, role: UserRole): Promise<Prescription[]> {
   const admin = getFirebaseAdmin();
-  let query = admin.firestore().collection(COLLECTION).orderBy('createdAt', 'desc');
-  if (role === UserRole.Doctor) {
-    query = query.where('doctorId', '==', uid);
-  } else if (role === UserRole.Patient) {
-    query = query.where('patientId', '==', uid);
-  } else if (role === UserRole.Pharmacy) {
-    query = query.where('pharmacyId', '==', uid);
-  }
+  const baseCollection = admin.firestore().collection(COLLECTION);
+  const query = getPrescriptionQueryForRole(baseCollection, uid, role).orderBy('createdAt', 'desc');
   const mapDocs = (docs: FirebaseFirestore.QueryDocumentSnapshot[]) =>
     docs.map((doc) => ({ ...(doc.data() as Prescription), id: doc.id }));
 
@@ -69,15 +86,7 @@ export async function listPrescriptionsForRole(uid: string, role: UserRole): Pro
     const message = error instanceof Error ? error.message : '';
     // Fallback for missing composite index in dev/preview environments.
     if (message.toLowerCase().includes('index')) {
-      const base = admin.firestore().collection(COLLECTION);
-      let fallbackQuery: FirebaseFirestore.Query = base;
-      if (role === UserRole.Doctor) {
-        fallbackQuery = fallbackQuery.where('doctorId', '==', uid);
-      } else if (role === UserRole.Patient) {
-        fallbackQuery = fallbackQuery.where('patientId', '==', uid);
-      } else if (role === UserRole.Pharmacy) {
-        fallbackQuery = fallbackQuery.where('pharmacyId', '==', uid);
-      }
+      const fallbackQuery = getPrescriptionQueryForRole(baseCollection, uid, role);
       const snapshot = await fallbackQuery.limit(200).get();
       const items = mapDocs(snapshot.docs);
       return items.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));

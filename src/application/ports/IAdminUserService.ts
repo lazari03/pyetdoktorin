@@ -1,15 +1,15 @@
-import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import type { User } from '@/domain/entities/User';
 
 export type AdminUsersPage = {
   items: User[];
   total: number;
-  nextCursor?: QueryDocumentSnapshot;
+  page: number;
+  pageSize: number;
 };
 
 export interface IAdminUserService {
   getAllUsers(): Promise<User[]>;
-  getUsersPage(pageSize: number, cursor?: QueryDocumentSnapshot): Promise<AdminUsersPage>;
+  getUsersPage(page: number, pageSize: number): Promise<AdminUsersPage>;
   getUserById(id: string): Promise<User | null>;
   getDoctorProfile(id: string): Promise<(User & { name?: string; surname?: string; specialization?: string; bio?: string; specializations?: string[] }) | null>;
   resetUserPassword(id: string): Promise<{ resetLink?: string }>;

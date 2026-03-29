@@ -1,34 +1,73 @@
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '@/config/firebaseconfig';
 import { IRealtimeAppointmentsService } from '@/application/ports/IRealtimeAppointmentsService';
+import { listAppointments } from '@/network/appointments';
+
+type PendingAppointment = Record<string, unknown>;
 
 export class RealtimeAppointmentsService implements IRealtimeAppointmentsService {
-  subscribeToPendingAppointments(doctorId: string, onChange: (count: number) => void): () => void {
-    const q = query(
-      collection(db, 'appointments'),
-      where('doctorId', '==', doctorId),
-      where('status', '==', 'pending')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      onChange(snapshot.empty ? 0 : snapshot.size);
+  subscribeToPendingAppointments(_doctorId: string, onChange: (count: number) => void): () => void {
+    return this.subscribe((_items) => {
+      onChange(_items.length);
     });
-    return () => unsubscribe();
   }
 
   subscribeToPendingAppointmentNotifications<T>(
-    doctorId: string,
+    _doctorId: string,
     map: (data: Record<string, unknown>) => T,
     onChange: (items: T[]) => void
   ): () => void {
-    const q = query(
-      collection(db, 'appointments'),
-      where('doctorId', '==', doctorId),
-      where('status', '==', 'pending')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const mapped = snapshot.docs.map((doc) => map({ id: doc.id, ...doc.data() }));
-      onChange(mapped);
+    return this.subscribe((items) => {
+      onChange(items.map((item) => map(item)));
     });
-    return () => unsubscribe();
+  }
+
+  private subscribe(onChange: (items: PendingAppointment[]) => void): () => void {
+    let disposed = false;
+
+    const refresh = async () => {
+      try {
+        const response = await listAppointments();
+        if (disposed) return;
+        const pending = response.items.filter(
+          (item) => String(item.status ?? '').toLowerCase() === 'pending',
+        ).map((item) => ({ ...item })) as PendingAppointment[];
+        onChange(pending);
+      } catch (error) {
+        if (disposed) return;
+        console.warn('Pending appointments refresh failed', error);
+      }
+    };
+
+    void refresh();
+    const intervalId = setInterval(() => {
+      void refresh();
+    }, 30_000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void refresh();
+      }
+    };
+
+    const handleFocus = () => {
+      void refresh();
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleFocus);
+    }
+
+    return () => {
+      disposed = true;
+      clearInterval(intervalId);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleFocus);
+      }
+    };
   }
 }

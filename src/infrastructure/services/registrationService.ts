@@ -1,8 +1,8 @@
 import { IRegistrationService, RegistrationData } from '@/application/ports/IRegistrationService';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '@/config/firebaseconfig';
+import { auth } from '@/config/firebaseconfig';
 import { UserRole } from '@/domain/entities/UserRole';
+import { backendFetch } from '@/network/backendClient';
 
 export class RegistrationService implements IRegistrationService {
   async register(data: RegistrationData): Promise<void> {
@@ -12,6 +12,24 @@ export class RegistrationService implements IRegistrationService {
       data.password
     );
     const user = userCredential.user;
+    const isDoctor = data.role === UserRole.Doctor;
+
+    try {
+      await backendFetch('/api/auth/register-profile', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: data.name,
+          surname: data.surname,
+          phone: data.phone,
+          address: data.address,
+          country: data.country,
+          role: isDoctor ? UserRole.Doctor : UserRole.Patient,
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to persist registration profile', error);
+      throw new Error('Failed to complete registration');
+    }
 
     try {
       const origin =
@@ -21,38 +39,6 @@ export class RegistrationService implements IRegistrationService {
       await sendEmailVerification(user, { url: `${origin}/verify-email?next=%2Fdashboard`, handleCodeInApp: true });
     } catch (e) {
       console.warn('Failed to send verification email', e);
-    }
-
-    const isDoctor = data.role === UserRole.Doctor;
-    await setDoc(doc(db, 'users', user.uid), {
-      name: data.name,
-      surname: data.surname,
-      phoneNumber: data.phone,
-      address: data.address,
-      country: data.country,
-      email: data.email,
-      role: data.role,
-      ...(isDoctor ? { approvalStatus: 'pending' } : {}),
-      createdAt: new Date().toISOString(),
-    });
-
-    if (isDoctor) {
-      try {
-        await addDoc(collection(db, 'notifications'), {
-          type: 'doctor_registration',
-          userId: user.uid,
-          name: data.name,
-          surname: data.surname,
-          phoneNumber: data.phone,
-          address: data.address,
-          country: data.country,
-          email: data.email,
-          createdAt: serverTimestamp(),
-          status: 'pending',
-        });
-      } catch (e) {
-        console.warn('Failed to create admin notification for doctor registration', e);
-      }
     }
   }
 }

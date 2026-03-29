@@ -27,7 +27,7 @@ const updatePrescriptionStatusSchema = z.object({
 
 const REAUTH_WINDOW_MS = 5 * 60 * 1000;
 
-router.get('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
+router.get('/', requireAuth([UserRole.Patient, UserRole.Doctor, UserRole.Pharmacy, UserRole.Admin]), async (req: AuthenticatedRequest, res) => {
   const user = req.user!;
   const prescriptions = await listPrescriptionsForRole(user.uid, user.role);
   res.json({ items: prescriptions });

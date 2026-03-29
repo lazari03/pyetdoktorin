@@ -514,6 +514,16 @@ export async function POST(req: Request) {
       },
     );
 
+    try {
+      await adminDb.collection('appointments').doc(roomIdParam).set({
+        roomId: actualRoomId,
+        roomCode,
+        updatedAt: Date.now(),
+      }, { merge: true });
+    } catch (persistError) {
+      console.warn('Failed to persist appointment room metadata', persistError);
+    }
+
     await new SecurityAuditService().logVideoAccessAttempt({
       userId: authenticatedUserId,
       appointmentId: roomIdParam,

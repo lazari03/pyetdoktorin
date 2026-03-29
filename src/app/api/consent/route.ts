@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ANALYTICS_CONSENT_COOKIE_NAME, COOKIE_SAMESITE, getCookieDomain } from "@/config/cookies";
-import { getClientIp, rateLimit } from "@/app/api/_lib/rateLimit";
+import { applyRateLimitHeaders, getClientIp, rateLimit } from "@/app/api/_lib/rateLimit";
 import { getOrCreateRequestId } from "@/app/api/_lib/requestId";
 
 type ConsentValue = "granted" | "denied";
@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
   const limit = rateLimit({ key: `consent:${ip}`, windowMs: 60_000, max: 60 });
   if (!limit.allowed) {
     const res = NextResponse.json({ ok: false, error: "RATE_LIMITED", requestId }, { status: 429 });
+    applyRateLimitHeaders(res.headers, limit);
     res.headers.set("x-request-id", requestId);
     return res;
   }

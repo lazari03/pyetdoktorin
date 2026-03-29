@@ -27,6 +27,7 @@ type DayPatch = {
 
 export function useManageAvailability(doctorId: string | null) {
   const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage;
   const [presetDefinitions, setPresetDefinitions] = useState<AvailabilityPreset[]>(
     getDefaultAvailabilityPresets(),
   );
@@ -73,7 +74,7 @@ export function useManageAvailability(doctorId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [doctorId, i18n.resolvedLanguage, t]);
+  }, [doctorId, t]);
 
   useEffect(() => {
     void refresh();
@@ -218,15 +219,15 @@ export function useManageAvailability(doctorId: string | null) {
     } finally {
       setSaving(false);
     }
-  }, [availability, i18n.resolvedLanguage, presetDefinitions, t]);
+  }, [availability, presetDefinitions, t]);
 
   const presets = useMemo(
     () =>
       presetDefinitions.map((preset) => ({
         ...preset,
-        ...getAvailabilityPresetCopy(preset, i18n.resolvedLanguage, t),
+        ...getAvailabilityPresetCopy(preset, language, t),
       })),
-    [i18n.resolvedLanguage, presetDefinitions, t],
+    [language, presetDefinitions, t],
   );
 
   const summary = useMemo(() => {
@@ -235,7 +236,7 @@ export function useManageAvailability(doctorId: string | null) {
       weeklyCapacity: countWeeklyCapacity(availability),
       openDays: getAvailabilityOpenDaysLabel(availability.weeklySchedule, t),
     };
-  }, [availability, i18n.resolvedLanguage, t]);
+  }, [availability, t]);
 
   return {
     availability,
