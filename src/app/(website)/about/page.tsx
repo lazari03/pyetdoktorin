@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import WebsiteShell from "@/presentation/components/website/WebsiteShell";
+import { resolveWebsiteImageSrc } from "@/presentation/components/website/websiteImageCatalog";
 import { getServerTranslations } from "@/i18n/serverTranslations";
 import { buildMetadata, SEO_KEYWORDS_AL } from "@/app/seo";
 
@@ -19,6 +20,7 @@ export async function generateMetadata() {
 
 export default async function AboutPage() {
   const t = await getServerTranslations();
+  const teamImage = resolveWebsiteImageSrc("/website/hero1.svg") ?? "/website/hero1.svg";
 
   return (
     <WebsiteShell>
@@ -94,11 +96,11 @@ export default async function AboutPage() {
           <section className="flex flex-col md:flex-row items-center gap-10 md:gap-20">
             <div className="md:w-1/2 w-full flex justify-center mb-6 md:mb-0">
               <Image
-                src="/website/hero1.svg"
+                src={teamImage}
                 alt={t("aboutTeamImageAlt")}
                 width={420}
                 height={320}
-                className="w-full max-w-md h-72 object-contain rounded-2xl bg-white p-4"
+                className="w-full max-w-md h-72 object-cover rounded-2xl bg-white"
                 priority
               />
             </div>

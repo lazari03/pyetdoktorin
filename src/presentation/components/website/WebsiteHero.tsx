@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { resolveWebsiteImageSrc, usesUnoptimizedImage } from '@/presentation/components/website/websiteImageCatalog';
 
 type HeroCta = {
   label: string;
@@ -40,7 +41,11 @@ export default function WebsiteHero({
   cardClassName?: string;
   priority?: boolean;
 }) {
-  const usesSvgImage = imageSrc?.endsWith('.svg') ?? false;
+  const resolvedImageSrc = resolveWebsiteImageSrc(imageSrc);
+  const usesSvgImage = usesUnoptimizedImage(resolvedImageSrc);
+  const avatar1Src = resolveWebsiteImageSrc('/website/avatar1.svg') ?? '/website/avatar1.svg';
+  const avatar2Src = resolveWebsiteImageSrc('/website/avatar2.svg') ?? '/website/avatar2.svg';
+  const avatar3Src = resolveWebsiteImageSrc('/website/avatar3.svg') ?? '/website/avatar3.svg';
 
   return (
     <section className={`website-hero ${className}`.trim()}>
@@ -66,19 +71,19 @@ export default function WebsiteHero({
             {metaText && (
               <div className="website-hero-meta">
                 <div className="website-avatars">
-                  <Image src="/website/avatar1.svg" alt="" width={28} height={28} className="website-avatar" unoptimized />
-                  <Image src="/website/avatar2.svg" alt="" width={28} height={28} className="website-avatar" unoptimized />
-                  <Image src="/website/avatar3.svg" alt="" width={28} height={28} className="website-avatar" unoptimized />
+                  <Image src={avatar1Src} alt="" width={28} height={28} className="website-avatar" />
+                  <Image src={avatar2Src} alt="" width={28} height={28} className="website-avatar" />
+                  <Image src={avatar3Src} alt="" width={28} height={28} className="website-avatar" />
                 </div>
                 <span className="website-hero-meta-text">{metaText}</span>
               </div>
             )}
           </div>
-          {imageSrc && (
+          {resolvedImageSrc && (
             <div className="website-hero-media">
               <div className={`website-hero-card ${cardClassName}`.trim()}>
                 <Image
-                  src={imageSrc}
+                  src={resolvedImageSrc}
                   alt={imageAlt || ''}
                   fill
                   sizes="(max-width: 768px) 320px, 420px"

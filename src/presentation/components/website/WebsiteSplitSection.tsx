@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { resolveWebsiteImageSrc, usesUnoptimizedImage } from '@/presentation/components/website/websiteImageCatalog';
 
 export default function WebsiteSplitSection({
   eyebrow,
@@ -17,7 +18,8 @@ export default function WebsiteSplitSection({
   imageAlt: string;
   reverse?: boolean;
 }) {
-  const usesSvgImage = imageSrc.endsWith('.svg');
+  const resolvedImageSrc = resolveWebsiteImageSrc(imageSrc) ?? imageSrc;
+  const usesSvgImage = usesUnoptimizedImage(resolvedImageSrc);
 
   return (
     <div className={`website-split ${reverse ? 'reverse' : ''}`}>
@@ -37,7 +39,7 @@ export default function WebsiteSplitSection({
       <div className="website-split-media">
         <div className="website-media-frame">
           <Image
-            src={imageSrc}
+            src={resolvedImageSrc}
             alt={imageAlt}
             fill
             sizes="(max-width: 768px) 320px, 520px"

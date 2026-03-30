@@ -111,7 +111,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       const users = get().users.map(u => (u.id === id ? { ...u, ...payload } : u));
       set({ users });
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : 'Failed to update user' });
+      const error = e instanceof Error ? e : new Error('Failed to update user');
+      set({ error: error.message });
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -124,7 +126,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       const users = get().users.map(u => (u.id === id ? { ...u, ...payload } : u));
       set({ users });
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : 'Failed to update doctor profile' });
+      const error = e instanceof Error ? e : new Error('Failed to update doctor profile');
+      set({ error: error.message });
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -136,7 +140,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       const users = get().users.map(u => (u.id === id ? ({ ...u, approvalStatus: 'approved' } as EditableUser & { approvalStatus: 'approved' }) : u));
       set({ users });
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : 'Failed to approve doctor' });
+      const error = e instanceof Error ? e : new Error('Failed to approve doctor');
+      set({ error: error.message });
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -146,8 +152,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     try {
       return await resetAdminUserPassword(id);
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : 'Failed to reset password' });
-      return null;
+      const error = e instanceof Error ? e : new Error('Failed to reset password');
+      set({ error: error.message });
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -158,7 +165,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       await deleteAdminUser(id);
       await get().loadUsers();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : 'Failed to delete user' });
+      const error = e instanceof Error ? e : new Error('Failed to delete user');
+      set({ error: error.message });
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -171,7 +180,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       await createAdminUser(payload);
       await get().loadUsers();
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : 'Failed to create user' });
+      const error = e instanceof Error ? e : new Error('Failed to create user');
+      set({ error: error.message });
+      throw error;
     } finally {
       set({ loading: false });
     }

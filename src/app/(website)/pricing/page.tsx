@@ -21,9 +21,13 @@ export default async function PricingPage() {
 
   const plans = [
     {
+      kind: "public" as const,
       name: t("pricingPlanStarterName"),
+      badge: t("pricingPublicBadge"),
       price: t("pricingPlanStarterPrice"),
       description: t("pricingPlanStarterDesc"),
+      ctaLabel: t("register"),
+      ctaHref: "/register",
       features: [
         t("pricingPlanStarterFeature1"),
         t("pricingPlanStarterFeature2"),
@@ -31,9 +35,13 @@ export default async function PricingPage() {
       ],
     },
     {
+      kind: "sales" as const,
       name: t("pricingPlanGrowthName"),
+      badge: t("pricingSalesBadge"),
       price: t("pricingPlanGrowthPrice"),
       description: t("pricingPlanGrowthDesc"),
+      ctaLabel: t("pricingCtaPrimary"),
+      ctaHref: "/contact",
       features: [
         t("pricingPlanGrowthFeature1"),
         t("pricingPlanGrowthFeature2"),
@@ -41,9 +49,13 @@ export default async function PricingPage() {
       ],
     },
     {
+      kind: "sales" as const,
       name: t("pricingPlanEnterpriseName"),
+      badge: t("pricingSalesBadge"),
       price: t("pricingPlanEnterprisePrice"),
       description: t("pricingPlanEnterpriseDesc"),
+      ctaLabel: t("pricingCtaPrimary"),
+      ctaHref: "/contact",
       features: [
         t("pricingPlanEnterpriseFeature1"),
         t("pricingPlanEnterpriseFeature2"),
@@ -82,10 +94,24 @@ export default async function PricingPage() {
 
           <div className="mt-10 website-grid">
             {plans.map((plan) => (
-              <div key={plan.name} className="website-card flex flex-col gap-6">
+              <div
+                key={plan.name}
+                className={`website-card pricing-plan-card ${plan.kind === "public" ? "pricing-plan-card--featured" : "pricing-plan-card--sales"} flex flex-col gap-6`}
+              >
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-600">{plan.name}</div>
-                  <div className="mt-3 text-3xl font-semibold text-slate-900">{plan.price}</div>
+                  <div className="pricing-plan-header">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-600">{plan.name}</div>
+                    <span
+                      className={`pricing-plan-badge ${plan.kind === "public" ? "pricing-plan-badge--featured" : "pricing-plan-badge--sales"}`}
+                    >
+                      {plan.badge}
+                    </span>
+                  </div>
+                  <div
+                    className={`pricing-plan-price ${plan.kind === "public" ? "pricing-plan-price--featured" : "pricing-plan-price--sales"}`}
+                  >
+                    {plan.price}
+                  </div>
                   <p className="mt-2 text-sm text-slate-600">{plan.description}</p>
                 </div>
                 <ul className="website-list">
@@ -96,6 +122,14 @@ export default async function PricingPage() {
                     </li>
                   ))}
                 </ul>
+                <div className="pricing-plan-actions mt-auto pt-2">
+                  <a
+                    href={plan.ctaHref}
+                    className={`website-btn ${plan.kind === "public" ? "website-btn-solid" : "website-btn-ghost"}`}
+                  >
+                    {plan.ctaLabel}
+                  </a>
+                </div>
               </div>
             ))}
           </div>

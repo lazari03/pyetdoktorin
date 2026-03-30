@@ -393,6 +393,80 @@ keeping them extremely subdued if they exist at all. */
   font-size: 0.95rem;
 }
 
+.pricing-plan-card {
+  min-height: 100%;
+  position: relative;
+}
+
+.pricing-plan-card--featured {
+  border-color: #c4b5fd;
+  background:
+    radial-gradient(circle at top right, rgba(168, 85, 247, 0.12), transparent 40%),
+    linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+  box-shadow: 0 18px 38px -24px rgba(124, 58, 237, 0.45);
+}
+
+.pricing-plan-card--sales {
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-color: #dbe4f0;
+}
+
+.pricing-plan-card--sales .website-check {
+  background: #4f46e5;
+}
+
+.pricing-plan-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pricing-plan-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 6px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pricing-plan-badge--featured {
+  background: #ecfdf3;
+  color: #047857;
+}
+
+.pricing-plan-badge--sales {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.pricing-plan-price {
+  margin-top: 14px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.pricing-plan-price--featured {
+  font-size: clamp(2.05rem, 4vw, 2.6rem);
+  font-weight: 800;
+  color: #111827;
+}
+
+.pricing-plan-price--sales {
+  font-size: clamp(1.7rem, 3vw, 2.1rem);
+  font-weight: 700;
+  color: #312e81;
+}
+
+.pricing-plan-actions {
+  display: flex;
+}
+
 .website-split {
   display: grid;
   gap: 32px;

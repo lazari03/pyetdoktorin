@@ -20,7 +20,6 @@ export function UserSidepanel() {
     loading,
     error,
     updateSelected,
-    updateDoctorProfile,
     loadSelectedDetails,
     approveDoctor,
     resetPassword,
@@ -75,25 +74,35 @@ export function UserSidepanel() {
 
   const panelClass = `fixed right-0 top-0 h-[100dvh] w-full sm:w-[520px] md:w-[640px] bg-white shadow-2xl p-0 font-app rounded-l-2xl overflow-hidden flex flex-col ${z.drawer}`;
 
+  const changedFields = useMemo(() => {
+    if (!user) return {} as Record<string, unknown>;
+
+    const payload: Record<string, unknown> = {};
+
+    if ((local.name ?? "") !== (user.name ?? "")) payload.name = local.name ?? "";
+    if ((local.surname ?? "") !== (user.surname ?? "")) payload.surname = local.surname ?? "";
+    if ((local.email ?? "") !== (user.email ?? "")) payload.email = local.email ?? "";
+    if (local.role !== undefined && local.role !== user.role) payload.role = local.role;
+
+    if ((local.patientNotes ?? "") !== (user.patientNotes ?? "")) payload.patientNotes = local.patientNotes ?? "";
+    if ((local.allergies ?? "") !== (user.allergies ?? "")) payload.allergies = local.allergies ?? "";
+    if ((local.chronicConditions ?? "") !== (user.chronicConditions ?? "")) payload.chronicConditions = local.chronicConditions ?? "";
+
+    if ((local.specialization ?? "") !== (user.specialization ?? "")) payload.specialization = local.specialization ?? "";
+    if ((local.bio ?? "") !== (user.bio ?? "")) payload.bio = local.bio ?? "";
+
+    return payload;
+  }, [local, user]);
+
   const save = async () => {
+    if (!user) return;
+    if (Object.keys(changedFields).length === 0) {
+      showToast(t('noChangesToSave') || 'No changes to save.', 'info');
+      return;
+    }
     try {
-      await updateSelected(
-        {
-          name: local.name,
-          surname: local.surname,
-          role: local.role,
-          email: local.email,
-          patientNotes: local.patientNotes,
-          allergies: local.allergies,
-          chronicConditions: local.chronicConditions,
-        }
-      );
-      if (local.role === UserRole.Doctor) {
-        await updateDoctorProfile(
-          { specialization: local.specialization, bio: local.bio, specializations: local.specializations }
-        );
-      }
-      showToast('Profile updated', 'success');
+      await updateSelected(changedFields);
+      showToast(t('profileUpdateSuccess') || 'Profile updated successfully!', 'success');
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Failed to update profile', 'error');
     }
@@ -103,7 +112,7 @@ export function UserSidepanel() {
     if (!user) return;
     try {
       await approveDoctor(user.id);
-      showToast('Doctor approved', 'success');
+      showToast(t('doctorApprovedSuccess') || 'Doctor approved.', 'success');
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Failed to approve doctor', 'error');
     }
@@ -301,7 +310,22 @@ export function UserSidepanel() {
                 <div className="flex flex-wrap gap-2">
 	                  <button className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-60" disabled={loading} onClick={save}>Save changes</button>
 	                  <button className="px-4 py-2 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-100" disabled={loading} onClick={closePanel}>Cancel</button>
-	                  <button className="px-4 py-2 rounded-full border border-red-300 text-red-600 hover:bg-red-50" disabled={loading} onClick={() => { if (user && confirm('Delete this user?')) deleteUser(user.id); }}>Delete user</button>
+	                  <button
+                      className="px-4 py-2 rounded-full border border-red-300 text-red-600 hover:bg-red-50"
+                      disabled={loading}
+                      onClick={async () => {
+                        if (!user || !confirm('Delete this user?')) return;
+                        try {
+                          await deleteUser(user.id);
+                          showToast(t('userDeletedSuccess') || 'User deleted.', 'success');
+                          closePanel();
+                        } catch (e) {
+                          showToast(e instanceof Error ? e.message : 'Failed to delete user', 'error');
+                        }
+                      }}
+                    >
+                      Delete user
+                    </button>
 	                </div>
 
                 <div className="mt-2 rounded-xl border bg-gray-50 p-3">

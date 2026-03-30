@@ -2,11 +2,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { resolveWebsiteImageSrc } from '@/presentation/components/website/websiteImageCatalog';
 
 export default function ContentSection() {
   const { t } = useTranslation();
-  // Placeholder image and logo
-  const doctorImage = "/website/child1.svg";
+  const doctorImage = resolveWebsiteImageSrc("/website/child1.svg") ?? "/website/child1.svg";
 
   return (
     <section className="relative min-h-[70vh] flex items-center justify-center bg-[#ede9fe] px-2 py-20 overflow-x-hidden">

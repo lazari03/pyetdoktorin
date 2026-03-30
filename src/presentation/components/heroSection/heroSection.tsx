@@ -4,6 +4,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import Image from "next/image";
+import { resolveWebsiteImageSrc, usesUnoptimizedImage } from '@/presentation/components/website/websiteImageCatalog';
 
 // Use secure API endpoint for images
 const MAIN_IMAGE = "/website/hero1.svg";
@@ -12,6 +13,8 @@ export default function HeroSection() {
   const nav = useNavigationCoordinator();
   const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
+  const heroImage = resolveWebsiteImageSrc(MAIN_IMAGE) ?? MAIN_IMAGE;
+  const usesSvgImage = usesUnoptimizedImage(heroImage);
 
   return (
     <section
@@ -56,13 +59,13 @@ export default function HeroSection() {
           <div className="relative w-[340px] sm:w-[400px] aspect-[3/4] bg-white/10 rounded-2xl md:rounded-3xl shadow-2xl border border-white/20 backdrop-blur-xl flex items-center justify-center overflow-visible">
             {/* Main portrait image */}
             <Image
-              src={MAIN_IMAGE}
+              src={heroImage}
               alt={t('heroImageAlt')}
               fill
               sizes="(max-width: 640px) 340px, (max-width: 1024px) 400px, 400px"
               className="object-cover rounded-2xl md:rounded-3xl"
               draggable={false}
-              unoptimized
+              unoptimized={usesSvgImage}
             />
             {/* Bottom control bar */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 bg-white/30 rounded-xl px-4 py-2 shadow-lg backdrop-blur-md border border-white/40">

@@ -17,6 +17,7 @@ module.exports = {
       { protocol: 'https', hostname: 'tailwindcss.com' },
       { protocol: 'https', hostname: 'pyetdoktorin-storage.fra1.digitaloceanspaces.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'images.pexels.com' },
     ],
   },
 
