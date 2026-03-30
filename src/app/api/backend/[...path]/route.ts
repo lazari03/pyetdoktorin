@@ -37,6 +37,9 @@ function cloneRequestHeaders(req: Request): Headers {
 function cloneResponseHeaders(upstream: Response): Headers {
   const headers = new Headers(upstream.headers);
   headers.delete('content-length');
+  // The upstream fetch layer may already decode compressed responses.
+  // If we keep the original encoding header, the browser will fail decoding the body.
+  headers.delete('content-encoding');
   headers.delete('set-cookie');
 
   const getSetCookie = (

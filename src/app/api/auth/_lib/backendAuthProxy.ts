@@ -25,6 +25,9 @@ function buildBackendUrl(baseUrl: URL, path: string): URL {
 function cloneResponseHeaders(upstream: Response): Headers {
   const headers = new Headers(upstream.headers);
   headers.delete('content-length');
+  // Undici may hand us a decoded body while preserving the upstream encoding header.
+  // Forwarding that header makes the browser try to decode the payload a second time.
+  headers.delete('content-encoding');
   headers.delete('set-cookie');
 
   const getSetCookie = (
