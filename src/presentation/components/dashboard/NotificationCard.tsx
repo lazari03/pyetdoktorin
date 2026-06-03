@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
@@ -9,6 +9,25 @@ import { useAuth } from "@/context/AuthContext";
 import { getRoleNotificationsPath } from "@/navigation/roleRoutes";
 import { UserRole } from "@/domain/entities/UserRole";
 import { BellIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+
+const STORAGE_KEY = "readNotificationIds";
+
+function loadReadIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveReadIds(ids: Set<string>) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
+  } catch {}
+}
 
 type Props = {
   appointments: Appointment[];
@@ -60,39 +79,33 @@ export function NotificationCard({ appointments }: Props) {
       });
   }, [filtered, t]);
 
-  const getTone = (normalizedStatus: string) => {
+  const getDotClass = (normalizedStatus: string) => {
     switch (normalizedStatus) {
-      case "accepted":
-        return {
-          dot: "bg-emerald-500",
-          pill: "border-emerald-200 bg-emerald-50 text-emerald-700",
-        };
+      case "accepted":                          return "notif-dot notif-dot-unread-accepted";
       case "rejected":
       case "declined":
       case "canceled":
-      case "cancelled":
-        return {
-          dot: "bg-rose-500",
-          pill: "border-rose-200 bg-rose-50 text-rose-700",
-        };
-      case "completed":
-      case "finished":
-        return {
-          dot: "bg-indigo-500",
-          pill: "border-indigo-200 bg-indigo-50 text-indigo-700",
-        };
-      case "pending":
-        return {
-          dot: "bg-amber-500",
-          pill: "border-amber-200 bg-amber-50 text-amber-700",
-        };
-      default:
-        return {
-          dot: "bg-gray-400",
-          pill: "border-gray-200 bg-gray-50 text-gray-700",
-        };
+      case "cancelled":                         return "notif-dot notif-dot-unread-rejected";
+      case "pending":                           return "notif-dot notif-dot-unread-pending";
+      default:                                  return "notif-dot notif-dot-unread-default";
     }
   };
+
+  const getPillClass = (normalizedStatus: string) => {
+    switch (normalizedStatus) {
+      case "accepted":                          return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      case "rejected":
+      case "declined":
+      case "canceled":
+      case "cancelled":                         return "border-rose-200 bg-rose-50 text-rose-700";
+      case "completed":
+      case "finished":                          return "border-indigo-200 bg-indigo-50 text-indigo-700";
+      case "pending":                           return "border-amber-200 bg-amber-50 text-amber-700";
+      default:                                  return "border-gray-200 bg-gray-50 text-gray-700";
+    }
+  };
+
+  const unreadCount = items.filter((i) => !readIds.has(i.id)).length;
 
   return (
     <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">

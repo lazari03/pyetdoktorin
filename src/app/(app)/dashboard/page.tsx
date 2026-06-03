@@ -120,7 +120,7 @@ export default function Dashboard() {
   const router = useRouter();
   const paidAppointmentId = searchParams?.get("paid") || "";
   const paidSyncRef = useRef<string>("");
-  const setAppointments = useAppointmentStore((s) => s.setAppointments);
+  const { syncPaymentUseCase } = useDI();
   const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
   const appointmentsError = useAppointmentStore((s) => s.error);
   const appointmentsLoading = useAppointmentStore((s) => s.loading);
@@ -152,18 +152,16 @@ export default function Dashboard() {
         console.warn("Payment sync after checkout failed", error);
       })
       .finally(() => {
-        listAppointments()
-          .then((refreshed) => setAppointments(refreshed.items))
-          .catch((error) => console.warn("Appointment refresh after payment failed", error));
+        fetchAppointments(effectiveRole).catch((error) => console.warn("Appointment refresh after payment failed", error));
         try {
           const url = new URL(window.location.href);
           url.searchParams.delete("paid");
           router.replace(url.pathname + url.search);
-	        } catch {
-	          router.replace(DASHBOARD_PATHS.root);
-	        }
-	      });
-	  }, [paidAppointmentId, router, setAppointments]);
+        } catch {
+          router.replace(DASHBOARD_PATHS.root);
+        }
+      });
+  }, [paidAppointmentId, router, effectiveRole, fetchAppointments, syncPaymentUseCase]);
 
   const sortedDashboardAppointments = sortAppointments(vm.filteredAppointments, vm.filteredAppointments.length);
   const appointmentsTotalPages = Math.max(1, Math.ceil(sortedDashboardAppointments.length / DASHBOARD_APPOINTMENTS_PAGE_SIZE));
