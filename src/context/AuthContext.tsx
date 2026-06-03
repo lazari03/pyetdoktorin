@@ -1,10 +1,9 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
-import { fetchCurrentUserProfile } from '@/network/currentUser';
+import { subscribeToFullAuthState, fetchCurrentUser } from '@/infrastructure/services/authService';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -33,57 +32,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const auth = getAuth();
-
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-
-      if (currentUser) {
-        let resolvedEmailVerified = currentUser.emailVerified === true;
-        try {
-          // Email verification status can be stale until we reload the user.
-          if (currentUser.email && !resolvedEmailVerified) {
-            await currentUser.reload();
-            resolvedEmailVerified = currentUser.emailVerified === true;
-          }
-        } catch {
-          // ignore reload failures
-        }
-
+    const unsubscribe = subscribeToFullAuthState(async (firebaseUser) => {
+      if (firebaseUser) {
         setIsAuthenticated(true);
-        setUid(currentUser.uid); // Set `uid`
-        setEmailVerified(resolvedEmailVerified);
+        setUid(firebaseUser.uid);
+        setEmailVerified(firebaseUser.emailVerified);
         try {
-          const userData = await fetchCurrentUserProfile();
+          const userData = await fetchCurrentUser();
           const normalizedRole = normalizeRole(userData.role);
           setRole(normalizedRole);
           setUser({
-            uid: currentUser.uid,
-            name: userData.name || currentUser.displayName || 'Unknown',
-            email: userData.email || currentUser.email || undefined,
-            phoneNumber: userData.phoneNumber || currentUser.phoneNumber || undefined,
+            uid: firebaseUser.uid,
+            name: userData.name || firebaseUser.displayName || 'Unknown',
+            email: userData.email || firebaseUser.email || undefined,
+            phoneNumber: userData.phoneNumber || firebaseUser.phoneNumber || undefined,
           });
           setEmailVerified(
             typeof userData.emailVerified === 'boolean'
               ? userData.emailVerified
-              : resolvedEmailVerified,
+              : firebaseUser.emailVerified,
           );
         } catch {
           setRole(null);
           setUser(null);
-          setEmailVerified(resolvedEmailVerified);
+          setEmailVerified(firebaseUser.emailVerified);
         }
       } else {
         setIsAuthenticated(false);
-        setUid(null); // Reset `uid`
+        setUid(null);
         setUser(null);
         setRole(null);
         setEmailVerified(false);
       }
-
       setLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup the listener on unmount
+    return () => unsubscribe();
   }, []);
 
   return (

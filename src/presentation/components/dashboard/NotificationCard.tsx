@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
@@ -10,6 +10,25 @@ import { getRoleNotificationsPath } from "@/navigation/roleRoutes";
 import { UserRole } from "@/domain/entities/UserRole";
 import { BellIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
+const STORAGE_KEY = "readNotificationIds";
+
+function loadReadIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveReadIds(ids: Set<string>) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
+  } catch {}
+}
+
 type Props = {
   appointments: Appointment[];
 };
@@ -18,6 +37,17 @@ export function NotificationCard({ appointments }: Props) {
   const { t } = useTranslation();
   const { role, user } = useAuth();
   const notificationsHref = getRoleNotificationsPath(role) || "/dashboard/notifications";
+
+  const [readIds, setReadIds] = useState<Set<string>>(loadReadIds);
+
+  const markRead = (id: string) => {
+    setReadIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      saveReadIds(next);
+      return next;
+    });
+  };
 
   const items = useMemo(() => {
     return [...appointments]
@@ -31,7 +61,7 @@ export function NotificationCard({ appointments }: Props) {
         const bt = Number.isFinite(new Date(b.createdAt).getTime()) ? new Date(b.createdAt).getTime() : 0;
         return bt - at;
       })
-      .slice(0, 20) // keep payload light
+      .slice(0, 20)
       .map((a) => {
         const status = getAppointmentStatusPresentation(a.status);
         const createdAt = new Date(a.createdAt);
@@ -56,39 +86,33 @@ export function NotificationCard({ appointments }: Props) {
       });
   }, [appointments, role, t, user?.uid]);
 
-  const getTone = (normalizedStatus: string) => {
+  const getDotClass = (normalizedStatus: string) => {
     switch (normalizedStatus) {
-      case "accepted":
-        return {
-          dot: "bg-emerald-500",
-          pill: "border-emerald-200 bg-emerald-50 text-emerald-700",
-        };
+      case "accepted":                          return "notif-dot notif-dot-unread-accepted";
       case "rejected":
       case "declined":
       case "canceled":
-      case "cancelled":
-        return {
-          dot: "bg-rose-500",
-          pill: "border-rose-200 bg-rose-50 text-rose-700",
-        };
-      case "completed":
-      case "finished":
-        return {
-          dot: "bg-indigo-500",
-          pill: "border-indigo-200 bg-indigo-50 text-indigo-700",
-        };
-      case "pending":
-        return {
-          dot: "bg-amber-500",
-          pill: "border-amber-200 bg-amber-50 text-amber-700",
-        };
-      default:
-        return {
-          dot: "bg-gray-400",
-          pill: "border-gray-200 bg-gray-50 text-gray-700",
-        };
+      case "cancelled":                         return "notif-dot notif-dot-unread-rejected";
+      case "pending":                           return "notif-dot notif-dot-unread-pending";
+      default:                                  return "notif-dot notif-dot-unread-default";
     }
   };
+
+  const getPillClass = (normalizedStatus: string) => {
+    switch (normalizedStatus) {
+      case "accepted":                          return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      case "rejected":
+      case "declined":
+      case "canceled":
+      case "cancelled":                         return "border-rose-200 bg-rose-50 text-rose-700";
+      case "completed":
+      case "finished":                          return "border-indigo-200 bg-indigo-50 text-indigo-700";
+      case "pending":                           return "border-amber-200 bg-amber-50 text-amber-700";
+      default:                                  return "border-gray-200 bg-gray-50 text-gray-700";
+    }
+  };
+
+  const unreadCount = items.filter((i) => !readIds.has(i.id)).length;
 
   return (
     <section className="card-premium card-premium-hover p-4 sm:p-5 flex flex-col gap-4 h-full min-h-[260px]">
@@ -99,16 +123,22 @@ export function NotificationCard({ appointments }: Props) {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{t("notifications") || "Notifications"}</p>
-              <span
-                className="shrink-0 inline-flex items-center rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700"
-                aria-label={t("notificationsCount") || "Notifications count"}
-                data-analytics="dashboard.notifications.count"
-              >
-                {items.length}
-              </span>
+              <p className="section-title truncate">
+                {t("notifications") || "Notifications"}
+              </p>
+              {unreadCount > 0 && (
+                <span
+                  className="shrink-0 inline-flex items-center rounded-full bg-purple-600 px-2 py-0.5 text-[11px] font-semibold text-white"
+                  aria-label={t("notificationsCount") || "Unread count"}
+                  data-analytics="dashboard.notifications.count"
+                >
+                  {unreadCount}
+                </span>
+              )}
             </div>
-            <p className="text-xs text-gray-500">{t("notificationsSubtitle") || "Latest updates and actions."}</p>
+            <p className="text-xs text-gray-500">
+              {t("notificationsSubtitle") || "Latest updates and actions."}
+            </p>
           </div>
         </div>
 
@@ -123,7 +153,10 @@ export function NotificationCard({ appointments }: Props) {
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-gray-100 bg-gray-50/70 overflow-auto" style={{ maxHeight: "360px" }}>
+      <div
+        className="rounded-2xl border border-gray-100 bg-gray-50/70 overflow-auto"
+        style={{ maxHeight: "360px" }}
+      >
         {items.length === 0 && (
           <div className="py-4 px-4 text-xs text-gray-500 flex items-center gap-2">
             <BellIcon className="h-4 w-4 text-gray-400" />
@@ -131,23 +164,42 @@ export function NotificationCard({ appointments }: Props) {
           </div>
         )}
         {items.map((item) => {
-          const tone = getTone(item.normalizedStatus);
+          const isRead = readIds.has(item.id);
           return (
             <Link
               key={item.id}
               href={`${notificationsHref}?focus=${encodeURIComponent(item.id)}`}
-              className="group bg-white px-4 py-3 flex items-start gap-3 border-b border-gray-100 hover:bg-purple-50/40 transition cursor-pointer last:border-b-0"
+              onClick={() => markRead(item.id)}
+              className={`group px-4 py-3 flex items-start gap-3 border-b border-gray-100 hover:bg-purple-50/40 transition cursor-pointer last:border-b-0 ${
+                isRead ? "bg-gray-50/60" : "bg-white"
+              }`}
               aria-label={t("openNotification") || "Open notification"}
               data-analytics="dashboard.notifications.open"
               data-analytics-id={item.id}
             >
-              <div className={`mt-1 h-2.5 w-2.5 rounded-full ${tone.dot} ring-2 ring-white`} />
+              {!isRead && <div className={getDotClass(item.normalizedStatus)} />}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
-                {item.desc && <p className="text-xs text-gray-600 truncate">{item.desc}</p>}
-                <p className="text-[11px] text-gray-500 mt-1">{item.ts || t("unknown")}</p>
+                <p
+                  className={`text-sm truncate ${
+                    isRead
+                      ? "font-normal text-gray-600"
+                      : "font-semibold text-gray-900"
+                  }`}
+                >
+                  {item.title}
+                </p>
+                {item.desc && (
+                  <p className="text-xs text-gray-600 truncate">{item.desc}</p>
+                )}
+                <p className="text-[11px] text-gray-500 mt-1">
+                  {item.ts || t("unknown")}
+                </p>
               </div>
-              <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${tone.pill}`}>
+              <span
+                className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getPillClass(
+                  item.normalizedStatus
+                )}`}
+              >
                 {t(item.status.label)}
               </span>
             </Link>

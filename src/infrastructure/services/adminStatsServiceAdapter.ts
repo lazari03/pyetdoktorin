@@ -1,5 +1,6 @@
-import { IAdminStatsService } from '@/application/ports/IAdminStatsService';
+import { IAdminStatsService, AdminDashboardStats } from '@/application/ports/IAdminStatsService';
 import { fetchTopDoctors } from '@/network/stats';
+import { fetchAdminDashboardStats } from '@/network/adminStats';
 
 export class AdminStatsServiceAdapter implements IAdminStatsService {
   async getTopDoctorsByAppointments(limit = 5) {
@@ -10,5 +11,9 @@ export class AdminStatsServiceAdapter implements IAdminStatsService {
   async getTopDoctorsByRequests(limit = 5) {
     const response = await fetchTopDoctors('requests', limit);
     return response.items;
+  }
+
+  async getDashboardStats(): Promise<AdminDashboardStats> {
+    return fetchAdminDashboardStats();
   }
 }

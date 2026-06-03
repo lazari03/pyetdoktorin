@@ -25,8 +25,7 @@ import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
 import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
-import { syncPaddlePaymentWithRetry } from "@/network/payments";
-import { listAppointments } from "@/network/appointments";
+import { useDI } from "@/context/DIContext";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { useEffect, useRef } from "react";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
@@ -105,7 +104,7 @@ export default function Dashboard() {
   const router = useRouter();
   const paidAppointmentId = searchParams?.get("paid") || "";
   const paidSyncRef = useRef<string>("");
-  const setAppointments = useAppointmentStore((s) => s.setAppointments);
+  const { syncPaymentUseCase } = useDI();
   const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
   const appointmentsError = useAppointmentStore((s) => s.error);
   const appointmentsLoading = useAppointmentStore((s) => s.loading);
@@ -121,23 +120,21 @@ export default function Dashboard() {
     if (!paidAppointmentId) return;
     if (paidSyncRef.current === paidAppointmentId) return;
     paidSyncRef.current = paidAppointmentId;
-    syncPaddlePaymentWithRetry(paidAppointmentId)
+    syncPaymentUseCase.execute(paidAppointmentId)
       .catch((error) => {
         console.warn("Payment sync after checkout failed", error);
       })
       .finally(() => {
-        listAppointments()
-          .then((refreshed) => setAppointments(refreshed.items))
-          .catch((error) => console.warn("Appointment refresh after payment failed", error));
+        fetchAppointments(effectiveRole).catch((error) => console.warn("Appointment refresh after payment failed", error));
         try {
           const url = new URL(window.location.href);
           url.searchParams.delete("paid");
           router.replace(url.pathname + url.search);
-	        } catch {
-	          router.replace(DASHBOARD_PATHS.root);
-	        }
-	      });
-	  }, [paidAppointmentId, router, setAppointments]);
+        } catch {
+          router.replace(DASHBOARD_PATHS.root);
+        }
+      });
+  }, [paidAppointmentId, router, effectiveRole, fetchAppointments, syncPaymentUseCase]);
 
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
@@ -313,8 +310,8 @@ export default function Dashboard() {
           {/* Recent Doctors/Patients Section */}
           <section className="card-premium card-premium-hover card-accent card-accent-purple p-4 sm:p-5 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-semibold text-gray-900">
-                {effectiveRole === UserRole.Doctor 
+              <p className="section-title">
+                {effectiveRole === UserRole.Doctor
                   ? (t("recentPatients") ?? "Recent Patients")
                   : (t("recentDoctors") ?? "Recent doctors")
                 }
@@ -344,7 +341,7 @@ export default function Dashboard() {
           <section className="card-premium card-premium-hover card-accent card-accent-violet p-4 sm:p-5 h-full flex flex-col gap-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-semibold text-gray-900">{t("visits") ?? "Visits"}</p>
+                <p className="section-title">{t("visits") ?? "Visits"}</p>
                 <p className="text-4xl font-extrabold mt-1 text-purple-700">{vm.totalAppointments}</p>
                 <p className="text-xs text-gray-600">{t("lastMonth") ?? "last month"}</p>
               </div>
@@ -371,7 +368,7 @@ export default function Dashboard() {
 
         <section className="card-premium card-accent card-accent-slate overflow-hidden">
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
-            <h2 className="text-base font-semibold text-gray-900">
+            <h2 className="section-title">
               {t("yourAppointments")}
             </h2>
 	            <Link href={DASHBOARD_PATHS.appointments} className="text-xs font-semibold text-purple-700 hover:text-purple-800">

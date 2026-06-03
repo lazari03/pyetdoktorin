@@ -1,17 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchAdminDashboardStats } from '@/network/adminStats';
-
-interface AdminDashboardStats {
-  totalAppointments: number;
-  totalRecipes: number;
-  totalClinicBookings: number;
-  totalUsers: number;
-  monthlyRevenue: number;
-}
+import { useDI } from '@/context/DIContext';
+import type { AdminDashboardStats } from '@/application/ports/IAdminStatsService';
 
 export function useAdminDashboardStats() {
+  const { getAdminDashboardStatsUseCase } = useDI();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -20,14 +14,14 @@ export function useAdminDashboardStats() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchAdminDashboardStats();
+      const data = await getAdminDashboardStatsUseCase.execute();
       setStats(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load stats'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getAdminDashboardStatsUseCase]);
 
   useEffect(() => {
     fetchStats();

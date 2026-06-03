@@ -126,32 +126,32 @@ function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-3">
-      <div className="max-w-5xl mx-auto space-y-4">
+    <div className="page">
+      <div className="page-inner page-inner-md">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+            <p className="page-eyebrow">
               {t('secureAccessEyebrow') ?? 'Secure access'}
             </p>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            <h1 className="page-title">
               {t('notifications', 'Notifications')}
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="page-subtitle">
               {t('notificationsSubtitle') || 'Latest care updates to keep you in control.'}
             </p>
           </div>
-        <Link
-          href={homeHref}
-          className="text-xs font-semibold text-purple-700 hover:text-purple-800"
-          data-analytics="dashboard.notifications.back_home"
-        >
-          {t('backToHome')}
-        </Link>
-      </div>
+          <Link
+            href={homeHref}
+            className="section-link"
+            data-analytics="dashboard.notifications.back_home"
+          >
+            {t('backToHome')}
+          </Link>
+        </div>
 
-        <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-900">{t('notifications')}</p>
+        <div className="panel">
+          <div className="section-hd">
+            <p className="section-title">{t('notifications')}</p>
             <span className="text-xs text-gray-500">
               {t('hipaaLine') || 'HIPAA-aware | Encrypted in transit'}
             </span>
@@ -271,9 +271,9 @@ function NotificationsPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-900">
+        <div className="panel">
+          <div className="section-hd">
+            <p className="section-title">
               {t('prescriptionUpdates') || 'Prescription updates'}
             </p>
             <span className="text-xs text-gray-500">

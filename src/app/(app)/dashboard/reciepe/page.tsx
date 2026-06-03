@@ -6,13 +6,11 @@ import { useDI } from "@/context/DIContext";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import Modal from "@/presentation/components/Modal/Modal";
-import { fetchAdminUsers } from '@/network/adminUsers';
-import { BackendError } from '@/network/backendClient';
+import { BackendError } from '@/application/errors/BackendError';
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import { UserRole } from '@/domain/entities/UserRole';
 import Link from "next/link";
 import Image from "next/image";
-import { EmailAuthProvider, getAuth, reauthenticateWithCredential } from "firebase/auth";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
 import { notifyFormSubmission } from "@/presentation/utils/formNotifications";
@@ -37,7 +35,8 @@ type Reciepe = {
 export default function DoctorReciepePage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const { getUserProfileUseCase, createReciepeUseCase, getReciepesByDoctorUseCase } = useDI();
+  const { getUserProfileUseCase, createReciepeUseCase, getReciepesByDoctorUseCase, reauthenticateUseCase, getUsersByRoleUseCase, getPharmaciesUseCase } = useDI();
+  const [showPassword, setShowPassword] = useState(false);
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [pharmacies, setPharmacies] = useState<{ id: string; name: string }[]>([]);
@@ -85,30 +84,22 @@ export default function DoctorReciepePage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [patientsResponse, pharmaciesResponse, profile, issued] = await Promise.all([
-        fetchAdminUsers({ role: UserRole.Patient, pageSize: 500 }),
-        fetchAdminUsers({ role: UserRole.Pharmacy, pageSize: 200 }),
+      const [patientsRaw, pharmacies, profile, issued] = await Promise.all([
+        getUsersByRoleUseCase.execute(UserRole.Patient, 500),
+        getPharmaciesUseCase.execute(),
         getUserProfileUseCase.execute(user.uid),
         getReciepesByDoctorUseCase.execute(user.uid),
       ]);
 
-      const pts = (patientsResponse.items || []).map((u: Record<string, unknown>) => ({
-        id: String(u.id ?? u.uid ?? ''),
+      const pts = (patientsRaw as unknown as Record<string, unknown>[]).map((u) => ({
+        id: String(u.id ?? ''),
         name:
-          `${(u.name as string | undefined) ?? ''} ${(u.surname as string | undefined) ?? ''}`.trim() ||
-          (u.email as string | undefined) ||
+          `${u.name ?? ''} ${u.surname ?? ''}`.trim() ||
+          String(u.email ?? '') ||
           'Unknown',
       }));
       setPatients(pts);
-
-      const phs = (pharmaciesResponse.items || []).map((entry: Record<string, unknown>) => ({
-        id: String(entry.id ?? ''),
-        name:
-          (entry.pharmacyName as string | undefined) ||
-          `${(entry.name as string | undefined) ?? ''} ${(entry.surname as string | undefined) ?? ''}`.trim() ||
-          'Pharmacy',
-      }));
-      setPharmacies(phs);
+      setPharmacies(pharmacies);
 
       setSavedSignatureUrl(profile?.signatureDataUrl || '');
       setSignatureLoaded(true);
@@ -125,7 +116,7 @@ export default function DoctorReciepePage() {
     } finally {
       setLoading(false);
     }
-  }, [getReciepesByDoctorUseCase, getUserProfileUseCase, toReciepe, user?.uid]);
+  }, [getReciepesByDoctorUseCase, getPharmaciesUseCase, getUserProfileUseCase, getUsersByRoleUseCase, toReciepe, user?.uid]);
 
   useEffect(() => {
     loadAll();
@@ -146,18 +137,7 @@ export default function DoctorReciepePage() {
   }, [pharmacies, pharmacySearch]);
 
   const reauthenticate = async (passwordValue: string) => {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error(t("notAuthenticated") || "User not authenticated.");
-    }
-    const email = currentUser.email || user?.email;
-    if (!email) {
-      throw new Error(t("missingEmail") || "Missing email for re-authentication.");
-    }
-    const credential = EmailAuthProvider.credential(email, passwordValue);
-    await reauthenticateWithCredential(currentUser, credential);
-    await currentUser.getIdToken(true);
+    await reauthenticateUseCase.execute(passwordValue);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -385,7 +365,7 @@ export default function DoctorReciepePage() {
       loadingLabel={t("loading")}
       analyticsPrefix="dashboard.reciepe"
     >
-      <div className="min-h-screen py-6 px-3">
+      <div className="page">
         <Modal isOpen={showIssuedModal} onClose={() => setShowIssuedModal(false)}>
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900">
@@ -405,16 +385,18 @@ export default function DoctorReciepePage() {
             </div>
           </div>
         </Modal>
-        <div className="max-w-5xl mx-auto space-y-4">
+        <div className="page-inner page-inner-md">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">{t("secureAccessEyebrow") || "Secure access"}</p>
-            <h1 className="text-2xl font-bold text-gray-900">{t("reciepeTitleDoctor") || "Reciepe"}</h1>
-            <p className="text-sm text-gray-600">{t("reciepeSubtitleDoctor") || "Issue prescriptions and keep a clear record for your patients."}</p>
+            <p className="page-eyebrow">{t("secureAccessEyebrow") || "Secure access"}</p>
+            <h1 className="page-title">{t("reciepeTitleDoctor") || "Prescriptions"}</h1>
+            <p className="page-subtitle">{t("reciepeSubtitleDoctor") || "Issue prescriptions and keep a clear record for your patients."}</p>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("reciepeList") || "Issued reciepes"}</h2>
+          <div className="split-layout">
+            <section className="panel">
+              <div className="section-hd">
+                <h2 className="section-title">{t("reciepeList") || "Issued prescriptions"}</h2>
+              </div>
               <div className="space-y-3">
                 {reciepes.length === 0 ? (
                   <p className="text-sm text-gray-500 py-4">{t("noReciepes") || "No reciepes found."}</p>
@@ -479,8 +461,10 @@ export default function DoctorReciepePage() {
               </div>
             </section>
 
-            <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("newReciepe") || "New reciepe"}</h2>
+            <section className="panel panel-tinted">
+              <div className="section-hd">
+                <h2 className="section-title">{t("newReciepe") || "New prescription"}</h2>
+              </div>
               <form className="space-y-3" onSubmit={handleSubmit}>
                 {submitError && (
                   <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -525,12 +509,15 @@ export default function DoctorReciepePage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">{t("patientName")}</label>
+                  <label htmlFor="patient-search" className="block text-xs font-medium text-gray-700 mb-1">{t("patientName")}</label>
                   <input
+                    id="patient-search"
                     className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder={t("searchByName") || "Search by name"}
+                    aria-autocomplete="list"
+                    aria-expanded={search.trim().length >= 4}
                   />
                   {search.trim().length >= 4 && (
                     <div className="mt-2 max-h-32 overflow-auto rounded-xl bg-white">
@@ -586,12 +573,15 @@ export default function DoctorReciepePage() {
                   <p className="px-1 py-1 text-[11px] text-gray-500 mt-1">
                     {t("reimbursementCodeHelper") || "This code will also be saved on the patient's account in Firebase."}
                   </p>
-                  <label className="block text-xs font-medium text-gray-700 mb-1 mt-2">
+                  <label htmlFor="reimbursement-pharmacy-search" className="block text-xs font-medium text-gray-700 mb-1 mt-2">
                     {t("pharmacyName") || "Pharmacy"}
                   </label>
                   <input
+                    id="reimbursement-pharmacy-search"
                     className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     value={pharmacySearch}
+                    aria-autocomplete="list"
+                    aria-expanded={pharmacySearch.trim().length >= 2}
                     onChange={(e) => {
                       const value = e.target.value;
                       setPharmacySearch(value);
@@ -628,12 +618,15 @@ export default function DoctorReciepePage() {
               {form.type === "standard" ? (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("pharmacyName") || "Pharmacy"}</label>
+                    <label htmlFor="standard-pharmacy-search" className="block text-xs font-medium text-gray-700 mb-1">{t("pharmacyName") || "Pharmacy"}</label>
                     <input
+                      id="standard-pharmacy-search"
                       className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       value={pharmacySearch}
                       onChange={(e) => setPharmacySearch(e.target.value)}
                       placeholder={t("searchPharmacy") || "Search pharmacy"}
+                      aria-autocomplete="list"
+                      aria-expanded={pharmacySearch.trim().length >= 2}
                     />
                     {pharmacySearch.trim().length >= 2 && (
                       <div className="mt-2 max-h-32 overflow-auto rounded-xl bg-white">
@@ -744,15 +737,30 @@ export default function DoctorReciepePage() {
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t("confirmPassword") || "Confirm password"}</label>
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <label htmlFor="confirm-password" className="block text-xs font-medium text-gray-700 mb-1">{t("confirmPassword") || "Confirm password"}</label>
+                <div className="relative">
+                  <input
+                    id="confirm-password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    className="w-full rounded-2xl border border-gray-200 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? (t("hidePassword") || "Hide password") : (t("showPassword") || "Show password")}
+                  >
+                    {showPassword ? (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="flex justify-end">
                 <button

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { ADMIN_PATHS } from '@/navigation/paths';
-import { fetchSecurityLogs, type SecurityLogEntry } from '@/network/securityLogs';
+import { useDI } from '@/context/DIContext';
+import type { SecurityLogEntry } from '@/application/ports/ISecurityLogsService';
 
 type SecurityFilter = 'all' | 'session_established' | 'session_establishment_failed' | 'logout';
 
@@ -52,6 +53,7 @@ function eventLabel(type: string, t: (key: string, options?: Record<string, unkn
 
 export default function AdminSecurityPage() {
   const { t, i18n } = useTranslation();
+  const { getSecurityLogsUseCase } = useDI();
   const [items, setItems] = useState<SecurityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
@@ -59,22 +61,22 @@ export default function AdminSecurityPage() {
 
   const intlLocale = toIntlLocale(i18n.resolvedLanguage);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchSecurityLogs(100);
+      const response = await getSecurityLogsUseCase.execute(100);
       setItems(response.items);
     } catch (nextError) {
       setError(nextError);
     } finally {
       setLoading(false);
     }
-  };
+  }, [getSecurityLogsUseCase]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const filteredItems = useMemo(() => {
     if (filter === 'all') return items;

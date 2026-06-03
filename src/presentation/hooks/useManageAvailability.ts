@@ -13,7 +13,7 @@ import {
   getDefaultAvailabilityPresets,
   normalizeAvailability,
 } from '@/domain/rules/availabilityRules';
-import { availabilityService } from '@/infrastructure/services/availabilityServiceAdapter';
+import { useDI } from '@/context/DIContext';
 import {
   getAvailabilityOpenDaysLabel,
   getAvailabilityPresetCopy,
@@ -27,6 +27,7 @@ type DayPatch = {
 
 export function useManageAvailability(doctorId: string | null) {
   const { t, i18n } = useTranslation();
+  const { getAvailabilityUseCase, getAvailabilityPresetsUseCase, saveAvailabilityUseCase } = useDI();
   const language = i18n.resolvedLanguage;
   const [presetDefinitions, setPresetDefinitions] = useState<AvailabilityPreset[]>(
     getDefaultAvailabilityPresets(),
@@ -43,8 +44,8 @@ export function useManageAvailability(doctorId: string | null) {
     setError(null);
     try {
       const [availabilityResult, presetsResult] = await Promise.all([
-        availabilityService.getMyAvailability(),
-        availabilityService.getPresets(),
+        getAvailabilityUseCase.execute(),
+        getAvailabilityPresetsUseCase.execute(),
       ]);
       const effectivePresets = presetsResult.length > 0
         ? presetsResult
@@ -74,7 +75,7 @@ export function useManageAvailability(doctorId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [doctorId, t]);
+  }, [doctorId, getAvailabilityUseCase, getAvailabilityPresetsUseCase, t]);
 
   useEffect(() => {
     void refresh();
@@ -197,7 +198,7 @@ export function useManageAvailability(doctorId: string | null) {
     setSaving(true);
     setError(null);
     try {
-      const saved = await availabilityService.saveMyAvailability({
+      const saved = await saveAvailabilityUseCase.execute({
         weeklySchedule: availability.weeklySchedule,
         dateOverrides: availability.dateOverrides,
         slotDurationMinutes: availability.slotDurationMinutes,
@@ -219,7 +220,7 @@ export function useManageAvailability(doctorId: string | null) {
     } finally {
       setSaving(false);
     }
-  }, [availability, presetDefinitions, t]);
+  }, [availability, presetDefinitions, saveAvailabilityUseCase, t]);
 
   const presets = useMemo(
     () =>

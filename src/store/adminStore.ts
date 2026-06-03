@@ -1,15 +1,9 @@
 import { create } from 'zustand';
 import type { User } from '@/domain/entities/User';
-import {
-  AdminUserCreatePayload,
-  AdminUserUpdatePayload,
-  createAdminUser,
-  deleteAdminUser,
-  fetchAdminUser,
-  fetchAdminUsers,
-  resetAdminUserPassword,
-  updateAdminUser,
-} from '@/network/adminUsers';
+import type { AdminUserCreatePayload, AdminUserUpdatePayload } from '@/application/ports/IAdminUserService';
+import { AdminUserService } from '@/infrastructure/services/adminUserService';
+
+const adminUserService = new AdminUserService();
 
 type EditableUser = User & {
   // optional base profile fields (may be absent in base User entity)
@@ -66,7 +60,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const { pageSize, searchQuery } = get();
     set({ loading: true, error: null });
     try {
-      const response = await fetchAdminUsers({ page, pageSize, search: searchQuery || undefined });
+      const response = await adminUserService.getUsersPage(page, pageSize, searchQuery || undefined);
       const items = response.items.map((u) => ({
         ...(u as EditableUser),
         approvalStatus: (u as unknown as { approvalStatus?: 'pending' | 'approved' }).approvalStatus,
@@ -90,7 +84,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const id = get().selectedUserId; if (!id) return;
     set({ loading: true, error: null });
     try {
-      const base = await fetchAdminUser(id);
+      const base = await adminUserService.getUserById(id);
       const users = get().users.map((u) => (u.id === id ? ({
         ...u,
         ...(base as EditableUser),
@@ -107,7 +101,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const id = get().selectedUserId; if (!id) return;
     set({ loading: true, error: null });
     try {
-      await updateAdminUser(id, payload);
+      await adminUserService.updateUserAdmin(id, payload);
       const users = get().users.map(u => (u.id === id ? { ...u, ...payload } : u));
       set({ users });
     } catch (e) {
@@ -122,7 +116,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const id = get().selectedUserId; if (!id) return;
     set({ loading: true, error: null });
     try {
-      await updateAdminUser(id, payload);
+      await adminUserService.updateDoctorProfileAdmin(id, payload);
       const users = get().users.map(u => (u.id === id ? { ...u, ...payload } : u));
       set({ users });
     } catch (e) {
@@ -136,7 +130,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   async approveDoctor(id) {
     set({ loading: true, error: null });
     try {
-      await updateAdminUser(id, { approvalStatus: 'approved' });
+      await adminUserService.approveDoctor(id);
       const users = get().users.map(u => (u.id === id ? ({ ...u, approvalStatus: 'approved' } as EditableUser & { approvalStatus: 'approved' }) : u));
       set({ users });
     } catch (e) {
@@ -150,7 +144,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   async resetPassword(id) {
     set({ loading: true, error: null });
     try {
-      return await resetAdminUserPassword(id);
+      return await adminUserService.resetUserPassword(id);
     } catch (e) {
       const error = e instanceof Error ? e : new Error('Failed to reset password');
       set({ error: error.message });
@@ -162,7 +156,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   async deleteUser(id) {
     set({ loading: true, error: null });
     try {
-      await deleteAdminUser(id);
+      await adminUserService.deleteUserAccount(id);
       await get().loadUsers();
     } catch (e) {
       const error = e instanceof Error ? e : new Error('Failed to delete user');
@@ -177,7 +171,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   ) {
     set({ loading: true, error: null });
     try {
-      await createAdminUser(payload);
+      await adminUserService.createAdminUser(payload);
       await get().loadUsers();
     } catch (e) {
       const error = e instanceof Error ? e : new Error('Failed to create user');

@@ -166,3 +166,37 @@ export async function updateUserEmail(userId: string, nextEmail: string) {
     }
     await updateEmail(currentUser, trimmed);
 }
+
+export type FullAuthUser = {
+  uid: string;
+  emailVerified: boolean;
+  displayName: string | null;
+  email: string | null;
+  phoneNumber: string | null;
+};
+
+export function subscribeToFullAuthState(
+  callback: (user: FullAuthUser | null) => Promise<void> | void,
+): () => void {
+  const authInstance = getAuth();
+  return onAuthStateChanged(authInstance, async (currentUser) => {
+    if (!currentUser) {
+      await callback(null);
+      return;
+    }
+    if (currentUser.email && !currentUser.emailVerified) {
+      try { await currentUser.reload(); } catch { /* ignore reload failures */ }
+    }
+    await callback({
+      uid: currentUser.uid,
+      emailVerified: currentUser.emailVerified,
+      displayName: currentUser.displayName,
+      email: currentUser.email,
+      phoneNumber: currentUser.phoneNumber,
+    });
+  });
+}
+
+export async function fetchCurrentUser() {
+  return fetchCurrentUserProfile();
+}

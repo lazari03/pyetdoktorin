@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import type { Appointment } from '@/domain/entities/Appointment';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
-import { listAppointments } from '@/network/appointments';
+import { useDI } from '@/context/DIContext';
 
 export default function UpcomingRequestsPage() {
   const [requests, setRequests] = useState<Appointment[]>([]);
@@ -17,14 +17,15 @@ export default function UpcomingRequestsPage() {
   const nav = useNavigationCoordinator();
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
+  const { listAppointmentsUseCase } = useDI();
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       if (isAuthenticated && user) {
-        const allAppointments = await listAppointments();
-        const pendingRequests = allAppointments.items.filter((appt: Appointment) => appt.status === 'pending');
+        const allAppointments = await listAppointmentsUseCase.execute();
+        const pendingRequests = allAppointments.filter((appt: Appointment) => appt.status === 'pending');
         setRequests(pendingRequests);
       } else {
         setRequests([]);
@@ -34,7 +35,7 @@ export default function UpcomingRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, listAppointmentsUseCase, user]);
 
   useEffect(() => {
     void fetchRequests();

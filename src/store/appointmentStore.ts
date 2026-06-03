@@ -3,9 +3,11 @@ import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentAction } from "@/presentation/utils/appointmentActionButton";
 import { APPOINTMENT_DURATION_MINUTES } from '../config/appointmentConfig';
 import { UserRole } from '@/domain/entities/UserRole';
-import { listAppointments } from '@/network/appointments';
 import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
-import { BackendError } from '@/network/backendClient';
+import { BackendError } from '@/application/errors/BackendError';
+import { AppointmentService } from '@/infrastructure/services/appointmentService';
+
+const appointmentService = new AppointmentService();
 
 /**
  * Convert a time string (either "HH:mm" or "hh:mm AM/PM") into "HH:mm" 24-hour format
@@ -41,9 +43,10 @@ interface AppointmentState {
   isDoctor: boolean | null;
   loading: boolean;
   error: string | null;
+  lastFetchedAt: number;
   setAppointments: (appointments: Appointment[]) => void;
   setIsDoctor: (isDoctor: boolean | null) => void;
-  fetchAppointments: (role?: UserRole | null) => Promise<void>;
+  fetchAppointments: (role?: UserRole | null, forceRefresh?: boolean) => Promise<void>;
   subscribeAppointments: (userId: string, role: UserRole) => () => void;
   setAppointmentPaid: (appointmentId: string, setAppointmentPaidUseCase: (appointmentId: string) => Promise<void>) => Promise<void>;
   handlePayNow: (
@@ -67,15 +70,28 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   isDoctor: null,
   loading: false,
   error: null,
+  lastFetchedAt: 0,
   setAppointments: (appointments) => set({ appointments }),
   setIsDoctor: (isDoctor) => set({ isDoctor }),
-  fetchAppointments: async (role) => {
+  fetchAppointments: async (role, forceRefresh = false) => {
+    const state = get();
+    // Skip the network call if we already have fresh data (< 10 s old)
+    // and no explicit refresh was requested. Prevents redundant fetches
+    // when multiple components mount and call fetchAppointments in parallel.
+    if (
+      !forceRefresh &&
+      state.appointments.length > 0 &&
+      Date.now() - state.lastFetchedAt < 10_000
+    ) {
+      return;
+    }
     set({ loading: true, error: null });
     try {
-      const response = await listAppointments();
+      const response = { items: await appointmentService.listAppointments() };
       set({
         appointments: response.items,
         loading: false,
+        lastFetchedAt: Date.now(),
         isDoctor: typeof role === 'undefined' ? get().isDoctor : role === UserRole.Doctor,
       });
     } catch (error) {
@@ -88,7 +104,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
     const refreshFromBackend = async () => {
       try {
-        const response = await listAppointments();
+        const response = { items: await appointmentService.listAppointments() };
         if (disposed) return;
         set({
           appointments: response.items,

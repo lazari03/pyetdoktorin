@@ -7,17 +7,14 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useTranslation } from 'react-i18next';
 import { getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation/utils/errorMessages';
-import { syncPaddlePaymentWithRetry } from '@/network/payments';
-import { clearPaymentProcessing } from '@/network/appointments';
-import { listAppointments } from '@/network/appointments';
 import { dashboardVideoSessionUrl } from '@/navigation/paths';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
 
 export function useDashboardActions() {
   const { user, role } = useAuth();
   const { setAuthStatus, generateRoomCodeAndStore } = useVideoStore();
-  const { handlePayNow: storeHandlePayNow, setAppointments } = useAppointmentStore();
-  const { handlePayNowUseCase } = useDI();
+  const { handlePayNow: storeHandlePayNow, fetchAppointments } = useAppointmentStore();
+  const { handlePayNowUseCase, syncPaymentUseCase, clearPaymentProcessingUseCase } = useDI();
   const { t } = useTranslation();
   const { toast } = useToast();
 
@@ -58,18 +55,16 @@ export function useDashboardActions() {
     try {
       await storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
         onClose: () => {
-          clearPaymentProcessing(appointmentId).catch((error) => {
+          clearPaymentProcessingUseCase.execute(appointmentId).catch((error) => {
             console.warn('Payment processing clear failed', error);
           });
           (async () => {
             try {
-              await syncPaddlePaymentWithRetry(appointmentId);
+              await syncPaymentUseCase.execute(appointmentId);
             } catch (error) {
               console.warn('Payment sync failed', error);
             } finally {
-              listAppointments()
-                .then((refreshed) => setAppointments(refreshed.items))
-                .catch((error) => console.warn('Appointment refresh after payment failed', error));
+              fetchAppointments(role).catch((error) => console.warn('Appointment refresh after payment failed', error));
             }
           })();
         },
@@ -82,7 +77,7 @@ export function useDashboardActions() {
       const translatedMessage = getAppointmentErrorMessage(error, t);
       toast({ variant: 'error', message: translatedMessage ?? t('genericError') });
     }
-  }, [storeHandlePayNow, handlePayNowUseCase, setAppointments, t, toast]);
+  }, [storeHandlePayNow, handlePayNowUseCase, syncPaymentUseCase, clearPaymentProcessingUseCase, fetchAppointments, role, t, toast]);
 
   return { handleJoinCall, handlePayNow };
 }

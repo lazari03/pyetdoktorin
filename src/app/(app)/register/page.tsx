@@ -8,7 +8,6 @@ import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { ROUTES } from '@/config/routes';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
-import { establishSessionForCurrentUserAllowUnverified } from '@/infrastructure/services/authService';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 
 function RegisterPageInner() {
@@ -28,7 +27,7 @@ function RegisterPageInner() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const nav = useNavigationCoordinator();
-    const { registerUserUseCase } = useDI();
+    const { registerUserUseCase, establishSessionAllowUnverifiedUseCase } = useDI();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -79,7 +78,7 @@ function RegisterPageInner() {
                 },
             });
 
-            await establishSessionForCurrentUserAllowUnverified();
+            await establishSessionAllowUnverifiedUseCase.execute();
             nav.replacePath(DASHBOARD_PATHS.root);
         } catch (error) {
             setError(

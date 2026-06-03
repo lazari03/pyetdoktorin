@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getAuth } from 'firebase/auth';
 import { ArrowPathIcon, EnvelopeIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { z } from '@/config/zIndex';
-import { establishSessionForCurrentUser, sendVerificationEmail } from '@/infrastructure/services/authService';
+import { useDI } from '@/context/DIContext';
 
 function getSiteOrigin(): string {
   if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin;
@@ -20,6 +19,7 @@ export default function EmailVerificationRequiredModal({
   onLogout: () => void;
 }) {
   const { t } = useTranslation();
+  const { reloadUserUseCase, sendVerificationEmailUseCase, establishSessionUseCase } = useDI();
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +35,7 @@ export default function EmailVerificationRequiredModal({
   }, [isOpen]);
 
   const refreshVerification = async (): Promise<boolean> => {
-    const auth = getAuth();
-    if (!auth.currentUser) return false;
-    await auth.currentUser.reload();
-    return auth.currentUser.emailVerified === true;
+    return reloadUserUseCase.execute();
   };
 
   const resend = async () => {
@@ -50,7 +47,7 @@ export default function EmailVerificationRequiredModal({
       const origin = getSiteOrigin();
       const next = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/dashboard';
       const continueUrl = `${origin}/verify-email?next=${encodeURIComponent(next)}`;
-      await sendVerificationEmail({ continueUrl });
+      await sendVerificationEmailUseCase.execute(continueUrl);
       setNotice(t('verifyEmailSent', { defaultValue: 'Verification email sent. Please check your inbox.' }));
       setResendCooldownUntil(Date.now() + 30_000);
     } catch (e) {
@@ -71,7 +68,7 @@ export default function EmailVerificationRequiredModal({
         setNotice(t('verifyEmailStillPending', { defaultValue: 'Email not verified yet. Open the link in your email, then try again.' }));
         return;
       }
-      await establishSessionForCurrentUser();
+      await establishSessionUseCase.execute();
       if (typeof window !== 'undefined') window.location.reload();
     } catch (e) {
       const msg = e instanceof Error ? e.message : null;

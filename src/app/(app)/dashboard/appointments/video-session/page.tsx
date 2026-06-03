@@ -2,7 +2,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { auth } from "@/config/firebaseconfig";
+import { useDI } from "@/context/DIContext";
 import { useTranslation } from "react-i18next";
 import { VIDEO_ERROR_CODES } from "@/config/errorCodes";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
@@ -18,6 +18,7 @@ export default function VideoSessionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionToken = searchParams?.get("session") || null;
+  const { getIdTokenUseCase } = useDI();
   const { t } = useTranslation();
   const [attempt, setAttempt] = useState(0);
 
@@ -36,15 +37,15 @@ export default function VideoSessionPage() {
       }
 
       try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
+        let idToken: string;
+        try {
+          idToken = await getIdTokenUseCase.execute();
+        } catch {
           if (!isActive) return;
           setError(VIDEO_ERROR_CODES.AuthMissing);
           setLoading(false);
           return;
         }
-
-        const idToken = await currentUser.getIdToken();
         const response = await fetch('/api/100ms/validate-session', {
           method: 'POST',
           headers: {
@@ -78,7 +79,7 @@ export default function VideoSessionPage() {
     return () => {
       isActive = false;
     };
-  }, [attempt, sessionToken]);
+  }, [attempt, getIdTokenUseCase, sessionToken]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {

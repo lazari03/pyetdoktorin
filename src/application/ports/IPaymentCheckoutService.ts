@@ -1,3 +1,4 @@
 export interface IPaymentCheckoutService {
-  openCheckout(params: { appointmentId: string; onClose?: () => void }): Promise<void>;
+  openCheckout(params: { appointmentId: string; userId?: string | null; onClose?: () => void }): Promise<void>;
+  prepareCheckout(): Promise<void>;
 }
