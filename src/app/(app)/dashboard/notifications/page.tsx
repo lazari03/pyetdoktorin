@@ -308,6 +308,11 @@ function NotificationsPage() {
                           ? `${item.patientName || t('patient')} • ${item.pharmacyName || t('pharmacyName') || 'Pharmacy'}`
                           : `${item.doctorName || t('doctor')} • ${item.pharmacyName || t('pharmacyName') || 'Pharmacy'}`}
                       </p>
+                      {status === 'pending' ? (
+                        <p className="text-[11px] text-purple-700 mt-1">
+                          {t('newPrescriptionNotification') || 'A new prescription was issued to your account.'}
+                        </p>
+                      ) : null}
                       <p className="text-[11px] text-gray-500 mt-1">
                         {formatDate(item.updatedAt)}
                       </p>

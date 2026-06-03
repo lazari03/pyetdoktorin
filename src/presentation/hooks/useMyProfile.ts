@@ -32,6 +32,7 @@ export const useMyProfile = () => {
     emergencyContactName: "",
     emergencyContactPhone: "",
     signatureDataUrl: "",
+    reimbursementCode: "",
   });
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [isFetching, setIsFetching] = useState(true); // To handle data fetching state
@@ -99,6 +100,7 @@ export const useMyProfile = () => {
           emergencyContactName: userData.emergencyContactName || "",
           emergencyContactPhone: userData.emergencyContactPhone || "",
           signatureDataUrl: userData.signatureDataUrl || "",
+          reimbursementCode: userData.reimbursementCode || "",
         }));
       } else {
         setFormData((prev) => ({
@@ -182,7 +184,8 @@ export const useMyProfile = () => {
       if (!userId) throw new Error("User not authenticated");
 
       trackAnalyticsEvent("profile_update_attempt");
-      await updateUserProfileUseCase.execute(userId, formData);
+      const { reimbursementCode: _, ...profileUpdates } = formData;
+      await updateUserProfileUseCase.execute(userId, profileUpdates);
       void notifyFormSubmission({
         formType: "profile_update",
         source: "my_profile",
@@ -204,6 +207,7 @@ export const useMyProfile = () => {
           emergencyContactPhone: formData.emergencyContactPhone,
           profilePicture: formData.profilePicture ? "[uploaded profile picture]" : "",
           signatureDataUrl: formData.signatureDataUrl ? "[saved signature]" : "",
+          reimbursementCode: formData.reimbursementCode || "",
         },
       });
       trackAnalyticsEvent("profile_update_success");

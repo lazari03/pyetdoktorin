@@ -21,6 +21,8 @@ type Reciepe = {
   id: string;
   patientId: string;
   patient: string;
+  type: "standard" | "reimbursement";
+  reimbursementCode?: string;
   pharmacyId?: string;
   pharmacy?: string;
   title: string;
@@ -44,6 +46,8 @@ export default function DoctorReciepePage() {
   const [form, setForm] = useState<Omit<Reciepe, "id" | "date">>({
     patientId: "",
     patient: "",
+    type: "standard",
+    reimbursementCode: "",
     pharmacyId: "",
     pharmacy: "",
     title: "",
@@ -63,9 +67,11 @@ export default function DoctorReciepePage() {
     id: p.id || "",
     patientId: p.patientId,
     patient: p.patientName,
+    type: p.type || "standard",
+    reimbursementCode: p.reimbursementCode,
     pharmacyId: p.pharmacyId,
     pharmacy: p.pharmacyName,
-    title: p.title || t("reciepeTitleDoctor") || "Reciepe",
+    title: p.title || (p.type === "reimbursement" ? (t("prescriptionTypeReimbursement") || "Reimbursement") : (t("reciepeTitleDoctor") || "Reciepe")),
     medicines: Array.isArray(p.medicines) ? p.medicines.join(', ') : String(p.medicines ?? ''),
     dosage: p.dosage || "",
     notes: p.notes,
@@ -157,12 +163,24 @@ export default function DoctorReciepePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
-    if (!form.patientId || !form.pharmacyId || !user?.uid) {
-      setSubmitError(t("missingRequiredFields") || "Please select a patient and pharmacy.");
+    if (!form.patientId || !user?.uid) {
+      setSubmitError(t("missingRequiredFields") || "Please fill out all required fields.");
       return;
     }
-    if (!form.patient || !form.pharmacy) {
-      setSubmitError(t("missingRequiredFields") || "Please select a patient and pharmacy.");
+    if (!form.patient) {
+      setSubmitError(t("missingRequiredFields") || "Please fill out all required fields.");
+      return;
+    }
+    if (form.type === "standard" && (!form.pharmacyId || !form.pharmacy)) {
+      setSubmitError(t("prescriptionPharmacyRequired") || "Please select a pharmacy for a standard prescription.");
+      return;
+    }
+    if (form.type === "reimbursement" && !form.reimbursementCode?.trim()) {
+      setSubmitError(t("reimbursementCodeRequired") || "Please enter the reimbursement code.");
+      return;
+    }
+    if (form.type === "reimbursement" && !pharmacySearch.trim()) {
+      setSubmitError(t("reimbursementPharmacyRequired") || "Please enter the pharmacy name for reimbursement.");
       return;
     }
     if (!savedSignatureUrl) {
@@ -173,11 +191,20 @@ export default function DoctorReciepePage() {
       setSubmitError(t("confirmPasswordRequired") || "Please confirm your password to issue a reciepe.");
       return;
     }
-    const medicineList = form.medicines
-      .split(/[\n,]+/)
-      .map((m) => m.trim())
-      .filter(Boolean);
-    if (medicineList.length === 0) {
+    const medicineList = form.type === "standard"
+      ? form.medicines
+          .split(/[\n,]+/)
+          .map((m) => m.trim())
+          .filter(Boolean)
+      : [];
+    const reimbursementPharmacyInput = pharmacySearch.trim();
+    const matchedReimbursementPharmacy = form.type === "reimbursement"
+      ? pharmacies.find((p) => p.name.trim().toLowerCase() === reimbursementPharmacyInput.toLowerCase())
+      : undefined;
+    const reimbursementPharmacyName = form.type === "reimbursement"
+      ? (matchedReimbursementPharmacy?.name ?? reimbursementPharmacyInput)
+      : "";
+    if (form.type === "standard" && medicineList.length === 0) {
       setSubmitError(t("missingMedicines") || "Please add at least one medicine.");
       return;
     }
@@ -187,14 +214,16 @@ export default function DoctorReciepePage() {
       const created = await createReciepeUseCase.execute({
         patientId: form.patientId,
         patientName: form.patient,
-        pharmacyId: form.pharmacyId,
-        pharmacyName: form.pharmacy || '',
+        type: form.type,
+        reimbursementCode: form.reimbursementCode?.trim() || undefined,
+        pharmacyId: form.type === "standard" ? form.pharmacyId : matchedReimbursementPharmacy?.id,
+        pharmacyName: form.type === "standard" ? (form.pharmacy || '') : reimbursementPharmacyName,
         doctorId: user?.uid,
         doctorName: user?.name || '',
         medicines: medicineList,
-        dosage: form.dosage,
-        notes: form.notes,
-        title: form.title,
+        dosage: form.type === "standard" ? form.dosage : "",
+        notes: form.type === "standard" ? form.notes : undefined,
+        title: form.type === "standard" ? form.title : undefined,
         signatureDataUrl: savedSignatureUrl,
       });
       void notifyFormSubmission({
@@ -206,18 +235,31 @@ export default function DoctorReciepePage() {
           doctorId: user?.uid || '',
           doctorName: user?.name || '',
           doctorEmail: user?.email || '',
+          type: form.type,
+          reimbursementCode: form.reimbursementCode?.trim() || '',
           patientId: form.patientId,
           patientName: form.patient,
-          pharmacyId: form.pharmacyId || '',
-          pharmacyName: form.pharmacy || '',
-          title: form.title,
+          pharmacyId: form.type === "standard" ? (form.pharmacyId || '') : (matchedReimbursementPharmacy?.id || ''),
+          pharmacyName: form.type === "standard" ? (form.pharmacy || '') : reimbursementPharmacyName,
+          title: form.type === "standard" ? form.title : '',
           medicines: medicineList,
-          dosage: form.dosage,
-          notes: form.notes || '',
+          dosage: form.type === "standard" ? form.dosage : '',
+          notes: form.type === "standard" ? (form.notes || '') : '',
         },
       });
       setReciepes((prev) => [toReciepe(created), ...prev]);
-      setForm({ patientId: '', patient: '', pharmacyId: '', pharmacy: '', title: '', medicines: '', dosage: '', notes: '' });
+      setForm({
+        patientId: '',
+        patient: '',
+        type: 'standard',
+        reimbursementCode: '',
+        pharmacyId: '',
+        pharmacy: '',
+        title: '',
+        medicines: '',
+        dosage: '',
+        notes: '',
+      });
       setSearch('');
       setPharmacySearch('');
       setPassword('');
@@ -291,11 +333,16 @@ export default function DoctorReciepePage() {
     };
 
     addRow("Patient", r.patient);
-    addRow("Pharmacy", r.pharmacy ?? "-");
-    addRow("Title", r.title);
-    addRow("Medicines", r.medicines);
-    addRow("Dosage", r.dosage);
-    if (r.notes) addRow("Notes", r.notes);
+    addRow("Type", r.type === "reimbursement" ? "Reimbursement" : "Standard");
+    if (r.reimbursementCode) addRow("Reimbursement code", r.reimbursementCode);
+    if (r.type === "reimbursement") addRow("Pharmacy", r.pharmacy ?? "-");
+    if (r.type === "standard") {
+      addRow("Pharmacy", r.pharmacy ?? "-");
+      addRow("Title", r.title);
+      addRow("Medicines", r.medicines);
+      addRow("Dosage", r.dosage);
+      if (r.notes) addRow("Notes", r.notes);
+    }
 
     if (r.signatureDataUrl) {
       const sigWrap = doc.createElement("div");
@@ -398,9 +445,34 @@ export default function DoctorReciepePage() {
                         </div>
                       </div>
                       <p className="text-xs text-gray-600">{t("patient")}: {r.patient}</p>
-                      <p className="text-xs text-gray-700">{t("medicinesLabel") || "Medicines"}: {r.medicines}</p>
-                      <p className="text-xs text-gray-700">{t("dosageLabel") || "Dosage"}: {r.dosage}</p>
-                      {r.notes ? <p className="text-xs text-gray-600 mt-1">{r.notes}</p> : null}
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-600">
+                        <span className={`rounded-full px-2 py-1 font-semibold ${
+                          r.type === "reimbursement"
+                            ? "bg-sky-50 text-sky-700"
+                            : "bg-slate-100 text-slate-700"
+                        }`}>
+                          {r.type === "reimbursement"
+                            ? (t("prescriptionTypeReimbursement") || "Reimbursement")
+                            : (t("prescriptionTypeStandard") || "Standard")}
+                        </span>
+                        {r.reimbursementCode ? (
+                          <span>
+                            {(t("reimbursementCodeLabel") || "Reimbursement code")}: {r.reimbursementCode}
+                          </span>
+                        ) : null}
+                        {r.type === "reimbursement" ? (
+                          <span>
+                            {(t("pharmacyName") || "Pharmacy")}: {r.pharmacy || "-"}
+                          </span>
+                        ) : null}
+                      </div>
+                      {r.type === "standard" ? (
+                        <>
+                          <p className="text-xs text-gray-700">{t("medicinesLabel") || "Medicines"}: {r.medicines}</p>
+                          <p className="text-xs text-gray-700">{t("dosageLabel") || "Dosage"}: {r.dosage}</p>
+                          {r.notes ? <p className="text-xs text-gray-600 mt-1">{r.notes}</p> : null}
+                        </>
+                      ) : null}
                     </div>
                   ))
                 )}
@@ -415,6 +487,43 @@ export default function DoctorReciepePage() {
                     {submitError}
                   </div>
                 )}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">{t("prescriptionTypeLabel") || "Prescription type"}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { value: "standard", label: t("prescriptionTypeStandard") || "Standard" },
+                      { value: "reimbursement", label: t("prescriptionTypeReimbursement") || "Reimbursement" },
+                    ] as const).map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`rounded-2xl border px-3 py-2 text-sm font-medium transition ${
+                          form.type === option.value
+                            ? "border-purple-400 bg-purple-50 text-purple-700"
+                            : "border-gray-200 text-gray-700 hover:border-purple-200"
+                        }`}
+                        onClick={() => {
+                          setForm((current) => ({
+                            ...current,
+                            type: option.value,
+                            reimbursementCode: option.value === "reimbursement" ? current.reimbursementCode : "",
+                            pharmacyId: option.value === "standard" ? current.pharmacyId : "",
+                            pharmacy: option.value === "standard" ? current.pharmacy : "",
+                            title: option.value === "standard" ? current.title : "",
+                            medicines: option.value === "standard" ? current.medicines : "",
+                            dosage: option.value === "standard" ? current.dosage : "",
+                            notes: option.value === "standard" ? current.notes : "",
+                          }));
+                          if (option.value !== "standard") {
+                            setPharmacySearch("");
+                          }
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">{t("patientName")}</label>
                   <input
@@ -462,89 +571,151 @@ export default function DoctorReciepePage() {
                   </div>
                 )}
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t("pharmacyName") || "Pharmacy"}</label>
-                <input
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  value={pharmacySearch}
-                  onChange={(e) => setPharmacySearch(e.target.value)}
-                  placeholder={t("searchPharmacy") || "Search pharmacy"}
-                />
-                {pharmacySearch.trim().length >= 2 && (
-                  <div className="mt-2 max-h-32 overflow-auto rounded-xl bg-white">
-                    {filteredPharmacies.map((p) => (
-                      <button
-                        type="button"
-                        key={p.id}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${form.pharmacyId === p.id ? "bg-purple-50 font-semibold" : ""}`}
-                        onClick={() => {
-                          setForm((f) => ({ ...f, pharmacyId: p.id, pharmacy: p.name }));
-                          setPharmacySearch(p.name);
-                        }}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                    {filteredPharmacies.length === 0 && (
-                      <p className="px-3 py-2 text-xs text-gray-500">{t("noResults") || "No pharmacies found"}</p>
+              {form.type === "reimbursement" ? (
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    {t("reimbursementCodeLabel") || "Reimbursement code"}
+                  </label>
+                  <input
+                    className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    value={form.reimbursementCode || ""}
+                    onChange={(e) => setForm((f) => ({ ...f, reimbursementCode: e.target.value }))}
+                    placeholder={t("reimbursementCodePlaceholder") || "Enter patient reimbursement code"}
+                    required
+                  />
+                  <p className="px-1 py-1 text-[11px] text-gray-500 mt-1">
+                    {t("reimbursementCodeHelper") || "This code will also be saved on the patient's account in Firebase."}
+                  </p>
+                  <label className="block text-xs font-medium text-gray-700 mb-1 mt-2">
+                    {t("pharmacyName") || "Pharmacy"}
+                  </label>
+                  <input
+                    className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    value={pharmacySearch}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setPharmacySearch(value);
+                      setForm((f) => ({ ...f, pharmacyId: "", pharmacy: value }));
+                    }}
+                    placeholder={t("reimbursementPharmacyPlaceholder") || "Type pharmacy name"}
+                    required
+                  />
+                  {pharmacySearch.trim().length >= 2 && (
+                    <div className="mt-2 max-h-32 overflow-auto rounded-xl bg-white">
+                      {filteredPharmacies.map((p) => (
+                        <button
+                          type="button"
+                          key={p.id}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${form.pharmacyId === p.id ? "bg-purple-50 font-semibold" : ""}`}
+                          onClick={() => {
+                            setForm((f) => ({ ...f, pharmacyId: p.id, pharmacy: p.name }));
+                            setPharmacySearch(p.name);
+                          }}
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                      {filteredPharmacies.length === 0 && (
+                        <p className="px-3 py-2 text-xs text-gray-500">{t("noResults") || "No pharmacies found"}</p>
+                      )}
+                    </div>
+                  )}
+                  <p className="px-1 py-1 text-[11px] text-gray-500 mt-1">
+                    {t("reimbursementPharmacyCaseInsensitive") || "Pharmacy name matching is case-insensitive."}
+                  </p>
+                </div>
+              ) : null}
+              {form.type === "standard" ? (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("pharmacyName") || "Pharmacy"}</label>
+                    <input
+                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      value={pharmacySearch}
+                      onChange={(e) => setPharmacySearch(e.target.value)}
+                      placeholder={t("searchPharmacy") || "Search pharmacy"}
+                    />
+                    {pharmacySearch.trim().length >= 2 && (
+                      <div className="mt-2 max-h-32 overflow-auto rounded-xl bg-white">
+                        {filteredPharmacies.map((p) => (
+                          <button
+                            type="button"
+                            key={p.id}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${form.pharmacyId === p.id ? "bg-purple-50 font-semibold" : ""}`}
+                            onClick={() => {
+                              setForm((f) => ({ ...f, pharmacyId: p.id, pharmacy: p.name }));
+                              setPharmacySearch(p.name);
+                            }}
+                          >
+                            {p.name}
+                          </button>
+                        ))}
+                        {filteredPharmacies.length === 0 && (
+                          <p className="px-3 py-2 text-xs text-gray-500">{t("noResults") || "No pharmacies found"}</p>
+                        )}
+                      </div>
+                    )}
+                    {pharmacySearch.trim().length < 2 && (
+                      <p className="px-1 py-1 text-[11px] text-gray-500 mt-1">{t("typeMoreToSearchShort") || "Type 2+ characters"}</p>
+                    )}
+                    {form.pharmacy && (
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-600 mt-1">
+                        <span className="break-words">{t("selected") || "Selected"}: {form.pharmacy}</span>
+                        <button
+                          type="button"
+                          className="text-purple-600 font-semibold hover:text-purple-700"
+                          onClick={() => {
+                            setForm((f) => ({ ...f, pharmacyId: "", pharmacy: "" }));
+                            setPharmacySearch("");
+                          }}
+                        >
+                          {t("clearSelection") || "Clear"}
+                        </button>
+                      </div>
                     )}
                   </div>
-                )}
-                {pharmacySearch.trim().length < 2 && (
-                  <p className="px-1 py-1 text-[11px] text-gray-500 mt-1">{t("typeMoreToSearchShort") || "Type 2+ characters"}</p>
-                )}
-                {form.pharmacy && (
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-600 mt-1">
-                    <span className="break-words">{t("selected") || "Selected"}: {form.pharmacy}</span>
-                    <button
-                      type="button"
-                      className="text-purple-600 font-semibold hover:text-purple-700"
-                      onClick={() => {
-                        setForm((f) => ({ ...f, pharmacyId: "", pharmacy: "" }));
-                        setPharmacySearch("");
-                      }}
-                    >
-                      {t("clearSelection") || "Clear"}
-                    </button>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("reciepeTitle") || "Reciepe title"}</label>
+                    <input
+                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      value={form.title}
+                      onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                      required
+                    />
                   </div>
-                )}
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t("reciepeTitle") || "Reciepe title"}</label>
-                <input
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t("medicinesLabel") || "Medicines"}</label>
-                <input
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  value={form.medicines}
-                  onChange={(e) => setForm((f) => ({ ...f, medicines: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t("dosageLabel") || "Dosage"}</label>
-                <input
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  value={form.dosage}
-                  onChange={(e) => setForm((f) => ({ ...f, dosage: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t("notesLabel")}</label>
-                <textarea
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  rows={3}
-                  value={form.notes}
-                  onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                />
-              </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("medicinesLabel") || "Medicines"}</label>
+                    <input
+                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      value={form.medicines}
+                      onChange={(e) => setForm((f) => ({ ...f, medicines: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("dosageLabel") || "Dosage"}</label>
+                    <input
+                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      value={form.dosage}
+                      onChange={(e) => setForm((f) => ({ ...f, dosage: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("notesLabel")}</label>
+                    <textarea
+                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      rows={3}
+                      value={form.notes}
+                      onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-gray-600 rounded-2xl border border-sky-100 bg-sky-50 px-3 py-2">
+                  {t("reimbursementSimpleModeHelp") || "For reimbursement prescriptions, only patient and reimbursement code are required. Medicines and dosage are not included."}
+                </p>
+              )}
 	              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 space-y-2">
 	                <div className="flex items-center justify-between">
 	                  <p className="text-xs font-medium text-gray-700">{t("doctorSignature") || "Doctor signature"}</p>

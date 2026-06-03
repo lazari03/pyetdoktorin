@@ -6,6 +6,8 @@ const mapPrescription = (p: Prescription): ReciepePayload => ({
   id: p.id,
   patientId: p.patientId,
   patientName: p.patientName,
+  type: p.type,
+  reimbursementCode: p.reimbursementCode,
   pharmacyId: p.pharmacyId,
   pharmacyName: p.pharmacyName,
   doctorId: p.doctorId,
@@ -25,6 +27,8 @@ export class ReciepeService implements IReciepeService {
     const created = await createPrescription({
       patientId: data.patientId,
       patientName: data.patientName,
+      type: data.type,
+      reimbursementCode: data.reimbursementCode,
       pharmacyId: data.pharmacyId,
       pharmacyName: data.pharmacyName,
       doctorName: data.doctorName,

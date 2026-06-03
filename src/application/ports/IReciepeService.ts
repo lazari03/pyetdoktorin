@@ -2,6 +2,8 @@ export type ReciepePayload = {
   id?: string;
   patientId: string;
   patientName: string;
+  type?: "standard" | "reimbursement";
+  reimbursementCode?: string;
   pharmacyId?: string;
   pharmacyName?: string;
   doctorId?: string;

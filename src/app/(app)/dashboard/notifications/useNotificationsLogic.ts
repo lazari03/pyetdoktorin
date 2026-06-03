@@ -85,7 +85,13 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
           reciepes = await getReciepesByPharmacyUseCase.execute(user.uid);
         }
         const mapped = (reciepes || [])
-          .filter((p) => p.status && p.status !== 'pending')
+          .filter((p) => {
+            const status = p.status || 'pending';
+            if (userRole === UserRole.Patient || userRole === UserRole.Pharmacy) {
+              return true;
+            }
+            return status !== 'pending';
+          })
           .map((p) => ({
             id: p.id || '',
             title: p.title || '',

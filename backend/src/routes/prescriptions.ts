@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
-import { createPrescription, listPrescriptionsForRole, updatePrescriptionStatus, getPrescriptionById, type PrescriptionInput, type PrescriptionStatus } from '@/services/prescriptionsService';
+import { createPrescription, listPrescriptionsForRole, updatePrescriptionStatus, getPrescriptionById, type PrescriptionInput, type PrescriptionStatus, type PrescriptionType } from '@/services/prescriptionsService';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 import { z } from 'zod';
 import { validateBody } from '@/routes/validation';
@@ -11,9 +11,11 @@ const router = Router();
 const createPrescriptionSchema = z.object({
   patientId: z.string().min(1),
   patientName: z.string().min(1),
+  type: z.enum(['standard', 'reimbursement']).optional(),
+  reimbursementCode: z.string().trim().min(1).optional(),
   pharmacyId: z.string().optional(),
   pharmacyName: z.string().optional(),
-  medicines: z.array(z.string().min(1)).min(1),
+  medicines: z.array(z.string().min(1)).optional(),
   dosage: z.string().optional(),
   notes: z.string().optional(),
   title: z.string().optional(),
@@ -41,11 +43,27 @@ router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedReques
   }
   const requestPayload = validateBody(res, createPrescriptionSchema, req.body, 'INVALID_PAYLOAD');
   if (!requestPayload) return;
-  const { patientId, patientName, pharmacyId, pharmacyName, medicines, dosage, notes, title, doctorName } = requestPayload;
+  const { patientId, patientName, type, reimbursementCode, pharmacyId, pharmacyName, medicines, dosage, notes, title, doctorName } = requestPayload;
+  const normalizedType: PrescriptionType = type ?? 'standard';
+  const normalizedPharmacyName = pharmacyName?.trim();
+
+  if (normalizedType === 'reimbursement' && !reimbursementCode) {
+    return res.status(400).json({ error: 'MISSING_REIMBURSEMENT_CODE' });
+  }
+  if (normalizedType === 'reimbursement' && !normalizedPharmacyName) {
+    return res.status(400).json({ error: 'MISSING_REIMBURSEMENT_PHARMACY_NAME' });
+  }
+  if (normalizedType === 'standard' && (!medicines || medicines.length === 0)) {
+    return res.status(400).json({ error: 'MISSING_MEDICINES' });
+  }
+
+  const normalizedMedicines = normalizedType === 'reimbursement' ? [] : (medicines ?? []);
+  const normalizedPharmacyId = pharmacyId || undefined;
+
   const [doctorProfile, patientProfile, pharmacyProfile] = await Promise.all([
     getUserProfile(user.uid),
     getUserProfile(patientId),
-    pharmacyId ? getUserProfile(pharmacyId) : Promise.resolve(null),
+    normalizedPharmacyId ? getUserProfile(normalizedPharmacyId) : Promise.resolve(null),
   ]);
   const doctorSignature = doctorProfile?.signatureDataUrl;
   if (!doctorSignature) {
@@ -53,18 +71,22 @@ router.post('/', requireAuth([UserRole.Doctor]), async (req: AuthenticatedReques
   }
   const doctorDisplayName = buildDisplayName(doctorProfile, doctorName || 'Doctor');
   const patientDisplayName = buildDisplayName(patientProfile, patientName || 'Patient');
-  const pharmacyDisplayName = pharmacyProfile?.pharmacyName ?? pharmacyName;
+  const pharmacyDisplayName = normalizedType === 'standard'
+    ? (pharmacyProfile?.pharmacyName ?? normalizedPharmacyName)
+    : normalizedPharmacyName;
   const prescriptionInput: PrescriptionInput = {
     doctorId: user.uid,
     doctorName: doctorDisplayName,
     patientId,
     patientName: patientDisplayName,
-    medicines,
-    ...(pharmacyId !== undefined ? { pharmacyId } : {}),
+    type: normalizedType,
+    ...(reimbursementCode !== undefined ? { reimbursementCode } : {}),
+    medicines: normalizedMedicines,
+    ...(normalizedPharmacyId !== undefined ? { pharmacyId: normalizedPharmacyId } : {}),
     ...(pharmacyDisplayName !== undefined ? { pharmacyName: pharmacyDisplayName } : {}),
-    ...(dosage !== undefined ? { dosage } : {}),
-    ...(notes !== undefined ? { notes } : {}),
-    ...(title !== undefined ? { title } : {}),
+    ...(normalizedType === 'standard' && dosage !== undefined ? { dosage } : {}),
+    ...(normalizedType === 'standard' && notes !== undefined ? { notes } : {}),
+    ...(normalizedType === 'standard' && title !== undefined ? { title } : {}),
     signatureDataUrl: doctorSignature,
   };
   const prescription = await createPrescription(prescriptionInput);
@@ -84,7 +106,7 @@ router.patch('/:id/status', requireAuth([UserRole.Pharmacy, UserRole.Doctor, Use
   if (user.role === UserRole.Doctor && prescription.doctorId !== user.uid) {
     return res.status(403).json({ error: 'Forbidden' });
   }
-  if (user.role === UserRole.Pharmacy && prescription.pharmacyId !== user.uid) {
+  if (user.role === UserRole.Pharmacy && prescription.pharmacyId && prescription.pharmacyId !== user.uid) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   await updatePrescriptionStatus(id, status);

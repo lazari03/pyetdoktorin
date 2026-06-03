@@ -16,6 +16,7 @@ export interface UserProfileData {
   communicationPreference?: 'video' | 'voice' | 'chat';
   shareSummaryConsent?: boolean;
   signatureDataUrl?: string;
+  reimbursementCode?: string;
   dashboardTutorialSeen?: boolean;
   dashboardTutorialVersion?: number;
   dashboardTutorialSeenAt?: string; // ISO timestamp

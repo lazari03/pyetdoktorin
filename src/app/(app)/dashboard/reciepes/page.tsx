@@ -14,6 +14,9 @@ import { DASHBOARD_PATHS } from "@/navigation/paths";
 type Reciepe = {
   id: string;
   doctor: string;
+  type: "standard" | "reimbursement";
+  reimbursementCode?: string;
+  pharmacy?: string;
   title: string;
   medicines: string;
   dosage: string;
@@ -41,6 +44,9 @@ export default function PatientReciepesPage() {
       const mapped = (response || []).map((r: ReciepePayload) => ({
         id: r.id || (r.patientId + String(r.createdAt ?? "")),
         doctor: r.doctorName || "",
+        type: r.type || "standard",
+        reimbursementCode: r.reimbursementCode,
+        pharmacy: r.pharmacyName,
         title: r.title || t("reciepeTitleDoctor") || "Reciepe",
         medicines: Array.isArray(r.medicines) ? r.medicines.join(", ") : String(r.medicines ?? ""),
         dosage: r.dosage || "",
@@ -101,6 +107,11 @@ export default function PatientReciepesPage() {
                   }`}
                 >
                   <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
+                  <p className="text-[11px] text-gray-500">
+                    {r.type === "reimbursement"
+                      ? (t("prescriptionTypeReimbursement") || "Reimbursement")
+                      : (t("prescriptionTypeStandard") || "Standard")}
+                  </p>
                   <p className="text-xs text-gray-600 truncate">{r.doctor}</p>
                   <p className="text-[11px] text-gray-500">{r.date}</p>
                 </button>
@@ -135,18 +146,42 @@ export default function PatientReciepesPage() {
                   </div>
                   <div className="space-y-2 text-sm text-gray-800">
                     <div>
-                      <span className="font-semibold">{t("medicinesLabel") || "Medicines"}: </span>
-                      <span>{active.medicines}</span>
+                      <span className="font-semibold">{t("prescriptionTypeLabel") || "Prescription type"}: </span>
+                      <span>
+                        {active.type === "reimbursement"
+                          ? (t("prescriptionTypeReimbursement") || "Reimbursement")
+                          : (t("prescriptionTypeStandard") || "Standard")}
+                      </span>
                     </div>
-                    <div>
-                      <span className="font-semibold">{t("dosageLabel") || "Dosage"}: </span>
-                      <span>{active.dosage}</span>
-                    </div>
-                    {active.notes ? (
-                      <div className="text-gray-700">
-                        <span className="font-semibold">{t("notesLabel")}: </span>
-                        <span>{active.notes}</span>
+                    {active.reimbursementCode ? (
+                      <div>
+                        <span className="font-semibold">{t("reimbursementCodeLabel") || "Reimbursement code"}: </span>
+                        <span>{active.reimbursementCode}</span>
                       </div>
+                    ) : null}
+                    {active.type === "reimbursement" ? (
+                      <div>
+                        <span className="font-semibold">{t("pharmacyName") || "Pharmacy"}: </span>
+                        <span>{active.pharmacy || "-"}</span>
+                      </div>
+                    ) : null}
+                    {active.type === "standard" ? (
+                      <>
+                        <div>
+                          <span className="font-semibold">{t("medicinesLabel") || "Medicines"}: </span>
+                          <span>{active.medicines}</span>
+                        </div>
+                        <div>
+                          <span className="font-semibold">{t("dosageLabel") || "Dosage"}: </span>
+                          <span>{active.dosage}</span>
+                        </div>
+                        {active.notes ? (
+                          <div className="text-gray-700">
+                            <span className="font-semibold">{t("notesLabel")}: </span>
+                            <span>{active.notes}</span>
+                          </div>
+                        ) : null}
+                      </>
                     ) : null}
                   </div>
                   {active.signatureDataUrl ? (

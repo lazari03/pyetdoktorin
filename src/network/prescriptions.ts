@@ -1,6 +1,7 @@
 import { backendFetch } from './backendClient';
 
 export type PrescriptionStatus = 'pending' | 'accepted' | 'rejected';
+export type PrescriptionType = 'standard' | 'reimbursement';
 
 export interface Prescription {
   id: string;
@@ -8,6 +9,8 @@ export interface Prescription {
   doctorName: string;
   patientId: string;
   patientName: string;
+  type: PrescriptionType;
+  reimbursementCode?: string;
   pharmacyId?: string;
   pharmacyName?: string;
   medicines: string[];
@@ -27,6 +30,8 @@ export interface PrescriptionListResponse {
 export interface CreatePrescriptionPayload {
   patientId: string;
   patientName: string;
+  type?: PrescriptionType;
+  reimbursementCode?: string;
   pharmacyId?: string;
   pharmacyName?: string;
   doctorName?: string;
