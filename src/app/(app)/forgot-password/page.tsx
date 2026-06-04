@@ -11,6 +11,7 @@ import { Input } from '@/presentation/ui/Input';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
 import { ROUTES } from '@/config/routes';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
+import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation();
@@ -21,6 +22,7 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    trackAnalyticsEvent('password_reset_requested');
     try {
       await resetUserPasswordUseCase.execute(email);
       void notifyFormSubmission({
@@ -32,6 +34,7 @@ export default function ForgotPasswordPage() {
           email,
         },
       });
+      trackAnalyticsEvent('password_reset_success');
       setSubmitted(true);
       toast({ variant: 'success', message: t('passwordResetEmailSent') });
     } catch {

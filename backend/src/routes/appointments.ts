@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
+import { validateQuery } from '@/routes/validation';
 import {
   createAppointment,
   listAppointmentsForUser,
@@ -34,6 +35,13 @@ const updateStatusSchema = z.object({
   status: z.string().min(1),
 });
 
+const quickAppointmentQuerySchema = z.object({
+  specialty: z.string().optional(),
+  preferredDate: z.string().optional(),
+  preferredTime: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+});
+
 router.get('/', requireAuth([UserRole.Patient, UserRole.Doctor, UserRole.Admin]), async (req: AuthenticatedRequest, res) => {
   try {
     const user = req.user!;
@@ -42,6 +50,25 @@ router.get('/', requireAuth([UserRole.Patient, UserRole.Doctor, UserRole.Admin])
   } catch (error) {
     console.error('Error fetching appointments:', error);
     res.status(500).json({ error: AppointmentErrorCode.FetchFailed });
+  }
+});
+
+router.get('/quick-match', requireAuth([UserRole.Patient]), async (req: AuthenticatedRequest, res) => {
+  const query = validateQuery(res, quickAppointmentQuerySchema, req.query, 'INVALID_QUERY');
+  if (!query) return;
+
+  try {
+    const result = await findQuickAppointmentMatches({
+      patientId: req.user!.uid,
+      ...(query.specialty !== undefined ? { specialty: query.specialty } : {}),
+      ...(query.preferredDate !== undefined ? { preferredDate: query.preferredDate } : {}),
+      ...(query.preferredTime !== undefined ? { preferredTime: query.preferredTime } : {}),
+      ...(query.limit !== undefined ? { limit: query.limit } : {}),
+    });
+    res.json(result);
+  } catch (error) {
+    console.error('Error building quick appointment matches:', error);
+    res.status(500).json({ error: 'QUICK_APPOINTMENT_MATCH_FAILED' });
   }
 });
 

@@ -9,6 +9,7 @@ import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { ROUTES } from '@/config/routes';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
+import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 
 const inputClass = 'block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500';
 const fieldLabelClass = 'block mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500';
@@ -47,6 +48,7 @@ function RegisterPageInner() {
 
         setError('');
         setLoading(true);
+        trackAnalyticsEvent('register_attempt', { role: formData.role });
         try {
             const payload = {
                 name: formData.name.trim(),
@@ -82,8 +84,10 @@ function RegisterPageInner() {
             });
 
             await establishSessionAllowUnverifiedUseCase.execute();
+            trackAnalyticsEvent('register_success', { role: payload.role });
             nav.replacePath(DASHBOARD_PATHS.root);
         } catch (error) {
+            trackAnalyticsEvent('register_failed', { role: formData.role });
             setError(
                 error instanceof Error
                     ? error.message
@@ -258,6 +262,7 @@ function RegisterPageInner() {
 
           <button
             type="submit"
+            data-analytics="auth.register.submit"
             className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={loading}
           >

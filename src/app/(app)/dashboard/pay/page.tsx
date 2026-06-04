@@ -97,6 +97,8 @@ export default function PayPage() {
             <button
               onClick={openCheckout}
               disabled={!paddleReady || status === 'loading'}
+              data-analytics="payment.pay_now"
+              data-analytics-id={appointmentId}
               className="w-full inline-flex items-center justify-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {t('payNow')}
@@ -116,6 +118,7 @@ export default function PayPage() {
 
         <button
           className="w-full mt-2 text-sm font-medium text-gray-700 underline"
+          data-analytics="payment.go_back"
           onClick={() => router.back()}
         >
           {t('goBack')}

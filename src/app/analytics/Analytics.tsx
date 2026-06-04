@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { hasAnalyticsConsent, subscribeAnalyticsConsent } from "@/presentation/utils/analyticsConsent";
 
-
-// Declare gtag on the window object for TypeScript
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
@@ -46,29 +43,21 @@ export default function Analytics() {
   const searchParams = useSearchParams();
   const { isAuthenticated, role } = useAuth();
   const lastStateRef = useRef<string | null>(null);
-  const [enabled, setEnabled] = useState(() => hasAnalyticsConsent());
 
   const pagePath = useMemo(
     () => pathname + (searchParams ? `?${searchParams}` : ""),
     [pathname, searchParams]
   );
 
+  // Page view on route change
   useEffect(() => {
-    return subscribeAnalyticsConsent(() => setEnabled(hasAnalyticsConsent()));
-  }, []);
+    if (!GA_ID || typeof window.gtag !== "function") return;
+    window.gtag("config", GA_ID, { page_path: pagePath });
+  }, [pagePath]);
 
+  // Auth state event
   useEffect(() => {
-    if (!enabled || !GA_ID) return;
-    if (typeof window.gtag === "function") {
-      window.gtag("config", GA_ID, {
-        page_path: pagePath,
-      });
-    }
-  }, [enabled, pagePath]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    if (typeof window.gtag !== "function" || !GA_ID) return;
+    if (!GA_ID || typeof window.gtag !== "function") return;
     const statePayload = {
       page_path: pagePath,
       is_authenticated: Boolean(isAuthenticated),
@@ -78,13 +67,12 @@ export default function Analytics() {
     if (lastStateRef.current === stateKey) return;
     lastStateRef.current = stateKey;
     window.gtag("event", "ui_state", statePayload);
-  }, [enabled, pagePath, isAuthenticated, role]);
+  }, [pagePath, isAuthenticated, role]);
 
+  // Click tracking
   useEffect(() => {
-    if (!enabled) return;
-    if (typeof window === "undefined") return;
     const handleClick = (event: MouseEvent) => {
-      if (typeof window.gtag !== "function" || !GA_ID) return;
+      if (!GA_ID || typeof window.gtag !== "function") return;
       const target = event.target as Element | null;
       if (!target) return;
       const element = target.closest("button, a, [role='button'], [data-analytics]") as Element | null;
@@ -94,11 +82,9 @@ export default function Analytics() {
       const analyticsName = element.getAttribute("data-analytics") || "";
       const analyticsId = element.getAttribute("data-analytics-id") || "";
       const ariaLabel = element.getAttribute("aria-label") || "";
-      // Avoid sending potentially sensitive text content to analytics (PII/PHI risk).
-      // Prefer stable identifiers that don't contain user-entered content.
       const label = analyticsName || ariaLabel || href || element.getAttribute("id") || element.tagName.toLowerCase();
 
-      const payload = {
+      window.gtag("event", "ui_click", {
         page_path: pagePath,
         element_type: element.tagName.toLowerCase(),
         element_id: element.getAttribute("id") || "",
@@ -107,38 +93,34 @@ export default function Analytics() {
         element_analytics_id: analyticsId,
         element_href: href,
         role: role || "unknown",
-      };
-      window.gtag("event", "ui_click", payload);
+      });
     };
 
     window.addEventListener("click", handleClick, { capture: true });
     return () => window.removeEventListener("click", handleClick, { capture: true });
-  }, [enabled, pagePath, role]);
+  }, [pagePath, role]);
 
+  // Form submit tracking
   useEffect(() => {
-    if (!enabled) return;
-    if (typeof window === "undefined") return;
     const handleSubmit = (event: Event) => {
-      if (typeof window.gtag !== "function" || !GA_ID) return;
+      if (!GA_ID || typeof window.gtag !== "function") return;
       const target = event.target as HTMLFormElement | null;
       if (!target) return;
-      const payload = {
+      window.gtag("event", "ui_submit", {
         page_path: pagePath,
         form_id: getFormIdentifier(target),
         role: role || "unknown",
-      };
-      window.gtag("event", "ui_submit", payload);
+      });
     };
 
     window.addEventListener("submit", handleSubmit, { capture: true });
     return () => window.removeEventListener("submit", handleSubmit, { capture: true });
-  }, [enabled, pagePath, role]);
+  }, [pagePath, role]);
 
+  // Select / checkbox / radio change tracking
   useEffect(() => {
-    if (!enabled) return;
-    if (typeof window === "undefined") return;
     const handleChange = (event: Event) => {
-      if (typeof window.gtag !== "function" || !GA_ID) return;
+      if (!GA_ID || typeof window.gtag !== "function") return;
       const target = event.target as HTMLInputElement | HTMLSelectElement | null;
       if (!target) return;
       const tag = target.tagName.toLowerCase();
@@ -148,20 +130,19 @@ export default function Analytics() {
       } else if (tag !== "select") {
         return;
       }
-      const payload = {
+      window.gtag("event", "ui_change", {
         page_path: pagePath,
         element_type: tag,
         element_id: getInputIdentifier(target),
         role: role || "unknown",
         toggled: tag === "input" ? (target as HTMLInputElement).checked : undefined,
         selected_index: tag === "select" ? (target as HTMLSelectElement).selectedIndex : undefined,
-      };
-      window.gtag("event", "ui_change", payload);
+      });
     };
 
     window.addEventListener("change", handleChange, { capture: true });
     return () => window.removeEventListener("change", handleChange, { capture: true });
-  }, [enabled, pagePath, role]);
+  }, [pagePath, role]);
 
   return null;
 }

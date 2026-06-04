@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import ToastProvider from '@/presentation/components/Toast/ToastProvider';
 import AnalyticsScripts from '@/app/analytics/AnalyticsScripts';
+import Analytics from '@/app/analytics/Analytics';
 import ClientErrorReporter from '@/presentation/components/ClientErrorReporter/ClientErrorReporter';
 
 export default function WebsiteProviders({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export default function WebsiteProviders({ children }: { children: React.ReactNo
       <ClientErrorReporter />
       <Suspense fallback={null}>
         <AnalyticsScripts />
+        <Analytics />
       </Suspense>
       {children}
     </ToastProvider>

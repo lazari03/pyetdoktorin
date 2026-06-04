@@ -58,7 +58,7 @@ export default function useNewAppointment() {
 
       for (let minutes = 9 * 60; minutes < 17 * 60; minutes += 30) {
         const time = addMinutes(selectedDate, minutes);
-        const formattedTime = format(time, 'hh:mm a');
+        const formattedTime = format(time, 'HH:mm');
         const isDisabled = isSameDay(time, now) && isBefore(time, now);
         times.push({
           time: formattedTime,
@@ -81,7 +81,7 @@ export default function useNewAppointment() {
         if (!active) return;
         setAvailableTimes(
           slots.map((slot) => ({
-            time: format(new Date(`2000-01-01T${slot.time}:00`), 'hh:mm a'),
+            time: format(new Date(`2000-01-01T${slot.time}:00`), 'HH:mm'),
             disabled: slot.booked || slot.past,
           })),
         );
