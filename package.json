@@ -40,7 +40,7 @@
     "firebase": "^11.5.0",
     "firebase-admin": "^13.7.0",
     "formidable": "^3.5.4",
-    "i18next": "^25.6.2",
+    "i18next": "^26.3.1",
     "i18next-browser-languagedetector": "^8.2.0",
     "js-confuser": "^2.0.0",
     "jsonwebtoken": "^9.0.2",
