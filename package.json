@@ -31,7 +31,7 @@
     "backfill:approval": "env-cmd -f .env.local node scripts/backfill-approvalStatus.js"
   },
   "dependencies": {
-    "@100mslive/react-sdk": "^0.10.35",
+    "@100mslive/react-sdk": "^0.12.2",
     "@heroicons/react": "^2.2.0",
     "@types/formidable": "^3.4.5",
     "aws-sdk": "^2.1693.0",
