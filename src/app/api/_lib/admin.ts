@@ -3,7 +3,12 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
 function parseServiceAccount(raw: string) {
-  let normalized = raw;
+  let normalized = raw.trim();
+
+  // Support base64-encoded JSON (safe for dashboard env var fields)
+  if (!normalized.startsWith('{')) {
+    normalized = Buffer.from(normalized, 'base64').toString('utf8');
+  }
 
   // Support dotenv-loaded JSON values that contain escaped quotes/newlines.
   if (normalized.includes('\\"')) {

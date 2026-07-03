@@ -5,22 +5,16 @@ let initialized = false;
 
 export function getFirebaseAdmin() {
   if (!initialized) {
-    let raw = env.firebaseServiceAccount;
+    let raw = env.firebaseServiceAccount.trim();
 
-    // dotenv v17 with quoted values:
-    //   ‑ strips the outer "…"
-    //   ‑ converts \\n → real newline
-    //   ‑ but leaves \" as literal backslash-quote
-    //
-    // We need valid JSON for JSON.parse().  Strategy:
-    //   1. Turn real newlines into the JSON escape \\n
-    //   2. Turn literal \" into "  (unescape the quotes)
-    // Order matters: step 1 must come first so the \" in step 2
-    // doesn't collide with the \\n we just wrote.
+    // Accept base64-encoded JSON (safe for any dashboard / CI env var field)
+    if (!raw.startsWith('{')) {
+      raw = Buffer.from(raw, 'base64').toString('utf8');
+    }
+
+    // dotenv legacy: quoted value with escaped quotes
     if (raw.includes('\\"')) {
-      raw = raw
-        .replace(/\n/g, '\\n')   // real newlines → JSON \\n
-        .replace(/\\"/g, '"');   // literal \" → "
+      raw = raw.replace(/\n/g, '\\n').replace(/\\"/g, '"');
     }
 
     const serviceAccount = JSON.parse(raw);
