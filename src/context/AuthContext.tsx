@@ -5,7 +5,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { fetchCurrentUserProfile } from '@/network/currentUser';
 import { useDI } from '@/context/DIContext';
-import { setAuthToken } from '@/infrastructure/auth/tokenHolder';
+import { setAuthToken } from '@/application/auth/tokenHolder';
 
 interface AuthContextType {
   isAuthenticated: boolean;

@@ -1,14 +1,9 @@
 import { backendFetch } from '@/network/backendClient';
 import type { BlogPost, CreateBlogPostPayload, UpdateBlogPostPayload } from '@/domain/entities/BlogPost';
+import { slugify } from '@/domain/rules/slugify';
 
-export function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
+export { slugify };
+
 
 export async function getAllBlogPosts(): Promise<BlogPost[]> {
   const response = await backendFetch<{ items: BlogPost[] }>('/api/blog');

@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { getAuthToken } from '@/infrastructure/auth/tokenHolder';
+import { getAuthToken } from '@/application/auth/tokenHolder';
 
 export async function apiClient<T = unknown>(
   url: string,

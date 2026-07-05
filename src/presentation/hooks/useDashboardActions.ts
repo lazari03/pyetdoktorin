@@ -7,7 +7,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useTranslation } from 'react-i18next';
 import { getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation/utils/errorMessages';
-import { getAuthToken } from '@/infrastructure/auth/tokenHolder';
+import { getAuthToken } from '@/application/auth/tokenHolder';
 import { dashboardVideoSessionUrl } from '@/navigation/paths';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
 

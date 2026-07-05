@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "🔍 Pre-commit checks..."
+
+# ──────────────────────────────────────────────
+# 1. TypeScript compilation
+# ──────────────────────────────────────────────
+echo "   • tsc --noEmit ..."
+if ! npx tsc --noEmit 2>&1; then
+  echo "❌ TypeScript compilation failed. Fix errors before committing."
+  exit 1
+fi
+
+# ──────────────────────────────────────────────
+# 2. Knip (dead code / unused exports)
+# ──────────────────────────────────────────────
+echo "   • knip ..."
+if ! npx knip --no-exit-code 2>&1; then
+  echo "❌ Knip found issues. Fix them before committing."
+  exit 1
+fi
+
+# ──────────────────────────────────────────────
+# 3. Architecture: no client page imports from infrastructure
+# ──────────────────────────────────────────────
+echo "   • architecture lint ..."
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.tsx?$' || true)
+if [ -n "$STAGED" ]; then
+  # Check client pages (marked "use client") for infrastructure imports
+  for f in $STAGED; do
+    if [ -f "$f" ] && head -1 "$f" | grep -q "use client"; then
+      if grep -qE "from ['\"]@/infrastructure/" "$f"; then
+        echo "❌ $f: client page importing from @/infrastructure/"
+        exit 1
+      fi
+    fi
+  done
+fi
+
+echo "✅ All checks passed."

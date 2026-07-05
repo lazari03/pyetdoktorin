@@ -2,7 +2,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getAuthToken } from "@/infrastructure/auth/tokenHolder";
+import { getAuthToken } from "@/application/auth/tokenHolder";
 import { useTranslation } from "react-i18next";
 import { VIDEO_ERROR_CODES } from "@/config/errorCodes";
 import { DASHBOARD_PATHS } from "@/navigation/paths";

@@ -8,7 +8,7 @@ import { useDI } from "@/context/DIContext";
 import { Appointment } from "@/domain/entities/Appointment";
 import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 import { useTranslation } from "react-i18next";
-import { getAuthToken } from "@/infrastructure/auth/tokenHolder";
+import { getAuthToken } from "@/application/auth/tokenHolder";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import { getAppointmentErrorMessage, getVideoErrorMessage } from "@/presentation/utils/errorMessages";
 import { APPOINTMENT_ERROR_CODES, VIDEO_ERROR_CODES } from "@/config/errorCodes";

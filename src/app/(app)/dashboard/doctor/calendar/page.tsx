@@ -16,7 +16,7 @@ import { Appointment } from '@/domain/entities/Appointment';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
-import { getAuthToken } from '@/infrastructure/auth/tokenHolder';
+import { getAuthToken } from '@/application/auth/tokenHolder';
 import type { DoctorAvailability } from '@/domain/entities/DoctorAvailability';
 
 import type { CalendarEvent } from '../Calendar';

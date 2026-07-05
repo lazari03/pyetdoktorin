@@ -1,5 +1,5 @@
 
-import { getAuthToken, waitForToken } from '@/infrastructure/auth/tokenHolder';
+import { getAuthToken, waitForToken } from '@/application/auth/tokenHolder';
 import { BackendError } from '@/application/errors/BackendError';
 
 const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
