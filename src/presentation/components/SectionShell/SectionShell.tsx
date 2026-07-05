@@ -735,75 +735,19 @@ export default function SectionShell({
           {/* Right: bell + CTA + profile */}
           <div className="flex items-center gap-1 lg:gap-2 ml-auto shrink-0">
             {/* Notification bell */}
-            <div className="relative shrink-0" ref={notifMenuRef}>
-              <button
-                type="button"
-                onClick={() => { setProfileMenuOpen(false); setTopbarProfileOpen(false); setNotifOpen((o) => !o); }}
-                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:border-purple-300 hover:text-purple-700 transition-colors"
-                aria-label={t('notifications') || 'Notifications'}
-                data-analytics={`${sectionId}.topbar.notifications`}
-              >
-                <BellIcon className="h-5 w-5" />
-                {notificationCount && notificationCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-                    {notificationCount > 9 ? '9+' : notificationCount}
-                  </span>
-                ) : null}
-              </button>
-
-              {notifOpen && (
-                <div className={`absolute right-0 top-full mt-2 w-[340px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white border border-gray-100 shadow-lg overflow-hidden ${z.maximum}`}>
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                    <p className="text-[14px] font-bold text-gray-900">{t('notifications') || 'Notifications'}</p>
-                    <button
-                      type="button"
-                      onClick={markAllRead}
-                      className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800"
-                      data-analytics={`${sectionId}.topbar.notifications_mark_all_read`}
-                    >
-                      {t('markAllRead') || 'Mark all read'}
-                    </button>
-                  </div>
-
-                  <div className="max-h-[340px] overflow-y-auto">
-                    {notifFeed.length === 0 ? (
-                      <p className="px-4 py-6 text-center text-[12.5px] text-gray-500">
-                        {t('noNotifications') || 'No notifications yet.'}
-                      </p>
-                    ) : (
-                      notifFeed.map((n) => {
-                        const Icon = n.icon;
-                        return (
-                          <Link
-                            key={n.id}
-                            href={n.appointmentId ? `${sectionNotificationsHref(sectionId)}?focus=${encodeURIComponent(n.appointmentId)}` : sectionNotificationsHref(sectionId)}
-                            onClick={() => setNotifOpen(false)}
-                            className="flex gap-3 px-4 py-3 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/70 transition-colors"
-                          >
-                            <span className={`h-9 w-9 shrink-0 rounded-lg flex items-center justify-center ${n.bg} ${n.color}`}>
-                              <Icon className="h-4.5 w-4.5" />
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-[12.5px] text-gray-800 leading-snug">{n.text}</p>
-                              <p className="text-[10.5px] text-gray-400 mt-0.5">{formatRelativeTime(n.ts)}</p>
-                            </div>
-                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-purple-600" />
-                          </Link>
-                        );
-                      })
-                    )}
-                  </div>
-
-                  <Link
-                    href={sectionNotificationsHref(sectionId)}
-                    onClick={() => setNotifOpen(false)}
-                    className="block w-full px-4 py-3 text-center text-[12px] font-semibold text-purple-700 hover:bg-purple-50/60 border-t border-gray-100 transition-colors"
-                  >
-                    {t('viewAllNotifications') || 'View all notifications'}
-                  </Link>
-                </div>
-              )}
-            </div>
+            <Link
+              href={sectionNotificationsHref(sectionId)}
+              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:border-purple-300 hover:text-purple-700 transition-colors"
+              aria-label={t('notifications') || 'Notifications'}
+              data-analytics={`${sectionId}.topbar.notifications`}
+            >
+              <BellIcon className="h-5 w-5" />
+              {notificationCount && notificationCount > 0 ? (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                  {notificationCount > 9 ? '9+' : notificationCount}
+                </span>
+              ) : null}
+            </Link>
 
             {/* Optional CTA (e.g. + New appointment) */}
             {topbarCta}
