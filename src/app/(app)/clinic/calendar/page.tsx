@@ -39,44 +39,44 @@ export default function ClinicCalendarPage() {
       loadingLabel={t('loading')}
       analyticsPrefix="clinic.calendar"
     >
-      <div className="space-y-6">
-      <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 flex items-center justify-between">
+      <div className="space-y-4">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('clinicCalendar') || 'Clinic calendar'}</h1>
-          <p className="text-sm text-gray-600">{t('clinicCalendarSubtitle') || 'Review your daily schedule'}</p>
+          <h1 className="text-[15px] font-bold text-gray-900">{t('clinicCalendar') || 'Clinic calendar'}</h1>
+          <p className="text-[12.5px] text-gray-500">{t('clinicCalendarSubtitle') || 'Review your daily schedule'}</p>
         </div>
-        <Link href={CLINIC_PATHS.bookings} className="text-sm text-purple-600 hover:underline">
+        <Link href={CLINIC_PATHS.bookings} className="text-[12.5px] font-semibold text-purple-600 hover:underline">
           {t('goToBookings') || 'Go to bookings'}
         </Link>
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-500 py-10">{t('loading') || 'Loading...'}</div>
+        <div className="text-center text-sm text-gray-500 py-10">{t('loading') || 'Loading...'}</div>
       ) : sortedDates.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow p-6 text-gray-500 text-center">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-sm text-gray-500 text-center">
           {t('noBookingsYet') || 'No bookings yet'}
         </div>
       ) : (
         <div className="space-y-4">
           {sortedDates.map((dateKey) => (
-            <div key={dateKey} className="bg-white rounded-2xl shadow border border-purple-50">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div key={dateKey} className="bg-white rounded-xl border border-gray-100 shadow-sm">
+              <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-[12.5px] font-semibold text-gray-900">
                     {format(new Date(dateKey), 'EEEE, dd MMMM yyyy')}
                   </p>
                 </div>
-                <span className="text-xs text-gray-500">{grouped[dateKey].length} {t('bookings') || 'bookings'}</span>
+                <span className="text-[11.5px] text-gray-500">{grouped[dateKey].length} {t('bookings') || 'bookings'}</span>
               </div>
-              <div className="divide-y">
+              <div className="divide-y divide-gray-50">
                 {grouped[dateKey].map((booking) => (
-                  <div key={booking.id} className="px-6 py-4 flex items-center justify-between">
+                  <div key={booking.id} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50/60 transition-colors">
                     <div>
-                      <p className="font-semibold text-gray-900">{booking.patientName}</p>
-                      <p className="text-sm text-gray-600">{booking.note}</p>
+                      <p className="text-[12.5px] font-semibold text-gray-900">{booking.patientName}</p>
+                      <p className="text-[12px] text-gray-500">{booking.note}</p>
                     </div>
                     <span
-                      className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                      className={`text-[10.5px] font-bold px-2.5 py-1 rounded-full ${
                         booking.status === 'confirmed'
                           ? 'bg-green-100 text-green-700'
                           : booking.status === 'declined'

@@ -1380,5 +1380,7 @@
   "psychCtaTitle": "Keni nevojë për mbështetje sot?",
   "psychCtaSubtitle": "Rezervoni psikologun tuaj online në pak minuta.",
   "psychCtaPrimary": "Rezervoni tani",
-  "psychCtaSecondary": "Shikoni çmimet"
+  "psychCtaSecondary": "Shikoni çmimet",
+  "collapseSidebar": "Mbyll shiritin anësor",
+  "expandSidebar": "Zgjero shiritin anësor"
 }

@@ -7,6 +7,7 @@ import { useDI } from "@/context/DIContext";
 import Link from "next/link";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import { UserRole } from "@/domain/entities/UserRole";
+import { DocumentTextIcon, BellIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import { getRoleNotificationsPath } from "@/navigation/roleRoutes";
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
@@ -112,7 +113,7 @@ export default function PharmacyDashboardPage() {
       analyticsPrefix="pharmacy.dashboard"
     >
       {user?.uid ? <DashboardTutorialGate userId={user.uid} role={role} /> : null}
-      <div className="min-h-screen py-6 px-3">
+      <div className="py-4 sm:py-6 px-3">
         <div className="max-w-6xl mx-auto space-y-4">
           <div className="flex flex-col gap-1">
             <p className="text-xs uppercase tracking-[0.2em] text-purple-600 font-semibold">
@@ -125,25 +126,33 @@ export default function PharmacyDashboardPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <StatCard
-              label={t("pendingReciepes") || "Pending prescriptions"}
-              value={pendingCount.toString()}
-              helper={t("awaitingFulfillment") || "Awaiting fulfillment"}
-            />
-            <StatCard
-              label={t("notificationsLabel") || "Notifications"}
-              value={notifications.length.toString()}
-              helper={t("today") || "Today"}
-            />
-            <StatCard
-              label={t("processedReciepes") || "Processed reciepes"}
-              value={processedCount.toString()}
-              helper={t("processedReciepesHelper") || "Completed or rejected prescriptions"}
-            />
+            {[
+              { label: t("pendingReciepes") || "Pending prescriptions", value: pendingCount, helper: t("awaitingFulfillment") || "Awaiting fulfillment", Icon: DocumentTextIcon, iconBg: "bg-amber-100 text-amber-600", accent: "text-amber-700", delta: pendingCount > 0 ? `${pendingCount} to review` : null, pos: false },
+              { label: t("notificationsLabel") || "Notifications", value: notifications.length, helper: t("today") || "Today", Icon: BellIcon, iconBg: "bg-purple-100 text-purple-600", accent: "text-purple-700", delta: null, pos: true },
+              { label: t("processedReciepes") || "Processed", value: processedCount, helper: t("processedReciepesHelper") || "Completed or rejected", Icon: CheckCircleIcon, iconBg: "bg-emerald-100 text-emerald-600", accent: "text-emerald-700", delta: processedCount > 0 ? `${processedCount} done` : null, pos: true },
+            ].map((card) => (
+              <div key={card.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11.5px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
+                  <span className={`h-7 w-7 rounded-xl flex items-center justify-center ${card.iconBg}`}>
+                    <card.Icon className="h-4 w-4" />
+                  </span>
+                </div>
+                <div className="flex items-end gap-2">
+                  <p className={`text-3xl font-bold leading-none ${card.accent}`}>{card.value}</p>
+                  {card.delta && (
+                    <span className={`self-end mb-0.5 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-full ${card.pos ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                      {card.delta}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-400">{card.helper}</p>
+              </div>
+            ))}
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            <section className="lg:col-span-2 bg-white rounded-3xl border border-purple-50 shadow-lg p-4 space-y-3">
+            <section className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{t("reciepeInbox") || "Prescription inbox"}</p>
@@ -198,7 +207,7 @@ export default function PharmacyDashboardPage() {
               </div>
             </section>
 
-            <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-4 space-y-3 h-full">
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3 h-full">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{t("notificationsLabel") || "Notifications"}</p>
@@ -247,12 +256,3 @@ export default function PharmacyDashboardPage() {
   );
 }
 
-function StatCard({ label, value, helper }: { label: string; value: string; helper: string }) {
-  return (
-    <div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-4">
-      <p className="text-xs text-gray-600">{label}</p>
-      <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-      <p className="text-[11px] text-gray-500">{helper}</p>
-    </div>
-  );
-}

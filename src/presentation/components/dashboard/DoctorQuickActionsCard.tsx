@@ -98,12 +98,12 @@ export function DoctorQuickActionsCard({ appointments }: Props) {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3">
         {actions.map(({ key, label, href, Icon, tone }) => (
           <Link
             key={key}
             href={href}
-            className="group rounded-2xl border border-gray-200/70 bg-white/70 p-3 sm:p-4 hover:bg-white transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
+            className="group rounded-2xl border border-gray-200/70 bg-white/70 p-3 sm:p-4 hover:bg-white transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500 min-w-0"
             aria-label={label}
             data-analytics={`dashboard.doctor_quick_actions.${key}`}
           >

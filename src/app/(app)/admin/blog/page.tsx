@@ -153,7 +153,7 @@ export default function AdminBlogPage() {
             </div>
 
             {/* Form */}
-            <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 space-y-5">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-5">
               {/* Title */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Title *</label>
@@ -309,7 +309,7 @@ export default function AdminBlogPage() {
         >
           <div className="p-4 md:p-6 space-y-6">
             {/* Header */}
-            <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
@@ -335,18 +335,18 @@ export default function AdminBlogPage() {
               ].map((s) => (
                 <div
                   key={s.label}
-                  className="bg-white rounded-2xl shadow-md border border-purple-50 p-5"
+                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-4"
                 >
-                  <p className="text-xs uppercase tracking-wide text-gray-500">{s.label}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{s.value}</p>
+                  <p className="text-[11.5px] text-gray-500">{s.label}</p>
+                  <p className="text-3xl font-extrabold text-gray-900 tracking-tight mt-2">{s.value}</p>
                 </div>
               ))}
             </section>
 
             {/* Posts list */}
-            <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 space-y-3">
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-3">
               {posts.length === 0 ? (
-                <div className="rounded-2xl border border-gray-200 bg-gray-50/60 px-4 py-10 text-center">
+                <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-10 text-center">
                   <p className="text-gray-500 text-sm">No articles yet.</p>
                   <Button variant="outline" className="mt-4" onClick={openCreate}>
                     Write your first article
@@ -356,7 +356,7 @@ export default function AdminBlogPage() {
                 posts.map((post) => (
                   <div
                     key={post.id}
-                    className="group rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm flex flex-wrap items-center justify-between gap-3"
+                    className="group rounded-xl border border-gray-100 bg-white px-4 py-4 shadow-sm flex flex-wrap items-center justify-between gap-3"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">

@@ -92,15 +92,15 @@ export default function RequestStateGate({
   if (error) {
     const showDebug = process.env.NODE_ENV !== 'production';
     return (
-      <div className="min-h-screen py-8 px-3">
-        <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-lg border border-purple-50 p-6 space-y-3">
-          <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+      <div className="py-4 sm:py-6 px-3">
+        <div className="max-w-2xl mx-auto bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
             {t('secureAccessEyebrow') ?? 'Secure access'}
           </p>
-          <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-[15px] font-bold text-gray-900">
             {t('somethingWentWrong', 'Something went wrong')}
           </h1>
-          <p className="text-sm text-gray-600">{message}</p>
+          <p className="text-[12.5px] text-gray-500">{message}</p>
           {showDebug && debugDetail ? (
             <p className="text-[11px] text-gray-400 break-words">detail: {debugDetail.slice(0, 240)}</p>
           ) : null}

@@ -17,7 +17,7 @@ type TableUser = {
   approvalStatus?: 'pending' | 'approved';
 };
 
-export function UsersTable() {
+export function UsersTable({ roleFilter }: { roleFilter?: string }) {
   const { t } = useTranslation();
   const { users, loadUsers, loadUsersPage, searchUsers, selectUser, loading, error, total, pageSize, searchQuery, page } = useAdminStore();
   const [search, setSearch] = useState('');
@@ -75,6 +75,11 @@ export function UsersTable() {
   const handlePageChange = (p: number) => {
     loadUsersPage(p);
   };
+  const filteredUsers = useMemo(
+    () => (roleFilter ? users.filter((u) => String(u.role).toLowerCase() === roleFilter.toLowerCase()) : users),
+    [users, roleFilter],
+  );
+
   return (
     <RequestStateGate
       loading={loading && users.length === 0}
@@ -95,15 +100,15 @@ export function UsersTable() {
           />
         </div>
         <GenericTable
-          data={users}
+          data={filteredUsers}
           columns={columns}
           actions={actions}
           loading={loading}
           emptyText={t('noRecordsFound')}
           page={page}
-          pageSize={pageSize}
+          pageSize={roleFilter ? undefined : pageSize}
           onPageChange={handlePageChange}
-          total={total}
+          total={roleFilter ? filteredUsers.length : total}
         />
       </div>
     </RequestStateGate>

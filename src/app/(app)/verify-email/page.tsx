@@ -158,7 +158,7 @@ export default function VerifyEmailPage() {
   if (!user) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-purple-50 to-white">
-        <Card className="card-premium w-full max-w-lg p-6">
+        <Card className="rounded-xl border border-gray-100 shadow-sm w-full max-w-lg p-6">
           <div className="flex items-start gap-3">
             <div className="h-10 w-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center">
               <EnvelopeIcon className="h-5 w-5" aria-hidden />
@@ -205,7 +205,7 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-purple-50 to-white">
-      <Card className="card-premium w-full max-w-2xl overflow-hidden">
+      <Card className="rounded-xl border border-gray-100 shadow-sm w-full max-w-2xl overflow-hidden">
         <div className="p-6 border-b border-slate-200/70 bg-gradient-to-r from-purple-800 via-purple-700 to-purple-600 text-white">
           <div className="flex items-start gap-3">
             <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center">

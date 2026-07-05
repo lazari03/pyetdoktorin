@@ -121,15 +121,15 @@ function JourneyPage() {
       loadingLabel={t("loading")}
       analyticsPrefix="appointments"
     >
-      <div className="min-h-screen bg-gradient-to-b">
+      <div>
         <RedirectingModal show={vm.showRedirecting} />
-        <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10 space-y-6">
+        <div className="space-y-4">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+              <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
                 {t("appointmentJourneyTitle")}
               </p>
-              <h1 className="text-2xl font-semibold text-gray-900 mt-1">
+              <h1 className="text-[15px] font-bold text-gray-900 mt-1">
                 {t("yourAppointments")}
               </h1>
             </div>
@@ -137,7 +137,7 @@ function JourneyPage() {
               <div className="flex items-center gap-2">
                 <Link
                   href={DASHBOARD_PATHS.newAppointment}
-                  className="inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-purple-700"
+                  className="inline-flex items-center rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-700"
                 >
                   {t("bookNewAppointment")}
                 </Link>
@@ -154,13 +154,13 @@ function JourneyPage() {
             onPayNow={vm.handlePayNow}
           />
         ) : (
-          <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center">
-            <p className="text-lg font-semibold text-gray-900">{t("noUpcoming")}</p>
-            <p className="text-sm text-gray-600 mt-1">{t("emptyJourneyCopy")}</p>
+          <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-6 text-center">
+            <p className="text-[14px] font-bold text-gray-900">{t("noUpcoming")}</p>
+            <p className="text-[12.5px] text-gray-500 mt-1">{t("emptyJourneyCopy")}</p>
             {vm.userRole === UserRole.Patient && (
               <Link
                 href={DASHBOARD_PATHS.newAppointment}
-                className="mt-3 inline-flex items-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+                className="mt-3 inline-flex items-center rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
               >
                 {t("bookNewAppointment")}
               </Link>
@@ -168,7 +168,7 @@ function JourneyPage() {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
           <MetricTile label={t("visitsThisMonth")} value={visitsThisMonth.toString()} />
           <MetricTile label={t("completedVisits")} value={completedCount.toString()} />
           <MetricTile label={t("pendingActions")} value={pendingCount.toString()} tone="amber" />
@@ -176,12 +176,12 @@ function JourneyPage() {
 
         <div className="flex items-center justify-between flex-wrap gap-3">
           <AppointmentFilters active={filter} onChange={setFilter} />
-          <span className="text-xs text-gray-500">
+          <span className="text-[11.5px] text-gray-500">
             {filtered.length} {t("appointments") ?? "appointments"}
           </span>
         </div>
 
-        <section className="rounded-3xl bg-white border border-purple-50 shadow-lg p-4">
+        <section className="rounded-xl bg-white border border-gray-100 shadow-sm p-4">
           {filtered.length > 0 ? (
             <AppointmentTimeline
               items={filtered}
@@ -216,9 +216,9 @@ function MetricTile({
       ? "bg-amber-50 border-amber-100 text-amber-700"
       : "bg-purple-50 border-purple-100 text-purple-700";
   return (
-    <div className={`rounded-2xl border ${toneClasses} p-4 shadow-sm`}>
-      <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold mt-1">{value}</p>
+    <div className={`rounded-xl border ${toneClasses} p-4 shadow-sm`}>
+      <p className="text-[10.5px] font-bold uppercase tracking-[.08em]">{label}</p>
+      <p className="text-2xl font-extrabold mt-1 tracking-tight">{value}</p>
     </div>
   );
 }

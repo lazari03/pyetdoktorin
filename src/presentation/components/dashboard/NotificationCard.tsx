@@ -19,7 +19,7 @@ export function NotificationCard({ appointments }: Props) {
   const { role, user } = useAuth();
   const notificationsHref = getRoleNotificationsPath(role) || "/dashboard/notifications";
 
-  const items = useMemo(() => {
+  const filtered = useMemo(() => {
     return [...appointments]
       .filter((a) => {
         if (user?.uid && a.dismissedBy?.[user.uid]) return false;
@@ -30,8 +30,12 @@ export function NotificationCard({ appointments }: Props) {
         const at = Number.isFinite(new Date(a.createdAt).getTime()) ? new Date(a.createdAt).getTime() : 0;
         const bt = Number.isFinite(new Date(b.createdAt).getTime()) ? new Date(b.createdAt).getTime() : 0;
         return bt - at;
-      })
-      .slice(0, 20) // keep payload light
+      });
+  }, [appointments, role, user?.uid]);
+
+  const items = useMemo(() => {
+    return filtered
+      .slice(0, 5) // show 5 latest only; "View all" links to the full list
       .map((a) => {
         const status = getAppointmentStatusPresentation(a.status);
         const createdAt = new Date(a.createdAt);
@@ -54,7 +58,7 @@ export function NotificationCard({ appointments }: Props) {
         const normalizedStatus = (a.status || "").toString().trim().toLowerCase();
         return { id: a.id, title, desc, ts: createdLabel, status, normalizedStatus };
       });
-  }, [appointments, role, t, user?.uid]);
+  }, [filtered, t]);
 
   const getTone = (normalizedStatus: string) => {
     switch (normalizedStatus) {
@@ -91,69 +95,58 @@ export function NotificationCard({ appointments }: Props) {
   };
 
   return (
-    <section className="card-premium card-premium-hover p-4 sm:p-5 flex flex-col gap-4 h-full min-h-[260px]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="mt-0.5 rounded-full bg-purple-50 p-2 border border-purple-100">
-            <BellIcon className="h-4 w-4 text-purple-700" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{t("notifications") || "Notifications"}</p>
-              <span
-                className="shrink-0 inline-flex items-center rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700"
-                aria-label={t("notificationsCount") || "Notifications count"}
-                data-analytics="dashboard.notifications.count"
-              >
-                {items.length}
-              </span>
-            </div>
-            <p className="text-xs text-gray-500">{t("notificationsSubtitle") || "Latest updates and actions."}</p>
-          </div>
-        </div>
-
-        <Link
-          href={notificationsHref}
-          className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-purple-700 hover:border-purple-200 hover:bg-purple-50 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
-          aria-label={t("viewAll") || "View all notifications"}
-          data-analytics="dashboard.notifications.view_all"
-        >
-          {t("viewAll") || "View all"}
-          <ChevronRightIcon className="h-4 w-4" />
-        </Link>
-      </div>
-
-      <div className="rounded-2xl border border-gray-100 bg-gray-50/70 overflow-auto" style={{ maxHeight: "360px" }}>
-        {items.length === 0 && (
-          <div className="py-4 px-4 text-xs text-gray-500 flex items-center gap-2">
-            <BellIcon className="h-4 w-4 text-gray-400" />
-            {t("noNotifications") || "No notifications yet."}
-          </div>
+    <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[12.5px] font-bold text-gray-900">{t("activity") || "Activity"}</p>
+        {filtered.length > 0 && (
+          <span
+            className="shrink-0 inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700"
+            aria-label={t("notificationsCount") || "Notifications count"}
+            data-analytics="dashboard.notifications.count"
+          >
+            {filtered.length} {t("new") || "new"}
+          </span>
         )}
-        {items.map((item) => {
-          const tone = getTone(item.normalizedStatus);
-          return (
-            <Link
-              key={item.id}
-              href={`${notificationsHref}?focus=${encodeURIComponent(item.id)}`}
-              className="group bg-white px-4 py-3 flex items-start gap-3 border-b border-gray-100 hover:bg-purple-50/40 transition cursor-pointer last:border-b-0"
-              aria-label={t("openNotification") || "Open notification"}
-              data-analytics="dashboard.notifications.open"
-              data-analytics-id={item.id}
-            >
-              <div className={`mt-1 h-2.5 w-2.5 rounded-full ${tone.dot} ring-2 ring-white`} />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
-                {item.desc && <p className="text-xs text-gray-600 truncate">{item.desc}</p>}
-                <p className="text-[11px] text-gray-500 mt-1">{item.ts || t("unknown")}</p>
-              </div>
-              <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${tone.pill}`}>
-                {t(item.status.label)}
-              </span>
-            </Link>
-          );
-        })}
       </div>
+
+      {items.length === 0 ? (
+        <div className="py-4 text-[12px] text-gray-500 flex items-center gap-2">
+          <BellIcon className="h-4 w-4 text-gray-400" />
+          {t("noNotifications") || "No notifications yet."}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-0.5">
+          {items.map((item) => {
+            const tone = getTone(item.normalizedStatus);
+            return (
+              <Link
+                key={item.id}
+                href={`${notificationsHref}?focus=${encodeURIComponent(item.id)}`}
+                className="flex gap-2.5 rounded-lg px-1 py-2 hover:bg-gray-50/80 transition-colors"
+                aria-label={t("openNotification") || "Open notification"}
+                data-analytics="dashboard.notifications.open"
+                data-analytics-id={item.id}
+              >
+                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone.dot}`} />
+                <div className="min-w-0">
+                  <p className="text-[12px] text-gray-700 leading-snug">{item.title}</p>
+                  <p className="text-[10.5px] text-gray-400 mt-0.5">{item.ts || t("unknown")}</p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      <Link
+        href={notificationsHref}
+        className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-purple-700 hover:text-purple-800"
+        aria-label={t("viewAll") || "View all notifications"}
+        data-analytics="dashboard.notifications.view_all"
+      >
+        {t("viewAll") || "View all"}
+        <ChevronRightIcon className="h-3.5 w-3.5" />
+      </Link>
     </section>
   );
 }

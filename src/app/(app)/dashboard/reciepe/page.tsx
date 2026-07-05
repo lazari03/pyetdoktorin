@@ -385,7 +385,7 @@ export default function DoctorReciepePage() {
       loadingLabel={t("loading")}
       analyticsPrefix="dashboard.reciepe"
     >
-      <div className="min-h-screen py-6 px-3">
+      <div className="py-4 sm:py-6 px-3">
         <Modal isOpen={showIssuedModal} onClose={() => setShowIssuedModal(false)}>
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900">
@@ -407,13 +407,13 @@ export default function DoctorReciepePage() {
         </Modal>
         <div className="max-w-5xl mx-auto space-y-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">{t("secureAccessEyebrow") || "Secure access"}</p>
-            <h1 className="text-2xl font-bold text-gray-900">{t("reciepeTitleDoctor") || "Reciepe"}</h1>
-            <p className="text-sm text-gray-600">{t("reciepeSubtitleDoctor") || "Issue prescriptions and keep a clear record for your patients."}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">{t("secureAccessEyebrow") || "Secure access"}</p>
+            <h1 className="text-[15px] font-bold text-gray-900">{t("reciepeTitleDoctor") || "Reciepe"}</h1>
+            <p className="text-[12.5px] text-gray-500">{t("reciepeSubtitleDoctor") || "Issue prescriptions and keep a clear record for your patients."}</p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
               <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("reciepeList") || "Issued reciepes"}</h2>
               <div className="space-y-3">
                 {reciepes.length === 0 ? (
@@ -479,7 +479,7 @@ export default function DoctorReciepePage() {
               </div>
             </section>
 
-            <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5">
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
               <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("newReciepe") || "New reciepe"}</h2>
               <form className="space-y-3" onSubmit={handleSubmit}>
                 {submitError && (

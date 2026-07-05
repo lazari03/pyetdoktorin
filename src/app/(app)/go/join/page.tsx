@@ -54,7 +54,7 @@ export default function GoJoinPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-gradient-to-br from-purple-50 to-white">
-      <Card className="card-premium w-full max-w-lg">
+      <Card className="rounded-xl border border-gray-100 shadow-sm w-full max-w-lg">
         <div className="card-body">
           <h1 className="card-title">{t('redirecting') || 'Redirecting…'}</h1>
           <p className="text-sm text-slate-600 mt-2">

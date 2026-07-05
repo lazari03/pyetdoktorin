@@ -180,7 +180,7 @@ export default function Calendar({ events, availability, onSelectEvent }: Calend
             </div>
 
             {/* Calendar grid */}
-            <div className="rounded-3xl border border-purple-50 bg-white shadow-lg p-3">
+            <div className="rounded-xl border border-gray-100 bg-white shadow-sm p-3">
                 <BigCalendar
                     localizer={localizer}
                     events={events}

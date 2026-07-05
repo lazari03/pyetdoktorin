@@ -5,16 +5,16 @@ import AppointmentConfirmation from './AppointmentConfirmation';
 
 import { useNewAppointmentViewModel } from '@/presentation/view-models/useNewAppointmentViewModel';
 import { useState } from 'react';
-import { CalendarDaysIcon, ClipboardDocumentListIcon, UserCircleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { APPOINTMENT_PRICE_CURRENCY, APPOINTMENT_PRICE_EUR } from '@/config/paywallConfig';
 
 export default function NewAppointmentStepper() {
 	const { t } = useTranslation();
 	const vm = useNewAppointmentViewModel();
 	const steps = [
-		{ key: 'doctor', title: t('stepChooseDoctor'), icon: UserCircleIcon },
-		{ key: 'schedule', title: t('stepSchedule'), icon: CalendarDaysIcon },
-		{ key: 'details', title: t('stepDetails'), icon: ClipboardDocumentListIcon },
-		{ key: 'review', title: t('stepReview'), icon: ShieldCheckIcon },
+		{ key: 'doctor', title: t('stepChooseDoctor') },
+		{ key: 'schedule', title: t('stepSchedule') },
+		{ key: 'details', title: t('stepDetails') },
+		{ key: 'review', title: t('stepReview') },
 	] as const;
 	const [step, setStep] = useState(0);
 
@@ -33,65 +33,65 @@ export default function NewAppointmentStepper() {
 	};
 
 	return (
-		<div className="min-h-screen py-10 px-4">
-			<div className="w-full max-w-5xl mx-auto space-y-8">
-				{/* Header & subtitle */}
-				<div className="flex items-start justify-between flex-wrap gap-4">
-					<div>
-						<p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
-							{t('bookingFlowEyebrow') || 'Telehealth'}
-						</p>
-						<h1 className="text-2xl md:text-3xl font-semibold text-gray-900 mt-1">
-							{t('bookingFlowTitle') || 'Book your visit'}
-						</h1>
-						<p className="text-sm md:text-base text-gray-600">
-							{t('bookingFlowSubtitle') || 'Follow the guided steps. No surprises, just care.'}
-						</p>
-					</div>
-					<div className="bg-white/80 backdrop-blur rounded-2xl border border-purple-100 px-3 py-2 text-xs text-gray-600 shadow-sm">
-						{t('bookingSecureNotice') || 'Your health information is protected and never shared.'}
-					</div>
+		<div className="mx-auto max-w-5xl px-4 py-4 sm:py-6 space-y-4">
+			{/* Header & subtitle */}
+			<div className="flex items-start justify-between flex-wrap gap-4">
+				<div>
+					<p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
+						{t('bookingFlowEyebrow') || 'Telehealth'}
+					</p>
+					<h1 className="text-[15px] font-bold text-gray-900 mt-1">
+						{t('bookingFlowTitle') || 'Book your visit'}
+					</h1>
+					<p className="text-[12.5px] text-gray-500">
+						{t('bookingFlowSubtitle') || 'Follow the guided steps. No surprises, just care.'}
+					</p>
 				</div>
+				<div className="bg-white rounded-xl border border-gray-100 shadow-sm px-3 py-2 text-xs text-gray-600">
+					{t('bookingSecureNotice') || 'Your health information is protected and never shared.'}
+				</div>
+			</div>
 
-				{/* Step indicator */}
-				<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+			{/* Step indicator */}
+			<div className="grid grid-cols-2 md:grid-cols-4 gap-3">
 					{steps.map((s, idx) => {
 						const active = idx === step;
 						const done = idx < step;
-						const Icon = s.icon;
 						return (
 							<div
 								key={s.key}
-								className={`flex items-center gap-3 rounded-2xl border px-3 py-2 text-sm shadow-sm ${
+								className={`flex items-center gap-2 sm:gap-3 rounded-xl border px-2.5 sm:px-3 py-2.5 text-sm shadow-sm min-w-0 ${
 									active
-										? 'border-purple-400 bg-white'
-										: done
-										? 'border-purple-100 bg-white'
-										: 'border-gray-200 bg-white/70'
+										? 'border-purple-200 bg-white'
+										: 'border-gray-100 bg-white'
 								}`}
 							>
 								<div
-									className={`h-9 w-9 rounded-full flex items-center justify-center ${
-										active ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700'
+									className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-[12.5px] font-bold ${
+										done
+											? 'bg-green-100 text-green-700'
+											: active
+											? 'bg-purple-600 text-white'
+											: 'bg-gray-100 text-gray-400'
 									}`}
 								>
-									<Icon className="h-5 w-5" />
+									{done ? '✓' : idx + 1}
 								</div>
-								<div className="flex-1">
-									<p className="text-[11px] uppercase tracking-wide text-gray-500">
+								<div className="flex-1 min-w-0">
+									<p className="text-[10px] font-bold uppercase tracking-[.08em] text-gray-400 truncate">
 										{t('stepLabel', { current: idx + 1, total: steps.length }) || `Step ${idx + 1}`}
 									</p>
-									<p className="font-semibold text-gray-900">{s.title}</p>
+									<p className="text-[12.5px] font-semibold text-gray-900 truncate">{s.title}</p>
 								</div>
 							</div>
 						);
 					})}
 				</div>
 
-				<form onSubmit={vm.handleFormSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				<form onSubmit={vm.handleFormSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0">
 					{/* Main panel */}
-					<div className="lg:col-span-2 space-y-6">
-						<div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-6 space-y-5">
+					<div className="lg:col-span-2 space-y-4 min-w-0">
+						<div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-5">
 							{vm.submitError && (
 								<div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
 									{vm.submitError}
@@ -123,20 +123,32 @@ export default function NewAppointmentStepper() {
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium mb-1 text-gray-700">
+										<label className="block text-sm font-medium mb-1.5 text-gray-700">
 											{t('appointmentType')}
 										</label>
-										<select
-											className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-											value={vm.appointmentType}
-											onChange={(e) => vm.setAppointmentType(e.target.value)}
-											required
-										>
-											<option value="">{t('selectAppointmentType')}</option>
-											<option value="Check-up">{t('checkUp')}</option>
-											<option value="Follow-up">{t('followUp')}</option>
-											<option value="Consultation">{t('consultation')}</option>
-										</select>
+										<div className="flex flex-wrap gap-2">
+											{[
+												{ value: 'Consultation', label: t('consultation') },
+												{ value: 'Check-up', label: t('checkUp') },
+												{ value: 'Follow-up', label: t('followUp') },
+											].map((option) => {
+												const selected = vm.appointmentType === option.value;
+												return (
+													<button
+														key={option.value}
+														type="button"
+														onClick={() => vm.setAppointmentType(option.value)}
+														className={`rounded-lg px-3.5 py-2 text-[12.5px] font-semibold border transition-colors ${
+															selected
+																? 'border-purple-400 bg-purple-50 text-purple-700'
+																: 'border-gray-200 bg-white text-gray-600 hover:border-purple-200'
+														}`}
+													>
+														{option.label}
+													</button>
+												);
+											})}
+										</div>
 									</div>
 
 									<div className="grid md:grid-cols-2 gap-4">
@@ -146,7 +158,7 @@ export default function NewAppointmentStepper() {
 											</label>
 											<input
 												type="date"
-												className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+												className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white"
 												value={vm.preferredDate}
 												onChange={(e) => vm.setPreferredDate(e.target.value)}
 												min={vm.minDate}
@@ -199,7 +211,7 @@ export default function NewAppointmentStepper() {
 										{t('addNotesOptional') || 'Share any symptoms or goals. Optional but helpful for your doctor.'}
 									</p>
 									<textarea
-										className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white min-h-[140px]"
+										className="w-full rounded-lg border border-gray-200 px-3 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 bg-white min-h-[140px]"
 										rows={4}
 										value={vm.notes}
 										onChange={(e) => vm.setNotes(e.target.value)}
@@ -213,15 +225,24 @@ export default function NewAppointmentStepper() {
 									<h2 className="text-lg font-semibold text-gray-900">{t('reviewConfirm')}</h2>
 									<p className="text-sm text-gray-600">{t('readyToConfirm') || 'Review the details before we reserve your slot.'}</p>
 									<div className="grid md:grid-cols-2 gap-3">
-										<SummaryItem label={t('doctor')} value={vm.selectedDoctor?.name || t('notSelected')} helper={vm.selectedDoctor?.specialization} />
-										<SummaryItem label={t('appointmentType')} value={vm.appointmentType || t('notSelected')} />
-										<SummaryItem label={t('preferredDate')} value={vm.preferredDate || t('notSelected')} />
-										<SummaryItem label={t('preferredTime')} value={vm.preferredTime || t('notSelected')} />
+										<SummaryItem label={t('doctor')} value={vm.selectedDoctor?.name || t('notSelected')} helper={vm.selectedDoctor?.specialization} boxed />
+										<SummaryItem label={t('appointmentType')} value={vm.appointmentType || t('notSelected')} boxed />
+										<SummaryItem label={t('preferredDate')} value={vm.preferredDate || t('notSelected')} boxed />
+										<SummaryItem label={t('preferredTime')} value={vm.preferredTime || t('notSelected')} boxed />
 										<SummaryItem
 											label={t('notesLabel')}
 											value={vm.notes ? vm.notes : t('none')}
 											full
+											boxed
 										/>
+									</div>
+									<div className="flex items-center justify-between rounded-xl bg-purple-50 border border-purple-100 px-4 py-3">
+										<span className="text-[12.5px] font-semibold text-purple-800">
+											{t('consultationFee') || 'Consultation fee'}
+										</span>
+										<span className="text-base font-extrabold text-purple-800">
+											{APPOINTMENT_PRICE_CURRENCY} {APPOINTMENT_PRICE_EUR.toFixed(2)}
+										</span>
 									</div>
 								</div>
 							)}
@@ -262,9 +283,9 @@ export default function NewAppointmentStepper() {
 					</div>
 
 					{/* Side summary / reassurance */}
-					<div className="space-y-4">
-						<div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-6 space-y-4">
-							<h3 className="text-base font-semibold text-gray-900">{t('appointmentSummary') || 'Appointment summary'}</h3>
+					<div className="space-y-4 min-w-0">
+						<div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
+							<h3 className="text-[13.5px] font-bold text-gray-900">{t('appointmentSummary') || 'Appointment summary'}</h3>
 							{!vm.hasSummaryContent ? (
 								<p className="text-sm text-gray-500">
 									{t('appointmentSummaryEmpty') || 'Start by selecting a doctor and time. We will recap here.'}
@@ -280,9 +301,9 @@ export default function NewAppointmentStepper() {
 							)}
 						</div>
 
-						<div className="bg-gradient-to-br from-purple-600 to-purple-500 text-white rounded-3xl p-5 shadow-lg">
-							<p className="text-sm font-semibold">{t('carePromiseTitle') || 'Designed for calm care'}</p>
-							<ul className="mt-3 space-y-2 text-sm text-purple-50">
+						<div className="bg-gradient-to-br from-purple-600 to-purple-500 text-white rounded-xl p-5 shadow-sm">
+							<p className="text-[12.5px] font-bold">{t('carePromiseTitle') || 'Designed for calm care'}</p>
+							<ul className="mt-3 space-y-2 text-[12px] text-purple-50">
 								<li>• {t('carePromise1') || 'HIPAA-aware practices and secure sessions.'}</li>
 								<li>• {t('carePromise2') || 'Clear next steps and reminders by email.'}</li>
 								<li>• {t('carePromise3') || 'Human support if you need help scheduling.'}</li>
@@ -290,7 +311,6 @@ export default function NewAppointmentStepper() {
 						</div>
 					</div>
 				</form>
-			</div>
 
 			{/* Confirmation Modal */}
 			{vm.showModal && <AppointmentConfirmation onClose={vm.handleCloseModal} />}
@@ -303,17 +323,19 @@ function SummaryItem({
 	value,
 	helper,
 	full,
+	boxed,
 }: {
 	label: string | undefined;
 	value?: string | null;
 	helper?: string | null;
 	full?: boolean;
+	boxed?: boolean;
 }) {
 	return (
-		<div className={`${full ? 'md:col-span-2' : ''}`}>
-			<p className="text-[11px] uppercase tracking-wide text-gray-500">{label}</p>
-			<p className="font-semibold text-gray-900">{value || '—'}</p>
-			{helper && <p className="text-xs text-gray-500">{helper}</p>}
+		<div className={`${full ? 'md:col-span-2' : ''} ${boxed ? 'rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5' : ''}`}>
+			<p className="text-[10px] font-bold uppercase tracking-[.06em] text-gray-400">{label}</p>
+			<p className="text-[13px] font-semibold text-gray-900 mt-0.5">{value || '—'}</p>
+			{helper && <p className="text-[11.5px] text-gray-500">{helper}</p>}
 		</div>
 	);
 }

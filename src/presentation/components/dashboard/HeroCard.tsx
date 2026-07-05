@@ -41,21 +41,21 @@ export function HeroCard({
   const showJoin = Boolean(onJoin && !showPay && !showWaiting && !showProcessing);
 
   return (
-    <section className="card-premium card-premium-hover overflow-hidden">
-      <div className="relative min-h-[220px] flex items-end">
+    <section className="rounded-lg overflow-hidden shadow-sm">
+      <div className="relative flex flex-col">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.25),transparent_45%)]" />
-        <div className={`relative ${z.absoluteContent} w-full p-6 flex flex-col gap-4 text-white`}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_50%)]" />
+        <div className={`relative ${z.absoluteContent} w-full p-5 sm:p-6 flex flex-col gap-3 text-white`}>
           <div className="space-y-1">
-            {helper && <p className="text-xs text-white/80">{helper}</p>}
-            <h1 className="text-3xl font-semibold leading-tight drop-shadow">{title}</h1>
-            {subtitle && <p className="text-sm text-white/80">{subtitle}</p>}
+            {helper && <p className="text-[11px] uppercase tracking-wide font-semibold text-white/70">{helper}</p>}
+            <h1 className="text-2xl sm:text-3xl font-bold leading-tight">{title}</h1>
+            {subtitle && <p className="text-sm text-white/80 leading-snug">{subtitle}</p>}
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 pt-1">
             {showJoin && (
               <button
                 onClick={onJoin}
-                className="inline-flex items-center gap-2 rounded-full bg-white text-purple-700 px-4 py-2 text-sm font-semibold shadow hover:bg-purple-50 transition"
+                className="inline-flex items-center gap-2 rounded-lg bg-white text-purple-700 px-4 py-2 text-sm font-semibold shadow hover:bg-purple-100 hover:text-purple-800 transition-colors"
               >
                 <PhoneIcon className="h-4 w-4" />
                 {ctaLabel}
@@ -63,7 +63,7 @@ export function HeroCard({
             )}
             {showProcessing && (
               <button
-                className="inline-flex items-center gap-2 rounded-full bg-white/80 text-purple-700 px-4 py-2 text-sm font-semibold shadow cursor-wait"
+                className="inline-flex items-center gap-2 rounded-lg bg-white/80 text-purple-700 px-4 py-2 text-sm font-semibold shadow cursor-wait"
                 disabled
               >
                 <span className="h-4 w-4 animate-spin rounded-full border border-purple-400 border-t-transparent" />
@@ -72,7 +72,7 @@ export function HeroCard({
             )}
             {showWaiting && (
               <button
-                className="inline-flex items-center gap-2 rounded-full bg-white/20 text-white px-4 py-2 text-sm font-semibold shadow cursor-not-allowed"
+                className="inline-flex items-center gap-2 rounded-lg bg-white/20 text-white px-4 py-2 text-sm font-semibold cursor-not-allowed"
                 disabled
               >
                 <ClockIcon className="h-4 w-4" />
@@ -82,7 +82,7 @@ export function HeroCard({
             {showPay && (
               <button
                 onClick={onPay}
-                className="inline-flex items-center gap-2 rounded-full border border-white/80 text-white px-4 py-2 text-sm font-semibold hover:bg-white hover:text-purple-700 transition"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/80 text-white px-4 py-2 text-sm font-semibold hover:bg-white hover:text-purple-700 transition-colors"
               >
                 <CreditCardIcon className="h-4 w-4" />
                 {payLabel}
@@ -91,7 +91,7 @@ export function HeroCard({
             {onViewProfile && (
               <button
                 onClick={onViewProfile}
-                className="inline-flex items-center gap-2 rounded-full bg-white/20 text-white px-4 py-2 text-sm font-semibold hover:bg-white/30 transition"
+                className="inline-flex items-center gap-2 rounded-lg bg-white/15 text-white px-4 py-2 text-sm font-semibold hover:bg-white/30 transition-colors"
               >
                 <UserIcon className="h-4 w-4" />
                 {profileLabel}

@@ -148,107 +148,107 @@ export default function EarningsPage() {
       analyticsPrefix="earnings"
     >
       {earningsData ? (
-        <div className="min-h-screen">
-          <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10">
+        <div>
+          <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link 
+        <div className="flex items-center gap-4">
+          <Link
             href={DASHBOARD_PATHS.root}
-            className="p-2 rounded-full bg-white shadow-sm hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-[15px] font-bold text-gray-900">
               {t("earningsHistory") || "Earnings History"}
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-[12.5px] text-gray-500">
               {t("trackYourEarnings") || "Track your earnings and performance"}
             </p>
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-3 mb-8">
+        <div className="grid gap-4 md:grid-cols-3">
           {/* Total Earnings */}
-          <div className="bg-white rounded-2xl shadow-md p-6 border border-purple-50">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-purple-100 rounded-lg">
                 <BanknotesIcon className="h-5 w-5 text-purple-600" />
               </div>
-              <p className="text-sm text-gray-600">{t("totalEarnings") || "Total Earnings"}</p>
+              <p className="text-[11.5px] text-gray-500">{t("totalEarnings") || "Total Earnings"}</p>
             </div>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
               ${earningsData.totalEarnings.toFixed(2)}
             </p>
           </div>
 
           {/* Current Month */}
-          <div className="bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-2xl shadow-md p-6 text-white">
+          <div className="bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-sm p-4 text-white">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-white/20 rounded-lg">
                 <CalendarIcon className="h-5 w-5 text-white" />
               </div>
-              <p className="text-sm text-white/80">{t("thisMonth") || "This Month"}</p>
+              <p className="text-[11.5px] text-white/80">{t("thisMonth") || "This Month"}</p>
             </div>
-            <p className="text-3xl font-bold">
+            <p className="text-3xl font-extrabold tracking-tight">
               ${earningsData.currentMonthEarnings.toFixed(2)}
             </p>
           </div>
 
           {/* Total Appointments */}
-          <div className="bg-white rounded-2xl shadow-md p-6 border border-purple-50">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 rounded-lg bg-purple-100">
                 <CalendarIcon className="h-5 w-5 text-purple-600" />
               </div>
-              <p className="text-sm text-gray-600">{t("appointmentsInTotal") || "Appointments in total"}</p>
+              <p className="text-[11.5px] text-gray-500">{t("appointmentsInTotal") || "Appointments in total"}</p>
             </div>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
               {earningsData.totalAppointments}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-[10.5px] text-gray-400 mt-1">
               {t("allTime") || "All time"}
             </p>
           </div>
         </div>
 
         {/* Monthly Breakdown */}
-        <div className="bg-white rounded-2xl shadow-md border border-purple-50 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="text-[13.5px] font-bold text-gray-900">
               {t("monthlyBreakdown") || "Monthly Breakdown"}
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-[11.5px] text-gray-500">
               {t("earningsByMonth") || "Your earnings breakdown by month"}
             </p>
           </div>
-          
-          <div className="divide-y divide-gray-100">
+
+          <div className="divide-y divide-gray-50">
             {earningsData.monthlyData.map((month, index) => (
-              <div key={`${month.month}-${month.year}`} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+              <div key={`${month.month}-${month.year}`} className="p-4 flex items-center justify-between hover:bg-gray-50/60 transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                    <span className="text-sm font-bold text-purple-600">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center shrink-0">
+                    <span className="text-[11px] font-bold text-purple-700">
                       {month.month.slice(0, 3)}
                     </span>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">
+                    <p className="text-[12.5px] font-semibold text-gray-900">
                       {month.month} {month.year}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-[10.5px] text-gray-400">
                       {month.appointments} {t("appointments") || "appointments"}
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-[13px] font-bold text-gray-900">
                     ${month.earnings.toFixed(2)}
                   </p>
                   {index > 0 && month.percentageChange !== 0 && (
-                    <p className={`text-xs ${month.isIncrease ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`text-[10.5px] font-semibold ${month.isIncrease ? 'text-green-600' : 'text-red-600'}`}>
                       {month.isIncrease ? '↑' : '↓'} {Math.abs(month.percentageChange).toFixed(1)}%
                     </p>
                   )}
@@ -259,8 +259,8 @@ export default function EarningsPage() {
         </div>
 
         {/* Info Note */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-          <p className="text-sm text-blue-800">
+        <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+          <p className="text-[12px] text-blue-800">
             <strong>{t("note") || "Note"}:</strong>{" "}
             {t("earningsInfo") ||
               `You receive ${DOCTOR_PAYOUT_PERCENTAGE}% of each appointment fee (${APPOINTMENT_PRICE_CURRENCY} ${APPOINTMENT_PRICE_EUR}). Earnings are calculated based on completed and paid appointments only.`}

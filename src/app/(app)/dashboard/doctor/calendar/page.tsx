@@ -25,7 +25,7 @@ import type { CalendarEvent } from '../Calendar';
 const Calendar = dynamic(() => import('../Calendar'), {
   ssr: false,
   loading: () => (
-    <div className="rounded-3xl border border-purple-50 bg-white shadow-lg p-4">
+    <div className="rounded-xl border border-gray-100 bg-white shadow-sm p-4">
       <div className="h-10 w-48 rounded-2xl bg-slate-100 animate-pulse" />
       <div className="mt-4 h-[68vh] min-h-[520px] rounded-2xl bg-slate-100 animate-pulse" />
     </div>
@@ -213,26 +213,26 @@ export default function DoctorCalendarPage() {
         loadingLabel={t('loading')}
         analyticsPrefix="doctor_calendar"
       >
-        <div className="min-h-screen">
+        <div>
           <RedirectingModal show={showRedirecting} />
-          <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10 space-y-6">
+          <div className="space-y-4">
             <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-purple-600 font-semibold">
+                <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
                   {t('doctorCalendar') || 'Doctor calendar'}
                 </p>
-                <h1 className="text-3xl font-semibold text-gray-900 mt-1">
+                <h1 className="text-[15px] font-bold text-gray-900 mt-1">
                   {t('yourAppointments') || 'Your appointments'}
                 </h1>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-[12.5px] text-gray-500 mt-1">
                   {t('calendarHelper') || 'Manage your week and jump into calls on time.'}
                 </p>
               </div>
-              <div className="rounded-2xl border border-purple-100 bg-white px-4 py-3 shadow-sm">
-                <p className="text-xs uppercase tracking-wide text-purple-600 font-semibold">
+              <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[.1em] text-purple-600">
                   {t('upcoming') || 'Upcoming'}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-2xl font-extrabold text-gray-900 mt-1 tracking-tight">
                   {upcomingCount}
                 </p>
               </div>

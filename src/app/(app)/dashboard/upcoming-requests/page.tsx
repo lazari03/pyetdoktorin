@@ -53,26 +53,26 @@ export default function UpcomingRequestsPage() {
       loadingLabel={t('loading')}
       analyticsPrefix="upcoming_requests"
     >
-      <div className="min-h-screen">
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:py-10 space-y-6">
+      <div>
+        <div className="space-y-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+            <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
               {t('secureAccessEyebrow') ?? 'Secure access'}
             </p>
-            <h1 className="text-2xl font-semibold text-gray-900">{t('upcomingRequests')}</h1>
-            <p className="text-sm text-gray-600">
+            <h1 className="text-[15px] font-bold text-gray-900">{t('upcomingRequests')}</h1>
+            <p className="text-[12.5px] text-gray-500">
               {t('manageUpcomingAppointments') ?? 'Manage your upcoming appointment requests.'}
             </p>
           </div>
 
           {requests.length === 0 ? (
-            <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center text-sm text-gray-600">
+            <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-6 text-center text-sm text-gray-500">
               {t('noUpcomingRequests')}
             </div>
           ) : (
             <div className="space-y-4">
               {requests.map((request) => (
-                <div key={request.id} className="rounded-3xl bg-white border border-purple-50 shadow p-5 space-y-3">
+                <div key={request.id} className="rounded-xl bg-white border border-gray-100 shadow-sm p-5 space-y-3">
                   <div>
                     <h2 className="text-base font-semibold text-gray-900">
                       {t('appointmentWith', { doctorId: request.doctorId })}

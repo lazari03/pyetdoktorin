@@ -1384,5 +1384,7 @@
   "psychCtaTitle": "Need support today?",
   "psychCtaSubtitle": "Book your psychologist online in minutes.",
   "psychCtaPrimary": "Book now",
-  "psychCtaSecondary": "See pricing"
+  "psychCtaSecondary": "See pricing",
+  "collapseSidebar": "Collapse sidebar",
+  "expandSidebar": "Expand sidebar"
 }

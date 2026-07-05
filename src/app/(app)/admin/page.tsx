@@ -48,19 +48,19 @@ export default function AdminPage() {
         loadingLabel={t('loading')}
         analyticsPrefix="admin.dashboard"
       >
-        <div className="space-y-6">
-          <section className="bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-500 rounded-3xl shadow-lg p-6 text-white">
+        <div className="space-y-4">
+          <section className="bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-sm p-5 text-white">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <p className="text-sm uppercase tracking-wide text-white/70">{t('adminControlCenter') || 'Admin Control Center'}</p>
-                <h1 className="text-3xl font-bold mt-1">{t('adminDashboard')}</h1>
-                <p className="text-white/80 mt-2 text-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[.13em] text-white/70">{t('adminControlCenter') || 'Admin Control Center'}</p>
+                <h1 className="text-2xl font-bold mt-1">{t('adminDashboard')}</h1>
+                <p className="text-white/80 mt-2 text-[12.5px]">
                   {t('adminDashboardHero') || 'Monitor platform activity, manage users, and review clinic bookings from one place.'}
                 </p>
               </div>
-              <div className="bg-white/10 rounded-2xl px-5 py-4 text-center">
-                <p className="text-xs uppercase tracking-wide text-white/80">{t('revenueThisMonth') || 'Revenue this month'}</p>
-                <p className="text-2xl font-bold">
+              <div className="bg-white/10 rounded-xl px-5 py-4 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-[.1em] text-white/80">{t('revenueThisMonth') || 'Revenue this month'}</p>
+                <p className="text-2xl font-extrabold tracking-tight">
                   {stats ? formatter.format(stats.monthlyRevenue ?? 0) : '—'}
                 </p>
               </div>
@@ -69,21 +69,21 @@ export default function AdminPage() {
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {cards.map((card) => (
-              <div key={card.label} className="bg-white rounded-2xl shadow-md border border-purple-50 p-5">
-                <p className="text-xs uppercase tracking-wide text-gray-500">{card.label}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {loading && !stats ? <span className="text-gray-400">…</span> : card.value}
+              <div key={card.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <p className="text-[11.5px] text-gray-500">{card.label}</p>
+                <p className="text-3xl font-extrabold text-gray-900 tracking-tight mt-2">
+                  {loading && !stats ? <span className="text-gray-300">—</span> : card.value}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">{card.helper}</p>
+                <p className="text-[10.5px] text-gray-400 mt-1">{card.helper}</p>
               </div>
             ))}
           </section>
 
-          <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-5">
+          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{t('users')}</h2>
-                <p className="text-sm text-gray-600">{t('manageUsersHint') || 'Review, edit, and reset access for any account.'}</p>
+                <h2 className="text-[13.5px] font-bold text-gray-900">{t('users')}</h2>
+                <p className="text-[11.5px] text-gray-500">{t('manageUsersHint') || 'Review, edit, and reset access for any account.'}</p>
               </div>
             </div>
             <UsersTable />

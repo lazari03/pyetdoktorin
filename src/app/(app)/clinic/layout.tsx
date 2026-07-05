@@ -54,6 +54,8 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
           handleLogoutClick();
         }
       }}
+      displayName={user?.name || undefined}
+      displayEmail={user?.email || undefined}
     >
       {verificationRequired ? null : children}
       <EmailVerificationRequiredModal isOpen={verificationRequired} onLogout={handleLogoutClick} />

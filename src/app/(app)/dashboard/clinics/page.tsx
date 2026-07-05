@@ -118,18 +118,18 @@ export default function ClinicsPage() {
       loadingLabel={t('loading')}
       analyticsPrefix="dashboard.clinics"
     >
-      <div className="min-h-screen">
-        <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-          <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 flex items-center justify-between">
+      <div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{t('privateClinics') || 'Private Clinics'}</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-[15px] font-bold text-gray-900">{t('privateClinics') || 'Private Clinics'}</h1>
+              <p className="text-[12.5px] text-gray-500 mt-1">
                 {t('privateClinicsSubtitle') || 'Choose a clinic and send a booking request'}
               </p>
             </div>
             <Link
               href={DASHBOARD_PATHS.clinicsHistory}
-              className="text-sm font-semibold text-purple-600 hover:underline"
+              className="text-[12.5px] font-semibold text-purple-600 hover:underline"
               data-analytics="dashboard.clinics.view_requests"
             >
               {t('viewRequests') || 'View requests'}
@@ -137,20 +137,20 @@ export default function ClinicsPage() {
           </div>
 
           {clinics.length === 0 ? (
-            <div className="rounded-3xl bg-white border border-purple-50 shadow p-6 text-center">
-              <p className="text-lg font-semibold text-gray-900">
+            <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-6 text-center">
+              <p className="text-[14px] font-bold text-gray-900">
                 {t('noClinicsAvailable') || 'No clinics available yet'}
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-[12.5px] text-gray-500 mt-1">
                 {t('noClinicsAvailableSubtitle') || 'Please check back later.'}
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               {clinics.map((clinic) => (
                 <div
                   key={clinic.id}
-                  className="bg-white rounded-2xl shadow-md border border-purple-50 overflow-hidden flex flex-col"
+                  className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
                 >
                   {clinic.imageUrl ? (
                     <div className="relative h-40 w-full">
@@ -204,7 +204,7 @@ export default function ClinicsPage() {
 
       {selectedClinic && (
         <div className={`fixed inset-0 bg-black/40 flex items-center justify-center px-4 ${z.modal}`}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 relative">
             <button className="absolute top-4 right-4 text-gray-500" onClick={() => setSelectedClinic(null)}>
               ×
             </button>

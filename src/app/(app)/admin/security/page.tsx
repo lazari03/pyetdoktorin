@@ -126,15 +126,15 @@ export default function AdminSecurityPage() {
       loadingLabel={t('loading', { defaultValue: 'Loading...' })}
       analyticsPrefix="admin.security_logs"
     >
-      <div className="space-y-6">
-        <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
-          <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+      <div className="space-y-4">
+        <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
             {t('securityLogs', { defaultValue: 'Security logs' })}
           </p>
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 mt-2">
+          <h1 className="text-[15px] font-bold text-gray-900 mt-2">
             {t('securityLogsTitle', { defaultValue: 'Security activity' })}
           </h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-[12.5px] text-gray-500 mt-2">
             {t('securityLogsSubtitle', {
               defaultValue:
                 'Review sign-ins, failed session attempts, and logout events with account and network context.',
@@ -144,20 +144,20 @@ export default function AdminSecurityPage() {
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {stats.map((card) => (
-            <div key={card.label} className="bg-white rounded-2xl shadow-md border border-purple-50 p-5">
-              <p className="text-xs uppercase tracking-wide text-gray-500">{card.label}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{card.value}</p>
+            <div key={card.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <p className="text-[11.5px] text-gray-500">{card.label}</p>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight mt-2">{card.value}</p>
             </div>
           ))}
         </section>
 
-        <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 space-y-4">
+        <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-[13.5px] font-bold text-gray-900">
                 {t('securityLogsListTitle', { defaultValue: 'Latest events' })}
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-[11.5px] text-gray-500">
                 {t('securityLogsListSubtitle', {
                   defaultValue: 'IP and location are best-effort and depend on proxy headers being available.',
                 })}
@@ -181,7 +181,7 @@ export default function AdminSecurityPage() {
                   key={item}
                   type="button"
                   onClick={() => setFilter(item)}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  className={`rounded-full px-4 py-2 text-[12px] font-semibold transition ${
                     active
                       ? 'bg-purple-600 text-white shadow-sm'
                       : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
@@ -194,7 +194,7 @@ export default function AdminSecurityPage() {
           </div>
 
           {filteredItems.length === 0 ? (
-            <div className="rounded-2xl border border-gray-200 bg-gray-50/60 px-4 py-6 text-center text-sm text-gray-500">
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-6 text-center text-sm text-gray-500">
               {t('securityLogsEmpty', { defaultValue: 'No security events recorded yet.' })}
             </div>
           ) : (
@@ -209,7 +209,7 @@ export default function AdminSecurityPage() {
                 return (
                   <article
                     key={item.id}
-                    className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm"
+                    className="rounded-xl border border-gray-100 bg-white px-5 py-4 shadow-sm"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>

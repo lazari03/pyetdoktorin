@@ -1,26 +1,76 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { useDI } from '@/context/DIContext';
+import { useDoctorSearchStore } from '@/store/doctorSearchStore';
+import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import {
   ArrowRightOnRectangleIcon,
   BanknotesIcon,
   Bars3Icon,
   BellIcon,
+  MagnifyingGlassIcon,
   BuildingOfficeIcon,
   BuildingStorefrontIcon,
   CalendarIcon,
+  CheckCircleIcon,
+  ClipboardDocumentListIcon,
   ClockIcon,
+  DocumentIcon,
+  DocumentPlusIcon,
+  DocumentTextIcon,
   HomeModernIcon,
+  PlusCircleIcon,
+  ShieldCheckIcon,
+  Squares2X2Icon,
   UserCircleIcon,
+  UsersIcon,
+  XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { z } from '@/config/zIndex';
 import type { MenuEntryDef, NavItemDef } from '@/navigation/navConfig';
+import { useNotificationsLogic } from '@/app/(app)/dashboard/notifications/useNotificationsLogic';
 
 export type AppSectionId = 'dashboard' | 'admin' | 'clinic' | 'pharmacy';
 export type MenuActionId = Extract<MenuEntryDef, { kind: 'action' }>['actionId'];
+
+const SIDEBAR_COLLAPSE_STORAGE_KEY = 'pd_sidebar_collapsed';
+const SIDEBAR_WIDTH_EXPANDED = 'md:w-[248px]';
+const SIDEBAR_WIDTH_COLLAPSED = 'md:w-[76px]';
+
+function sectionLabel(sectionId: AppSectionId): string {
+  switch (sectionId) {
+    case 'admin': return 'ADMIN MENU';
+    case 'clinic': return 'CLINIC MENU';
+    case 'pharmacy': return 'PHARMACY MENU';
+    case 'dashboard':
+    default: return 'PATIENT MENU';
+  }
+}
+
+function sectionNotificationsHref(sectionId: AppSectionId): string {
+  switch (sectionId) {
+    case 'admin': return '/admin/notifications';
+    case 'clinic': return '/clinic/notifications';
+    case 'pharmacy': return '/pharmacy/notifications';
+    case 'dashboard':
+    default: return '/dashboard/notifications';
+  }
+}
+
+function sectionSearchHref(sectionId: AppSectionId, q: string): string {
+  const encoded = encodeURIComponent(q);
+  switch (sectionId) {
+    case 'admin': return `/admin/users?search=${encoded}`;
+    case 'clinic': return `/clinic/bookings?search=${encoded}`;
+    case 'pharmacy': return `/pharmacy/reciepes?search=${encoded}`;
+    case 'dashboard':
+    default: return `/dashboard/notifications?q=${encoded}`;
+  }
+}
 
 function sectionHomeHref(sectionId: AppSectionId): string {
   switch (sectionId) {
@@ -104,6 +154,48 @@ function menuIcon({
   }
 }
 
+// Sidebar nav items carry no iconKey of their own (NavItemDef is shared across every
+// section and intentionally minimal) — map by nav `key` instead so the icons stay in
+// sync without touching src/navigation/navConfig.ts.
+function navIcon({ iconKey, sectionId }: { iconKey: string; sectionId: AppSectionId }): React.ReactNode {
+  const cls = 'h-full w-full';
+  switch (iconKey) {
+    case 'dashboard':
+    case 'adminDashboard':
+    case 'clinicDashboard':
+    case 'pharmacyDashboard':
+      if (sectionId === 'clinic') return <BuildingOfficeIcon className={cls} />;
+      if (sectionId === 'pharmacy') return <BuildingStorefrontIcon className={cls} />;
+      return <HomeModernIcon className={cls} />;
+    case 'newAppointment':
+      return <PlusCircleIcon className={cls} />;
+    case 'appointments':
+    case 'appointmentHistory':
+    case 'reports':
+    case 'bookings':
+      return <ClipboardDocumentListIcon className={cls} />;
+    case 'calendar':
+    case 'availability':
+      return <CalendarIcon className={cls} />;
+    case 'reciepe':
+    case 'reciepes':
+    case 'myReciepes':
+      return <DocumentTextIcon className={cls} />;
+    case 'privateClinics':
+      return <BuildingOfficeIcon className={cls} />;
+    case 'users':
+      return <UsersIcon className={cls} />;
+    case 'notifications':
+      return <BellIcon className={cls} />;
+    case 'security':
+      return <ShieldCheckIcon className={cls} />;
+    case 'blog':
+      return <DocumentIcon className={cls} />;
+    default:
+      return <Squares2X2Icon className={cls} />;
+  }
+}
+
 export default function SectionShell({
   sectionId,
   navItems,
@@ -113,7 +205,10 @@ export default function SectionShell({
   onNavigate,
   onMenuAction,
   mobileCenter,
-  desktopLeft,
+  notificationCount,
+  displayName,
+  displayEmail,
+  topbarCta,
   children,
 }: {
   sectionId: AppSectionId;
@@ -126,33 +221,154 @@ export default function SectionShell({
   mobileTitleKey?: string;
   mobileTitleFallback?: string;
   mobileCenter?: React.ReactNode;
-  desktopLeft?: React.ReactNode;
+  notificationCount?: number;
+  displayName?: string;
+  displayEmail?: string;
+  topbarCta?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [topbarProfileOpen, setTopbarProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [doctorDropdownOpen, setDoctorDropdownOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
   const mobileProfileMenuRef = useRef<HTMLDivElement | null>(null);
   const desktopProfileMenuRef = useRef<HTMLDivElement | null>(null);
+  const topbarProfileMenuRef = useRef<HTMLDivElement | null>(null);
+  const notifMenuRef = useRef<HTMLDivElement | null>(null);
   const { t } = useTranslation();
+  const { fetchDoctorsUseCase } = useDI();
+  const nav = useNavigationCoordinator();
+  const { filteredDoctors, setSearchTerm: setDoctorSearchTerm, fetchDoctors, reset: resetDoctorSearch } = useDoctorSearchStore();
+  const {
+    appointmentNotifications,
+    prescriptionNotifications,
+    handleDismissNotification,
+  } = useNotificationsLogic(nav);
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-    setProfileMenuOpen(false);
-  }, [activePath]);
+  const notifFeed = useMemo(() => {
+    const fromAppointments = appointmentNotifications.slice(0, 6).map((a) => {
+      const normalized = (a.status || '').toString().trim().toLowerCase();
+      const tone =
+        normalized === 'accepted'
+          ? { icon: CheckCircleIcon, bg: 'bg-green-100', color: 'text-green-700' }
+          : normalized === 'rejected' || normalized === 'declined' || normalized === 'canceled' || normalized === 'cancelled'
+          ? { icon: XCircleIcon, bg: 'bg-red-100', color: 'text-red-700' }
+          : { icon: BellIcon, bg: 'bg-amber-100', color: 'text-amber-700' };
+      const text =
+        normalized === 'accepted'
+          ? t('notificationAccepted', { doctor: a.doctorName || t('doctor') })
+          : normalized === 'rejected'
+          ? t('notificationRejected', { doctor: a.doctorName || t('doctor') })
+          : t('notificationPending', { doctor: a.doctorName || t('doctor') });
+      return {
+        id: `appt-${a.id}`,
+        appointmentId: a.id,
+        icon: tone.icon,
+        bg: tone.bg,
+        color: tone.color,
+        text,
+        ts: new Date(a.createdAt).getTime(),
+      };
+    });
+    const fromPrescriptions = prescriptionNotifications.slice(0, 6).map((p) => ({
+      id: `rx-${p.id}`,
+      appointmentId: null,
+      icon: DocumentPlusIcon,
+      bg: 'bg-blue-100',
+      color: 'text-blue-700',
+      text: t('notificationNewPrescription', { doctor: p.doctorName || t('doctor') }) || `New prescription issued by ${p.doctorName || t('doctor')}.`,
+      ts: p.updatedAt,
+    }));
+    return [...fromAppointments, ...fromPrescriptions]
+      .filter((n) => Number.isFinite(n.ts))
+      .sort((a, b) => b.ts - a.ts)
+      .slice(0, 6);
+  }, [appointmentNotifications, prescriptionNotifications, t]);
 
+  const markAllRead = useCallback(() => {
+    notifFeed.forEach((n) => {
+      if (n.appointmentId) handleDismissNotification(n.appointmentId);
+    });
+  }, [notifFeed, handleDismissNotification]);
+
+  const handleDoctorSearchChange = useCallback((value: string) => {
+    setSearchValue(value);
+    if (sectionId !== 'dashboard') return;
+    setDoctorSearchTerm(value);
+    if (value.trim().length > 0) {
+      setDoctorDropdownOpen(true);
+      fetchDoctors((term, type) => fetchDoctorsUseCase.execute(term, type));
+    } else {
+      setDoctorDropdownOpen(false);
+      resetDoctorSearch();
+    }
+  }, [sectionId, setDoctorSearchTerm, fetchDoctors, fetchDoctorsUseCase, resetDoctorSearch]);
+
+  // Close doctor dropdown on outside click
   useEffect(() => {
-    if (!profileMenuOpen) return;
+    if (!doctorDropdownOpen) return;
     const handler = (e: MouseEvent) => {
-      if (!(e.target instanceof Node)) return;
-      const insideMobile = mobileProfileMenuRef.current?.contains(e.target) ?? false;
-      const insideDesktop = desktopProfileMenuRef.current?.contains(e.target) ?? false;
-      if (!insideMobile && !insideDesktop) {
-        setProfileMenuOpen(false);
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setDoctorDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [profileMenuOpen]);
+  }, [doctorDropdownOpen]);
+
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return t('goodMorning') || 'Good morning';
+    if (h < 17) return t('goodAfternoon') || 'Good afternoon';
+    return t('goodEvening') || 'Good evening';
+  })();
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(SIDEBAR_COLLAPSE_STORAGE_KEY);
+    if (stored === '1') setCollapsed(true);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(SIDEBAR_COLLAPSE_STORAGE_KEY, collapsed ? '1' : '0');
+  }, [collapsed]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setProfileMenuOpen(false);
+    setNotifOpen(false);
+  }, [activePath]);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!(e.target instanceof Node)) return;
+      if (notifMenuRef.current && !notifMenuRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [notifOpen]);
+
+  useEffect(() => {
+    if (!profileMenuOpen && !topbarProfileOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!(e.target instanceof Node)) return;
+      const insideMobile = mobileProfileMenuRef.current?.contains(e.target) ?? false;
+      const insideDesktop = desktopProfileMenuRef.current?.contains(e.target) ?? false;
+      const insideTopbar = topbarProfileMenuRef.current?.contains(e.target) ?? false;
+      if (!insideMobile && !insideDesktop && !insideTopbar) {
+        setProfileMenuOpen(false);
+        setTopbarProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [profileMenuOpen, topbarProfileOpen]);
 
   const renderedNav = useMemo(
     () =>
@@ -178,36 +394,31 @@ export default function SectionShell({
   const handleNavigate = (href: string) => {
     setMobileMenuOpen(false);
     setProfileMenuOpen(false);
+    setTopbarProfileOpen(false);
     onNavigate(href);
   };
 
   const handleAction = (actionId: MenuActionId) => {
     setMobileMenuOpen(false);
     setProfileMenuOpen(false);
+    setTopbarProfileOpen(false);
     onMenuAction(actionId);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchValue.trim();
+    if (!q) return;
+    if (sectionId === 'dashboard') return; // dashboard uses the dropdown
+    handleNavigate(sectionSearchHref(sectionId, q));
+    setSearchValue('');
   };
 
   const homeHref = sectionHomeHref(sectionId);
 
-  const profileButtonClassName =
-    sectionId === 'dashboard'
-      ? 'h-8 w-8 rounded-full bg-gray-900 text-xs font-semibold text-white flex items-center justify-center'
-      : 'h-8 w-8 rounded-full bg-purple-600 text-xs font-semibold text-white flex items-center justify-center';
-
-  const desktopLeftNode =
-    desktopLeft ?? (
-      <Link
-        href={homeHref}
-        className="inline-flex items-center"
-        aria-label="Pyet Doktorin"
-        data-analytics={`${sectionId}.brand.home`}
-      >
-        <AppWordmark tone="dark" pharmacyMark={sectionId === 'pharmacy'} />
-      </Link>
-    );
 
   return (
-    <div className="app-page-gradient min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col md:flex-row bg-[#f5f6fa] overflow-hidden">
       <div
         className={`md:hidden fixed top-0 left-0 right-0 bg-white shadow-md flex items-center justify-between px-4 py-4 ${z.navbar}`}
       >
@@ -242,7 +453,7 @@ export default function SectionShell({
               setMobileMenuOpen(false);
               setProfileMenuOpen((open) => !open);
             }}
-            className={profileButtonClassName}
+            className="h-9 w-9 rounded-full bg-purple-600 text-sm font-bold text-white flex items-center justify-center hover:bg-purple-700 transition-colors"
             aria-label="Open profile menu"
             data-analytics={`${sectionId}.profile.toggle`}
           >
@@ -317,54 +528,310 @@ export default function SectionShell({
         </div>
       )}
 
-      <header className={`hidden md:block sticky top-0 ${z.navbar}`}>
-        <div className="relative border-b border-white/10 bg-gradient-to-r from-purple-800 via-purple-700 to-purple-600 text-white shadow-md">
-          <div className="pointer-events-none absolute inset-0 opacity-70 [background:radial-gradient(circle_at_15%_15%,rgba(255,255,255,0.18),transparent_45%),radial-gradient(circle_at_85%_0%,rgba(56,189,248,0.12),transparent_40%)]" />
-          <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-6 px-10 py-4">
-            {desktopLeftNode}
+      <aside
+        className={`hidden md:flex md:flex-col md:h-full shrink-0 border-r border-gray-200 bg-white transition-[width] duration-200 ease-out relative ${z.sidebar} ${
+          collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED
+        }`}
+      >
+        {/* Brand row */}
+        <div className={`flex items-center h-[68px] shrink-0 px-5 gap-3 ${collapsed ? 'justify-center px-0' : ''}`}>
+          <Link
+            href={homeHref}
+            className="flex items-center gap-2.5"
+            aria-label="Pyet Doktorin"
+            data-analytics={`${sectionId}.brand.home`}
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white font-bold text-lg shadow-sm">
+              +
+            </span>
+            {!collapsed && (
+              <span className="flex flex-col leading-tight">
+                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-900">PYETDOKTORIN</span>
+                <span className="text-[10px] uppercase tracking-[0.14em] text-gray-400 font-medium">HEALTH PLATFORM</span>
+              </span>
+            )}
+          </Link>
+        </div>
 
-            <nav className="flex flex-1 items-center justify-center" aria-label="Primary navigation">
-              <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/10 p-1 shadow-sm backdrop-blur">
-                {renderedNav.map((item) => {
-                  const active = activePath === item.href;
+        {/* Section label */}
+        {!collapsed && (
+          <p className="px-5 pt-3 pb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
+            {sectionLabel(sectionId)}
+          </p>
+        )}
+
+        <nav className="flex-1 overflow-y-auto px-3 py-1 space-y-0.5" aria-label="Primary navigation">
+          {renderedNav.map((item) => {
+            const active = activePath === item.href;
+            return (
+              <button
+                key={item.href}
+                type="button"
+                onClick={() => handleNavigate(item.href)}
+                aria-current={active ? 'page' : undefined}
+                title={collapsed ? item.name : undefined}
+                className={`group flex w-full items-center gap-3 rounded-xl py-2.5 text-sm transition-all duration-150 ${
+                  collapsed ? 'justify-center px-2' : 'px-3'
+                } ${
+                  active
+                    ? 'bg-purple-50 text-purple-700 font-semibold'
+                    : 'text-gray-600 font-medium hover:bg-gray-100 hover:text-gray-900'
+                }`}
+                data-analytics={`${sectionId}.nav.${item.key}`}
+              >
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center ${
+                    active ? 'text-purple-600' : 'text-gray-400 group-hover:text-gray-600'
+                  }`}
+                >
+                  {navIcon({ iconKey: item.key, sectionId })}
+                </span>
+                {!collapsed && <span className="truncate">{item.name}</span>}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Bottom: user */}
+        <div className="border-t border-gray-100 p-3 space-y-1">
+          <div className="relative" ref={desktopProfileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen((open) => !open)}
+              className={`flex w-full items-center gap-3 rounded-xl p-2 hover:bg-gray-50 transition-colors ${
+                collapsed ? 'justify-center' : ''
+              }`}
+              aria-label="Open profile menu"
+              data-analytics={`${sectionId}.profile.toggle`}
+            >
+              <span className="h-9 w-9 shrink-0 rounded-full bg-purple-600 text-sm font-bold text-white flex items-center justify-center">
+                {initials}
+              </span>
+              {!collapsed && (
+                <span className="flex flex-col min-w-0 text-left">
+                  <span className="text-sm font-semibold text-gray-900 truncate">{displayName || initials}</span>
+                  {displayEmail && (
+                    <span className="text-xs text-gray-400 truncate">{displayEmail}</span>
+                  )}
+                </span>
+              )}
+            </button>
+            {profileMenuOpen && (
+              <div
+                className={`absolute bottom-full left-0 mb-2 w-56 rounded-xl bg-white shadow-lg border border-gray-200 py-2 text-sm text-gray-900 ${z.maximum}`}
+              >
+                {renderedProfileMenu.map((entry) => {
+                  if (entry.kind === 'divider') {
+                    return <div key={entry.key} className="my-2 border-t border-gray-100" />;
+                  }
+                  if (entry.kind === 'action') {
+                    return (
+                      <button
+                        key={entry.key}
+                        type="button"
+                        onClick={() => handleAction(entry.actionId)}
+                        className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+                        data-analytics={entry.analyticsId}
+                      >
+                        {menuIcon({ iconKey: entry.iconKey, sectionId })}
+                        <span className="font-medium">{entry.name}</span>
+                      </button>
+                    );
+                  }
                   return (
-                    <button
-                      key={item.href}
-                      type="button"
-                      onClick={() => handleNavigate(item.href)}
-                      aria-current={active ? 'page' : undefined}
-                      className={`relative rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-white/35 ${
-                        active ? 'text-white' : 'text-white/85 hover:text-white'
-                      } after:content-[''] after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-[2px] after:rounded-full after:transition-opacity ${
-                        active ? 'after:bg-white after:opacity-100' : 'after:bg-white after:opacity-0 hover:after:opacity-30'
-                      }`}
-                      data-analytics={`${sectionId}.nav.${item.key}`}
+                    <Link
+                      key={entry.key}
+                      href={entry.href}
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                      data-analytics={entry.analyticsId}
                     >
-                      {item.name}
-                    </button>
+                      {menuIcon({ iconKey: entry.iconKey, sectionId })}
+                      <span className="font-medium">{entry.name}</span>
+                    </Link>
                   );
                 })}
               </div>
-            </nav>
+            )}
+          </div>
+        </div>
+      </aside>
 
-            <div className="relative flex items-center justify-end w-24" ref={desktopProfileMenuRef}>
+      <main className="flex-1 min-w-0 flex flex-col overflow-y-auto pt-14 md:pt-0">
+        {/* ── Desktop top bar ── */}
+        <header className={`hidden md:flex items-center gap-2 lg:gap-4 sticky top-0 bg-white border-b border-gray-200 px-3 lg:px-6 h-[68px] shrink-0 ${z.navbar}`}>
+          {/* Sidebar collapse toggle */}
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? (t('expandSidebar') || 'Expand sidebar') : (t('collapseSidebar') || 'Collapse sidebar')}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            data-analytics={`${sectionId}.sidebar.toggle`}
+          >
+            <Bars3Icon className="h-[18px] w-[18px]" />
+          </button>
+
+          {/* Left: greeting (hidden on narrower desktop widths to make room for search + actions) */}
+          <div className="hidden lg:flex flex-col justify-center shrink-0 min-w-0 max-w-[220px]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-purple-600 truncate">
+              OVERVIEW
+            </p>
+            <p className="text-base font-bold text-gray-900 leading-tight truncate">
+              {greeting}{displayName ? `, ${displayName.split(' ')[0]}` : ''}
+            </p>
+          </div>
+
+          {/* Center: search */}
+          <div className="flex-1 min-w-0 max-w-[200px] lg:max-w-xs mx-1 lg:mx-4 relative" ref={searchContainerRef}>
+            <form onSubmit={handleSearchSubmit}>
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                <input
+                  type="search"
+                  value={searchValue}
+                  onChange={(e) => handleDoctorSearchChange(e.target.value)}
+                  placeholder={sectionId === 'dashboard' ? (t('searchDoctors') || 'Search doctors…') : `${t('search') || 'Search'}…`}
+                  className="w-full rounded-full border border-gray-200 bg-gray-50 pl-9 pr-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition"
+                />
+              </div>
+            </form>
+            {/* Doctor search dropdown (dashboard only) */}
+            {sectionId === 'dashboard' && doctorDropdownOpen && (
+              <div className={`absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden ${z.maximum}`}>
+                {filteredDoctors.length === 0 ? (
+                  <p className="px-4 py-3 text-sm text-gray-400">{t('noResults') || 'No doctors found'}</p>
+                ) : (
+                  <ul>
+                    {filteredDoctors.slice(0, 8).map((doc) => (
+                      <li key={doc.id}>
+                        <button
+                          type="button"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-purple-50 transition-colors"
+                          onClick={() => {
+                            setDoctorDropdownOpen(false);
+                            setSearchValue('');
+                            resetDoctorSearch();
+                            nav.toDoctorProfile(doc.id);
+                          }}
+                        >
+                          <span className="h-7 w-7 shrink-0 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold">
+                            {doc.name.slice(0, 2).toUpperCase()}
+                          </span>
+                          <span className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{doc.name}</p>
+                            {doc.specialization?.length > 0 && (
+                              <p className="text-xs text-gray-400 truncate">{doc.specialization[0]}</p>
+                            )}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right: bell + CTA + profile */}
+          <div className="flex items-center gap-1 lg:gap-2 ml-auto shrink-0">
+            {/* Notification bell */}
+            <div className="relative shrink-0" ref={notifMenuRef}>
               <button
                 type="button"
-                onClick={() => setProfileMenuOpen((open) => !open)}
-                className="h-9 w-9 rounded-full border border-white/15 bg-white/10 text-xs font-semibold text-white flex items-center justify-center shadow-sm backdrop-blur hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/35"
-                data-analytics={`${sectionId}.profile.toggle`}
+                onClick={() => { setProfileMenuOpen(false); setTopbarProfileOpen(false); setNotifOpen((o) => !o); }}
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:border-purple-300 hover:text-purple-700 transition-colors"
+                aria-label={t('notifications') || 'Notifications'}
+                data-analytics={`${sectionId}.topbar.notifications`}
               >
-                {initials}
+                <BellIcon className="h-5 w-5" />
+                {notificationCount && notificationCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                    {notificationCount > 9 ? '9+' : notificationCount}
+                  </span>
+                ) : null}
               </button>
-              {profileMenuOpen && (
-                <div
-                  className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-slate-200/70 py-2 text-sm text-slate-900 ${z.maximum}`}
-                >
+
+              {notifOpen && (
+                <div className={`absolute right-0 top-full mt-2 w-[340px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white border border-gray-100 shadow-lg overflow-hidden ${z.maximum}`}>
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <p className="text-[14px] font-bold text-gray-900">{t('notifications') || 'Notifications'}</p>
+                    <button
+                      type="button"
+                      onClick={markAllRead}
+                      className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800"
+                      data-analytics={`${sectionId}.topbar.notifications_mark_all_read`}
+                    >
+                      {t('markAllRead') || 'Mark all read'}
+                    </button>
+                  </div>
+
+                  <div className="max-h-[340px] overflow-y-auto">
+                    {notifFeed.length === 0 ? (
+                      <p className="px-4 py-6 text-center text-[12.5px] text-gray-500">
+                        {t('noNotifications') || 'No notifications yet.'}
+                      </p>
+                    ) : (
+                      notifFeed.map((n) => {
+                        const Icon = n.icon;
+                        return (
+                          <Link
+                            key={n.id}
+                            href={n.appointmentId ? `${sectionNotificationsHref(sectionId)}?focus=${encodeURIComponent(n.appointmentId)}` : sectionNotificationsHref(sectionId)}
+                            onClick={() => setNotifOpen(false)}
+                            className="flex gap-3 px-4 py-3 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/70 transition-colors"
+                          >
+                            <span className={`h-9 w-9 shrink-0 rounded-lg flex items-center justify-center ${n.bg} ${n.color}`}>
+                              <Icon className="h-4.5 w-4.5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[12.5px] text-gray-800 leading-snug">{n.text}</p>
+                              <p className="text-[10.5px] text-gray-400 mt-0.5">{formatRelativeTime(n.ts)}</p>
+                            </div>
+                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-purple-600" />
+                          </Link>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  <Link
+                    href={sectionNotificationsHref(sectionId)}
+                    onClick={() => setNotifOpen(false)}
+                    className="block w-full px-4 py-3 text-center text-[12px] font-semibold text-purple-700 hover:bg-purple-50/60 border-t border-gray-100 transition-colors"
+                  >
+                    {t('viewAllNotifications') || 'View all notifications'}
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Optional CTA (e.g. + New appointment) */}
+            {topbarCta}
+
+            {/* Divider */}
+            <div className="h-6 w-px bg-gray-200 shrink-0 hidden lg:block" />
+
+            {/* Profile */}
+            <div className="relative shrink-0" ref={topbarProfileMenuRef}>
+              <button
+                type="button"
+                onClick={() => { setProfileMenuOpen(false); setTopbarProfileOpen((o) => !o); }}
+                className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1 lg:pr-3 hover:bg-gray-100 transition-colors"
+                aria-label="Open profile menu"
+                data-analytics={`${sectionId}.topbar.profile`}
+              >
+                <span className="h-8 w-8 shrink-0 rounded-full bg-purple-600 text-xs font-bold text-white flex items-center justify-center">{initials}</span>
+                {displayName && (
+                  <span className="hidden lg:inline text-sm font-medium text-gray-700 max-w-[120px] truncate">{displayName}</span>
+                )}
+              </button>
+
+              {topbarProfileOpen && (
+                <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-lg border border-gray-200 py-2 text-sm text-gray-900 ${z.maximum}`}>
                   {renderedProfileMenu.map((entry) => {
                     if (entry.kind === 'divider') {
-                      return <div key={entry.key} className="my-2 border-t border-slate-100" />;
+                      return <div key={entry.key} className="my-2 border-t border-gray-100" />;
                     }
-
                     if (entry.kind === 'action') {
                       return (
                         <button
@@ -379,13 +846,12 @@ export default function SectionShell({
                         </button>
                       );
                     }
-
                     return (
                       <Link
                         key={entry.key}
                         href={entry.href}
-                        onClick={() => setProfileMenuOpen(false)}
-                        className="w-full px-4 py-2.5 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                        onClick={() => setTopbarProfileOpen(false)}
+                        className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
                         data-analytics={entry.analyticsId}
                       >
                         {menuIcon({ iconKey: entry.iconKey, sectionId })}
@@ -397,11 +863,11 @@ export default function SectionShell({
               )}
             </div>
           </div>
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-        </div>
-      </header>
+        </header>
 
-      <main className="flex-1 pt-14 md:pt-0 px-2 sm:px-4 md:px-8 lg:px-12 py-4 md:py-6 lg:py-8">{children}</main>
+        {/* Page content */}
+        <div className="flex-1 min-w-0 px-4 md:px-6 lg:px-8 py-6">{children}</div>
+      </main>
     </div>
   );
 }

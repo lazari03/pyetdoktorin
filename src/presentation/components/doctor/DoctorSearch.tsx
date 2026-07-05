@@ -170,32 +170,52 @@ export default function DoctorSearch({
 				</div>
 			</div>
 
-			{loading && <p className="text-center py-2">Loading results...</p>}
-			{error && <p className="text-red-500 text-center py-2">{error}</p>}
+			{loading && <p className="text-center py-2 text-sm text-gray-500">{t('loading') || 'Loading results...'}</p>}
+			{error && <p className="text-red-500 text-center py-2 text-sm">{error}</p>}
 
 			{isEditing && resultDoctors.length > 0 && (
-				<ul className={`mt-3 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto relative ${z.dropdown}`}>
+				<div className={`mt-3 flex flex-col gap-2 max-h-80 overflow-auto relative ${z.dropdown}`}>
 					{resultDoctors.map((doctor) => {
 						const specList = Array.isArray(doctor.specialization)
 							? doctor.specialization
 							: doctor.specialization
 							? [doctor.specialization]
 							: [];
+						const initials = formatDoctorName(doctor).split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+						const selected = selectedDoctor?.id === doctor.id;
 						return (
-						<li
-							key={doctor.id}
-							className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-							onClick={() => handleDoctorClick(doctor)}
-						>
-							<p className="text-sm font-semibold text-gray-900">{formatDoctorName(doctor)}</p>
-							{specList.length > 0 && (
-								<p className="text-xs text-gray-500">
-									{specList.join(' • ')}
-								</p>
-							)}
-						</li>
-					)})}
-				</ul>
+							<button
+								type="button"
+								key={doctor.id}
+								onClick={() => handleDoctorClick(doctor)}
+								className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+									selected ? 'border-purple-400 bg-purple-50' : 'border-gray-100 bg-white hover:border-purple-200'
+								}`}
+							>
+								<div className="h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center font-bold text-[13px]">
+									{initials}
+								</div>
+								<div className="flex-1 min-w-0">
+									<p className="text-[13px] font-semibold text-gray-900 truncate">{formatDoctorName(doctor)}</p>
+									{specList.length > 0 && (
+										<p className="text-[11.5px] text-gray-500 truncate">{specList.join(' • ')}</p>
+									)}
+								</div>
+								<span
+									className={`h-5 w-5 shrink-0 rounded-full flex items-center justify-center ${
+										selected ? 'bg-purple-600' : 'bg-gray-100'
+									}`}
+								>
+									{selected && (
+										<svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+											<path d="M4.5 12.75l6 6 9-13.5" />
+										</svg>
+									)}
+								</span>
+							</button>
+						);
+					})}
+				</div>
 			)}
 		</div>
 	);

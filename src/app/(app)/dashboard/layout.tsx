@@ -14,6 +14,8 @@ import MissingRole from '@/presentation/components/MissingRole/MissingRole';
 import { useDashboardGuard } from '@/navigation/useDashboardGuard';
 import { getDashboardNavDefs, getDashboardProfileMenuDefs } from '@/navigation/navConfig';
 import SectionShell from '@/presentation/components/SectionShell/SectionShell';
+import Link from 'next/link';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import EmailVerificationRequiredModal from '@/presentation/components/auth/EmailVerificationRequiredModal';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -81,6 +83,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       onMenuAction={(actionId) => {
         if (actionId === 'logout') handleLogoutClick();
       }}
+      displayName={user?.name || undefined}
+      displayEmail={user?.email || undefined}
+      topbarCta={
+        <Link
+          href="/dashboard/new-appointment"
+          className="flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 lg:px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition-colors shrink-0 shadow-sm"
+          data-analytics="dashboard.topbar.new_appointment"
+        >
+          <PlusIcon className="h-4 w-4 shrink-0" />
+          <span className="hidden lg:inline">New appointment</span>
+        </Link>
+      }
     >
       {verificationRequired ? null : children}
       <EmailVerificationRequiredModal isOpen={verificationRequired} onLogout={handleLogoutClick} />

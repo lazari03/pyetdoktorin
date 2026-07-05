@@ -99,16 +99,16 @@ export default function PharmacyReciepesPage() {
       loadingLabel={t('loading')}
       analyticsPrefix="pharmacy.reciepes"
     >
-      <div className="min-h-screen py-6 px-3">
+      <div className="py-4 sm:py-6 px-3">
         <div className="max-w-5xl mx-auto space-y-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-purple-600 font-semibold">{t("secureAccessEyebrow") || "Secure access"}</p>
-            <h1 className="text-2xl font-bold text-gray-900">{t("pharmacyReciepesTitle") || "Reciepes"}</h1>
-            <p className="text-sm text-gray-600">{t("pharmacyReciepesSubtitle") || "View prescriptions to dispense and update their status."}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">{t("secureAccessEyebrow") || "Secure access"}</p>
+            <h1 className="text-[15px] font-bold text-gray-900">{t("pharmacyReciepesTitle") || "Reciepes"}</h1>
+            <p className="text-[12.5px] text-gray-500">{t("pharmacyReciepesSubtitle") || "View prescriptions to dispense and update their status."}</p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            <aside className="bg-white rounded-3xl border border-purple-50 shadow-lg p-4 space-y-2 h-full">
+            <aside className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-2 h-full">
               {reciepes.length === 0 && (
                 <p className="text-sm text-gray-500 py-4">{t("noReciepes") || "No reciepes found."}</p>
               )}
@@ -116,8 +116,8 @@ export default function PharmacyReciepesPage() {
                 <button
                   key={r.id}
                   onClick={() => setActiveId(r.id)}
-                  className={`w-full text-left rounded-2xl border px-3 py-2 transition ${
-                    active?.id === r.id ? "border-purple-400 bg-purple-50" : "border-gray-200 hover:border-purple-200"
+                  className={`w-full text-left rounded-lg border px-3 py-2 transition ${
+                    active?.id === r.id ? "border-purple-400 bg-purple-50" : "border-gray-100 hover:border-purple-200"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-0.5">
@@ -147,7 +147,7 @@ export default function PharmacyReciepesPage() {
               ))}
             </aside>
 
-            <section className="lg:col-span-2 bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-4">
+            <section className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
               {active ? (
                 <>
                   <div className="flex items-start justify-between gap-3">

@@ -9,6 +9,12 @@ import { ClinicBooking } from '@/domain/entities/ClinicBooking';
 import { RecentPatientsList, RecentPatient } from '@/presentation/components/dashboard/RecentPatientsList';
 import { DoctorEarningsCard } from '@/presentation/components/dashboard/DoctorEarningsCard';
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from '@/config/paywallConfig';
+import {
+  CalendarDaysIcon,
+  BanknotesIcon,
+  CheckCircleIcon,
+  ClockIcon,
+} from '@heroicons/react/24/outline';
 import { CLINIC_PATHS } from '@/navigation/paths';
 import { UserRole } from '@/domain/entities/UserRole';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
@@ -115,14 +121,56 @@ export default function ClinicDashboardPage() {
       analyticsPrefix="clinic.dashboard"
     >
       {user?.uid ? <DashboardTutorialGate userId={user.uid} role={role} /> : null}
-      <div className="space-y-6">
-      <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('clinicDashboard') || 'Clinic dashboard'}</h1>
-        <p className="text-sm text-gray-600">{t('clinicDashboardDescription') || 'Monitor bookings and performance'}</p>
-      </div>
+      <div className="space-y-4">
+        {/* 4×KPI row */}
+        <section className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          {[
+            {
+              label: 'Total Bookings', value: bookings.length, helper: 'All time',
+              Icon: CalendarDaysIcon, iconBg: 'bg-purple-100 text-purple-600', accent: 'text-purple-700',
+              delta: earningsData.currentMonthAppointments > 0 ? `+${earningsData.currentMonthAppointments} this month` : null, pos: true,
+            },
+            {
+              label: 'Monthly Revenue', value: `€${earningsData.currentMonthEarnings.toFixed(0)}`, helper: 'Current month payout',
+              Icon: BanknotesIcon, iconBg: 'bg-teal-100 text-teal-600', accent: 'text-teal-700',
+              delta: earningsData.currentMonthEarnings > earningsData.previousMonthEarnings
+                ? `+€${(earningsData.currentMonthEarnings - earningsData.previousMonthEarnings).toFixed(0)} vs last mo.`
+                : earningsData.previousMonthEarnings > earningsData.currentMonthEarnings
+                  ? `−€${(earningsData.previousMonthEarnings - earningsData.currentMonthEarnings).toFixed(0)} vs last mo.`
+                  : null,
+              pos: earningsData.currentMonthEarnings >= earningsData.previousMonthEarnings,
+            },
+            {
+              label: 'Confirmed', value: bookings.filter((b) => b.status === 'confirmed').length, helper: 'Scheduled visits',
+              Icon: CheckCircleIcon, iconBg: 'bg-emerald-100 text-emerald-600', accent: 'text-emerald-700', delta: null, pos: true,
+            },
+            {
+              label: 'Pending', value: bookings.filter((b) => b.status === 'pending').length, helper: 'Awaiting review',
+              Icon: ClockIcon, iconBg: 'bg-amber-100 text-amber-600', accent: 'text-amber-700', delta: null, pos: false,
+            },
+          ].map((card) => (
+            <div key={card.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[11.5px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
+                <span className={`h-7 w-7 rounded-xl flex items-center justify-center ${card.iconBg}`}>
+                  <card.Icon className="h-4 w-4" />
+                </span>
+              </div>
+              <div className="flex items-end gap-2">
+                <p className={`text-3xl font-bold leading-none ${card.accent}`}>{card.value}</p>
+                {card.delta && (
+                  <span className={`self-end mb-0.5 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-full ${card.pos ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+                    {card.delta}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-400">{card.helper}</p>
+            </div>
+          ))}
+        </section>
 
 	      <div className="grid gap-4 lg:grid-cols-3">
-	        <section className="bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col">
+	        <section className="bg-white rounded-xl shadow-sm p-4 border border-gray-100 h-full flex flex-col">
 	          <div className="flex items-center justify-between mb-3">
 	            <p className="text-sm font-semibold text-gray-900">{t('recentPatients') ?? 'Recent patients'}</p>
 	            <Link href={CLINIC_PATHS.bookings} className="text-xs text-purple-600 hover:underline">
@@ -141,7 +189,7 @@ export default function ClinicDashboardPage() {
           monthlyHistory={earningsData.monthlyHistory}
         />
 
-        <section className="bg-white rounded-2xl shadow-md p-5 border border-purple-50 h-full flex flex-col gap-4">
+        <section className="bg-white rounded-xl shadow-sm p-4 border border-gray-100 h-full flex flex-col gap-4">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-semibold text-gray-900">{t('activeBookings') ?? 'Active bookings'}</p>
@@ -167,7 +215,7 @@ export default function ClinicDashboardPage() {
 	        </section>
 	      </div>
 
-      <section className="bg-white rounded-3xl shadow-lg p-4 border border-purple-50">
+      <section className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
 	        <div className="flex items-center justify-between mb-3">
 	          <h2 className="text-base font-semibold text-gray-900">{t('latestRequests') || 'Latest requests'}</h2>
 	          <Link href={CLINIC_PATHS.bookings} className="text-xs text-purple-600 hover:underline">

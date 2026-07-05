@@ -55,64 +55,64 @@ export default function ClinicBookingHistoryPage() {
       loadingLabel={t('loading')}
       analyticsPrefix="dashboard.clinics_history"
     >
-      <div className="min-h-screen">
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:py-10 space-y-6">
-          <div className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 flex items-center justify-between flex-wrap gap-3">
+      <div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{t('clinicBookingHistory') || 'Clinic booking history'}</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="text-[15px] font-bold text-gray-900">{t('clinicBookingHistory') || 'Clinic booking history'}</h1>
+              <p className="text-[12.5px] text-gray-500">
                 {t('clinicBookingHistorySubtitle') || 'Track your requests and their status'}
               </p>
             </div>
             <Link
               href={DASHBOARD_PATHS.clinics}
-              className="text-sm text-purple-600 hover:underline"
+              className="text-[12.5px] font-semibold text-purple-600 hover:underline"
               data-analytics="dashboard.clinics_history.book_another"
             >
               {t('bookAnotherClinic') || 'Book another clinic'}
             </Link>
           </div>
 
-          <div className="bg-white rounded-2xl shadow border border-purple-50 overflow-hidden">
+          <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-[640px] w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <table className="min-w-[640px] w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/80">
+                    <th className="text-left text-[10px] font-bold uppercase tracking-[.06em] text-gray-400 px-4 py-2.5">
                       {t('clinic') || 'Clinic'}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <th className="text-left text-[10px] font-bold uppercase tracking-[.06em] text-gray-400 px-3 py-2.5">
                       {t('note') || 'Note'}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <th className="text-left text-[10px] font-bold uppercase tracking-[.06em] text-gray-400 px-3 py-2.5">
                       {t('preferredDate') || 'Preferred date'}
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <th className="text-left text-[10px] font-bold uppercase tracking-[.06em] text-gray-400 px-3 py-2.5">
                       {t('status') || 'Status'}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody>
                   {bookings.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                      <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-500">
                         {t('noClinicBookings') || 'No clinic bookings yet'}
                       </td>
                     </tr>
                   ) : (
                     bookings.map((booking) => (
-                      <tr key={booking.id}>
-                        <td className="px-4 py-4">
-                          <div className="text-sm font-semibold text-gray-900">{booking.clinicName}</div>
-                          <div className="text-xs text-gray-500">{new Date(booking.createdAt).toLocaleDateString()}</div>
+                      <tr key={booking.id} className="border-t border-gray-50 hover:bg-gray-50/60 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="text-[12.5px] font-semibold text-gray-900">{booking.clinicName}</div>
+                          <div className="text-[10.5px] text-gray-400">{new Date(booking.createdAt).toLocaleDateString()}</div>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-600">{booking.note}</td>
-                        <td className="px-4 py-4 text-sm text-gray-600">
+                        <td className="px-3 py-3 text-[12px] text-gray-500">{booking.note}</td>
+                        <td className="px-3 py-3 text-[12px] text-gray-700">
                           {booking.preferredDate || t('notProvided') || 'Not provided'}
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-3 py-3">
                           <span
-                            className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                            className={`text-[10.5px] font-bold px-2.5 py-1 rounded-full ${
                               booking.status === 'confirmed'
                                 ? 'bg-green-100 text-green-700'
                                 : booking.status === 'declined'
