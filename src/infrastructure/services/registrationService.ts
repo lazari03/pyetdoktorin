@@ -1,6 +1,6 @@
 import { IRegistrationService, RegistrationData } from '@/application/ports/IRegistrationService';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { auth } from '@/config/firebaseconfig';
+import { auth } from '@/infrastructure/firebase/firebaseconfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { backendFetch } from '@/network/backendClient';
 

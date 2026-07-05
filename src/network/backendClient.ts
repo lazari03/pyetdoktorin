@@ -1,5 +1,5 @@
 
-import { auth } from '@/config/firebaseconfig';
+import { getAuthToken, waitForToken } from '@/infrastructure/auth/tokenHolder';
 
 const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
 
@@ -44,27 +44,12 @@ async function readResponseTextSafe(response: Response): Promise<string> {
   }
 }
 
-async function waitForCurrentUser(timeoutMs = 3000, intervalMs = 120) {
-  if (auth.currentUser) return auth.currentUser;
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    if (auth.currentUser) return auth.currentUser;
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-  }
-  return null;
-}
-
 async function getOptionalIdToken(timeoutMs = 3000): Promise<string | null> {
-  const user = auth.currentUser ?? (await waitForCurrentUser(timeoutMs));
-  if (!user) {
+  const token = getAuthToken() ?? (await waitForToken(timeoutMs));
+  if (!token) {
     return null;
   }
-  try {
-    return await user.getIdToken();
-  } catch (error) {
-    console.warn('Failed to get auth token', error);
-    return null;
-  }
+  return token;
 }
 
 async function fetchWithRetry(url: string, options: RequestInit, retries = 3, delay = 500): Promise<Response> {

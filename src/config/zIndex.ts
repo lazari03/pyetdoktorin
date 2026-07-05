@@ -82,4 +82,4 @@ export const z = {
   maximum: 'z-[900]',
 } as const;
 
-export default Z_INDEX;
+

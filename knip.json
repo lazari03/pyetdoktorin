@@ -2,9 +2,19 @@
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "entry": [
     "src/app/**/*.{ts,tsx,js,jsx}",
-    "src/pages/**/*.{ts,tsx,js,jsx}",
-    "src/components/**/*.{ts,tsx,js,jsx}",
-    "pages/**/*.{ts,tsx,js,jsx}"
+    "src/application/**/*.{ts,tsx,js,jsx}",
+    "src/domain/**/*.{ts,tsx,js,jsx}",
+    "src/infrastructure/**/*.{ts,tsx,js,jsx}",
+    "src/network/**/*.{ts,tsx,js,jsx}",
+    "src/presentation/**/*.{ts,tsx,js,jsx}",
+    "src/store/**/*.{ts,tsx,js,jsx}",
+    "src/context/**/*.{ts,tsx,js,jsx}",
+    "src/config/**/*.{ts,tsx,js,jsx}",
+    "src/models/**/*.{ts,tsx,js,jsx}",
+    "src/navigation/**/*.{ts,tsx,js,jsx}",
+    "src/utils/**/*.{ts,tsx,js,jsx}",
+    "src/i18n/**/*.{ts,tsx,js,jsx}",
+    "tools/**/*.{ts,tsx,js,jsx,cjs,mjs}"
   ],
   "project": "**/*.{ts,tsx,js,jsx}",
   "ignore": [
@@ -13,10 +23,12 @@
     "**/dist/**",
     "**/build/**",
     "trash/**",
-    "**/*.d.ts"
+    "**/*.d.ts",
+    "backend/**",
+    "public/service-worker.js",
+    "src/locales/*.ts"
   ],
   "ignoreDependencies": [
-    "eslint-*",
-    "prettier"
+    "eslint-*"
   ]
 }

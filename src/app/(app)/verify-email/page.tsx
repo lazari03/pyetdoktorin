@@ -3,14 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { getAuth } from 'firebase/auth';
-import { applyActionCode } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
+import { useDI } from '@/context/DIContext';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
 import Loader from '@/presentation/components/Loader/Loader';
 import { Card } from '@/presentation/ui/Card';
-import { establishSessionForCurrentUser, sendVerificationEmail } from '@/infrastructure/services/authService';
 import { CheckCircleIcon, EnvelopeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 function sanitizeNextPath(value: string | null | undefined): string | null {
@@ -31,6 +29,7 @@ export default function VerifyEmailPage() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const { loading, user, role, emailVerified } = useAuth();
+  const { authService } = useDI();
 
   const nextTarget = useMemo(() => sanitizeNextPath(searchParams?.get('next')), [searchParams]);
   const fallbackTarget = useMemo(() => (role ? getRoleLandingPath(role) : '/dashboard'), [role]);
@@ -48,13 +47,10 @@ export default function VerifyEmailPage() {
   }, [emailVerified]);
 
   const refreshVerification = useCallback(async () => {
-    const auth = getAuth();
-    if (!auth.currentUser) return false;
-    await auth.currentUser.reload();
-    const verified = auth.currentUser.emailVerified === true;
+    const verified = await authService.reloadUser();
     setLocalVerified(verified);
     return verified;
-  }, []);
+  }, [authService]);
 
   useEffect(() => {
     const mode = searchParams?.get('mode');
@@ -67,8 +63,7 @@ export default function VerifyEmailPage() {
     setNotice(null);
     (async () => {
       try {
-        const auth = getAuth();
-        await applyActionCode(auth, oobCode);
+        await authService.applyVerificationCode(oobCode);
         setCodeApplied(true);
 
         // Remove one-time action params from the URL to avoid re-applying on refresh.
@@ -87,7 +82,7 @@ export default function VerifyEmailPage() {
         const verified = await refreshVerification();
         if (verified) {
           try {
-            await establishSessionForCurrentUser();
+            await authService.establishSession();
             window.location.replace(destination);
             return;
           } catch {
@@ -122,7 +117,7 @@ export default function VerifyEmailPage() {
     try {
       const origin = getSiteOrigin();
       const continueUrl = `${origin}/verify-email?next=${encodeURIComponent(destination)}`;
-      await sendVerificationEmail({ continueUrl });
+      await authService.sendVerificationEmail({ continueUrl });
       setNotice(t('verifyEmailSent', { defaultValue: 'Verification email sent. Please check your inbox.' }));
       setResendCooldownUntil(Date.now() + 30_000);
     } catch (e) {
@@ -143,7 +138,7 @@ export default function VerifyEmailPage() {
         setNotice(t('verifyEmailStillPending', { defaultValue: 'Email not verified yet. Open the link in your email, then try again.' }));
         return;
       }
-      await establishSessionForCurrentUser();
+      await authService.establishSession();
       window.location.replace(destination);
     } catch (e) {
       const msg = e instanceof Error ? e.message : null;

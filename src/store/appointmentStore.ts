@@ -1,37 +1,17 @@
 import { create } from "zustand";
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentAction } from "@/presentation/utils/appointmentActionButton";
-import { APPOINTMENT_DURATION_MINUTES } from '../config/appointmentConfig';
+import { APPOINTMENT_DURATION_MINUTES } from '@/config/appointmentConfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { listAppointments } from '@/network/appointments';
 import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
 import { BackendError } from '@/network/backendClient';
-
-/**
- * Convert a time string (either "HH:mm" or "hh:mm AM/PM") into "HH:mm" 24-hour format
- * so it can be used in `new Date("YYYY-MM-DDThh:mm")`.
- */
-function normalizeTo24h(time: string): string {
-  const ampmMatch = time.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
-  if (ampmMatch) {
-    let hours = parseInt(ampmMatch[1], 10);
-    const minutes = ampmMatch[2];
-    const period = ampmMatch[3].toUpperCase();
-    if (period === 'PM' && hours !== 12) hours += 12;
-    if (period === 'AM' && hours === 12) hours = 0;
-    return `${hours.toString().padStart(2, '0')}:${minutes}`;
-  }
-  return time; // already in HH:mm
-}
+import { normalizeTo24h, isPastAppointment as isPast, isAppointmentPast as isPastEntity } from '@/domain/rules/appointmentRules';
 
 function resolveAppointmentFetchError(error: unknown): string {
   if (error instanceof BackendError) {
-    if (error.status === 401) {
-      return APPOINTMENT_ERROR_CODES.Unauthorized;
-    }
-    if (error.status === 403) {
-      return APPOINTMENT_ERROR_CODES.Forbidden;
-    }
+    if (error.status === 401) return APPOINTMENT_ERROR_CODES.Unauthorized;
+    if (error.status === 403) return APPOINTMENT_ERROR_CODES.Forbidden;
   }
   return APPOINTMENT_ERROR_CODES.FetchFailed;
 }
@@ -90,15 +70,10 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       try {
         const response = await listAppointments();
         if (disposed) return;
-        set({
-          appointments: response.items,
-          loading: false,
-          error: null,
-        });
+        set({ appointments: response.items, loading: false, error: null });
       } catch (error) {
         if (disposed) return;
         set({ loading: false, error: resolveAppointmentFetchError(error) });
-        console.warn('Backend appointments refresh failed', error);
       }
     };
 
@@ -139,16 +114,8 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   handlePayNow: async (appointmentId, amount, handlePayNowUseCase, options) =>
     handlePayNowUseCase(appointmentId, amount, options),
   checkIfPastAppointment: async (appointmentId, checkIfPastAppointmentUseCase) => checkIfPastAppointmentUseCase(appointmentId),
-  isPastAppointment: (date, time) => {
-    const appointmentDateTime = new Date(`${date}T${normalizeTo24h(time)}`);
-    const appointmentEndTime = new Date(appointmentDateTime.getTime() + 30 * 60000);
-    return appointmentEndTime < new Date();
-  },
-  isAppointmentPast: (appointment) => {
-    const appointmentDateTime = new Date(`${appointment.preferredDate}T${normalizeTo24h(appointment.preferredTime)}`);
-    const appointmentEndTime = new Date(appointmentDateTime.getTime() + APPOINTMENT_DURATION_MINUTES * 60000);
-    return appointmentEndTime < new Date();
-  },
+  isPastAppointment: (date, time) => isPast(date, time),
+  isAppointmentPast: (appointment) => isPastEntity(appointment, APPOINTMENT_DURATION_MINUTES),
   getAppointmentAction: (appointment) => getAppointmentAction(appointment, get().isAppointmentPast),
 }));
 

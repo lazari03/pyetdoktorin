@@ -13,7 +13,7 @@ import {
   getDefaultAvailabilityPresets,
   normalizeAvailability,
 } from '@/domain/rules/availabilityRules';
-import { availabilityService } from '@/infrastructure/services/availabilityServiceAdapter';
+import { useDI } from '@/context/DIContext';
 import {
   getAvailabilityOpenDaysLabel,
   getAvailabilityPresetCopy,
@@ -27,6 +27,7 @@ type DayPatch = {
 
 export function useManageAvailability(doctorId: string | null) {
   const { t, i18n } = useTranslation();
+  const { availabilityService } = useDI();
   const language = i18n.resolvedLanguage;
   const [presetDefinitions, setPresetDefinitions] = useState<AvailabilityPreset[]>(
     getDefaultAvailabilityPresets(),

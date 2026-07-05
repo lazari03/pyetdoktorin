@@ -10,14 +10,9 @@ import { Input } from "@/presentation/ui/Input";
 import { Textarea } from "@/presentation/ui/Textarea";
 import { ADMIN_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { useDI } from "@/context/DIContext";
 import type { BlogPost } from "@/domain/entities/BlogPost";
-import {
-  getAllBlogPosts,
-  createBlogPost,
-  updateBlogPost,
-  deleteBlogPost,
-  slugify,
-} from "@/infrastructure/services/blogService";
+import { slugify } from "@/infrastructure/services/blogService";
 
 type EditorMode = "list" | "create" | "edit";
 
@@ -44,6 +39,7 @@ const emptyForm = {
 
 export default function AdminBlogPage() {
   const { t } = useTranslation();
+  const { blogService } = useDI();
 
   const [mode, setMode] = useState<EditorMode>("list");
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -59,14 +55,14 @@ export default function AdminBlogPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getAllBlogPosts();
+      const data = await blogService.getAll();
       setPosts(data);
     } catch (e) {
       setError(e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [blogService]);
 
   useEffect(() => {
     load();
@@ -107,10 +103,10 @@ export default function AdminBlogPage() {
     try {
       if (mode === "create") {
         const keywords = form.keywords.split(",").map((k) => k.trim()).filter(Boolean);
-        await createBlogPost({ ...form, slug: form.slug || slugify(form.title), keywords });
+        await blogService.create({ ...form, slug: form.slug || slugify(form.title), keywords });
       } else if (mode === "edit" && editingId) {
         const keywords = form.keywords.split(",").map((k) => k.trim()).filter(Boolean);
-        await updateBlogPost(editingId, { ...form, keywords });
+        await blogService.update(editingId, { ...form, keywords });
       }
       await load();
       setMode("list");
@@ -125,7 +121,7 @@ export default function AdminBlogPage() {
     if (!confirm("Are you sure you want to delete this post?")) return;
     setDeleting(id);
     try {
-      await deleteBlogPost(id);
+      await blogService.delete(id);
       await load();
     } finally {
       setDeleting(null);

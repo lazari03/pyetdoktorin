@@ -8,7 +8,7 @@ import { useDI } from "@/context/DIContext";
 import { Appointment } from "@/domain/entities/Appointment";
 import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 import { useTranslation } from "react-i18next";
-import { auth } from "@/config/firebaseconfig";
+import { getAuthToken } from "@/infrastructure/auth/tokenHolder";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import { syncPaddlePayment, syncPaddlePaymentWithRetry } from "@/network/payments";
 import { listAppointments } from "@/network/appointments";
@@ -150,13 +150,12 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
         }
 
         const sessionRole = isDoctor ? "doctor" : "patient";
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
+        const idToken = getAuthToken();
+        if (!idToken) {
           setShowRedirecting(false);
           toast({ variant: "error", message: t("sessionExpired") });
           return;
         }
-        const idToken = await currentUser.getIdToken();
 
         const data = await generateRoomCodeUseCase.execute({
           user_id: user.uid,

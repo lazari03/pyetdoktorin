@@ -36,11 +36,21 @@ import { RegistrationService } from '@/infrastructure/services/registrationServi
 import { DoctorSearchService } from '@/infrastructure/services/doctorSearchService';
 import { GA4AnalyticsService } from '@/infrastructure/services/analyticsService';
 import { IAnalyticsService } from '@/application/ports/IAnalyticsService';
+import { IAuthService } from '@/application/ports/IAuthService';
+import { IPaymentCheckoutService } from '@/application/ports/IPaymentCheckoutService';
+import { IBlogService } from '@/application/ports/IBlogService';
+import { IAvailabilityService } from '@/application/ports/IAvailabilityService';
+import { BlogServiceAdapter } from '@/infrastructure/services/blogServiceAdapter';
+import { AvailabilityServiceAdapter } from '@/infrastructure/services/availabilityServiceAdapter';
 import { ReciepeService } from '@/infrastructure/services/reciepeService';
 import { AppointmentPaymentService } from '@/infrastructure/services/appointmentPaymentService';
 import { PaymentCheckoutService } from '@/infrastructure/services/paymentCheckoutService';
 
 interface DIContextValue {
+  authService: IAuthService;
+  paymentCheckoutService: IPaymentCheckoutService;
+  blogService: IBlogService;
+  availabilityService: IAvailabilityService;
   handlePayNowUseCase: HandlePayNowUseCase;
   generateRoomCodeUseCase: GenerateRoomCodeUseCase;
   getTopDoctorsByAppointmentsUseCase: GetTopDoctorsByAppointmentsUseCase;
@@ -84,6 +94,8 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const reciepeService = new ReciepeService();
   const appointmentPaymentService = new AppointmentPaymentService();
   const paymentCheckoutService = new PaymentCheckoutService();
+  const blogService: IBlogService = new BlogServiceAdapter();
+  const availabilityService: IAvailabilityService = new AvailabilityServiceAdapter();
 
   const handlePayNowUseCase = new HandlePayNowUseCase(appointmentPaymentService, paymentCheckoutService);
   const generateRoomCodeUseCase = new GenerateRoomCodeUseCase(videoSessionService, analyticsService);
@@ -111,6 +123,10 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   return (
     <DIContext.Provider
       value={{
+        authService,
+        paymentCheckoutService,
+        blogService,
+        availabilityService,
         handlePayNowUseCase,
         generateRoomCodeUseCase,
         getTopDoctorsByAppointmentsUseCase,

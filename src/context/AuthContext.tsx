@@ -1,10 +1,11 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { fetchCurrentUserProfile } from '@/network/currentUser';
+import { useDI } from '@/context/DIContext';
+import { setAuthToken } from '@/infrastructure/auth/tokenHolder';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -25,42 +26,48 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const { authService } = useDI();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [uid, setUid] = useState<string | null>(null); // Add state for `uid`
+  const [uid, setUid] = useState<string | null>(null);
   const [user, setUser] = useState<{ uid: string; name: string; email?: string; phoneNumber?: string } | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
-  const [role, setRole] = useState<UserRole | null>(null); // Fix type here
+  const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const auth = getAuth();
+    let cancel = false;
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubToken = authService.observeIdToken((token) => {
+      setAuthToken(token);
+    });
 
-      if (currentUser) {
-        let resolvedEmailVerified = currentUser.emailVerified === true;
+    const unsubscribe = authService.observeAuthState(async (authState) => {
+      if (cancel) return;
+
+      if (authState.userId) {
+        let resolvedEmailVerified = authService.isEmailVerified();
         try {
-          // Email verification status can be stale until we reload the user.
-          if (currentUser.email && !resolvedEmailVerified) {
-            await currentUser.reload();
-            resolvedEmailVerified = currentUser.emailVerified === true;
+          if (!resolvedEmailVerified) {
+            resolvedEmailVerified = await authService.reloadUser();
           }
         } catch {
           // ignore reload failures
         }
 
+        const currentUserInfo = authService.getCurrentUserInfo();
+
         setIsAuthenticated(true);
-        setUid(currentUser.uid); // Set `uid`
+        setUid(authState.userId);
         setEmailVerified(resolvedEmailVerified);
         try {
           const userData = await fetchCurrentUserProfile();
           const normalizedRole = normalizeRole(userData.role);
           setRole(normalizedRole);
           setUser({
-            uid: currentUser.uid,
-            name: userData.name || currentUser.displayName || 'Unknown',
-            email: userData.email || currentUser.email || undefined,
-            phoneNumber: userData.phoneNumber || currentUser.phoneNumber || undefined,
+            uid: authState.userId,
+            name: userData.name || currentUserInfo?.displayName || 'Unknown',
+            email: userData.email || currentUserInfo?.email || undefined,
+            phoneNumber: userData.phoneNumber || currentUserInfo?.phoneNumber || undefined,
           });
           setEmailVerified(
             typeof userData.emailVerified === 'boolean'
@@ -74,16 +81,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } else {
         setIsAuthenticated(false);
-        setUid(null); // Reset `uid`
+        setUid(null);
         setUser(null);
         setRole(null);
         setEmailVerified(false);
       }
 
-      setLoading(false);
+      if (!cancel) setLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup the listener on unmount
+    return () => {
+      cancel = true;
+      unsubscribe();
+      unsubToken();
+    };
   }, []);
 
   return (

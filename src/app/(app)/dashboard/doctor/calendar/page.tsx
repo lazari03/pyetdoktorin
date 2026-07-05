@@ -12,12 +12,11 @@ import { useAppointmentStore } from '@/store/appointmentStore';
 import { useVideoStore } from '@/store/videoStore';
 import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
-import { auth } from '@/config/firebaseconfig';
 import { Appointment } from '@/domain/entities/Appointment';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
-import { availabilityService } from '@/infrastructure/services/availabilityServiceAdapter';
+import { getAuthToken } from '@/infrastructure/auth/tokenHolder';
 import type { DoctorAvailability } from '@/domain/entities/DoctorAvailability';
 
 import type { CalendarEvent } from '../Calendar';
@@ -50,7 +49,7 @@ export default function DoctorCalendarPage() {
   const { user, role } = useAuth();
   const { appointments, loading, error, isAppointmentPast, fetchAppointments } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
-  const { generateRoomCodeUseCase } = useDI();
+  const { generateRoomCodeUseCase, availabilityService } = useDI();
   const { toast } = useToast();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showRedirecting, setShowRedirecting] = useState(false);
@@ -145,14 +144,12 @@ export default function DoctorCalendarPage() {
         return;
       }
 
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
+      const idToken = getAuthToken();
+      if (!idToken) {
         setShowRedirecting(false);
         toast({ variant: 'error', message: t('sessionExpired') || 'Your session has expired. Please log in again.' });
         return;
       }
-
-      const idToken = await currentUser.getIdToken();
       const data = await generateRoomCodeUseCase.execute({
         user_id: user.uid,
         room_id: appointmentId,

@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { auth } from '@/config/firebaseconfig';
+import { getAuthToken } from '@/infrastructure/auth/tokenHolder';
 
 export async function apiClient<T = unknown>(
   url: string,
@@ -19,9 +19,8 @@ export async function apiClient<T = unknown>(
       validateStatus: () => true,
     };
     // Attach Firebase ID token when available
-    const user = auth.currentUser;
-    if (user) {
-      const token = await user.getIdToken();
+    const token = getAuthToken();
+    if (token) {
       config.headers = { ...(config.headers || {}), Authorization: `Bearer ${token}` };
     }
     const response = await axios<T>(config);

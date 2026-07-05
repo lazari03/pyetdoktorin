@@ -5,25 +5,29 @@ This project has been refactored to follow Clean Architecture principles, provid
 
 ## Architecture Layers
 
-### 1. Domain Layer (`/src/clean/src/domain/`)
-- **Entities**: Core business objects (Appointment, User, Doctor, Notification, Payment)
-- **Value Objects**: Immutable objects that represent domain concepts
+### 1. Domain Layer (`src/domain/`)
+- **Entities**: Core business objects (Appointment, User, Doctor, Clinic)
 - **Repository Interfaces**: Contracts for data access without implementation details
-- **Domain Services**: Complex business logic that doesn't fit in entities
+- **Domain Rules**: Business rules and validation logic
 
-### 2. Application Layer (`/src/clean/src/application/`)
+### 2. Application Layer (`src/application/`)
 - **Use Cases**: Application-specific business logic and workflows
 - **Ports**: Interfaces for external services (notifications, payments, etc.)
 
-### 3. Infrastructure Layer (`/src/clean/src/infrastructure/`)
-- **Persistence**: Firebase repository implementations
-- **Services**: External service adapters (PayPal, SMS, Email, etc.)
-- **Dependency Injection**: Container for managing dependencies
+### 3. Infrastructure Layer (`src/infrastructure/`)
+- **Repositories**: Firebase repository implementations
+- **Services**: External service adapters (100ms, Paddle, SMS, Email, etc.)
+- **DI Context**: Dependency injection container
 
-### 4. Presentation Layer (`/src/clean/src/presentation/`)
+### 4. Presentation Layer (`src/presentation/`)
 - **Components**: React components with no business logic
 - **Hooks**: Custom hooks that orchestrate use cases
-- **Pages**: Page-level components that compose multiple components
+- **View Models**: View models that bridge components and use cases
+
+### Supporting Layers
+- **Network (`src/network/`)**: HTTP API clients (target: migrate into infrastructure)
+- **Store (`src/store/`)**: Zustand state stores (target: migrate into use cases)
+- **Context (`src/context/`)**: React contexts for Auth and DI
 
 ## Key Improvements
 
@@ -63,11 +67,12 @@ const handleCreate = async (data) => {
 
 ### Using the Dependency Container
 ```typescript
-import DependencyContainer from '@/infrastructure/di/DependencyContainer';
+import { useDI } from '@/context/DIContext';
 
-const container = DependencyContainer.getInstance();
-const appointmentRepo = container.getAppointmentRepository();
-const appointments = await appointmentRepo.getByUser(userId, isDoctor);
+function MyComponent() {
+  const { appointmentUseCases } = useDI();
+  const appointments = appointmentUseCases.getAppointments(userId);
+}
 ```
 
 ## Dependency Flow
@@ -96,24 +101,35 @@ Presentation → Application → Domain ← Infrastructure
 ## File Structure
 
 ```
-src/clean/src/
+src/
 ├── domain/
 │   ├── entities/          # Core business entities
-│   ├── value-objects/     # Value objects
 │   ├── repositories/      # Repository interfaces
-│   └── services/          # Domain services
+│   └── rules/             # Business rules
 ├── application/
-│   ├── use-cases/         # Application use cases
-│   └── ports/             # External service interfaces
+│   ├── auth/              # Auth use cases
+│   ├── clinics/           # Clinic use cases
+│   ├── ports/             # External service interfaces
+│   └── ...                # Use case files
 ├── infrastructure/
-│   ├── persistence/       # Repository implementations
-│   ├── services/          # External service adapters
-│   └── di/               # Dependency injection
-└── presentation/
-    ├── components/        # React components
-    ├── hooks/            # Custom hooks
-    ├── pages/            # Page components
-    └── layout/           # Layout components
+│   ├── repositories/      # Repository implementations
+│   └── services/          # External service adapters
+├── presentation/
+│   ├── components/        # React components
+│   ├── hooks/             # Custom hooks
+│   ├── view-models/       # View models
+│   └── utils/             # UI utilities
+├── network/               # API client layer
+├── store/                 # Zustand state stores
+├── config/                # App configuration
+├── context/               # React contexts (Auth, DI)
+├── navigation/            # Routing/navigation
+├── app/                   # Next.js App Router
+├── i18n/                  # Internationalization setup
+├── locales/               # Translation files
+├── models/                # Type definitions
+├── utils/                 # Shared utilities
+└── types/                 # Global type declarations
 ```
 
 ## Migration Strategy

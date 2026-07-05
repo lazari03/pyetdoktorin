@@ -12,7 +12,6 @@ import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import { UserRole } from '@/domain/entities/UserRole';
 import Link from "next/link";
 import Image from "next/image";
-import { EmailAuthProvider, getAuth, reauthenticateWithCredential } from "firebase/auth";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
 import { notifyFormSubmission } from "@/presentation/utils/formNotifications";
@@ -37,7 +36,7 @@ type Reciepe = {
 export default function DoctorReciepePage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const { getUserProfileUseCase, createReciepeUseCase, getReciepesByDoctorUseCase } = useDI();
+  const { authService, getUserProfileUseCase, createReciepeUseCase, getReciepesByDoctorUseCase } = useDI();
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [pharmacies, setPharmacies] = useState<{ id: string; name: string }[]>([]);
@@ -146,18 +145,7 @@ export default function DoctorReciepePage() {
   }, [pharmacies, pharmacySearch]);
 
   const reauthenticate = async (passwordValue: string) => {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error(t("notAuthenticated") || "User not authenticated.");
-    }
-    const email = currentUser.email || user?.email;
-    if (!email) {
-      throw new Error(t("missingEmail") || "Missing email for re-authentication.");
-    }
-    const credential = EmailAuthProvider.credential(email, passwordValue);
-    await reauthenticateWithCredential(currentUser, credential);
-    await currentUser.getIdToken(true);
+    await authService.reauthenticate(passwordValue);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

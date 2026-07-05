@@ -1,7 +1,13 @@
 
-
 import { create } from 'zustand';
-import { auth } from '@/config/firebaseconfig';
+
+interface GenerateRoomCodeParams {
+  appointmentId: string;
+  userId: string;
+  role: string;
+}
+
+type GenerateRoomCodeFn = (params: GenerateRoomCodeParams) => Promise<string>;
 
 interface VideoState {
   isInCall: boolean;
@@ -12,7 +18,7 @@ interface VideoState {
   userName: string | null;
   roomCode: string | null;
   setAuthStatus: (isAuthenticated: boolean, userId: string | null, userName: string | null) => void;
-  generateRoomCodeAndStore: (params: { appointmentId: string; userId: string; role: string }) => Promise<string>;
+  generateRoomCodeAndStore: (params: GenerateRoomCodeParams, generateRoomCode: GenerateRoomCodeFn) => Promise<string>;
 }
 
 export const useVideoStore = create<VideoState>()((set) => ({
@@ -26,24 +32,12 @@ export const useVideoStore = create<VideoState>()((set) => ({
   setAuthStatus: (isAuthenticated, userId, userName) => {
     set({ isAuthenticated, userId, userName, loading: false });
   },
-  generateRoomCodeAndStore: async ({ appointmentId, userId, role }) => {
+  generateRoomCodeAndStore: async ({ appointmentId, userId, role }, generateRoomCode) => {
     set({ loading: true, error: null });
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        throw new Error('Your session has expired. Please log in again.');
-      }
-      const idToken = await currentUser.getIdToken();
-      const { generateRoomCodeAndToken } = await import('../infrastructure/services/100msService');
-      const data = await generateRoomCodeAndToken({
-        user_id: userId,
-        room_id: appointmentId,
-        role,
-        idToken,
-      });
-      if (!data.sessionToken) throw new Error('No session token returned from server');
-      set({ roomCode: data.roomCode ?? null, loading: false });
-      return data.sessionToken;
+      const sessionToken = await generateRoomCode({ appointmentId, userId, role });
+      set({ roomCode: null, loading: false });
+      return sessionToken;
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
       throw error;

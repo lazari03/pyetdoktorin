@@ -8,6 +8,7 @@ import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useTranslation } from 'react-i18next';
 import { getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation/utils/errorMessages';
 import { syncPaddlePaymentWithRetry } from '@/network/payments';
+import { getAuthToken } from '@/infrastructure/auth/tokenHolder';
 import { clearPaymentProcessing } from '@/network/appointments';
 import { listAppointments } from '@/network/appointments';
 import { dashboardVideoSessionUrl } from '@/navigation/paths';
@@ -17,7 +18,7 @@ export function useDashboardActions() {
   const { user, role } = useAuth();
   const { setAuthStatus, generateRoomCodeAndStore } = useVideoStore();
   const { handlePayNow: storeHandlePayNow, setAppointments } = useAppointmentStore();
-  const { handlePayNowUseCase } = useDI();
+  const { handlePayNowUseCase, generateRoomCodeUseCase } = useDI();
   const { t } = useTranslation();
   const { toast } = useToast();
 
@@ -35,11 +36,25 @@ export function useDashboardActions() {
         return;
       }
       const effectiveRole = role === UserRole.Doctor ? UserRole.Doctor : UserRole.Patient;
+
+      const generateRoomCode = async (params: { appointmentId: string; userId: string; role: string }) => {
+        const idToken = getAuthToken();
+        if (!idToken) throw new Error('Your session has expired. Please log in again.');
+        const data = await generateRoomCodeUseCase.execute({
+          user_id: params.userId,
+          room_id: params.appointmentId,
+          role: params.role,
+          idToken,
+        });
+        if (!data.sessionToken) throw new Error('No session token returned from server');
+        return data.sessionToken;
+      };
+
       const sessionToken = await generateRoomCodeAndStore({
         appointmentId,
         userId: user.uid,
         role: effectiveRole,
-      });
+      }, generateRoomCode);
       const url = dashboardVideoSessionUrl(sessionToken);
       trackAnalyticsEvent('appointment_join_success', { appointmentId, role: effectiveRole });
       window.location.href = url;

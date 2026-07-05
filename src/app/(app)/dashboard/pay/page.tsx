@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import { useAuth } from '@/context/AuthContext';
-import { openPaddleCheckout, preparePaddleCheckout } from '@/infrastructure/services/paddleCheckout';
+import { useDI } from '@/context/DIContext';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { syncPaddlePaymentWithRetry } from '@/network/payments';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
@@ -15,6 +15,7 @@ export default function PayPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { paymentCheckoutService } = useDI();
 
   const appointmentId = searchParams?.get('appointmentId') || '';
 
@@ -25,7 +26,7 @@ export default function PayPage() {
   useEffect(() => {
     let cancelled = false;
     trackAnalyticsEvent('payment_page_loaded', { appointmentId });
-    preparePaddleCheckout()
+    paymentCheckoutService.prepare()
       .then(() => {
         if (!cancelled) setPaddleReady(true);
       })
@@ -50,9 +51,8 @@ export default function PayPage() {
     setStatus('loading');
     setErrorMessage(null);
     trackAnalyticsEvent('payment_checkout_opened', { appointmentId });
-    openPaddleCheckout({
+    paymentCheckoutService.openCheckout({
       appointmentId,
-      userId: user?.uid ?? null,
       onClose: () => {
         setStatus('idle');
         trackAnalyticsEvent('payment_checkout_closed', { appointmentId });
@@ -76,7 +76,7 @@ export default function PayPage() {
       setErrorMessage(t('paymentFailed'));
       trackAnalyticsEvent('payment_checkout_failed', { appointmentId, reason: 'open_failed' });
     });
-  }, [appointmentId, router, t, user?.uid]);
+  }, [appointmentId, router, t, paymentCheckoutService]);
 
   if (!appointmentId) {
     return (

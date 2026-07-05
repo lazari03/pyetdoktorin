@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getAuth } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
@@ -13,6 +12,7 @@ export const useMyProfile = () => {
   const { toast } = useToast();
   const { user, role, loading: authLoading } = useAuth(); // Access user, role, and loading from AuthContext
   const {
+    authService,
     getUserProfileUseCase,
     updateUserProfileUseCase,
     uploadProfilePictureUseCase,
@@ -41,8 +41,7 @@ export const useMyProfile = () => {
 
   const recentLoginAt = useMemo(() => {
     if (!user?.uid) return undefined;
-    const authUser = getAuth().currentUser;
-    const lastSignInTime = authUser?.metadata?.lastSignInTime;
+    const lastSignInTime = authService.getLastSignInTime();
     if (!lastSignInTime) return undefined;
     const date = new Date(lastSignInTime);
     if (Number.isNaN(date.getTime())) return undefined;
@@ -53,7 +52,7 @@ export const useMyProfile = () => {
       hour: "2-digit",
       minute: "2-digit",
     }).format(date);
-  }, [user?.uid]);
+  }, [user?.uid, authService]);
   // Handle profile picture upload
   const handleProfilePictureChange = async (file: File) => {
     if (!user?.uid) return;

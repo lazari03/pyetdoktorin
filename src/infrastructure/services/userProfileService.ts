@@ -1,5 +1,5 @@
 import { IUserProfileService, UserProfileData } from '@/application/ports/IUserProfileService';
-import { auth } from '@/config/firebaseconfig';
+import { auth } from '@/infrastructure/firebase/firebaseconfig';
 import { fetchCurrentUserProfile, updateCurrentUserProfile } from '@/network/currentUser';
 
 async function waitForCurrentUser(timeoutMs = 3000, intervalMs = 120) {

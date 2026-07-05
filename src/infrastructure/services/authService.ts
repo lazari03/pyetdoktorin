@@ -1,6 +1,6 @@
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, updateEmail, sendEmailVerification } from 'firebase/auth';
 import type { User } from 'firebase/auth';
-import { auth } from '@/config/firebaseconfig';
+import { auth } from '@/infrastructure/firebase/firebaseconfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { fetchCurrentUserProfile } from '@/network/currentUser';
@@ -80,6 +80,14 @@ export async function establishSessionForCurrentUser(): Promise<void> {
   await establishServerSession(idToken);
 }
 
+export async function reloadCurrentUser(): Promise<boolean> {
+  const authInstance = getAuth();
+  const currentUser = authInstance.currentUser;
+  if (!currentUser) return false;
+  await currentUser.reload();
+  return currentUser.emailVerified === true;
+}
+
 export async function establishSessionForCurrentUserAllowUnverified(): Promise<void> {
   const authInstance = getAuth();
   const currentUser = authInstance.currentUser;
@@ -91,15 +99,16 @@ export async function establishSessionForCurrentUserAllowUnverified(): Promise<v
 }
 
 // Check if user is authenticated
-export const isAuthenticated = (callback: (authState: { userId: string | null; error: string | null }) => void) => {
+export const isAuthenticated = (callback: (authState: { userId: string | null; error: string | null }) => void): (() => void) => {
     const authInstance = getAuth();
-    onAuthStateChanged(authInstance, (user) => {
+    const unsubscribe = onAuthStateChanged(authInstance, (user) => {
         if (user) {
             callback({ userId: user.uid, error: null });
         } else {
             callback({ userId: null, error: 'User not authenticated. Please log in.' });
         }
     });
+    return unsubscribe;
 };
 
 // Login function
