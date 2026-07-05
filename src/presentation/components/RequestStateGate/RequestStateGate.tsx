@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import Loader from '@/presentation/components/Loader/Loader';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
-import { BackendError } from '@/network/backendClient';
+import { BackendError } from '@/application/errors/BackendError';
 import { extractErrorCode, getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation/utils/errorMessages';
 import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
 import { VIDEO_ERROR_CODES } from '@/config/errorCodes';

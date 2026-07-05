@@ -1,15 +1,44 @@
 import type { User } from '@/domain/entities/User';
+import type { UserRole } from '@/domain/entities/UserRole';
+
+export interface AdminUserItem extends User {
+  [key: string]: unknown;
+}
 
 export type AdminUsersPage = {
-  items: User[];
+  items: AdminUserItem[];
   total: number;
   page: number;
   pageSize: number;
 };
 
+export type AdminUserCreatePayload = {
+  name: string;
+  surname: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  phone?: string;
+};
+
+export type AdminUserUpdatePayload = Partial<{
+  name: string;
+  surname: string;
+  email: string;
+  role: UserRole;
+  patientNotes?: string;
+  allergies?: string;
+  chronicConditions?: string;
+  phone?: string;
+  specialization?: string;
+  bio?: string;
+  specializations?: string[];
+  approvalStatus?: 'pending' | 'approved';
+}>;
+
 export interface IAdminUserService {
   getAllUsers(): Promise<User[]>;
-  getUsersPage(page: number, pageSize: number): Promise<AdminUsersPage>;
+  getUsersPage(page: number, pageSize: number, search?: string, role?: string): Promise<AdminUsersPage>;
   getUserById(id: string): Promise<User | null>;
   getDoctorProfile(id: string): Promise<(User & { name?: string; surname?: string; specialization?: string; bio?: string; specializations?: string[] }) | null>;
   resetUserPassword(id: string): Promise<{ resetLink?: string }>;

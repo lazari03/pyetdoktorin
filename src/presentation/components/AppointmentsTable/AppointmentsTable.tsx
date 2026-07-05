@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import Loader from '@/presentation/components/Loader/Loader';
-import { getAppointmentAction } from '@/presentation/utils/getAppointmentAction';
+import { getAppointmentAction } from '@/domain/rules/appointmentRules';
 import { getAppointmentActionPresentation } from '@/presentation/utils/getAppointmentActionPresentation';
 import { sortAppointments } from '@/presentation/utils/sortAppointments';
 import { toUserRole } from '@/presentation/utils/toUserRole';

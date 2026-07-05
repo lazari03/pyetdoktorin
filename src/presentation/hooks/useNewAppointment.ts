@@ -4,15 +4,15 @@ import { useNewAppointmentStore } from '@/store/newAppointmentStore';
 import { Appointment } from '@/domain/entities/Appointment';
 import { AppointmentStatus } from '@/domain/entities/AppointmentStatus';
 import { useAuth } from '@/context/AuthContext';
-import { createAppointment } from '@/network/appointments';
+import { useDI } from '@/context/DIContext';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { getAppointmentErrorMessage } from '@/presentation/utils/errorMessages';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
-import { getResolvedAvailabilitySlots } from '@/network/availability';
 
 export default function useNewAppointment() {
+  const { appointmentBookingService } = useDI();
   const {
     selectedDoctor,
     setSelectedDoctor,
@@ -76,7 +76,7 @@ export default function useNewAppointment() {
 
       setAvailabilityLoading(true);
       try {
-        const slots = await getResolvedAvailabilitySlots(selectedDoctor.id, preferredDate);
+        const slots = await appointmentBookingService.getResolvedSlots(selectedDoctor.id, preferredDate);
         if (!active) return;
         setAvailableTimes(
           slots.map((slot) => ({
@@ -145,7 +145,7 @@ export default function useNewAppointment() {
       status: AppointmentStatus.Pending,
     };
     try {
-      await createAppointment({
+      await appointmentBookingService.createAppointment({
         doctorId: appointmentData.doctorId,
         doctorName: appointmentData.doctorName,
         appointmentType,

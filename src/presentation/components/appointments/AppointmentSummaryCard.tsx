@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Appointment } from "@/domain/entities/Appointment";
-import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
+import { getAppointmentAction } from "@/domain/rules/appointmentRules";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
 import { toUserRole } from "@/presentation/utils/toUserRole";

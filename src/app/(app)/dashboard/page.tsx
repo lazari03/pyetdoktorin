@@ -27,7 +27,7 @@ const isCanceledOrRejectedStatus = (status?: string) =>
   isCanceledStatus(status) || isRejectedStatus(status);
 const DASHBOARD_APPOINTMENTS_PAGE_SIZE = 5;
 import { sortAppointments } from "@/presentation/utils/sortAppointments";
-import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
+import { getAppointmentAction } from "@/domain/rules/appointmentRules";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
 import { syncPaddlePaymentWithRetry } from "@/network/payments";

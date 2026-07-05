@@ -1,5 +1,5 @@
 import type { User } from '@/domain/entities/User';
-import { IAdminUserService, AdminUsersPage } from '@/application/ports/IAdminUserService';
+import { IAdminUserService, AdminUsersPage, AdminUserItem } from '@/application/ports/IAdminUserService';
 import {
   createAdminUser,
   deleteAdminUser,
@@ -12,13 +12,13 @@ import {
 export class AdminUserService implements IAdminUserService {
   async getAllUsers(): Promise<User[]> {
     const response = await fetchAdminUsers({ page: 0, pageSize: 500 });
-    return response.items as User[];
+    return response.items as unknown as User[];
   }
 
-  async getUsersPage(page: number, pageSize: number): Promise<AdminUsersPage> {
-    const response = await fetchAdminUsers({ page, pageSize });
+  async getUsersPage(page: number, pageSize: number, search?: string, role?: string): Promise<AdminUsersPage> {
+    const response = await fetchAdminUsers({ page, pageSize, search, role });
     return {
-      items: response.items as User[],
+      items: response.items,
       total: response.total,
       page: response.page,
       pageSize: response.pageSize,

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Appointment } from "@/domain/entities/Appointment";
 import { useTranslation } from "react-i18next";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
-import { getAppointmentAction } from "@/presentation/utils/getAppointmentAction";
+import { getAppointmentAction } from "@/domain/rules/appointmentRules";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { toUserRole } from "@/presentation/utils/toUserRole";
 import { PhoneIcon, CreditCardIcon } from "@heroicons/react/24/outline";

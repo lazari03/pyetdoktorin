@@ -1,12 +1,15 @@
 import { create } from "zustand";
 import { Appointment } from "@/domain/entities/Appointment";
-import { getAppointmentAction } from "@/presentation/utils/appointmentActionButton";
+import { getAppointmentAction } from "@/domain/rules/appointmentRules";
 import { APPOINTMENT_DURATION_MINUTES } from '@/config/appointmentConfig';
 import { UserRole } from '@/domain/entities/UserRole';
-import { listAppointments } from '@/network/appointments';
 import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
-import { BackendError } from '@/network/backendClient';
+import { BackendError } from '@/application/errors/BackendError';
 import { normalizeTo24h, isPastAppointment as isPast, isAppointmentPast as isPastEntity } from '@/domain/rules/appointmentRules';
+import type { IAppointmentQueryService } from '@/application/ports/IAppointmentQueryService';
+
+let appointmentQueryService: IAppointmentQueryService;
+export function setAppointmentQueryService(svc: IAppointmentQueryService) { appointmentQueryService = svc; }
 
 function resolveAppointmentFetchError(error: unknown): string {
   if (error instanceof BackendError) {
@@ -52,7 +55,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   fetchAppointments: async (role) => {
     set({ loading: true, error: null });
     try {
-      const response = await listAppointments();
+      const response = await appointmentQueryService.listAppointments();
       set({
         appointments: response.items,
         loading: false,
@@ -68,7 +71,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
     const refreshFromBackend = async () => {
       try {
-        const response = await listAppointments();
+        const response = await appointmentQueryService.listAppointments();
         if (disposed) return;
         set({ appointments: response.items, loading: false, error: null });
       } catch (error) {

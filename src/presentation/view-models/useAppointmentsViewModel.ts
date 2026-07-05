@@ -10,9 +10,6 @@ import { USER_ROLE_DOCTOR, USER_ROLE_PATIENT } from "@/config/userRoles";
 import { useTranslation } from "react-i18next";
 import { getAuthToken } from "@/infrastructure/auth/tokenHolder";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
-import { syncPaddlePayment, syncPaddlePaymentWithRetry } from "@/network/payments";
-import { listAppointments } from "@/network/appointments";
-import { clearPaymentProcessing } from "@/network/appointments";
 import { getAppointmentErrorMessage, getVideoErrorMessage } from "@/presentation/utils/errorMessages";
 import { APPOINTMENT_ERROR_CODES, VIDEO_ERROR_CODES } from "@/config/errorCodes";
 import { dashboardVideoSessionUrl } from "@/navigation/paths";
@@ -61,6 +58,8 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   const {
     generateRoomCodeUseCase,
     handlePayNowUseCase,
+    paymentSyncService,
+    appointmentQueryService,
   } = useDI();
 
   // Sync auth status with video store
@@ -118,8 +117,8 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
 
         if (!isDoctor && !appointment.isPaid) {
           try {
-            await syncPaddlePayment(appointmentId);
-            const response = await listAppointments();
+            await paymentSyncService.syncPayment(appointmentId);
+            const response = await appointmentQueryService.listAppointments();
             const refreshed = response.items.find((a) => a.id === appointmentId);
             if (refreshed) appointment = refreshed;
           } catch (syncError) {
@@ -225,16 +224,16 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
       try {
         await storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
           onClose: () => {
-            clearPaymentProcessing(appointmentId).catch((error) => {
+            paymentSyncService.clearPaymentProcessing(appointmentId).catch((error) => {
               console.warn("Payment processing clear failed", error);
             });
             (async () => {
               try {
-                await syncPaddlePaymentWithRetry(appointmentId);
+                await paymentSyncService.syncPaymentWithRetry(appointmentId);
               } catch (error) {
                 console.warn("Payment sync failed", error);
               } finally {
-                listAppointments()
+                appointmentQueryService.listAppointments()
                   .then((refreshed) => setAppointments(refreshed.items))
                   .catch((error) => console.warn("Appointment refresh after payment failed", error));
               }

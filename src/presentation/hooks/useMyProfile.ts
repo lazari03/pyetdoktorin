@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import { useTranslation } from "react-i18next";
-import { BackendError } from "@/network/backendClient";
+import { BackendError } from "@/application/errors/BackendError";
 import { useToast } from "@/presentation/components/Toast/ToastProvider";
 import { notifyFormSubmission } from "@/presentation/utils/formNotifications";
 

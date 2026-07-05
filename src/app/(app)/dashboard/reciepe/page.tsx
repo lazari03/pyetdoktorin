@@ -6,8 +6,7 @@ import { useDI } from "@/context/DIContext";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import Modal from "@/presentation/components/Modal/Modal";
-import { fetchAdminUsers } from '@/network/adminUsers';
-import { BackendError } from '@/network/backendClient';
+import { BackendError } from '@/application/errors/BackendError';
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import { UserRole } from '@/domain/entities/UserRole';
 import Link from "next/link";
@@ -36,7 +35,7 @@ type Reciepe = {
 export default function DoctorReciepePage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const { authService, getUserProfileUseCase, createReciepeUseCase, getReciepesByDoctorUseCase } = useDI();
+  const { authService, adminUserService, getUserProfileUseCase, createReciepeUseCase, getReciepesByDoctorUseCase } = useDI();
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [pharmacies, setPharmacies] = useState<{ id: string; name: string }[]>([]);
@@ -85,26 +84,26 @@ export default function DoctorReciepePage() {
     setLoadError(null);
     try {
       const [patientsResponse, pharmaciesResponse, profile, issued] = await Promise.all([
-        fetchAdminUsers({ role: UserRole.Patient, pageSize: 500 }),
-        fetchAdminUsers({ role: UserRole.Pharmacy, pageSize: 200 }),
+        adminUserService.getUsersPage(0, 500, undefined, UserRole.Patient),
+        adminUserService.getUsersPage(0, 200, undefined, UserRole.Pharmacy),
         getUserProfileUseCase.execute(user.uid),
         getReciepesByDoctorUseCase.execute(user.uid),
       ]);
 
-      const pts = (patientsResponse.items || []).map((u: Record<string, unknown>) => ({
-        id: String(u.id ?? u.uid ?? ''),
+      const pts = (patientsResponse.items || []).map((u) => ({
+        id: u.id ?? '',
         name:
-          `${(u.name as string | undefined) ?? ''} ${(u.surname as string | undefined) ?? ''}`.trim() ||
-          (u.email as string | undefined) ||
+          `${String(u['name'] ?? '')} ${String(u['surname'] ?? '')}`.trim() ||
+          u.email ||
           'Unknown',
       }));
       setPatients(pts);
 
-      const phs = (pharmaciesResponse.items || []).map((entry: Record<string, unknown>) => ({
-        id: String(entry.id ?? ''),
+      const phs = (pharmaciesResponse.items || []).map((entry) => ({
+        id: entry.id ?? '',
         name:
-          (entry.pharmacyName as string | undefined) ||
-          `${(entry.name as string | undefined) ?? ''} ${(entry.surname as string | undefined) ?? ''}`.trim() ||
+          String(entry['pharmacyName'] ?? '') ||
+          `${String(entry['name'] ?? '')} ${String(entry['surname'] ?? '')}`.trim() ||
           'Pharmacy',
       }));
       setPharmacies(phs);

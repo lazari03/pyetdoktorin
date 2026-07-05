@@ -29,6 +29,7 @@ import { UserProfileService } from '@/infrastructure/services/userProfileService
 import { DoctorProfileService } from '@/infrastructure/services/doctorProfileService';
 import { VideoSessionService } from '@/infrastructure/services/videoSessionService';
 import { AdminStatsServiceAdapter } from '@/infrastructure/services/adminStatsServiceAdapter';
+import { AdminUserService } from '@/infrastructure/services/adminUserService';
 import { SessionService } from '@/infrastructure/services/sessionService';
 import { RealtimeAppointmentsService } from '@/infrastructure/services/realtimeAppointmentsService';
 import { AuthLoginService } from '@/infrastructure/services/authLoginService';
@@ -40,9 +41,21 @@ import { IAuthService } from '@/application/ports/IAuthService';
 import { IPaymentCheckoutService } from '@/application/ports/IPaymentCheckoutService';
 import { IBlogService } from '@/application/ports/IBlogService';
 import { IAvailabilityService } from '@/application/ports/IAvailabilityService';
+import { IAdminUserService } from '@/application/ports/IAdminUserService';
+import { IAdminStatsService } from '@/application/ports/IAdminStatsService';
+import { IAppointmentQueryService } from '@/application/ports/IAppointmentQueryService';
+import { IAppointmentBookingService } from '@/application/ports/IAppointmentBookingService';
+import { IClinicBookingService } from '@/application/ports/IClinicBookingService';
+import { IPaymentSyncService } from '@/application/ports/IPaymentSyncService';
 import { BlogServiceAdapter } from '@/infrastructure/services/blogServiceAdapter';
 import { AvailabilityServiceAdapter } from '@/infrastructure/services/availabilityServiceAdapter';
+import { AppointmentQueryServiceAdapter } from '@/infrastructure/services/appointmentQueryServiceAdapter';
+import { AppointmentBookingServiceAdapter } from '@/infrastructure/services/appointmentBookingServiceAdapter';
+import { ClinicBookingServiceAdapter } from '@/infrastructure/services/clinicBookingServiceAdapter';
+import { PaymentSyncServiceAdapter } from '@/infrastructure/services/paymentSyncServiceAdapter';
 import { ReciepeService } from '@/infrastructure/services/reciepeService';
+import { setAdminUserService } from '@/store/adminStore';
+import { setAppointmentQueryService } from '@/store/appointmentStore';
 import { AppointmentPaymentService } from '@/infrastructure/services/appointmentPaymentService';
 import { PaymentCheckoutService } from '@/infrastructure/services/paymentCheckoutService';
 
@@ -51,6 +64,12 @@ interface DIContextValue {
   paymentCheckoutService: IPaymentCheckoutService;
   blogService: IBlogService;
   availabilityService: IAvailabilityService;
+  adminUserService: IAdminUserService;
+  adminStatsService: IAdminStatsService;
+  appointmentQueryService: IAppointmentQueryService;
+  appointmentBookingService: IAppointmentBookingService;
+  clinicBookingService: IClinicBookingService;
+  paymentSyncService: IPaymentSyncService;
   handlePayNowUseCase: HandlePayNowUseCase;
   generateRoomCodeUseCase: GenerateRoomCodeUseCase;
   getTopDoctorsByAppointmentsUseCase: GetTopDoctorsByAppointmentsUseCase;
@@ -85,6 +104,8 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const doctorProfileService = new DoctorProfileService();
   const videoSessionService = new VideoSessionService();
   const adminStatsService = new AdminStatsServiceAdapter();
+  const adminUserService = new AdminUserService();
+  setAdminUserService(adminUserService);
   const sessionService = new SessionService();
   const realtimeAppointmentsService = new RealtimeAppointmentsService();
   const authLoginService = new AuthLoginService();
@@ -96,6 +117,11 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const paymentCheckoutService = new PaymentCheckoutService();
   const blogService: IBlogService = new BlogServiceAdapter();
   const availabilityService: IAvailabilityService = new AvailabilityServiceAdapter();
+  const appointmentQueryService: IAppointmentQueryService = new AppointmentQueryServiceAdapter();
+  const appointmentBookingService: IAppointmentBookingService = new AppointmentBookingServiceAdapter();
+  const clinicBookingService: IClinicBookingService = new ClinicBookingServiceAdapter();
+  const paymentSyncService: IPaymentSyncService = new PaymentSyncServiceAdapter();
+  setAppointmentQueryService(appointmentQueryService);
 
   const handlePayNowUseCase = new HandlePayNowUseCase(appointmentPaymentService, paymentCheckoutService);
   const generateRoomCodeUseCase = new GenerateRoomCodeUseCase(videoSessionService, analyticsService);
@@ -127,6 +153,12 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         paymentCheckoutService,
         blogService,
         availabilityService,
+        adminUserService,
+        adminStatsService,
+        appointmentQueryService,
+        appointmentBookingService,
+        clinicBookingService,
+        paymentSyncService,
         handlePayNowUseCase,
         generateRoomCodeUseCase,
         getTopDoctorsByAppointmentsUseCase,

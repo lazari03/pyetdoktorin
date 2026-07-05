@@ -1,5 +1,6 @@
 
 import { getAuthToken, waitForToken } from '@/infrastructure/auth/tokenHolder';
+import { BackendError } from '@/application/errors/BackendError';
 
 const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
 
@@ -8,20 +9,6 @@ type BackendErrorPayload = {
   message?: unknown;
   detail?: unknown;
 };
-
-export class BackendError extends Error {
-  readonly status: number;
-  readonly code?: string;
-  readonly detail?: string;
-
-  constructor(message: string, status: number, code?: string, detail?: string) {
-    super(message);
-    this.status = status;
-    this.code = code;
-    this.detail = detail;
-    this.name = 'BackendError';
-  }
-}
 
 const parseBackendError = (text: string): BackendErrorPayload | null => {
   try {
