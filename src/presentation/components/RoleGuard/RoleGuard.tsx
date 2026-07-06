@@ -1,5 +1,5 @@
 'use client';
-import Loader from '../Loader/Loader';
+import { SectionShellSkeleton } from '@/presentation/components/Skeleton/SectionShellSkeleton';
 import { useEffect, useState } from 'react';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { UserRole } from '@/domain/entities/UserRole';
@@ -35,7 +35,7 @@ export default function RoleGuard({ children, allowedRoles, fallbackPath = ROUTE
 
   // Show loader while checking or redirecting
   if (isLoading || redirecting) {
-    return <div className="flex justify-center items-center min-h-screen"><Loader /></div>;
+    return <SectionShellSkeleton />;
   }
 
   // Only render children if authorized

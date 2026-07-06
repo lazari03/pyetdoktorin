@@ -8,7 +8,10 @@ import Image from "next/image";
 import { fetchPrescriptions, updatePrescriptionStatus } from '@/network/prescriptions';
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';
 import { PHARMACY_PATHS } from "@/navigation/paths";
+import { PillIcon, ClipboardIcon, UserIcon } from "@/presentation/components/icons/MiniIcons";
+import { initialsOf } from "@/presentation/utils/initials";
 import { UserRole } from "@/domain/entities/UserRole";
 
 type Reciepe = {
@@ -34,6 +37,7 @@ export default function PharmacyReciepesPage() {
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
 
   const load = useCallback(async () => {
     if (!user?.uid) return;
@@ -97,6 +101,7 @@ export default function PharmacyReciepesPage() {
       onRetry={load}
       homeHref={PHARMACY_PATHS.root}
       loadingLabel={t('loading')}
+      skeleton={<ListSkeleton />}
       analyticsPrefix="pharmacy.reciepes"
     >
       <div className="py-4 sm:py-6 px-3">
@@ -108,43 +113,73 @@ export default function PharmacyReciepesPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            <aside className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-2 h-full">
-              {reciepes.length === 0 && (
+            <aside className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3 h-full">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {([
+                  ["all", t("all") || "All"],
+                  ["pending", t("pending") || "Pending"],
+                  ["accepted", t("accepted") || "Accepted"],
+                  ["rejected", t("rejected") || "Rejected"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setStatusFilter(value)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                      statusFilter === value
+                        ? "bg-purple-600 text-white"
+                        : "border border-gray-200 text-gray-600 hover:border-purple-200"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {reciepes.filter((r) => statusFilter === "all" || r.status === statusFilter).length === 0 && (
                 <p className="text-sm text-gray-500 py-4">{t("noReciepes") || "No reciepes found."}</p>
               )}
-              {reciepes.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => setActiveId(r.id)}
-                  className={`w-full text-left rounded-lg border px-3 py-2 transition ${
-                    active?.id === r.id ? "border-purple-400 bg-purple-50" : "border-gray-100 hover:border-purple-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-semibold text-gray-900 truncate flex-1">{r.title}</p>
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      r.type === "reimbursement" ? "bg-sky-50 text-sky-700" : "bg-slate-100 text-slate-700"
-                    }`}>
-                      {r.type === "reimbursement"
-                        ? (t("prescriptionTypeReimbursement") || "Reimbursement")
-                        : (t("prescriptionTypeStandard") || "Standard")}
+              <div className="space-y-2">
+                {reciepes
+                  .filter((r) => statusFilter === "all" || r.status === statusFilter)
+                  .map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setActiveId(r.id)}
+                    className={`w-full text-left rounded-lg border px-3 py-2 transition flex items-start gap-2.5 ${
+                      active?.id === r.id ? "border-purple-400 bg-purple-50" : "border-gray-100 hover:border-purple-200"
+                    }`}
+                  >
+                    <span className="h-8 w-8 shrink-0 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center text-[11px] font-bold">
+                      {initialsOf(r.patient)}
                     </span>
-                  </div>
-                  <p className="text-xs text-gray-600 truncate">{r.patient}</p>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <p className="text-[11px] text-gray-500">{r.createdAt}</p>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      r.status === "accepted"
-                        ? "bg-green-50 text-green-700"
-                        : r.status === "rejected"
-                        ? "bg-red-50 text-red-700"
-                        : "bg-amber-50 text-amber-700"
-                    }`}>
-                      {t(r.status)}
-                    </span>
-                  </div>
-                </button>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-sm font-semibold text-gray-900 truncate flex-1">{r.title}</p>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          r.type === "reimbursement" ? "bg-sky-50 text-sky-700" : "bg-slate-100 text-slate-700"
+                        }`}>
+                          {r.type === "reimbursement"
+                            ? (t("prescriptionTypeReimbursement") || "Reimbursement")
+                            : (t("prescriptionTypeStandard") || "Standard")}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 truncate">{r.patient}</p>
+                      <div className="flex items-center justify-between mt-0.5">
+                        <p className="text-[11px] text-gray-500">{r.createdAt}</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          r.status === "accepted"
+                            ? "bg-green-50 text-green-700"
+                            : r.status === "rejected"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}>
+                          {t(r.status)}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </aside>
 
             <section className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
@@ -186,11 +221,11 @@ export default function PharmacyReciepesPage() {
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="rounded-2xl bg-gray-50 border border-gray-100 px-3 py-2">
-                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">{t("patientName") || "Patient"}</p>
+                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5 flex items-center gap-1"><UserIcon className="h-3 w-3" />{t("patientName") || "Patient"}</p>
                       <p className="text-gray-900">{active.patient}</p>
                     </div>
                     <div className="rounded-2xl bg-gray-50 border border-gray-100 px-3 py-2">
-                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">{t("doctorName") || "Doctor"}</p>
+                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5 flex items-center gap-1"><UserIcon className="h-3 w-3" />{t("doctorName") || "Doctor"}</p>
                       <p className="text-gray-900">{active.doctor || "-"}</p>
                     </div>
                     <div className="rounded-2xl bg-gray-50 border border-gray-100 px-3 py-2">
@@ -221,13 +256,13 @@ export default function PharmacyReciepesPage() {
                     <div className="space-y-2 text-sm">
                       {active.medicines && (
                         <div className="rounded-2xl bg-gray-50 border border-gray-100 px-3 py-2">
-                          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">{t("medicinesLabel") || "Medicines"}</p>
+                          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5 flex items-center gap-1"><PillIcon className="h-3 w-3" />{t("medicinesLabel") || "Medicines"}</p>
                           <p className="text-gray-900">{active.medicines}</p>
                         </div>
                       )}
                       {active.dosage && (
                         <div className="rounded-2xl bg-gray-50 border border-gray-100 px-3 py-2">
-                          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">{t("dosageLabel") || "Dosage"}</p>
+                          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5 flex items-center gap-1"><ClipboardIcon className="h-3 w-3" />{t("dosageLabel") || "Dosage"}</p>
                           <p className="text-gray-900">{active.dosage}</p>
                         </div>
                       )}

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
-import Loader from '@/presentation/components/Loader/Loader';
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';
 import { Card } from '@/presentation/ui/Card';
 import { CheckCircleIcon, EnvelopeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
@@ -148,7 +148,7 @@ export default function VerifyEmailPage() {
     }
   };
 
-  if (loading) return <Loader label={t('loading', { defaultValue: 'Loading…' })} />;
+  if (loading) return <StatsPageSkeleton />;
 
   if (!user) {
     return (

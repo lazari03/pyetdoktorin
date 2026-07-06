@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { CLINIC_PATHS } from '@/navigation/paths';
 import { UserRole } from '@/domain/entities/UserRole';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
-
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';
 export default function ClinicCalendarPage() {
   const { user, role } = useAuth();
   const { t } = useTranslation();
@@ -37,15 +37,16 @@ export default function ClinicCalendarPage() {
       onRetry={refresh}
       homeHref={CLINIC_PATHS.root}
       loadingLabel={t('loading')}
+      skeleton={<StatsPageSkeleton />}
       analyticsPrefix="clinic.calendar"
     >
-      <div className="space-y-4">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between">
+      <div className="space-y-3">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
         <div>
           <h1 className="text-[15px] font-bold text-gray-900">{t('clinicCalendar') || 'Clinic calendar'}</h1>
           <p className="text-[12.5px] text-gray-500">{t('clinicCalendarSubtitle') || 'Review your daily schedule'}</p>
         </div>
-        <Link href={CLINIC_PATHS.bookings} className="text-[12.5px] font-semibold text-purple-600 hover:underline">
+        <Link href={CLINIC_PATHS.bookings} className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800">
           {t('goToBookings') || 'Go to bookings'}
         </Link>
       </div>
@@ -57,7 +58,7 @@ export default function ClinicCalendarPage() {
           {t('noBookingsYet') || 'No bookings yet'}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {sortedDates.map((dateKey) => (
             <div key={dateKey} className="bg-white rounded-xl border border-gray-100 shadow-sm">
               <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
@@ -78,10 +79,10 @@ export default function ClinicCalendarPage() {
                     <span
                       className={`text-[10.5px] font-bold px-2.5 py-1 rounded-full ${
                         booking.status === 'confirmed'
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-green-50 text-green-700'
                           : booking.status === 'declined'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-amber-50 text-amber-700'
                       }`}
                     >
                       {booking.status}

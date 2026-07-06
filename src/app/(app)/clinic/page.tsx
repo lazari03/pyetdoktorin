@@ -18,7 +18,7 @@ import {
 import { CLINIC_PATHS } from '@/navigation/paths';
 import { UserRole } from '@/domain/entities/UserRole';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
-import { DashboardTutorialGate } from '@/presentation/components/dashboard/DashboardTutorialGate';
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';import { DashboardTutorialGate } from '@/presentation/components/dashboard/DashboardTutorialGate';
 
 function calculateClinicEarnings(bookings: ClinicBooking[]) {
   const payoutPercentage = DOCTOR_PAYOUT_RATE;
@@ -118,12 +118,13 @@ export default function ClinicDashboardPage() {
       onRetry={refresh}
       homeHref={CLINIC_PATHS.root}
       loadingLabel={t('loading')}
+      skeleton={<StatsPageSkeleton cardCount={3} />}
       analyticsPrefix="clinic.dashboard"
     >
       {user?.uid ? <DashboardTutorialGate userId={user.uid} role={role} /> : null}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* 4×KPI row */}
-        <section className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <section className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           {[
             {
               label: 'Total Bookings', value: bookings.length, helper: 'All time',
@@ -149,10 +150,10 @@ export default function ClinicDashboardPage() {
               Icon: ClockIcon, iconBg: 'bg-amber-100 text-amber-600', accent: 'text-amber-700', delta: null, pos: false,
             },
           ].map((card) => (
-            <div key={card.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2">
+            <div key={card.label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
-                <p className="text-[11.5px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
-                <span className={`h-7 w-7 rounded-xl flex items-center justify-center ${card.iconBg}`}>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{card.label}</p>
+                <span className={`h-7 w-7 rounded-lg flex items-center justify-center ${card.iconBg}`}>
                   <card.Icon className="h-4 w-4" />
                 </span>
               </div>
@@ -169,11 +170,11 @@ export default function ClinicDashboardPage() {
           ))}
         </section>
 
-	      <div className="grid gap-4 lg:grid-cols-3">
+	      <div className="grid gap-3 lg:grid-cols-3">
 	        <section className="bg-white rounded-xl shadow-sm p-4 border border-gray-100 h-full flex flex-col">
 	          <div className="flex items-center justify-between mb-3">
-	            <p className="text-sm font-semibold text-gray-900">{t('recentPatients') ?? 'Recent patients'}</p>
-	            <Link href={CLINIC_PATHS.bookings} className="text-xs text-purple-600 hover:underline">
+	            <p className="text-[13.5px] font-bold text-gray-900">{t('recentPatients') ?? 'Recent patients'}</p>
+	            <Link href={CLINIC_PATHS.bookings} className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800">
 	              {t('viewAll') || 'View all'}
 	            </Link>
 	          </div>
@@ -192,7 +193,7 @@ export default function ClinicDashboardPage() {
         <section className="bg-white rounded-xl shadow-sm p-4 border border-gray-100 h-full flex flex-col gap-4">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-900">{t('activeBookings') ?? 'Active bookings'}</p>
+              <p className="text-[13.5px] font-bold text-gray-900">{t('activeBookings') ?? 'Active bookings'}</p>
               <p className="text-4xl font-extrabold mt-1 text-purple-700">{bookings.length}</p>
               <p className="text-xs text-gray-600">{t('pendingAndConfirmed') || 'Pending and confirmed'}</p>
             </div>
@@ -203,7 +204,7 @@ export default function ClinicDashboardPage() {
               <p className="text-lg font-semibold text-purple-800">{bookings.filter((b) => b.status === 'pending').length}</p>
               <p className="text-[11px] text-purple-700/80">{t('awaitingReview') || 'Awaiting review'}</p>
             </div>
-            <div className="rounded-xl border border-gray-200 px-3 py-3">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-3">
               <p className="text-[11px] uppercase tracking-wide text-gray-600 font-semibold">{t('confirmed') ?? 'Confirmed'}</p>
               <p className="text-lg font-semibold text-gray-900">{bookings.filter((b) => b.status === 'confirmed').length}</p>
               <p className="text-[11px] text-gray-600">{t('scheduled') || 'Scheduled'}</p>
@@ -217,8 +218,8 @@ export default function ClinicDashboardPage() {
 
       <section className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
 	        <div className="flex items-center justify-between mb-3">
-	          <h2 className="text-base font-semibold text-gray-900">{t('latestRequests') || 'Latest requests'}</h2>
-	          <Link href={CLINIC_PATHS.bookings} className="text-xs text-purple-600 hover:underline">
+	          <h2 className="text-[13.5px] font-bold text-gray-900">{t('latestRequests') || 'Latest requests'}</h2>
+	          <Link href={CLINIC_PATHS.bookings} className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800">
 	            {t('viewAll')}
 	          </Link>
 	        </div>
@@ -226,18 +227,18 @@ export default function ClinicDashboardPage() {
           {loading ? (
             <p className="text-center text-gray-500 py-6">{t('loading') || 'Loading...'}</p>
           ) : bookings.slice(0, 5).map((booking) => (
-            <div key={booking.id} className="py-4 flex items-center justify-between">
+            <div key={booking.id} className="py-3 flex items-center justify-between">
               <div>
-                <p className="font-semibold text-gray-900">{booking.patientName}</p>
-                <p className="text-sm text-gray-600">{booking.note}</p>
+                <p className="text-sm font-semibold text-gray-900">{booking.patientName}</p>
+                <p className="text-xs text-gray-600">{booking.note}</p>
               </div>
               <span
-                className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
                   booking.status === 'confirmed'
-                    ? 'bg-green-100 text-green-700'
+                    ? 'bg-green-50 text-green-700'
                     : booking.status === 'declined'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-yellow-100 text-yellow-700'
+                    ? 'bg-red-50 text-red-700'
+                    : 'bg-amber-50 text-amber-700'
                 }`}
               >
                 {booking.status}

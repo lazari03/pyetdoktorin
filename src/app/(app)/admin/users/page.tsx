@@ -95,7 +95,7 @@ function AdminUsersContent() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -134,7 +134,7 @@ function AdminUsersContent() {
       </div>
 
       {/* Split layout */}
-      <div className={`flex gap-4 items-start ${panelOpen ? 'lg:flex-row' : ''}`}>
+      <div className={`flex gap-3 items-start ${panelOpen ? 'lg:flex-row' : ''}`}>
         {/* Table */}
         <div className={`bg-white rounded-xl border border-gray-100 shadow-sm p-4 min-w-0 ${panelOpen ? 'flex-1' : 'w-full'}`}>
           <UsersTable roleFilter={roleFilter ?? undefined} />
@@ -142,7 +142,7 @@ function AdminUsersContent() {
 
         {/* Create panel */}
         {panelOpen && (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 w-full lg:w-[380px] shrink-0">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 w-full lg:w-[380px] shrink-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-gray-900">{t('createUser') || 'New user'}</h2>
               <button

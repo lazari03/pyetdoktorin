@@ -17,7 +17,7 @@ import { listAppointments } from "@/network/appointments";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
-import { useAuth } from "@/context/AuthContext";
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';import { useAuth } from "@/context/AuthContext";
 import {
   isCanceledStatus,
   isRejectedStatus,
@@ -119,11 +119,12 @@ function JourneyPage() {
       onRetry={() => fetchAppointments(role)}
       homeHref={DASHBOARD_PATHS.root}
       loadingLabel={t("loading")}
+      skeleton={<StatsPageSkeleton />}
       analyticsPrefix="appointments"
     >
       <div>
         <RedirectingModal show={vm.showRedirecting} />
-        <div className="space-y-4">
+        <div className="space-y-3">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
@@ -168,7 +169,7 @@ function JourneyPage() {
           </div>
         )}
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3">
           <MetricTile label={t("visitsThisMonth")} value={visitsThisMonth.toString()} />
           <MetricTile label={t("completedVisits")} value={completedCount.toString()} />
           <MetricTile label={t("pendingActions")} value={pendingCount.toString()} tone="amber" />
@@ -211,14 +212,11 @@ function MetricTile({
   value: string;
   tone?: "purple" | "amber";
 }) {
-  const toneClasses =
-    tone === "amber"
-      ? "bg-amber-50 border-amber-100 text-amber-700"
-      : "bg-purple-50 border-purple-100 text-purple-700";
+  const accent = tone === "amber" ? "text-amber-700" : "text-purple-700";
   return (
-    <div className={`rounded-xl border ${toneClasses} p-4 shadow-sm`}>
-      <p className="text-[10.5px] font-bold uppercase tracking-[.08em]">{label}</p>
-      <p className="text-2xl font-extrabold mt-1 tracking-tight">{value}</p>
+    <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{label}</p>
+      <p className={`text-3xl font-bold leading-none ${accent}`}>{value}</p>
     </div>
   );
 }

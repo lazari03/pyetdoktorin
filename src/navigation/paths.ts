@@ -16,6 +16,7 @@ export const DASHBOARD_PATHS = {
   doctorProfileBase: `${ROUTES.DASHBOARD}/doctor`,
   reciepe: `${ROUTES.DASHBOARD}/reciepe`,
   reciepes: `${ROUTES.DASHBOARD}/reciepes`,
+  patients: `${ROUTES.DASHBOARD}/patients`,
 } as const;
 
 export const ADMIN_PATHS = {

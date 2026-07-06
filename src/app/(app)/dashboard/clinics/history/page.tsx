@@ -9,7 +9,7 @@ import { ClinicBooking } from '@/domain/entities/ClinicBooking';
 import { UserRole } from '@/domain/entities/UserRole';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
-
+import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';
 export default function ClinicBookingHistoryPage() {
   const { role } = useAuth();
   const { t } = useTranslation();
@@ -53,11 +53,12 @@ export default function ClinicBookingHistoryPage() {
       onRetry={load}
       homeHref={DASHBOARD_PATHS.clinics}
       loadingLabel={t('loading')}
+      skeleton={<ListSkeleton />}
       analyticsPrefix="dashboard.clinics_history"
     >
       <div>
-        <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between flex-wrap gap-3">
+        <div className="space-y-3">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center justify-between flex-wrap gap-3">
             <div>
               <h1 className="text-[15px] font-bold text-gray-900">{t('clinicBookingHistory') || 'Clinic booking history'}</h1>
               <p className="text-[12.5px] text-gray-500">
@@ -66,7 +67,7 @@ export default function ClinicBookingHistoryPage() {
             </div>
             <Link
               href={DASHBOARD_PATHS.clinics}
-              className="text-[12.5px] font-semibold text-purple-600 hover:underline"
+              className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800"
               data-analytics="dashboard.clinics_history.book_another"
             >
               {t('bookAnotherClinic') || 'Book another clinic'}
@@ -112,12 +113,12 @@ export default function ClinicBookingHistoryPage() {
                         </td>
                         <td className="px-3 py-3">
                           <span
-                            className={`text-[10.5px] font-bold px-2.5 py-1 rounded-full ${
+                            className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${
                               booking.status === 'confirmed'
-                                ? 'bg-green-100 text-green-700'
+                                ? 'bg-green-50 text-green-700'
                                 : booking.status === 'declined'
-                                  ? 'bg-red-100 text-red-700'
-                                  : 'bg-yellow-100 text-yellow-700'
+                                  ? 'bg-red-50 text-red-700'
+                                  : 'bg-amber-50 text-amber-700'
                             }`}
                           >
                             {booking.status}

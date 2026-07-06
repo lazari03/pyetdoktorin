@@ -9,7 +9,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
 import { UserRole } from '@/domain/entities/UserRole';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
-import Loader from '@/presentation/components/Loader/Loader';
+import { SectionShellSkeleton } from '@/presentation/components/Skeleton/SectionShellSkeleton';
 import MissingRole from '@/presentation/components/MissingRole/MissingRole';
 import { useDashboardGuard } from '@/navigation/useDashboardGuard';
 import { getDashboardNavDefs, getDashboardProfileMenuDefs } from '@/navigation/navConfig';
@@ -49,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   if (loading) {
-    return <Loader />;
+    return <SectionShellSkeleton />;
   }
 
   if (!isAuthenticated) {

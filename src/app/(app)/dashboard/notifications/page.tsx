@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Link from "next/link";
 import { useNotificationsLogic } from './useNotificationsLogic';
 import { UserRole } from '@/domain/entities/UserRole';
-import Loader from '@/presentation/components/Loader/Loader';
+import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';
 import { useSearchParams } from 'next/navigation';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
@@ -112,7 +112,7 @@ function NotificationsPage() {
   }
 
   if (isLoading || !userRole) {
-    return <Loader label={t('loadingNotifications', 'Loading notifications...')} />;
+    return <ListSkeleton items={5} />;
   }
 
   if (appointmentNotifications.length === 0 && prescriptionNotifications.length === 0) {
@@ -138,7 +138,7 @@ function NotificationsPage() {
 
   return (
     <div className="py-4 sm:py-6 px-3">
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="max-w-5xl mx-auto space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
@@ -172,10 +172,10 @@ function NotificationsPage() {
               const status = appointment.status?.toLowerCase();
               const chip =
                 status === 'accepted'
-                  ? { text: t('accepted'), classes: 'bg-green-50 text-green-700 border border-green-100' }
+                  ? { text: t('accepted'), classes: 'bg-green-50 text-green-700' }
                   : status === 'rejected'
-                  ? { text: t('rejected'), classes: 'bg-red-50 text-red-700 border border-red-100' }
-                  : { text: t('pending'), classes: 'bg-amber-50 text-amber-700 border border-amber-100' };
+                  ? { text: t('rejected'), classes: 'bg-red-50 text-red-700' }
+                  : { text: t('pending'), classes: 'bg-amber-50 text-amber-700' };
               const isFocused = Boolean(focusId && focusId === appointment.id);
               return (
                 <div
@@ -197,7 +197,7 @@ function NotificationsPage() {
                         {appointment.preferredDate} {appointment.preferredTime}
                       </p>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-bold ${chip.classes}`}>
+                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${chip.classes}`}>
                       {chip.text}
                     </span>
                   </div>
@@ -296,10 +296,10 @@ function NotificationsPage() {
               const status = item.status?.toLowerCase();
               const chip =
                 status === 'accepted'
-                  ? { text: t('accepted'), classes: 'bg-green-50 text-green-700 border border-green-100' }
+                  ? { text: t('accepted'), classes: 'bg-green-50 text-green-700' }
                   : status === 'rejected'
-                  ? { text: t('rejected'), classes: 'bg-red-50 text-red-700 border border-red-100' }
-                  : { text: t('pending'), classes: 'bg-amber-50 text-amber-700 border border-amber-100' };
+                  ? { text: t('rejected'), classes: 'bg-red-50 text-red-700' }
+                  : { text: t('pending'), classes: 'bg-amber-50 text-amber-700' };
               const isFocused = Boolean(focusId && focusId === item.id);
               return (
                 <div
@@ -328,7 +328,7 @@ function NotificationsPage() {
                         {formatDate(item.updatedAt)}
                       </p>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-bold ${chip.classes}`}>
+                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${chip.classes}`}>
                       {chip.text}
                     </span>
                   </div>

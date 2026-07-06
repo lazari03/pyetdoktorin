@@ -13,7 +13,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';
 import { notifyFormSubmission } from "@/presentation/utils/formNotifications";
+import { PillIcon, ClipboardIcon } from "@/presentation/components/icons/MiniIcons";
+import { initialsOf } from "@/presentation/utils/initials";
+import { DocumentTextIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+
+const inputClass = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500";
+const fieldLabelClass = "block text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1";
+const RECIEPES_PAGE_SIZE = 6;
 
 type Reciepe = {
   id: string;
@@ -61,6 +69,8 @@ export default function DoctorReciepePage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showIssuedModal, setShowIssuedModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
+  const [reciepesPage, setReciepesPage] = useState(0);
   const toReciepe = useCallback((p: ReciepePayload): Reciepe => ({
     id: p.id || "",
     patientId: p.patientId,
@@ -359,6 +369,26 @@ export default function DoctorReciepePage() {
     w.print();
   };
 
+  const totalCount = reciepes.length;
+  const pendingCount = reciepes.filter((r) => r.status === "pending").length;
+  const acceptedCount = reciepes.filter((r) => r.status === "accepted").length;
+  const rejectedCount = reciepes.filter((r) => r.status === "rejected").length;
+
+  const filteredReciepes = reciepes.filter((r) => statusFilter === "all" || r.status === statusFilter);
+  const reciepesTotalPages = Math.max(1, Math.ceil(filteredReciepes.length / RECIEPES_PAGE_SIZE));
+  const pagedReciepes = filteredReciepes.slice(
+    reciepesPage * RECIEPES_PAGE_SIZE,
+    reciepesPage * RECIEPES_PAGE_SIZE + RECIEPES_PAGE_SIZE
+  );
+
+  useEffect(() => {
+    setReciepesPage(0);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    if (reciepesPage > reciepesTotalPages - 1) setReciepesPage(0);
+  }, [reciepesPage, reciepesTotalPages]);
+
   if (role !== UserRole.Doctor) {
     return <RedirectingModal show />;
   }
@@ -370,9 +400,10 @@ export default function DoctorReciepePage() {
       onRetry={loadAll}
       homeHref={DASHBOARD_PATHS.root}
       loadingLabel={t("loading")}
+      skeleton={<StatsPageSkeleton />}
       analyticsPrefix="dashboard.reciepe"
     >
-      <div className="py-4 sm:py-6 px-3">
+      <div>
         <Modal isOpen={showIssuedModal} onClose={() => setShowIssuedModal(false)}>
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900">
@@ -392,26 +423,97 @@ export default function DoctorReciepePage() {
             </div>
           </div>
         </Modal>
-        <div className="max-w-5xl mx-auto space-y-4">
+        <div className="space-y-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">{t("secureAccessEyebrow") || "Secure access"}</p>
             <h1 className="text-[15px] font-bold text-gray-900">{t("reciepeTitleDoctor") || "Reciepe"}</h1>
             <p className="text-[12.5px] text-gray-500">{t("reciepeSubtitleDoctor") || "Issue prescriptions and keep a clear record for your patients."}</p>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("reciepeList") || "Issued reciepes"}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("reciepeList") || "Issued reciepes"}</p>
+                <span className="h-7 w-7 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600 shrink-0">
+                  <DocumentTextIcon className="h-4 w-4" />
+                </span>
+              </div>
+              <p className="text-3xl font-bold leading-none text-gray-900">{totalCount}</p>
+              <p className="text-[11px] text-gray-400 leading-none">{t("allTime") || "All time"}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("pending") || "Pending"}</p>
+                <span className="h-7 w-7 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600 shrink-0">
+                  <ClockIcon className="h-4 w-4" />
+                </span>
+              </div>
+              <p className="text-3xl font-bold leading-none text-amber-700">{pendingCount}</p>
+              <p className="text-[11px] text-gray-400 leading-none">{t("awaitingReview") || "Awaiting review"}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("accepted") || "Accepted"}</p>
+                <span className="h-7 w-7 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600 shrink-0">
+                  <CheckCircleIcon className="h-4 w-4" />
+                </span>
+              </div>
+              <p className="text-3xl font-bold leading-none text-emerald-700">{acceptedCount}</p>
+              <p className="text-[11px] text-gray-400 leading-none">{t("processedReciepesHelper") || "Completed or rejected"}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("rejected") || "Rejected"}</p>
+                <span className="h-7 w-7 rounded-lg flex items-center justify-center bg-red-100 text-red-600 shrink-0">
+                  <XCircleIcon className="h-4 w-4" />
+                </span>
+              </div>
+              <p className="text-3xl font-bold leading-none text-red-700">{rejectedCount}</p>
+              <p className="text-[11px] text-gray-400 leading-none">{t("declined") || "Declined"}</p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-2 items-start">
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                <h2 className="text-[13.5px] font-bold text-gray-900">{t("reciepeList") || "Issued reciepes"}</h2>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {([
+                    ["all", t("all") || "All"],
+                    ["pending", t("pending") || "Pending"],
+                    ["accepted", t("accepted") || "Accepted"],
+                    ["rejected", t("rejected") || "Rejected"],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setStatusFilter(value)}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                        statusFilter === value
+                          ? "bg-purple-600 text-white"
+                          : "border border-gray-200 text-gray-600 hover:border-purple-200"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="space-y-3">
-                {reciepes.length === 0 ? (
+                {filteredReciepes.length === 0 ? (
                   <p className="text-sm text-gray-500 py-4">{t("noReciepes") || "No reciepes found."}</p>
                 ) : (
-                  reciepes.map((r) => (
-                    <div key={r.id} className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <p className="font-semibold text-gray-900 truncate">{r.title}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-gray-500">{r.date}</span>
+                  pagedReciepes.map((r) => (
+                    <div key={r.id} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="h-8 w-8 shrink-0 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center text-[11px] font-bold">
+                          {initialsOf(r.patient)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
+                          <p className="text-[11.5px] text-gray-500 truncate">{r.patient}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
                           {r.status ? (
                             <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
                               r.status === "accepted"
@@ -423,17 +525,12 @@ export default function DoctorReciepePage() {
                               {t(r.status)}
                             </span>
                           ) : null}
-                          <button
-                            onClick={() => downloadPdf(r)}
-                            className="text-[11px] text-purple-600 hover:underline"
-                          >
-                            {t("download") || "Download"}
-                          </button>
+                          <span className="text-[10.5px] text-gray-400">{r.date}</span>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-600">{t("patient")}: {r.patient}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-600">
-                        <span className={`rounded-full px-2 py-1 font-semibold ${
+
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-600">
+                        <span className={`rounded-full px-2 py-0.5 font-semibold ${
                           r.type === "reimbursement"
                             ? "bg-sky-50 text-sky-700"
                             : "bg-slate-100 text-slate-700"
@@ -443,39 +540,74 @@ export default function DoctorReciepePage() {
                             : (t("prescriptionTypeStandard") || "Standard")}
                         </span>
                         {r.reimbursementCode ? (
-                          <span>
-                            {(t("reimbursementCodeLabel") || "Reimbursement code")}: {r.reimbursementCode}
-                          </span>
+                          <span>{(t("reimbursementCodeLabel") || "Reimbursement code")}: {r.reimbursementCode}</span>
                         ) : null}
                         {r.type === "reimbursement" ? (
-                          <span>
-                            {(t("pharmacyName") || "Pharmacy")}: {r.pharmacy || "-"}
-                          </span>
+                          <span>{(t("pharmacyName") || "Pharmacy")}: {r.pharmacy || "-"}</span>
                         ) : null}
                       </div>
+
                       {r.type === "standard" ? (
-                        <>
-                          <p className="text-xs text-gray-700">{t("medicinesLabel") || "Medicines"}: {r.medicines}</p>
-                          <p className="text-xs text-gray-700">{t("dosageLabel") || "Dosage"}: {r.dosage}</p>
-                          {r.notes ? <p className="text-xs text-gray-600 mt-1">{r.notes}</p> : null}
-                        </>
+                        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-700">
+                          <p className="flex items-center gap-1.5 min-w-0 truncate">
+                            <PillIcon className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+                            {r.medicines}
+                          </p>
+                          <p className="flex items-center gap-1.5 min-w-0 truncate">
+                            <ClipboardIcon className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+                            {r.dosage}
+                          </p>
+                          {r.notes ? <p className="col-span-2 text-gray-500 truncate">{r.notes}</p> : null}
+                        </div>
                       ) : null}
+
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          onClick={() => downloadPdf(r)}
+                          className="text-[11px] font-semibold text-purple-700 hover:text-purple-800"
+                        >
+                          {t("download") || "Download"}
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
               </div>
+              {reciepesTotalPages > 1 && (
+                <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setReciepesPage((p) => Math.max(0, p - 1))}
+                    disabled={reciepesPage === 0}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-[11.5px] font-semibold text-gray-600 hover:border-purple-300 hover:text-purple-700 disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-600"
+                  >
+                    {t("previous") || "Previous"}
+                  </button>
+                  <span className="text-[11.5px] text-gray-500">
+                    {t("page") || "Page"} {reciepesPage + 1} / {reciepesTotalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setReciepesPage((p) => Math.min(reciepesTotalPages - 1, p + 1))}
+                    disabled={reciepesPage >= reciepesTotalPages - 1}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-[11.5px] font-semibold text-gray-600 hover:border-purple-300 hover:text-purple-700 disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-600"
+                  >
+                    {t("next") || "Next"}
+                  </button>
+                </div>
+              )}
             </section>
 
-            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("newReciepe") || "New reciepe"}</h2>
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <h2 className="text-[13.5px] font-bold text-gray-900 mb-3">{t("newReciepe") || "New reciepe"}</h2>
               <form className="space-y-3" onSubmit={handleSubmit}>
                 {submitError && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                     {submitError}
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">{t("prescriptionTypeLabel") || "Prescription type"}</label>
+                  <label className={fieldLabelClass}>{t("prescriptionTypeLabel") || "Prescription type"}</label>
                   <div className="grid grid-cols-2 gap-2">
                     {([
                       { value: "standard", label: t("prescriptionTypeStandard") || "Standard" },
@@ -484,7 +616,7 @@ export default function DoctorReciepePage() {
                       <button
                         key={option.value}
                         type="button"
-                        className={`rounded-2xl border px-3 py-2 text-sm font-medium transition ${
+                        className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
                           form.type === option.value
                             ? "border-purple-400 bg-purple-50 text-purple-700"
                             : "border-gray-200 text-gray-700 hover:border-purple-200"
@@ -512,9 +644,9 @@ export default function DoctorReciepePage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">{t("patientName")}</label>
+                  <label className={fieldLabelClass}>{t("patientName")}</label>
                   <input
-                    className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className={inputClass}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder={t("searchByName") || "Search by name"}
@@ -560,11 +692,11 @@ export default function DoctorReciepePage() {
               </div>
               {form.type === "reimbursement" ? (
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                  <label className={fieldLabelClass}>
                     {t("reimbursementCodeLabel") || "Reimbursement code"}
                   </label>
                   <input
-                    className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className={inputClass}
                     value={form.reimbursementCode || ""}
                     onChange={(e) => setForm((f) => ({ ...f, reimbursementCode: e.target.value }))}
                     placeholder={t("reimbursementCodePlaceholder") || "Enter patient reimbursement code"}
@@ -573,11 +705,11 @@ export default function DoctorReciepePage() {
                   <p className="px-1 py-1 text-[11px] text-gray-500 mt-1">
                     {t("reimbursementCodeHelper") || "This code will also be saved on the patient's account in Firebase."}
                   </p>
-                  <label className="block text-xs font-medium text-gray-700 mb-1 mt-2">
+                  <label className={`${fieldLabelClass} mt-2`}>
                     {t("pharmacyName") || "Pharmacy"}
                   </label>
                   <input
-                    className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className={inputClass}
                     value={pharmacySearch}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -615,9 +747,9 @@ export default function DoctorReciepePage() {
               {form.type === "standard" ? (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("pharmacyName") || "Pharmacy"}</label>
+                    <label className={fieldLabelClass}>{t("pharmacyName") || "Pharmacy"}</label>
                     <input
-                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className={inputClass}
                       value={pharmacySearch}
                       onChange={(e) => setPharmacySearch(e.target.value)}
                       placeholder={t("searchPharmacy") || "Search pharmacy"}
@@ -662,36 +794,36 @@ export default function DoctorReciepePage() {
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("reciepeTitle") || "Reciepe title"}</label>
+                    <label className={fieldLabelClass}>{t("reciepeTitle") || "Reciepe title"}</label>
                     <input
-                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className={inputClass}
                       value={form.title}
                       onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("medicinesLabel") || "Medicines"}</label>
+                    <label className={fieldLabelClass}>{t("medicinesLabel") || "Medicines"}</label>
                     <input
-                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className={inputClass}
                       value={form.medicines}
                       onChange={(e) => setForm((f) => ({ ...f, medicines: e.target.value }))}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("dosageLabel") || "Dosage"}</label>
+                    <label className={fieldLabelClass}>{t("dosageLabel") || "Dosage"}</label>
                     <input
-                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className={inputClass}
                       value={form.dosage}
                       onChange={(e) => setForm((f) => ({ ...f, dosage: e.target.value }))}
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">{t("notesLabel")}</label>
+                    <label className={fieldLabelClass}>{t("notesLabel")}</label>
                     <textarea
-                      className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className={inputClass}
                       rows={3}
                       value={form.notes}
                       onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
@@ -699,14 +831,14 @@ export default function DoctorReciepePage() {
                   </div>
                 </>
               ) : (
-                <p className="text-xs text-gray-600 rounded-2xl border border-sky-100 bg-sky-50 px-3 py-2">
+                <p className="text-xs text-gray-600 rounded-xl border border-sky-100 bg-sky-50 px-3 py-2">
                   {t("reimbursementSimpleModeHelp") || "For reimbursement prescriptions, only patient and reimbursement code are required. Medicines and dosage are not included."}
                 </p>
               )}
-	              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+	              <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
 	                <div className="flex items-center justify-between">
-	                  <p className="text-xs font-medium text-gray-700">{t("doctorSignature") || "Doctor signature"}</p>
-	                  <Link href={DASHBOARD_PATHS.profile} className="text-[11px] font-semibold text-purple-600 hover:text-purple-700">
+	                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{t("doctorSignature") || "Doctor signature"}</p>
+	                  <Link href={DASHBOARD_PATHS.profile} className="text-[11px] font-semibold text-purple-700 hover:text-purple-800">
 	                    {t("manageSignature") || "Manage signature"}
 	                  </Link>
 	                </div>
@@ -731,11 +863,11 @@ export default function DoctorReciepePage() {
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t("confirmPassword") || "Confirm password"}</label>
+                <label className={fieldLabelClass}>{t("confirmPassword") || "Confirm password"}</label>
                 <input
                   type="password"
                   autoComplete="current-password"
-                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className={inputClass}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

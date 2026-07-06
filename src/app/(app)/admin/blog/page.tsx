@@ -10,7 +10,7 @@ import { Input } from "@/presentation/ui/Input";
 import { Textarea } from "@/presentation/ui/Textarea";
 import { ADMIN_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
-import { useDI } from "@/context/DIContext";
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';import { useDI } from "@/context/DIContext";
 import type { BlogPost } from "@/domain/entities/BlogPost";
 import { slugify } from "@/domain/rules/slugify";
 
@@ -132,7 +132,7 @@ export default function AdminBlogPage() {
     return (
       <ToastProvider>
         <DashboardShell>
-          <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
+          <div className="p-4 md:p-6 space-y-3 max-w-3xl mx-auto">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
@@ -149,7 +149,7 @@ export default function AdminBlogPage() {
             </div>
 
             {/* Form */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-5">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-5">
               {/* Title */}
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Title *</label>
@@ -301,11 +301,12 @@ export default function AdminBlogPage() {
           onRetry={() => setRetryKey((k) => k + 1)}
           homeHref={ADMIN_PATHS.root}
           loadingLabel={t("loading")}
+      skeleton={<StatsPageSkeleton />}
           analyticsPrefix="admin.blog"
         >
-          <div className="p-4 md:p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-3">
             {/* Header */}
-            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
@@ -323,7 +324,7 @@ export default function AdminBlogPage() {
             </section>
 
             {/* Stats strip */}
-            <section className="grid grid-cols-3 gap-4">
+            <section className="grid grid-cols-3 gap-3">
               {[
                 { label: "Total", value: posts.length },
                 { label: "Published", value: posts.filter((p) => p.status === "published").length },
@@ -331,18 +332,18 @@ export default function AdminBlogPage() {
               ].map((s) => (
                 <div
                   key={s.label}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-4"
+                  className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5"
                 >
-                  <p className="text-[11.5px] text-gray-500">{s.label}</p>
-                  <p className="text-3xl font-extrabold text-gray-900 tracking-tight mt-2">{s.value}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{s.label}</p>
+                  <p className="text-3xl font-bold leading-none text-gray-900">{s.value}</p>
                 </div>
               ))}
             </section>
 
             {/* Posts list */}
-            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-3">
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
               {posts.length === 0 ? (
-                <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-10 text-center">
+                <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-4 text-center">
                   <p className="text-gray-500 text-sm">No articles yet.</p>
                   <Button variant="outline" className="mt-4" onClick={openCreate}>
                     Write your first article
@@ -357,10 +358,10 @@ export default function AdminBlogPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span
-                          className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${
                             post.status === "published"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-500"
+                              ? "bg-green-50 text-green-700"
+                              : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {post.status}

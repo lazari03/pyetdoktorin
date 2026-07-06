@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { Appointment } from '@/domain/entities/Appointment';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
-import { DASHBOARD_PATHS } from '@/navigation/paths';
+import { TableSkeleton } from '@/presentation/components/Skeleton/TableSkeleton';import { DASHBOARD_PATHS } from '@/navigation/paths';
 import { listAppointments } from '@/network/appointments';
 
 export default function UpcomingRequestsPage() {
@@ -51,10 +51,11 @@ export default function UpcomingRequestsPage() {
       onRetry={fetchRequests}
       homeHref={DASHBOARD_PATHS.root}
       loadingLabel={t('loading')}
+      skeleton={<TableSkeleton />}
       analyticsPrefix="upcoming_requests"
     >
       <div>
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
               {t('secureAccessEyebrow') ?? 'Secure access'}
@@ -66,18 +67,18 @@ export default function UpcomingRequestsPage() {
           </div>
 
           {requests.length === 0 ? (
-            <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-6 text-center text-sm text-gray-500">
+            <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 text-center text-[12.5px] text-gray-500">
               {t('noUpcomingRequests')}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {requests.map((request) => (
-                <div key={request.id} className="rounded-xl bg-white border border-gray-100 shadow-sm p-5 space-y-3">
+                <div key={request.id} className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 space-y-3">
                   <div>
-                    <h2 className="text-base font-semibold text-gray-900">
+                    <h2 className="text-[12.5px] font-semibold text-gray-900">
                       {t('appointmentWith', { doctorId: request.doctorId })}
                     </h2>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-[11.5px] text-gray-500">
                       {t('appointmentTypeLabel', { appointmentType: request.appointmentType })}
                     </p>
                   </div>

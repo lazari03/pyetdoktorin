@@ -41,7 +41,7 @@ export function DoctorEarningsCard({
   });
 
   return (
-    <section className="card-premium card-premium-hover p-4 sm:p-5 h-full flex flex-col">
+    <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-5 h-full flex flex-col">
       <div className="mb-4">
         <p className="text-sm font-semibold text-gray-900">{t("monthlyEarnings") || "Monthly Earnings"}</p>
         <p className="text-xs text-gray-600 mt-1">

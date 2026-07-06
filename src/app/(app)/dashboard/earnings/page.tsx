@@ -12,6 +12,7 @@ import { DASHBOARD_PATHS } from "@/navigation/paths";
 import { isCompletedStatus } from "@/presentation/utils/appointmentStatus";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { StatsPageSkeleton } from "@/presentation/components/Skeleton/StatsPageSkeleton";
 
 
 // Helper function to calculate earnings data
@@ -128,7 +129,7 @@ export default function EarningsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">{t("accessDenied") || "Access denied"}</p>
-          <Link href={DASHBOARD_PATHS.root} className="text-purple-600 hover:underline mt-2 inline-block">
+          <Link href={DASHBOARD_PATHS.root} className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800 mt-2 inline-block">
             {t("backToDashboard") || "Back to Dashboard"}
           </Link>
         </div>
@@ -146,10 +147,11 @@ export default function EarningsPage() {
       homeHref={DASHBOARD_PATHS.root}
       loadingLabel={t("loading")}
       analyticsPrefix="earnings"
+      skeleton={<StatsPageSkeleton cardCount={3} />}
     >
       {earningsData ? (
         <div>
-          <div className="space-y-4">
+          <div className="space-y-3">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link
@@ -169,45 +171,45 @@ export default function EarningsPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3">
           {/* Total Earnings */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <BanknotesIcon className="h-5 w-5 text-purple-600" />
-              </div>
-              <p className="text-[11.5px] text-gray-500">{t("totalEarnings") || "Total Earnings"}</p>
+          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("totalEarnings") || "Total Earnings"}</p>
+              <span className="h-7 w-7 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
+                <BanknotesIcon className="h-4 w-4" />
+              </span>
             </div>
-            <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            <p className="text-3xl font-bold leading-none text-gray-900">
               ${earningsData.totalEarnings.toFixed(2)}
             </p>
           </div>
 
           {/* Current Month */}
-          <div className="bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-sm p-4 text-white">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <CalendarIcon className="h-5 w-5 text-white" />
-              </div>
-              <p className="text-[11.5px] text-white/80">{t("thisMonth") || "This Month"}</p>
+          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("thisMonth") || "This Month"}</p>
+              <span className="h-7 w-7 rounded-lg flex items-center justify-center bg-teal-100 text-teal-600">
+                <CalendarIcon className="h-4 w-4" />
+              </span>
             </div>
-            <p className="text-3xl font-extrabold tracking-tight">
+            <p className="text-3xl font-bold leading-none text-teal-700">
               ${earningsData.currentMonthEarnings.toFixed(2)}
             </p>
           </div>
 
           {/* Total Appointments */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-purple-100">
-                <CalendarIcon className="h-5 w-5 text-purple-600" />
-              </div>
-              <p className="text-[11.5px] text-gray-500">{t("appointmentsInTotal") || "Appointments in total"}</p>
+          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("appointmentsInTotal") || "Appointments in total"}</p>
+              <span className="h-7 w-7 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
+                <CalendarIcon className="h-4 w-4" />
+              </span>
             </div>
-            <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+            <p className="text-3xl font-bold leading-none text-gray-900">
               {earningsData.totalAppointments}
             </p>
-            <p className="text-[10.5px] text-gray-400 mt-1">
+            <p className="text-[11px] text-gray-400 leading-none">
               {t("allTime") || "All time"}
             </p>
           </div>

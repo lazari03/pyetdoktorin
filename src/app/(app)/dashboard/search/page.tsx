@@ -10,15 +10,15 @@ export default function SearchDoctorsPage() {
   return (
     <RoleGuard allowedRoles={[UserRole.Patient]}>
       <div className="min-h-screen">
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:py-10 space-y-4">
+        <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:py-10 space-y-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
+            <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
               {t('secureAccessEyebrow') ?? 'Secure access'}
             </p>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
+            <h1 className="text-[15px] font-bold text-gray-900">
               {t('findADoctor')}
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-[12.5px] text-gray-500">
               {t('searchHint') || 'Start typing at least 4 characters to search'}
             </p>
           </div>

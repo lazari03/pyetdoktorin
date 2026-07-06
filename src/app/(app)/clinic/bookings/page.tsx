@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useClinicBookings } from '@/presentation/hooks/useClinicBookings';
 import { CLINIC_PATHS } from '@/navigation/paths';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
-import { UserRole } from '@/domain/entities/UserRole';
+import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';import { UserRole } from '@/domain/entities/UserRole';
 
 export default function ClinicBookingsPage() {
   const { user, role } = useAuth();
@@ -27,10 +27,11 @@ export default function ClinicBookingsPage() {
       onRetry={refresh}
       homeHref={CLINIC_PATHS.root}
       loadingLabel={t('loading')}
+      skeleton={<ListSkeleton />}
       analyticsPrefix="clinic.bookings"
     >
-      <div className="space-y-4">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+      <div className="space-y-3">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
         <h1 className="text-[15px] font-bold text-gray-900">{t('clinicBookings') || 'Clinic bookings'}</h1>
         <p className="text-[12.5px] text-gray-500">{t('clinicBookingsSubtitle') || 'Manage incoming booking requests'}</p>
       </div>
@@ -82,10 +83,10 @@ export default function ClinicBookingsPage() {
                     <span
                       className={`text-[10.5px] font-bold px-2.5 py-1 rounded-full ${
                         booking.status === 'confirmed'
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-green-50 text-green-700'
                           : booking.status === 'declined'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-amber-50 text-amber-700'
                       }`}
                     >
                       {booking.status}

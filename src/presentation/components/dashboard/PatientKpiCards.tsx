@@ -148,7 +148,7 @@ export function PatientKpiCards({
           <Link
             key={card.label}
             href={card.href}
-            className={`group bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex flex-col gap-2.5 transition-colors ${card.hoverBg}`}
+            className={`group bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5 transition-colors ${card.hoverBg}`}
             data-analytics={`dashboard.kpi.${card.label.toLowerCase().replace(/ /g, '_')}`}
           >
             <div className="flex items-center justify-between">
@@ -165,7 +165,7 @@ export function PatientKpiCards({
               </p>
               {card.delta && (
                 <span
-                  className={`self-end mb-0.5 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-md ${
+                  className={`self-end mb-0.5 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-full ${
                     card.deltaPositive
                       ? 'bg-emerald-100 text-emerald-700'
                       : 'bg-red-100 text-red-600'

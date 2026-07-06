@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import Loader from '@/presentation/components/Loader/Loader';
+import { TableSkeleton } from '@/presentation/components/Skeleton/TableSkeleton';
 import { getAppointmentAction } from '@/domain/rules/appointmentRules';
 import { getAppointmentActionPresentation } from '@/presentation/utils/getAppointmentActionPresentation';
 import { sortAppointments } from '@/presentation/utils/sortAppointments';
@@ -9,7 +9,7 @@ import { PAYWALL_AMOUNT_USD } from '@/config/paywallConfig';
 import { getAppointmentStatusPresentation } from '@/presentation/utils/getAppointmentStatusPresentation';
 import { AppointmentsTableProps } from './types';
 import { Appointment } from '@/domain/entities/Appointment';
-import { PhoneIcon, CreditCardIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
+import { PhoneIcon, CreditCardIcon, CalendarDaysIcon, ClockIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { UserRole } from '@/domain/entities/UserRole';
 import { dashboardDoctorProfilePath, DASHBOARD_PATHS } from '@/navigation/paths';
 import { AppointmentActionKey } from '@/domain/entities/AppointmentAction';
@@ -55,10 +55,12 @@ const ActionButtons: React.FC<{
 	action: { label: string; disabled: boolean };
 	onJoinCall: (id: string) => void;
 	onPayNow: (id: string, amount: number) => void;
-}> = ({ appointment, role, action, onJoinCall, onPayNow }) => {
+	compact?: boolean;
+}> = ({ appointment, role, action, onJoinCall, onPayNow, compact = false }) => {
 	const { t } = useTranslation();
 	const presentation = getAppointmentActionPresentation(appointment, role, action);
   const canAddToCalendar = action.label !== AppointmentActionKey.Past && Boolean(appointment.preferredDate);
+  const iconBtnSize = compact ? 'h-8 w-8' : 'h-9 w-9';
 
   const addToCalendar = () => {
     const link = buildGoJoinLink(appointment.id);
@@ -76,7 +78,7 @@ const ActionButtons: React.FC<{
     <button
       type="button"
       onClick={addToCalendar}
-      className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+      className={`${iconBtnSize} inline-flex items-center justify-center rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors shrink-0`}
       aria-label={t('addToCalendar') || 'Add to calendar'}
       title={t('addToCalendar') || 'Add to calendar'}
       data-analytics="appointments.add_to_calendar"
@@ -90,6 +92,20 @@ const ActionButtons: React.FC<{
 		const fullLabel = t(presentation.label);
 		const compactLabel =
 			presentation.label === AppointmentActionKey.WaitingForAcceptance ? t('pending') : fullLabel;
+		if (compact) {
+			return (
+				<div className="inline-flex items-center gap-1.5">
+					<button
+						className={`${iconBtnSize} inline-flex items-center justify-center rounded-full border border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed shrink-0`}
+						disabled
+						title={fullLabel}
+					>
+						<ClockIcon className="h-4 w-4" aria-hidden />
+					</button>
+					{CalendarButton}
+				</div>
+			);
+		}
 		return (
       <div className="inline-flex items-center gap-2">
         <button
@@ -105,6 +121,19 @@ const ActionButtons: React.FC<{
 	}
 
 	if (presentation.type === 'waiting') {
+		if (compact) {
+			return (
+				<div className="inline-flex items-center gap-1.5">
+					<span
+						className={`${iconBtnSize} inline-flex items-center justify-center rounded-full border border-purple-200 bg-purple-50 text-purple-700 shrink-0`}
+						title={t(presentation.label)}
+					>
+						<ClockIcon className="h-4 w-4" aria-hidden />
+					</span>
+					{CalendarButton}
+				</div>
+			);
+		}
 		return (
       <div className="inline-flex items-center gap-2">
         <span
@@ -119,6 +148,20 @@ const ActionButtons: React.FC<{
 	}
 
 	if (presentation.type === 'processing') {
+		if (compact) {
+			return (
+				<div className="inline-flex items-center gap-1.5">
+					<button
+						className={`${iconBtnSize} inline-flex items-center justify-center rounded-full bg-purple-100 text-purple-700 cursor-wait shrink-0`}
+						disabled
+						title={t(presentation.label)}
+					>
+						<span className="h-3.5 w-3.5 animate-spin rounded-full border border-purple-400 border-t-transparent" />
+					</button>
+					{CalendarButton}
+				</div>
+			);
+		}
 		return (
       <div className="inline-flex items-center gap-2">
         <button
@@ -135,11 +178,12 @@ const ActionButtons: React.FC<{
 
 	if (presentation.type === 'join') {
 		return (
-      <div className="inline-flex items-center gap-2">
+      <div className="inline-flex items-center gap-1.5">
         <button
           type="button"
-          className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white transition-colors"
+          className={`${iconBtnSize} inline-flex items-center justify-center rounded-full border border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white transition-colors shrink-0`}
           onClick={() => onJoinCall(appointment.id)}
+          title={t(presentation.label)}
         >
           <PhoneIcon className="h-4 w-4" aria-hidden />
           <span className="sr-only">{t(presentation.label)}</span>
@@ -150,6 +194,21 @@ const ActionButtons: React.FC<{
 	}
 
 	if (presentation.type === 'pay') {
+		if (compact) {
+			return (
+				<div className="inline-flex items-center gap-1.5">
+					<button
+						type="button"
+						className={`${iconBtnSize} inline-flex items-center justify-center rounded-full border-2 border-purple-300 text-purple-600 hover:bg-purple-500 hover:text-white transition-colors shrink-0`}
+						onClick={() => onPayNow(appointment.id, PAYWALL_AMOUNT_USD)}
+						title={t(presentation.label)}
+					>
+						<CreditCardIcon className="h-4 w-4" aria-hidden />
+					</button>
+					{CalendarButton}
+				</div>
+			);
+		}
 		return (
       <div className="inline-flex items-center gap-2">
         <button
@@ -166,6 +225,20 @@ const ActionButtons: React.FC<{
 	}
 
 	// 'past' / 'none' — nothing actionable, but still offer a way to review the visit.
+	if (compact) {
+		return (
+			<div className="inline-flex items-center gap-1.5">
+				<a
+					href={DASHBOARD_PATHS.appointments}
+					className={`${iconBtnSize} inline-flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-700 transition-colors shrink-0`}
+					title={t('viewDetails') || 'Details'}
+				>
+					<EyeIcon className="h-4 w-4" aria-hidden />
+				</a>
+				{CalendarButton}
+			</div>
+		);
+	}
 	return (
 		<div className="inline-flex items-center gap-2">
 			<a
@@ -200,7 +273,7 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 		? 'mt-2'
 		: 'mt-4';
 
-	if (loading) return <Loader variant="inline" />;
+	if (loading) return <TableSkeleton />;
 
 	const sortedAppointments = appointments?.length > 0 ? sortAppointments(appointments, maxRows) : [];
 	const isDoctor = role === UserRole.Doctor;
@@ -221,6 +294,96 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 		{ key: 'status', label: t('status'), width: 'w-[16%]' },
 		...(showActions ? [{ key: 'actions', label: t('actions'), width: 'w-[16%]' }] : []),
 	];
+
+	// Embedded tables live in a narrow dashboard column, not the full viewport width, so the
+	// percentage-based desktop grid below (sized off viewport breakpoints) would overlap there.
+	// Use a real <table> with a fixed layout instead — column widths are then relative to the
+	// column's own box, not the viewport, so nothing overlaps regardless of how narrow it gets.
+	if (isEmbedded) {
+		return (
+			<div className={containerClass}>
+				<table className="w-full table-fixed border-collapse text-xs">
+					<colgroup>
+						<col className="w-[42%]" />
+						<col className="w-[24%]" />
+						<col className="w-[16%]" />
+						{showActions && <col className="w-[18%]" />}
+					</colgroup>
+					<thead>
+						<tr className="bg-gray-50/80 border-b border-gray-100">
+							<th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-[.06em] text-gray-400">
+								{isDoctor ? t('patient') : t('doctor')}
+							</th>
+							<th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-[.06em] text-gray-400">
+								{t('date')}
+							</th>
+							<th className="px-2 py-2 text-left text-[10px] font-bold uppercase tracking-[.06em] text-gray-400">
+								{t('status')}
+							</th>
+							{showActions && <th className="px-2 py-2" />}
+						</tr>
+					</thead>
+					<tbody>
+						{sortedAppointments.length > 0 ? (
+							sortedAppointments.map((appointment) => {
+								const action = getAppointmentAction(appointment, isAppointmentPast, toUserRole(role));
+								const personLabel = isDoctor ? appointment.patientName || t('patient') : appointment.doctorName || t('doctor');
+								return (
+									<tr key={appointment.id} className="border-t border-gray-100 hover:bg-gray-50/60 transition-colors">
+										<td className="px-3 py-2.5 align-middle">
+											<div className="flex items-center gap-2 min-w-0">
+												<span className="h-7 w-7 shrink-0 rounded-md bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center text-[10px] font-bold">
+													{initialsOf(personLabel)}
+												</span>
+												<div className="min-w-0">
+													<p className="text-[12px] font-semibold text-gray-900 truncate">{personLabel}</p>
+													<p className="text-[10.5px] text-gray-500 truncate">{appointment.appointmentType || '—'}</p>
+												</div>
+											</div>
+										</td>
+										<td className="px-2 py-2.5 align-middle">
+											<p className="text-[11.5px] text-gray-700 truncate">{appointment.preferredDate || '—'}</p>
+											<p className="text-[10px] text-gray-400 truncate">{appointment.preferredTime || '—'}</p>
+										</td>
+										<td className="px-2 py-2.5 align-middle">
+											<div className="flex flex-col items-start gap-1">
+												<StatusBadge status={appointment.status} />
+												{isAppointmentPast(appointment) && (
+													<span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-gray-500">
+														{t('past') || 'Past'}
+													</span>
+												)}
+											</div>
+										</td>
+										{showActions && (
+											<td className="px-2 py-2.5 align-middle">
+												<div className="flex justify-end">
+													<ActionButtons
+														appointment={appointment}
+														role={role}
+														action={action}
+														onJoinCall={handleJoinCall}
+														onPayNow={handlePayNow}
+														compact
+													/>
+												</div>
+											</td>
+										)}
+									</tr>
+								);
+							})
+						) : (
+							<tr>
+								<td colSpan={showActions ? 4 : 3} className="py-6 px-4 text-center text-sm text-gray-500">
+									{t('noAppointmentsFound')}
+								</td>
+							</tr>
+						)}
+					</tbody>
+				</table>
+			</div>
+		);
+	}
 
 	return (
 		<div className={containerClass}>
@@ -306,52 +469,10 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 			</div>
 
 			{/* Mobile Card View */}
-			<div className={isEmbedded ? 'md:hidden divide-y divide-gray-100' : 'md:hidden space-y-4'}>
+			<div className="md:hidden space-y-4">
 				{sortedAppointments.length > 0 ? (
 					sortedAppointments.map((appointment) => {
 						const action = getAppointmentAction(appointment, isAppointmentPast, toUserRole(role));
-
-						if (isEmbedded) {
-							const personLabel = isDoctor ? appointment.patientName || t('patient') : appointment.doctorName || t('doctor');
-							return (
-								<div key={appointment.id} className="px-4 py-3.5">
-									<div className="flex items-start gap-2.5">
-										<span className="h-9 w-9 shrink-0 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center text-[11px] font-bold">
-											{initialsOf(personLabel)}
-										</span>
-										<div className="min-w-0 flex-1">
-											<div className="flex items-start justify-between gap-2">
-												<p className="text-[12.5px] font-semibold text-gray-900 truncate">{personLabel}</p>
-												<div className="shrink-0 flex flex-col items-end gap-1">
-													<StatusBadge status={appointment.status} />
-													{isAppointmentPast(appointment) && (
-														<span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-gray-500">
-															{t('past') || 'Past'}
-														</span>
-													)}
-												</div>
-											</div>
-											<p className="text-[11.5px] text-gray-500 truncate">{appointment.appointmentType || '—'}</p>
-											<p className="text-[10.5px] text-gray-400 mt-0.5">
-												{appointment.preferredDate || '—'} · {appointment.preferredTime || '—'}
-											</p>
-										</div>
-									</div>
-
-									{showActions && (
-										<div className="pt-2.5 pl-[46px] flex justify-start">
-											<ActionButtons
-												appointment={appointment}
-												role={role}
-												action={action}
-												onJoinCall={handleJoinCall}
-												onPayNow={handlePayNow}
-											/>
-										</div>
-									)}
-								</div>
-							);
-						}
 
 						return (
 							<div

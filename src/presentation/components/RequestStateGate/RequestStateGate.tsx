@@ -4,7 +4,6 @@ import { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import Loader from '@/presentation/components/Loader/Loader';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { BackendError } from '@/application/errors/BackendError';
@@ -21,6 +20,7 @@ type Props = {
   loadingLabel?: string;
   analyticsPrefix?: string;
   children: React.ReactNode;
+  skeleton?: React.ReactNode;
 };
 
 function isUnauthorized(error: unknown, code: string | null): boolean {
@@ -42,9 +42,10 @@ export default function RequestStateGate({
   error,
   onRetry,
   homeHref = ROUTES.DASHBOARD,
-  loadingLabel,
+  loadingLabel: _loadingLabel,
   analyticsPrefix = 'request',
   children,
+  skeleton,
 }: Props) {
   const { t } = useTranslation();
   const nav = useNavigationCoordinator();
@@ -82,7 +83,7 @@ export default function RequestStateGate({
   }, [nav, pathname, unauthorized]);
 
   if (loading) {
-    return <Loader label={loadingLabel ?? t('loading')} />;
+    return skeleton ?? null;
   }
 
   if (unauthorized) {

@@ -94,39 +94,45 @@ export default function AdminReportDetailPage() {
           </Link>
         </div>
       ) : !appointment ? (
-        <div className="space-y-4">
-          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <Link href={ADMIN_PATHS.reports} className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+        <div className="space-y-3">
+          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <Link href={ADMIN_PATHS.reports} className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800">
               {t("reportBack")}
             </Link>
-            <h1 className="text-2xl font-semibold text-gray-900 mt-2">{t("reportDetailTitle")}</h1>
-            <p className="text-sm text-gray-600 mt-1">{t("reportDetailSubtitle")}</p>
+            <h1 className="text-[13.5px] font-bold text-gray-900 mt-2">{t("reportDetailTitle")}</h1>
+            <p className="text-[11px] text-gray-500 mt-1">{t("reportDetailSubtitle")}</p>
           </section>
-          <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-6 text-center">
+          <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 text-center">
             <p className="text-sm text-gray-600">
               {loading ? t("loading") : t("reportsEmpty")}
             </p>
           </div>
         </div>
       ) : (
-        <div className="space-y-6">
-          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <Link href={ADMIN_PATHS.reports} className="text-xs font-semibold uppercase tracking-wide text-purple-600">
+        <div className="space-y-3">
+          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <Link href={ADMIN_PATHS.reports} className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800">
               {t("reportBack")}
             </Link>
-            <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 mt-2">
+            <h1 className="text-[13.5px] font-bold text-gray-900 mt-2">
               {t("reportDetailTitle")}
             </h1>
-            <p className="text-sm text-gray-600 mt-2">{t("reportDetailSubtitle")}</p>
+            <p className="text-[11px] text-gray-500 mt-2">{t("reportDetailSubtitle")}</p>
           </section>
 
-          <section className="grid gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-4">
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <section className="grid gap-3 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-3">
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-lg font-semibold text-gray-900">{t("reportSectionSummary")}</h2>
+                  <h2 className="text-[13.5px] font-bold text-gray-900">{t("reportSectionSummary")}</h2>
                   <span
-                    className={`text-[11px] font-semibold px-3 py-1 rounded-full ${statusPresentation.color} bg-opacity-10`}
+                    className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${
+                      accepted
+                        ? "bg-green-50 text-green-700"
+                        : cancelled || rejected
+                        ? "bg-red-50 text-red-700"
+                        : "bg-amber-50 text-amber-700"
+                    }`}
                   >
                     {t(statusPresentation.label)}
                   </span>
@@ -145,17 +151,17 @@ export default function AdminReportDetailPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                <h2 className="text-lg font-semibold text-gray-900">{t("reportSectionNotes")}</h2>
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <h2 className="text-[13.5px] font-bold text-gray-900">{t("reportSectionNotes")}</h2>
                 <p className="text-sm text-gray-600 mt-2">
                   {appointment.notes ? appointment.notes : t("reportNoNotes")}
                 </p>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
-              <h2 className="text-lg font-semibold text-gray-900">{t("reportSectionDecision")}</h2>
-              <div className="rounded-2xl border border-purple-100 bg-purple-50/60 p-4 text-sm text-purple-800">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
+              <h2 className="text-[13.5px] font-bold text-gray-900">{t("reportSectionDecision")}</h2>
+              <div className="rounded-xl border border-purple-100 bg-purple-50/60 p-4 text-sm text-purple-800">
                 {resolutionText}
               </div>
               <div className="text-sm text-gray-700">

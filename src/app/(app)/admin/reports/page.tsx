@@ -17,7 +17,7 @@ import {
   normalizeAppointmentStatus,
 } from "@/presentation/utils/appointmentStatus";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
-import { ADMIN_PATHS } from "@/navigation/paths";
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';import { ADMIN_PATHS } from "@/navigation/paths";
 import { UserRole } from "@/domain/entities/UserRole";
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
 
@@ -153,26 +153,27 @@ export default function AdminReportsPage() {
       }}
       homeHref={ADMIN_PATHS.root}
       loadingLabel={t("loading")}
+      skeleton={<StatsPageSkeleton />}
       analyticsPrefix="admin.reports"
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* KPI cards — 4 across */}
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {cards.map((card) => (
-            <div key={card.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-              <p className="text-3xl font-extrabold text-gray-900 tracking-tight mt-3">
+            <div key={card.label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{card.label}</p>
+              <p className="text-3xl font-bold leading-none text-gray-900">
                 {statsLoading && !stats ? <span className="text-gray-300">—</span> : card.value}
               </p>
-              <p className="text-[11.5px] text-gray-500 mt-1.5">{card.label}</p>
-              <p className="text-[10.5px] text-gray-400">{card.helper}</p>
+              <p className="text-[11px] text-gray-400 leading-none">{card.helper}</p>
             </div>
           ))}
         </section>
 
         {/* Bar chart + side panels */}
-        <div className="grid gap-4 xl:grid-cols-[1.55fr_1fr]">
+        <div className="grid gap-3 xl:grid-cols-[1.55fr_1fr]">
           {/* Bar chart */}
-          <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-5">
+          <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-4">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-[13.5px] font-bold text-gray-900">Appointments &amp; revenue</p>
@@ -207,10 +208,10 @@ export default function AdminReportsPage() {
           </div>
 
           {/* Side: users by role + top doctors */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {/* Users by role */}
             <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-4">
-              <p className="text-[13px] font-bold text-gray-900 mb-3">Users by role</p>
+              <p className="text-[13.5px] font-bold text-gray-900 mb-3">Users by role</p>
               <div className="flex flex-col gap-2.5">
                 {roleSplit.map((r) => (
                   <div key={r.label}>
@@ -229,7 +230,7 @@ export default function AdminReportsPage() {
             {/* Top doctors */}
             {topDoctors.length > 0 && (
               <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-4">
-                <p className="text-[13px] font-bold text-gray-900 mb-2">Top doctors</p>
+                <p className="text-[13.5px] font-bold text-gray-900 mb-2">Top doctors</p>
                 <div className="flex flex-col gap-0.5">
                   {topDoctors.slice(0, 5).map((doc, i) => (
                     <div key={doc.doctorId} className="flex items-center gap-2.5 py-1.5">
@@ -260,7 +261,7 @@ export default function AdminReportsPage() {
           </div>
 
           {filtered.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-gray-500">{t("reportsEmpty")}</div>
+            <div className="px-4 py-4 text-center text-sm text-gray-500">{t("reportsEmpty")}</div>
           ) : (
             <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse">
@@ -281,9 +282,13 @@ export default function AdminReportsPage() {
                   const actorValue = cancelled
                     ? (appointment.patientName || t("reportUnknownActor"))
                     : (appointment.doctorName || t("reportUnknownActor"));
-                  void rejected; void accepted;
+                  const badgeTone = accepted
+                    ? "bg-green-50 text-green-700"
+                    : cancelled || rejected
+                    ? "bg-red-50 text-red-700"
+                    : "bg-amber-50 text-amber-700";
                   return (
-                    <tr key={appointment.id} className="border-t border-gray-50 hover:bg-gray-50/60 transition-colors cursor-pointer">
+                    <tr key={appointment.id} className="border-t border-gray-100 hover:bg-gray-50/60 transition-colors cursor-pointer">
                       <td className="px-4 py-3">
                         <p className="text-[12.5px] font-semibold text-gray-900">{appointment.patientName || t("patient")}</p>
                         <p className="text-[10.5px] text-gray-400">with {appointment.doctorName || t("doctor")}</p>
@@ -295,14 +300,14 @@ export default function AdminReportsPage() {
                       <td className="px-3 py-3 text-[12px] text-gray-500">{appointment.appointmentType}</td>
                       <td className="px-3 py-3 text-[12px] text-gray-500">{actorValue}</td>
                       <td className="px-3 py-3">
-                        <span className={`inline-flex text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full ${statusPresentation.color} bg-opacity-10`}>
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${badgeTone}`}>
                           {statusLabel}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link
                           href={adminReportDetailPath(appointment.id)}
-                          className="text-[11.5px] font-semibold text-purple-600 hover:text-purple-800"
+                          className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800"
                           data-analytics={`admin.reports.open.${appointment.id}`}
                         >
                           View →

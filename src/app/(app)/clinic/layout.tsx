@@ -10,7 +10,7 @@ import { useSectionGuard } from '@/navigation/useSectionGuard';
 import { getClinicNavDefs, getClinicProfileMenuDefs } from '@/navigation/navConfig';
 import { useSessionStore } from '@/store/sessionStore';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
-import Loader from '@/presentation/components/Loader/Loader';
+import { SectionShellSkeleton } from '@/presentation/components/Skeleton/SectionShellSkeleton';
 import SectionShell from '@/presentation/components/SectionShell/SectionShell';
 import EmailVerificationRequiredModal from '@/presentation/components/auth/EmailVerificationRequiredModal';
 
@@ -25,7 +25,7 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
   const profileMenuDefs = useMemo(() => getClinicProfileMenuDefs(), []);
 
   if (redirecting) return <RedirectingModal show />;
-  if (loading) return <Loader />;
+  if (loading) return <SectionShellSkeleton />;
   if (!isAuthenticated || role !== UserRole.Clinic) return <RedirectingModal show />;
 
   const initials =

@@ -9,7 +9,10 @@ import Image from "next/image";
 import { UserRole } from "@/domain/entities/UserRole";
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { TableSkeleton } from '@/presentation/components/Skeleton/TableSkeleton';
 import { DASHBOARD_PATHS } from "@/navigation/paths";
+import { PillIcon, ClipboardIcon } from "@/presentation/components/icons/MiniIcons";
+import { initialsOf } from "@/presentation/utils/initials";
 
 type Reciepe = {
   id: string;
@@ -34,6 +37,7 @@ export default function PatientReciepesPage() {
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
 
   const load = useCallback(async () => {
     if (!user?.uid) return;
@@ -82,6 +86,7 @@ export default function PatientReciepesPage() {
       onRetry={load}
       homeHref={DASHBOARD_PATHS.root}
       loadingLabel={t("loading")}
+      skeleton={<TableSkeleton />}
       analyticsPrefix="dashboard.reciepes"
     >
       <div className="py-4 sm:py-6 px-3">
@@ -97,25 +102,55 @@ export default function PatientReciepesPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            <aside className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-2 h-full">
-              {reciepes.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => setActiveId(r.id)}
-                  className={`w-full text-left rounded-lg border px-3 py-2 ${
-                    active?.id === r.id ? "border-purple-400 bg-purple-50" : "border-gray-100 hover:border-purple-200"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
-                  <p className="text-[11px] text-gray-500">
-                    {r.type === "reimbursement"
-                      ? (t("prescriptionTypeReimbursement") || "Reimbursement")
-                      : (t("prescriptionTypeStandard") || "Standard")}
-                  </p>
-                  <p className="text-xs text-gray-600 truncate">{r.doctor}</p>
-                  <p className="text-[11px] text-gray-500">{r.date}</p>
-                </button>
-              ))}
+            <aside className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3 h-full">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {([
+                  ["all", t("all") || "All"],
+                  ["pending", t("pending") || "Pending"],
+                  ["accepted", t("accepted") || "Accepted"],
+                  ["rejected", t("rejected") || "Rejected"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setStatusFilter(value)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                      statusFilter === value
+                        ? "bg-purple-600 text-white"
+                        : "border border-gray-200 text-gray-600 hover:border-purple-200"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-2">
+                {reciepes
+                  .filter((r) => statusFilter === "all" || r.status === statusFilter)
+                  .map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setActiveId(r.id)}
+                    className={`w-full text-left rounded-lg border px-3 py-2 flex items-start gap-2.5 ${
+                      active?.id === r.id ? "border-purple-400 bg-purple-50" : "border-gray-100 hover:border-purple-200"
+                    }`}
+                  >
+                    <span className="h-8 w-8 shrink-0 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center text-[11px] font-bold">
+                      {initialsOf(r.doctor)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
+                      <p className="text-[11px] text-gray-500">
+                        {r.type === "reimbursement"
+                          ? (t("prescriptionTypeReimbursement") || "Reimbursement")
+                          : (t("prescriptionTypeStandard") || "Standard")}
+                      </p>
+                      <p className="text-xs text-gray-600 truncate">{r.doctor}</p>
+                      <p className="text-[11px] text-gray-500">{r.date}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </aside>
 
             <section className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-3">
@@ -167,11 +202,13 @@ export default function PatientReciepesPage() {
                     ) : null}
                     {active.type === "standard" ? (
                       <>
-                        <div>
+                        <div className="flex items-center gap-1.5">
+                          <PillIcon className="h-4 w-4 text-purple-500 shrink-0" />
                           <span className="font-semibold">{t("medicinesLabel") || "Medicines"}: </span>
                           <span>{active.medicines}</span>
                         </div>
-                        <div>
+                        <div className="flex items-center gap-1.5">
+                          <ClipboardIcon className="h-4 w-4 text-purple-500 shrink-0" />
                           <span className="font-semibold">{t("dosageLabel") || "Dosage"}: </span>
                           <span>{active.dosage}</span>
                         </div>

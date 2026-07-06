@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { VIDEO_ERROR_CODES } from "@/config/errorCodes";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
-
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';
 export default function VideoSessionPage() {
   const [loading, setLoading] = useState(true);
   const [roomCode, setRoomCode] = useState<string | null>(null);
@@ -165,13 +165,14 @@ export default function VideoSessionPage() {
       onRetry={() => setAttempt((v) => v + 1)}
       homeHref={DASHBOARD_PATHS.root}
       loadingLabel={t("loading")}
+      skeleton={<StatsPageSkeleton />}
       analyticsPrefix="dashboard.video_session"
     >
       {roomCode ? (
         <div className="min-h-screen bg-gray-50 px-4 py-6">
           <div
             ref={containerRef}
-            className={isFullscreen ? "fixed inset-0 z-50 bg-black" : "mx-auto w-full max-w-5xl space-y-4"}
+            className={isFullscreen ? "fixed inset-0 z-50 bg-black" : "mx-auto w-full max-w-5xl space-y-3"}
           >
             {isFullscreen && (
               <button

@@ -10,13 +10,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HeroCard } from "@/presentation/components/dashboard/HeroCard";
 import { RecentDoctorsList, RecentDoctor } from "@/presentation/components/dashboard/RecentDoctorsList";
-import { RecentPatientsList, RecentPatient } from "@/presentation/components/dashboard/RecentPatientsList";
+import type { RecentPatient } from "@/presentation/components/dashboard/RecentPatientsList";
+import type { MonthlyEarning } from "@/presentation/components/dashboard/DoctorEarningsCard";
 import { CheckupReminderCard } from "@/presentation/components/dashboard/CheckupReminderCard";
-import { DoctorEarningsCard, MonthlyEarning } from "@/presentation/components/dashboard/DoctorEarningsCard";
 import { NotificationCard } from "@/presentation/components/dashboard/NotificationCard";
-import { DoctorQuickActionsCard } from "@/presentation/components/dashboard/DoctorQuickActionsCard";
 import { DashboardTutorialGate } from "@/presentation/components/dashboard/DashboardTutorialGate";
 import { PatientKpiCards, PatientKpiData } from "@/presentation/components/dashboard/PatientKpiCards";
+import { DoctorKpiCards, DoctorKpiData } from "@/presentation/components/dashboard/DoctorKpiCards";
 import { PatientQuickActions } from "@/presentation/components/dashboard/PatientQuickActions";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
@@ -27,6 +27,8 @@ const isCanceledOrRejectedStatus = (status?: string) =>
   isCanceledStatus(status) || isRejectedStatus(status);
 const DASHBOARD_APPOINTMENTS_PAGE_SIZE = 5;
 import { sortAppointments } from "@/presentation/utils/sortAppointments";
+import { initialsOf } from "@/presentation/utils/initials";
+import { normalizeAppointmentStatus } from "@/presentation/utils/appointmentStatus";
 import { getAppointmentAction } from "@/domain/rules/appointmentRules";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
@@ -36,6 +38,7 @@ import { useAppointmentStore } from "@/store/appointmentStore";
 import { useEffect, useRef, useState } from "react";
 import { useDI } from "@/context/DIContext";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
+import { DashboardPageSkeleton } from "@/presentation/components/Skeleton/DashboardPageSkeleton";
 
 // Helper function to calculate monthly earnings
 function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: UserRole) {
@@ -221,12 +224,32 @@ export default function Dashboard() {
       if (!acc[patient.id] || (acc[patient.id].lastVisit ?? "") < (patient.lastVisit ?? "")) acc[patient.id] = patient;
       return acc;
     }, {});
-  const recentPatientList = Object.values(recentPatientsMap).slice(0, 3);
-  
+
   // Calculate earnings for doctors
   const earningsData = effectiveRole === UserRole.Doctor && user?.uid
     ? calculateMonthlyEarnings(vm.filteredAppointments, user.uid, effectiveRole)
     : null;
+
+  const todayKey = new Date().toLocaleDateString("en-CA");
+  const todaysSchedule = vm.filteredAppointments
+    .filter((a) => a.preferredDate === todayKey)
+    .sort((a, b) => (a.preferredTime || "").localeCompare(b.preferredTime || ""));
+  const pendingRequestsList = vm.filteredAppointments.filter(
+    (a) => normalizeAppointmentStatus(a.status) === "pending"
+  );
+  const doctorKpiData: DoctorKpiData = {
+    todayAppointments: todaysSchedule.length,
+    pendingRequests: pendingRequestsList.length,
+    monthlyEarnings: earningsData?.currentMonthEarnings ?? 0,
+    activePatients: Object.keys(recentPatientsMap).length,
+  };
+  const scheduleStatusBadge = (status?: string) => {
+    const normalized = normalizeAppointmentStatus(status);
+    if (normalized === "accepted" || normalized === "completed") return "bg-green-50 text-green-700";
+    if (normalized === "rejected" || normalized === "canceled") return "bg-red-50 text-red-700";
+    return "bg-amber-50 text-amber-700";
+  };
+  const todayLabel = new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   // Patient KPI data — with spark (last 7 months visit counts) + deltas
   const now = new Date();
@@ -283,6 +306,7 @@ export default function Dashboard() {
       homeHref={DASHBOARD_PATHS.root}
       loadingLabel={t("loading")}
       analyticsPrefix="dashboard"
+      skeleton={<DashboardPageSkeleton />}
     >
       {user?.uid ? <DashboardTutorialGate userId={user.uid} role={effectiveRole} /> : null}
       <div>
@@ -394,103 +418,72 @@ export default function Dashboard() {
               </div>
             </>
           ) : (
-            /* ── DOCTOR layout (unchanged) ── */
+            /* ── DOCTOR enterprise layout ── */
             <>
-              <div className="grid gap-4 lg:grid-cols-3">
-                <div className="lg:col-span-2 flex flex-col gap-4">
-                  {heroAppointment ? (
-                    <HeroCard
-                      title={heroAppointment.patientName || t("yourNextConsultation") || "Your next consultation"}
-                      subtitle={heroAppointment.appointmentType || t("stayPrepared") || "Stay prepared for your upcoming session"}
-                      helper={`${t("consultation") || "Consultation"} • ${heroAppointment.preferredDate ?? (t("today") || "Today")}`}
-                      onJoin={heroPresentation?.type === "join" ? () => handleJoinCall(heroAppointment.id) : undefined}
-                      onPay={heroPresentation?.type === "pay" ? () => vm.handlePayNow(heroAppointment.id, APPOINTMENT_PRICE_EUR) : undefined}
-                      isPaid={heroIsPaid}
-                      isProcessing={heroIsProcessing}
-                      isWaiting={heroIsWaiting}
-                      ctaLabel={t("joinNow") || "Join now"}
-                      payLabel={t("payNow") || "Pay now"}
-                      processingLabel={(heroPresentation?.type === "processing" ? t(heroPresentation.label) : t("paymentProcessing")) || "Processing payment"}
-                      waitingLabel={(heroIsWaiting && heroPresentation ? t(heroPresentation.label) : t("waitingForAcceptance")) || "Waiting for approval"}
-                      profileLabel={t("viewDoctor") || "View doctor"}
-                    />
-                  ) : (
-                    <HeroCard
-                      title={t("noUpcomingDoctorTitle") || "No upcoming consultations"}
-                      subtitle={t("noUpcomingDoctorSubtitle") || "Your schedule is clear for now."}
-                      helper={t("noUpcomingHelper") || "Secure telemedicine on pyetdoktorin.al"}
-                    />
-                  )}
-                  <DoctorQuickActionsCard appointments={vm.filteredAppointments} />
+              <DoctorKpiCards data={doctorKpiData} />
+
+              <div className="grid gap-3 lg:grid-cols-3 items-start">
+                <div className="lg:col-span-2 flex flex-col gap-3">
+                  <section className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-4 pt-4 pb-2.5 border-b border-gray-100">
+                      <div>
+                        <h2 className="text-[13.5px] font-bold text-gray-900">{t("todaysSchedule") || "Today's schedule"}</h2>
+                        <p className="text-[11px] text-gray-500">{todayLabel}</p>
+                      </div>
+                      <Link href={DASHBOARD_PATHS.appointments} className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800 shrink-0">
+                        {t("viewAll")} →
+                      </Link>
+                    </div>
+                    {todaysSchedule.length === 0 ? (
+                      <p className="text-sm text-gray-500 px-4 py-3.5">{t("noUpcomingDoctorTitle") || "No upcoming consultations"}</p>
+                    ) : (
+                      <div>
+                        {todaysSchedule.map((a) => (
+                          <div key={a.id} className="flex items-center gap-3 px-4 py-2.5 border-t border-gray-100 first:border-t-0 hover:bg-gray-50/60 transition">
+                            <span className="h-9 w-9 shrink-0 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center text-[11px] font-bold">
+                              {initialsOf(a.patientName)}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{a.patientName || t("patient") || "Patient"}</p>
+                              <p className="text-xs text-gray-500 truncate">{a.appointmentType}</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs text-gray-600">{a.preferredTime}</span>
+                              <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${scheduleStatusBadge(a.status)}`}>
+                                {t(normalizeAppointmentStatus(a.status)) || a.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
                 </div>
-                <div className="lg:col-span-1">
+
+                <div className="flex flex-col gap-3">
+                  <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                    <p className="text-[13.5px] font-bold text-gray-900 mb-2.5">{t("patientRequests") || "Patient requests"}</p>
+                    {pendingRequestsList.length === 0 ? (
+                      <p className="text-xs text-gray-500">{t("noPendingRequests") || "No pending requests."}</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {pendingRequestsList.slice(0, 6).map((a) => (
+                          <div key={a.id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
+                            <span className="text-[11.5px] text-gray-700 truncate">
+                              {a.patientName || t("patient") || "Patient"} · {a.appointmentType}
+                            </span>
+                            <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700">
+                              {t("new") || "New"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+
                   <NotificationCard appointments={vm.filteredAppointments} />
                 </div>
               </div>
-
-              <div className="grid gap-4 lg:grid-cols-3">
-                <section className="card-premium card-premium-hover card-accent card-accent-purple p-4 sm:p-5 h-full flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-sm font-semibold text-gray-900">{t("recentPatients") ?? "Recent Patients"}</p>
-                  </div>
-                  <div className="flex-1">
-                    <RecentPatientsList patients={recentPatientList} />
-                  </div>
-                </section>
-
-                {earningsData ? (
-                  <DoctorEarningsCard
-                    currentMonthEarnings={earningsData.currentMonthEarnings}
-                    currentMonthAppointments={earningsData.currentMonthAppointments}
-                    previousMonthEarnings={earningsData.previousMonthEarnings}
-                    monthlyHistory={earningsData.monthlyHistory}
-                  />
-                ) : null}
-
-                <section className="card-premium card-premium-hover card-accent card-accent-violet p-4 sm:p-5 h-full flex flex-col gap-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{t("visits") ?? "Visits"}</p>
-                      <p className="text-4xl font-extrabold mt-1 text-purple-700">{vm.totalAppointments}</p>
-                      <p className="text-xs text-gray-600">{t("lastMonth") ?? "last month"}</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-2xl border border-purple-100/80 bg-purple-50/70 px-4 py-3">
-                      <p className="text-[11px] uppercase tracking-wide text-purple-600 font-semibold">{t("pendingActions") ?? "Pending actions"}</p>
-                      <p className="text-lg font-semibold text-purple-800">
-                        {vm.filteredAppointments.filter((a) => a.status?.toLowerCase?.() === "pending").length}
-                      </p>
-                      <p className="text-[11px] text-purple-700/80">{t("pendingActionsCopy") ?? "Awaiting confirmation or payment."}</p>
-                    </div>
-                    <div className="rounded-2xl border border-gray-200/70 bg-white/60 px-4 py-3">
-                      <p className="text-[11px] uppercase tracking-wide text-gray-600 font-semibold">{t("upcoming") ?? "Upcoming"}</p>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {vm.filteredAppointments.filter((a) => !vm.isAppointmentPast(a)).length}
-                      </p>
-                      <p className="text-[11px] text-gray-600">{t("upcomingCopy") ?? "Including today and future visits."}</p>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <section className="card-premium card-accent card-accent-slate overflow-hidden">
-                <div className="flex items-center justify-between px-5 pt-5 pb-3">
-                  <h2 className="text-base font-semibold text-gray-900">{t("yourAppointments")}</h2>
-                  <Link href={DASHBOARD_PATHS.appointments} className="text-xs font-semibold text-purple-700 hover:text-purple-800">
-                    {t("viewAll")}
-                  </Link>
-                </div>
-                <AppointmentsTable
-                  appointments={vm.filteredAppointments}
-                  role={effectiveRole}
-                  isAppointmentPast={vm.isAppointmentPast}
-                  handleJoinCall={handleJoinCall}
-                  handlePayNow={vm.handlePayNow}
-                  maxRows={5}
-                  variant="embedded"
-                />
-              </section>
             </>
           )}
         </div>

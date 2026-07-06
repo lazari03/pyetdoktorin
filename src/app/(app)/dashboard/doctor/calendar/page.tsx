@@ -15,7 +15,7 @@ import { useDI } from '@/context/DIContext';
 import { Appointment } from '@/domain/entities/Appointment';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
-import { useToast } from '@/presentation/components/Toast/ToastProvider';
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';import { useToast } from '@/presentation/components/Toast/ToastProvider';
 import { getAuthToken } from '@/application/auth/tokenHolder';
 import type { DoctorAvailability } from '@/domain/entities/DoctorAvailability';
 
@@ -208,11 +208,12 @@ export default function DoctorCalendarPage() {
         }}
         homeHref={DASHBOARD_PATHS.root}
         loadingLabel={t('loading')}
+      skeleton={<StatsPageSkeleton />}
         analyticsPrefix="doctor_calendar"
       >
         <div>
           <RedirectingModal show={showRedirecting} />
-          <div className="space-y-4">
+          <div className="space-y-3">
             <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">

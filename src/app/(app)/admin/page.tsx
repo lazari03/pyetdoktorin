@@ -7,7 +7,14 @@ import { UsersTable } from './components/UsersTable';
 import { UserSidepanel } from './components/UserSidepanel';
 import { ToastProvider } from './components/ToastProvider';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';
 import { ADMIN_PATHS } from '@/navigation/paths';
+import {
+  ClipboardDocumentListIcon,
+  DocumentTextIcon,
+  BuildingOfficeIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline';
 
 const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
@@ -20,21 +27,29 @@ export default function AdminPage() {
       label: t('totalAppointments') || 'Total appointments',
       value: stats?.totalAppointments ?? '—',
       helper: t('allTime') || 'All time',
+      Icon: ClipboardDocumentListIcon,
+      iconBg: 'bg-purple-100 text-purple-600',
     },
     {
       label: t('totalPrescriptions') || 'Prescriptions issued',
       value: stats?.totalRecipes ?? '—',
       helper: t('generatedAcrossDoctors') || 'Generated across doctors',
+      Icon: DocumentTextIcon,
+      iconBg: 'bg-teal-100 text-teal-600',
     },
     {
       label: t('clinicBookings') || 'Clinic bookings',
       value: stats?.totalClinicBookings ?? '—',
       helper: t('privateClinics') || 'Private clinics',
+      Icon: BuildingOfficeIcon,
+      iconBg: 'bg-emerald-100 text-emerald-600',
     },
     {
       label: t('totalUsers') || 'Total users',
       value: stats?.totalUsers ?? '—',
       helper: t('registeredAccounts') || 'Registered accounts',
+      Icon: UserGroupIcon,
+      iconBg: 'bg-amber-100 text-amber-600',
     },
   ];
 
@@ -47,8 +62,9 @@ export default function AdminPage() {
         homeHref={ADMIN_PATHS.root}
         loadingLabel={t('loading')}
         analyticsPrefix="admin.dashboard"
+        skeleton={<StatsPageSkeleton />}
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <section className="bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-sm p-5 text-white">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
@@ -67,23 +83,28 @@ export default function AdminPage() {
             </div>
           </section>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <section className="grid grid-cols-2 xl:grid-cols-4 gap-3">
             {cards.map((card) => (
-              <div key={card.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                <p className="text-[11.5px] text-gray-500">{card.label}</p>
-                <p className="text-3xl font-extrabold text-gray-900 tracking-tight mt-2">
+              <div key={card.label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{card.label}</p>
+                  <span className={`h-7 w-7 rounded-lg flex items-center justify-center ${card.iconBg}`}>
+                    <card.Icon className="h-4 w-4" />
+                  </span>
+                </div>
+                <p className="text-3xl font-bold leading-none text-gray-900">
                   {loading && !stats ? <span className="text-gray-300">—</span> : card.value}
                 </p>
-                <p className="text-[10.5px] text-gray-400 mt-1">{card.helper}</p>
+                <p className="text-[11px] text-gray-400 leading-none">{card.helper}</p>
               </div>
             ))}
           </section>
 
-          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
+          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <h2 className="text-[13.5px] font-bold text-gray-900">{t('users')}</h2>
-                <p className="text-[11.5px] text-gray-500">{t('manageUsersHint') || 'Review, edit, and reset access for any account.'}</p>
+                <p className="text-[11px] text-gray-500">{t('manageUsersHint') || 'Review, edit, and reset access for any account.'}</p>
               </div>
             </div>
             <UsersTable />

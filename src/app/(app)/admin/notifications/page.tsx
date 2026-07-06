@@ -10,6 +10,7 @@ import type { NotificationItem } from '@/presentation/components/admin/AdminNoti
 import { useDI } from '@/context/DIContext';
 import { useAuth } from '@/context/AuthContext';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';
 import { ADMIN_PATHS } from '@/navigation/paths';
 
 export default function AdminNotificationsPage() {
@@ -73,9 +74,10 @@ export default function AdminNotificationsPage() {
           onRetry={() => setRetryKey((k) => k + 1)}
           homeHref={ADMIN_PATHS.root}
           loadingLabel={t('loading')}
+          skeleton={<StatsPageSkeleton />}
           analyticsPrefix="admin.notifications"
         >
-          <div className="p-4 md:p-6 space-y-4">
+          <div className="p-4 md:p-6 space-y-3">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
                 {t('secureAccessEyebrow') ?? 'Secure access'}

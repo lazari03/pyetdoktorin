@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
-import { ADMIN_PATHS } from '@/navigation/paths';
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';import { ADMIN_PATHS } from '@/navigation/paths';
 import { fetchSecurityLogs, type SecurityLogEntry } from '@/network/securityLogs';
 
 type SecurityFilter = 'all' | 'session_established' | 'session_establishment_failed' | 'logout';
@@ -124,17 +124,18 @@ export default function AdminSecurityPage() {
       }}
       homeHref={ADMIN_PATHS.root}
       loadingLabel={t('loading', { defaultValue: 'Loading...' })}
+      skeleton={<StatsPageSkeleton />}
       analyticsPrefix="admin.security_logs"
     >
-      <div className="space-y-4">
-        <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+      <div className="space-y-3">
+        <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
           <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
             {t('securityLogs', { defaultValue: 'Security logs' })}
           </p>
           <h1 className="text-[15px] font-bold text-gray-900 mt-2">
             {t('securityLogsTitle', { defaultValue: 'Security activity' })}
           </h1>
-          <p className="text-[12.5px] text-gray-500 mt-2">
+          <p className="text-[11px] text-gray-500 mt-2">
             {t('securityLogsSubtitle', {
               defaultValue:
                 'Review sign-ins, failed session attempts, and logout events with account and network context.',
@@ -142,22 +143,22 @@ export default function AdminSecurityPage() {
           </p>
         </section>
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {stats.map((card) => (
-            <div key={card.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-              <p className="text-[11.5px] text-gray-500">{card.label}</p>
-              <p className="text-3xl font-extrabold text-gray-900 tracking-tight mt-2">{card.value}</p>
+            <div key={card.label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{card.label}</p>
+              <p className="text-3xl font-bold leading-none text-gray-900">{card.value}</p>
             </div>
           ))}
         </section>
 
-        <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-[13.5px] font-bold text-gray-900">
                 {t('securityLogsListTitle', { defaultValue: 'Latest events' })}
               </h2>
-              <p className="text-[11.5px] text-gray-500">
+              <p className="text-[11px] text-gray-500">
                 {t('securityLogsListSubtitle', {
                   defaultValue: 'IP and location are best-effort and depend on proxy headers being available.',
                 })}
@@ -194,7 +195,7 @@ export default function AdminSecurityPage() {
           </div>
 
           {filteredItems.length === 0 ? (
-            <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-6 text-center text-sm text-gray-500">
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-4 text-center text-sm text-gray-500">
               {t('securityLogsEmpty', { defaultValue: 'No security events recorded yet.' })}
             </div>
           ) : (
@@ -209,7 +210,7 @@ export default function AdminSecurityPage() {
                 return (
                   <article
                     key={item.id}
-                    className="rounded-xl border border-gray-100 bg-white px-5 py-4 shadow-sm"
+                    className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -221,10 +222,10 @@ export default function AdminSecurityPage() {
                         </p>
                       </div>
                       <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold ${
                           success
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-rose-50 text-rose-700'
+                            ? 'bg-green-50 text-green-700'
+                            : 'bg-red-50 text-red-700'
                         }`}
                       >
                         {success

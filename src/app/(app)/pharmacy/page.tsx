@@ -12,7 +12,7 @@ import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import { getRoleNotificationsPath } from "@/navigation/roleRoutes";
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
-import { PHARMACY_PATHS } from "@/navigation/paths";
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';import { PHARMACY_PATHS } from "@/navigation/paths";
 import { DashboardTutorialGate } from "@/presentation/components/dashboard/DashboardTutorialGate";
 
 type PharmacyNotification = {
@@ -110,11 +110,12 @@ export default function PharmacyDashboardPage() {
       onRetry={load}
       homeHref={PHARMACY_PATHS.root}
       loadingLabel={t("loading")}
+      skeleton={<StatsPageSkeleton cardCount={3} />}
       analyticsPrefix="pharmacy.dashboard"
     >
       {user?.uid ? <DashboardTutorialGate userId={user.uid} role={role} /> : null}
       <div className="py-4 sm:py-6 px-3">
-        <div className="max-w-6xl mx-auto space-y-4">
+        <div className="max-w-6xl mx-auto space-y-3">
           <div className="flex flex-col gap-1">
             <p className="text-xs uppercase tracking-[0.2em] text-purple-600 font-semibold">
               {t("secureAccessEyebrow") || "Secure access"}
@@ -125,16 +126,16 @@ export default function PharmacyDashboardPage() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
               { label: t("pendingReciepes") || "Pending prescriptions", value: pendingCount, helper: t("awaitingFulfillment") || "Awaiting fulfillment", Icon: DocumentTextIcon, iconBg: "bg-amber-100 text-amber-600", accent: "text-amber-700", delta: pendingCount > 0 ? `${pendingCount} to review` : null, pos: false },
               { label: t("notificationsLabel") || "Notifications", value: notifications.length, helper: t("today") || "Today", Icon: BellIcon, iconBg: "bg-purple-100 text-purple-600", accent: "text-purple-700", delta: null, pos: true },
               { label: t("processedReciepes") || "Processed", value: processedCount, helper: t("processedReciepesHelper") || "Completed or rejected", Icon: CheckCircleIcon, iconBg: "bg-emerald-100 text-emerald-600", accent: "text-emerald-700", delta: processedCount > 0 ? `${processedCount} done` : null, pos: true },
             ].map((card) => (
-              <div key={card.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-2">
+              <div key={card.label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11.5px] font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
-                  <span className={`h-7 w-7 rounded-xl flex items-center justify-center ${card.iconBg}`}>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{card.label}</p>
+                  <span className={`h-7 w-7 rounded-lg flex items-center justify-center ${card.iconBg}`}>
                     <card.Icon className="h-4 w-4" />
                   </span>
                 </div>
@@ -146,17 +147,17 @@ export default function PharmacyDashboardPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-gray-400">{card.helper}</p>
+                <p className="text-[11px] text-gray-400 leading-none">{card.helper}</p>
               </div>
             ))}
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-3 lg:grid-cols-3">
             <section className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{t("reciepeInbox") || "Prescription inbox"}</p>
-                  <p className="text-xs text-gray-600">{t("reciepeInboxSubtitle") || "Latest prescriptions to dispense"}</p>
+                  <p className="text-[13.5px] font-bold text-gray-900">{t("reciepeInbox") || "Prescription inbox"}</p>
+                  <p className="text-[11px] text-gray-500">{t("reciepeInboxSubtitle") || "Latest prescriptions to dispense"}</p>
                 </div>
               </div>
               <div className="divide-y divide-gray-100">
@@ -210,12 +211,12 @@ export default function PharmacyDashboardPage() {
             <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3 h-full">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{t("notificationsLabel") || "Notifications"}</p>
-                  <p className="text-xs text-gray-600">{t("pharmacyNotificationsSubtitle") || "Orders and prescription updates"}</p>
+                  <p className="text-[13.5px] font-bold text-gray-900">{t("notificationsLabel") || "Notifications"}</p>
+                  <p className="text-[11px] text-gray-500">{t("pharmacyNotificationsSubtitle") || "Orders and prescription updates"}</p>
                 </div>
                 <Link
                   href={notificationsHref}
-                  className="text-xs text-purple-600 hover:underline"
+                  className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800"
                   data-analytics="pharmacy.notifications.view_all"
                 >
                   {t("viewAll") || "View all"}

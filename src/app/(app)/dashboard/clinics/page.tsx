@@ -13,7 +13,7 @@ import AppointmentConfirmation from '@/presentation/components/appointment/Appoi
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
-
+import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';
 export default function ClinicsPage() {
   const { t } = useTranslation();
   const { user, role } = useAuth();
@@ -116,11 +116,12 @@ export default function ClinicsPage() {
       onRetry={loadClinics}
       homeHref={DASHBOARD_PATHS.root}
       loadingLabel={t('loading')}
+      skeleton={<ListSkeleton />}
       analyticsPrefix="dashboard.clinics"
     >
       <div>
-        <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between">
+        <div className="space-y-3">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
             <div>
               <h1 className="text-[15px] font-bold text-gray-900">{t('privateClinics') || 'Private Clinics'}</h1>
               <p className="text-[12.5px] text-gray-500 mt-1">
@@ -129,7 +130,7 @@ export default function ClinicsPage() {
             </div>
             <Link
               href={DASHBOARD_PATHS.clinicsHistory}
-              className="text-[12.5px] font-semibold text-purple-600 hover:underline"
+              className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800"
               data-analytics="dashboard.clinics.view_requests"
             >
               {t('viewRequests') || 'View requests'}
@@ -137,7 +138,7 @@ export default function ClinicsPage() {
           </div>
 
           {clinics.length === 0 ? (
-            <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-6 text-center">
+            <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 text-center">
               <p className="text-[14px] font-bold text-gray-900">
                 {t('noClinicsAvailable') || 'No clinics available yet'}
               </p>
@@ -146,7 +147,7 @@ export default function ClinicsPage() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2">
               {clinics.map((clinic) => (
                 <div
                   key={clinic.id}
@@ -157,7 +158,7 @@ export default function ClinicsPage() {
                       <Image src={clinic.imageUrl} alt={clinic.name} fill className="object-cover" />
                     </div>
                   ) : null}
-                  <div className="p-5 flex flex-col gap-3 flex-1">
+                  <div className="p-4 flex flex-col gap-3 flex-1">
                     <div>
                       <h2 className="text-xl font-semibold text-gray-900">{clinic.name}</h2>
                       <p className="text-sm text-gray-500">{clinic.address}</p>
@@ -190,7 +191,7 @@ export default function ClinicsPage() {
           )}
           {feedback ? (
             <div
-              className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
+              className={`rounded-xl border px-4 py-3 text-sm font-medium ${
                 feedback.type === 'success'
                   ? 'bg-green-50 border-green-100 text-green-700'
                   : 'bg-red-50 border-red-100 text-red-700'

@@ -24,9 +24,9 @@ export function RecentPatientsList({ patients }: Props) {
       {visible.map((patient) => (
         <div
           key={patient.id}
-          className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:bg-white hover:border-slate-200 transition"
+          className="rounded-2xl border border-gray-100 bg-gray-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:bg-white hover:border-purple-200 transition"
         >
-          <div className="shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-50 border border-purple-100/60 text-purple-800 font-bold text-lg flex items-center justify-center">
+          <div className="shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 font-bold text-sm flex items-center justify-center">
             {patient.name?.slice(0, 1) || "P"}
           </div>
           <div className="flex-1 min-w-0 space-y-1">
