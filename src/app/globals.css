@@ -49,12 +49,39 @@ a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
-  @apply ring-2 ring-primary/25 ring-offset-2 ring-offset-white;
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  @apply ring-2 ring-purple-500 ring-offset-2 ring-offset-white;
 }
 
 ::selection {
   background: rgba(124, 58, 237, 0.18);
+}
+
+/* Subtle press feedback on interactive elements — a small, purposeful micro-interaction
+   rather than decorative animation. Disabled elements shouldn't feel "pressable". */
+@media (hover: hover) {
+  button:not(:disabled):not([aria-disabled='true']):active,
+  a[role='button']:active {
+    transform: scale(0.97);
+  }
+}
+
+button,
+a[role='button'] {
+  transition: transform 0.12s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Respect the user's OS-level motion preference — kill transitions/animations, not layout. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Card style */

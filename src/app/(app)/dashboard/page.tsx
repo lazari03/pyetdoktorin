@@ -158,6 +158,12 @@ export default function Dashboard() {
 	      });
 	  }, [paidAppointmentId, router, setAppointments]);
 
+  const sortedDashboardAppointments = sortAppointments(vm.filteredAppointments, vm.filteredAppointments.length);
+  const appointmentsTotalPages = Math.max(1, Math.ceil(sortedDashboardAppointments.length / DASHBOARD_APPOINTMENTS_PAGE_SIZE));
+  useEffect(() => {
+    if (appointmentsPage > appointmentsTotalPages - 1) setAppointmentsPage(0);
+  }, [appointmentsPage, appointmentsTotalPages]);
+
   // Show modal and join call
   const handleJoinCall = async (appointmentId: string) => {
     vm.setShowRedirecting(true);
@@ -289,12 +295,6 @@ export default function Dashboard() {
       pendingActions: pendingNow > 0 ? `${pendingNow} pending` : null,
     },
   };
-
-  const sortedDashboardAppointments = sortAppointments(vm.filteredAppointments, vm.filteredAppointments.length);
-  const appointmentsTotalPages = Math.max(1, Math.ceil(sortedDashboardAppointments.length / DASHBOARD_APPOINTMENTS_PAGE_SIZE));
-  useEffect(() => {
-    if (appointmentsPage > appointmentsTotalPages - 1) setAppointmentsPage(0);
-  }, [appointmentsPage, appointmentsTotalPages]);
 
   return (
     <RequestStateGate

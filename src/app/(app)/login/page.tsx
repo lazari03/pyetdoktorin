@@ -8,7 +8,9 @@ import { useSearchParams } from 'next/navigation';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
+import type { UserRole } from '@/domain/entities/UserRole';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
+import { GoogleIcon } from '@/presentation/components/icons/MiniIcons';
 
 type TFunc = (key: string, options?: Record<string, unknown>) => string;
 
@@ -79,6 +81,7 @@ function LoginPageContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [privateDevice, setPrivateDevice] = useState(false);
   const { loginUseCase, testAuthConnectionUseCase } = useDI();
@@ -89,6 +92,13 @@ function LoginPageContent() {
       setErrorMsg(t('firebaseWarning'));
     });
   }, [t, testAuthConnectionUseCase]);
+
+  const goToRoleLanding = (role?: UserRole) => {
+    const next = sanitizeNextPath(searchParams?.get('next'));
+    const from = sanitizeNextPath(searchParams?.get('from'));
+    const target = next || from || getRoleLandingPath(role);
+    window.location.replace(target);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,15 +121,35 @@ function LoginPageContent() {
           password: '[redacted]',
         },
       });
-      const next = sanitizeNextPath(searchParams?.get('next'));
-      const from = sanitizeNextPath(searchParams?.get('from'));
-      const target = next || from || getRoleLandingPath(result?.role);
-      window.location.replace(target);
+      goToRoleLanding(result?.role);
     } catch (err) {
       setErrorMsg(toLoginErrorMessage(err, t as unknown as TFunc));
       console.error('Login error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    setErrorMsg('');
+    try {
+      if (!navigator.onLine) {
+        throw new Error(t('offlineError'));
+      }
+      const result = await loginUseCase.executeWithGoogle();
+      void notifyFormSubmission({
+        formType: 'login',
+        source: 'login_page_google',
+        subject: 'User login: Google',
+        data: { role: result?.role || '', privateDevice, method: 'google' },
+      });
+      goToRoleLanding(result?.role);
+    } catch (err) {
+      setErrorMsg(toLoginErrorMessage(err, t as unknown as TFunc));
+      console.error('Google login error:', err);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -134,39 +164,57 @@ function LoginPageContent() {
         { title: t('secureHighlights3') || 'Role-based access control', body: t('loginSideSecure') || 'Access differs for patients and doctors.' },
       ]}
       rightCta={
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-white">{t('noAccount')}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">{t('noAccount')}</p>
+            <p className="text-[11px] text-gray-500">{t('usePrivateWindow') || 'On a shared device? Use a private window.'}</p>
+          </div>
           <Link
             href="/register"
-            className="inline-flex items-center justify-center rounded-full bg-white text-purple-700 px-4 py-2 text-sm font-semibold hover:bg-purple-50"
+            className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition-colors shrink-0"
           >
             {t('registerNow')}
           </Link>
-          <p className="text-[11px] text-white/80">{t('usePrivateWindow') || 'On a shared device? Use a private window.'}</p>
         </div>
       }
     >
       {errorMsg && (
-        <div className="mt-2 rounded-2xl bg-red-50 px-3 py-2 text-sm text-red-800 border border-red-100">
+        <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 border border-red-100">
           {errorMsg}
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={handleGoogleLogin}
+        disabled={googleLoading || loading}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <GoogleIcon className="h-4 w-4" />
+        {googleLoading ? (t('signingIn') || 'Signing in...') : (t('continueWithGoogle') || 'Continue with Google')}
+      </button>
+
+      <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+        <span className="h-px flex-1 bg-gray-200" />
+        {t('orContinueWithEmail') || 'Or continue with email'}
+        <span className="h-px flex-1 bg-gray-200" />
+      </div>
 
       <form
         onSubmit={(e) => {
           e.preventDefault();
           handleLogin(e);
         }}
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-3"
       >
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">
+          <label className="block mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
             {t('email')}
           </label>
           <input
             type="email"
             placeholder={t('emailPlaceholder')}
-            className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            className="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -175,15 +223,15 @@ function LoginPageContent() {
 
         <div>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-gray-700">{t('password')}</span>
-            <Link href="/forgot-password" className="text-xs text-purple-600 hover:text-purple-700">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{t('password')}</span>
+            <Link href="/forgot-password" className="text-[11px] font-semibold text-purple-700 hover:text-purple-800">
               {t('forgotPassword')}
             </Link>
           </div>
           <input
             type="password"
             placeholder={t('passwordPlaceholder')}
-            className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            className="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -203,15 +251,11 @@ function LoginPageContent() {
         <button
           type="submit"
           className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
-          disabled={loading}
+          disabled={loading || googleLoading}
         >
           {loading ? t('loggingIn') : t('loginButton')}
         </button>
       </form>
-
-      <div className="text-xs text-gray-500 text-center">
-        {t('hipaaLine') || 'HIPAA-aware | Encrypted in transit'}
-      </div>
     </AuthShell>
   );
 }

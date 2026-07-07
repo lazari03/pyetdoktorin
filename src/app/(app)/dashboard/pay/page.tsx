@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
-import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { syncPaddlePaymentWithRetry } from '@/network/payments';
@@ -14,7 +13,6 @@ export default function PayPage() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user } = useAuth();
   const { paymentCheckoutService } = useDI();
 
   const appointmentId = searchParams?.get('appointmentId') || '';

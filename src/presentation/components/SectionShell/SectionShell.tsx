@@ -33,6 +33,8 @@ import {
 import { z } from '@/config/zIndex';
 import type { MenuEntryDef, NavItemDef } from '@/navigation/navConfig';
 import { useNotificationsLogic } from '@/app/(app)/dashboard/notifications/useNotificationsLogic';
+import { useNotificationReadState } from '@/presentation/hooks/useNotificationReadState';
+import { useAuth } from '@/context/AuthContext';
 
 export type AppSectionId = 'dashboard' | 'admin' | 'clinic' | 'pharmacy';
 export type MenuActionId = Extract<MenuEntryDef, { kind: 'action' }>['actionId'];
@@ -59,6 +61,19 @@ function sectionNotificationsHref(sectionId: AppSectionId): string {
     case 'dashboard':
     default: return '/dashboard/notifications';
   }
+}
+
+function formatRelativeTime(ts: number): string {
+  if (!Number.isFinite(ts) || ts <= 0) return '';
+  const diffMs = Date.now() - ts;
+  const minutes = Math.round(diffMs / 60000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ts).toLocaleDateString();
 }
 
 function sectionSearchHref(sectionId: AppSectionId, q: string): string {
@@ -205,7 +220,6 @@ export default function SectionShell({
   onNavigate,
   onMenuAction,
   mobileCenter,
-  notificationCount,
   displayName,
   displayEmail,
   topbarCta,
@@ -221,7 +235,6 @@ export default function SectionShell({
   mobileTitleKey?: string;
   mobileTitleFallback?: string;
   mobileCenter?: React.ReactNode;
-  notificationCount?: number;
   displayName?: string;
   displayEmail?: string;
   topbarCta?: React.ReactNode;
@@ -242,15 +255,16 @@ export default function SectionShell({
   const { t } = useTranslation();
   const { fetchDoctorsUseCase } = useDI();
   const nav = useNavigationCoordinator();
+  const { user } = useAuth();
   const { filteredDoctors, setSearchTerm: setDoctorSearchTerm, fetchDoctors, reset: resetDoctorSearch } = useDoctorSearchStore();
   const {
     appointmentNotifications,
     prescriptionNotifications,
-    handleDismissNotification,
   } = useNotificationsLogic(nav);
+  const { isRead, markRead, markManyRead, unreadCount } = useNotificationReadState(user?.uid);
 
   const notifFeed = useMemo(() => {
-    const fromAppointments = appointmentNotifications.slice(0, 6).map((a) => {
+    const fromAppointments = appointmentNotifications.slice(0, 8).map((a) => {
       const normalized = (a.status || '').toString().trim().toLowerCase();
       const tone =
         normalized === 'accepted'
@@ -274,9 +288,9 @@ export default function SectionShell({
         ts: new Date(a.createdAt).getTime(),
       };
     });
-    const fromPrescriptions = prescriptionNotifications.slice(0, 6).map((p) => ({
+    const fromPrescriptions = prescriptionNotifications.slice(0, 8).map((p) => ({
       id: `rx-${p.id}`,
-      appointmentId: null,
+      appointmentId: null as string | null,
       icon: DocumentPlusIcon,
       bg: 'bg-blue-100',
       color: 'text-blue-700',
@@ -286,14 +300,15 @@ export default function SectionShell({
     return [...fromAppointments, ...fromPrescriptions]
       .filter((n) => Number.isFinite(n.ts))
       .sort((a, b) => b.ts - a.ts)
-      .slice(0, 6);
+      .slice(0, 8);
   }, [appointmentNotifications, prescriptionNotifications, t]);
 
+  const notifFeedIds = useMemo(() => notifFeed.map((n) => n.id), [notifFeed]);
+  const notifUnreadCount = unreadCount(notifFeedIds);
+
   const markAllRead = useCallback(() => {
-    notifFeed.forEach((n) => {
-      if (n.appointmentId) handleDismissNotification(n.appointmentId);
-    });
-  }, [notifFeed, handleDismissNotification]);
+    markManyRead(notifFeedIds);
+  }, [notifFeedIds, markManyRead]);
 
   const handleDoctorSearchChange = useCallback((value: string) => {
     setSearchValue(value);
@@ -735,19 +750,81 @@ export default function SectionShell({
           {/* Right: bell + CTA + profile */}
           <div className="flex items-center gap-1 lg:gap-2 ml-auto shrink-0">
             {/* Notification bell */}
-            <Link
-              href={sectionNotificationsHref(sectionId)}
-              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:border-purple-300 hover:text-purple-700 transition-colors"
-              aria-label={t('notifications') || 'Notifications'}
-              data-analytics={`${sectionId}.topbar.notifications`}
-            >
-              <BellIcon className="h-5 w-5" />
-              {notificationCount && notificationCount > 0 ? (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-                  {notificationCount > 9 ? '9+' : notificationCount}
-                </span>
-              ) : null}
-            </Link>
+            <div className="relative shrink-0" ref={notifMenuRef}>
+              <button
+                type="button"
+                onClick={() => { setTopbarProfileOpen(false); setNotifOpen((o) => !o); }}
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:border-purple-300 hover:text-purple-700 transition-colors"
+                aria-label={t('notifications') || 'Notifications'}
+                data-analytics={`${sectionId}.topbar.notifications`}
+              >
+                <BellIcon className="h-5 w-5" />
+                {notifUnreadCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                    {notifUnreadCount > 9 ? '9+' : notifUnreadCount}
+                  </span>
+                ) : null}
+              </button>
+
+              {notifOpen && (
+                <div className={`absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl bg-white shadow-lg border border-gray-200 overflow-hidden ${z.maximum}`}>
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <p className="text-[13.5px] font-bold text-gray-900">{t('notifications') || 'Notifications'}</p>
+                    <button
+                      type="button"
+                      onClick={markAllRead}
+                      className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800"
+                      data-analytics={`${sectionId}.topbar.notifications.mark_all_read`}
+                    >
+                      {t('markAllRead') || 'Mark all read'}
+                    </button>
+                  </div>
+
+                  <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+                    {notifFeed.length === 0 ? (
+                      <p className="px-4 py-6 text-center text-[12.5px] text-gray-500">
+                        {t('noNewNotifications') || 'No new notifications'}
+                      </p>
+                    ) : (
+                      notifFeed.map((n) => {
+                        const Icon = n.icon;
+                        const unread = !isRead(n.id);
+                        const href = n.appointmentId
+                          ? `${sectionNotificationsHref(sectionId)}?focus=${encodeURIComponent(n.appointmentId)}`
+                          : sectionNotificationsHref(sectionId);
+                        return (
+                          <Link
+                            key={n.id}
+                            href={href}
+                            onClick={() => { markRead(n.id); setNotifOpen(false); }}
+                            className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${unread ? 'bg-purple-50/40' : ''}`}
+                            data-analytics={`${sectionId}.topbar.notifications.open`}
+                          >
+                            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${n.bg} ${n.color}`}>
+                              <Icon className="h-4 w-4" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className={`block text-[12.5px] leading-snug ${unread ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>{n.text}</span>
+                              <span className="block text-[10.5px] text-gray-400 mt-0.5">{formatRelativeTime(n.ts)}</span>
+                            </span>
+                            {unread && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-purple-600" />}
+                          </Link>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  <Link
+                    href={sectionNotificationsHref(sectionId)}
+                    onClick={() => setNotifOpen(false)}
+                    className="block px-4 py-3 text-center text-[11.5px] font-semibold text-purple-700 hover:bg-purple-50 border-t border-gray-100 transition-colors"
+                    data-analytics={`${sectionId}.topbar.notifications.view_all`}
+                  >
+                    {t('viewAllNotifications') || 'View all notifications'}
+                  </Link>
+                </div>
+              )}
+            </div>
 
             {/* Optional CTA (e.g. + New appointment) */}
             {topbarCta}
@@ -759,7 +836,7 @@ export default function SectionShell({
             <div className="relative shrink-0" ref={topbarProfileMenuRef}>
               <button
                 type="button"
-                onClick={() => { setProfileMenuOpen(false); setTopbarProfileOpen((o) => !o); }}
+                onClick={() => { setProfileMenuOpen(false); setNotifOpen(false); setTopbarProfileOpen((o) => !o); }}
                 className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1 lg:pr-3 hover:bg-gray-100 transition-colors"
                 aria-label="Open profile menu"
                 data-analytics={`${sectionId}.topbar.profile`}

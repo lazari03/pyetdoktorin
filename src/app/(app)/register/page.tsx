@@ -10,6 +10,9 @@ import { ROUTES } from '@/config/routes';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 
+const inputClass = 'block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500';
+const fieldLabelClass = 'block mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500';
+
 function RegisterPageInner() {
     const { t } = useTranslation();
     const [formData, setFormData] = useState({
@@ -96,44 +99,45 @@ function RegisterPageInner() {
         eyebrow={t('secureAccessEyebrow')}
         title={t('createCareAccount')}
         subtitle={t('onlyNeededData')}
+        maxWidthClassName="max-w-2xl"
         highlights={[
           { title: t('secureHighlights1'), body: t('hipaaLine') },
           { title: t('secureHighlights2'), body: t('consentLine') },
           { title: t('secureHighlights3'), body: t('loginSideSecure') },
         ]}
         rightCta={
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-white">{t('alreadyHaveAccount')}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+            <p className="text-sm font-semibold text-gray-900">{t('alreadyHaveAccount')}</p>
             <Link
               href={ROUTES.LOGIN}
-              className="inline-flex items-center justify-center rounded-full bg-white text-purple-700 px-4 py-2 text-sm font-semibold hover:bg-purple-50"
+              className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition-colors shrink-0"
             >
               {t('backToLogin')}
             </Link>
           </div>
         }
       >
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">{t('name')}</label>
+              <label className={fieldLabelClass}>{t('name')}</label>
               <input
                 type="text"
                 name="name"
                 placeholder={t('yourName')}
-                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={inputClass}
                 value={formData.name}
                 onChange={handleChange}
                 required
               />
             </div>
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">{t('surname')}</label>
+              <label className={fieldLabelClass}>{t('surname')}</label>
               <input
                 type="text"
                 name="surname"
                 placeholder={t('yourSurname')}
-                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={inputClass}
                 value={formData.surname}
                 onChange={handleChange}
                 required
@@ -143,24 +147,24 @@ function RegisterPageInner() {
 
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">{t('phoneNumber')}</label>
+              <label className={fieldLabelClass}>{t('phoneNumber')}</label>
               <input
                 type="tel"
                 name="phone"
                 placeholder={t('yourPhoneNumber')}
-                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={inputClass}
                 value={formData.phone}
                 onChange={handleChange}
                 required
               />
             </div>
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">{t('email')}</label>
+              <label className={fieldLabelClass}>{t('email')}</label>
               <input
                 type="email"
                 name="email"
                 placeholder={t('yourEmailPlaceholder')}
-                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={inputClass}
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -170,26 +174,26 @@ function RegisterPageInner() {
 
           <div className="grid sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
-              <label className="block mb-1 text-xs font-medium text-gray-700">{t('address')}</label>
+              <label className={fieldLabelClass}>{t('address')}</label>
               <input
                 type="text"
                 name="address"
                 placeholder={t('yourAddress')}
                 autoComplete="street-address"
-                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={inputClass}
                 value={formData.address}
                 onChange={handleChange}
                 required
               />
             </div>
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">{t('country')}</label>
+              <label className={fieldLabelClass}>{t('country')}</label>
               <input
                 type="text"
                 name="country"
                 placeholder={t('yourCountry')}
                 autoComplete="country-name"
-                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={inputClass}
                 value={formData.country}
                 onChange={handleChange}
                 required
@@ -199,24 +203,24 @@ function RegisterPageInner() {
 
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">{t('password')}</label>
+              <label className={fieldLabelClass}>{t('password')}</label>
               <input
                 type="password"
                 name="password"
                 placeholder="••••••••"
-                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={inputClass}
                 value={formData.password}
                 onChange={handleChange}
                 required
               />
             </div>
             <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">{t('confirmPassword')}</label>
+              <label className={fieldLabelClass}>{t('confirmPassword')}</label>
               <input
                 type="password"
                 name="confirmPassword"
                 placeholder="••••••••"
-                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className={inputClass}
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
@@ -224,19 +228,17 @@ function RegisterPageInner() {
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block mb-1 text-xs font-medium text-gray-700">{t('role')}</label>
-              <select
-                name="role"
-                className="block w-full rounded-2xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                value={formData.role}
-                onChange={handleChange}
-              >
-                <option value="patient">{t('patient')}</option>
-                <option value="doctor">{t('doctor')}</option>
-              </select>
-            </div>
+          <div className="sm:max-w-[calc(50%-0.375rem)]">
+            <label className={fieldLabelClass}>{t('role')}</label>
+            <select
+              name="role"
+              className={inputClass}
+              value={formData.role}
+              onChange={handleChange}
+            >
+              <option value="patient">{t('patient')}</option>
+              <option value="doctor">{t('doctor')}</option>
+            </select>
           </div>
 
           <label className="flex items-start gap-2 text-xs text-gray-700">
@@ -248,7 +250,11 @@ function RegisterPageInner() {
             <span>{t('consentLine')}</span>
           </label>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && (
+            <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 border border-red-100">
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
@@ -258,11 +264,6 @@ function RegisterPageInner() {
             {loading ? t('registering') : t('secureRegisterCta')}
           </button>
         </form>
-
-        <div className="text-center text-xs text-gray-500 mt-2">
-          {t('onlyNeededData')}
-        </div>
-
       </AuthShell>
     );
 }

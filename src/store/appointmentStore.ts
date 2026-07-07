@@ -5,7 +5,7 @@ import { APPOINTMENT_DURATION_MINUTES } from '@/config/appointmentConfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
 import { BackendError } from '@/application/errors/BackendError';
-import { normalizeTo24h, isPastAppointment as isPast, isAppointmentPast as isPastEntity } from '@/domain/rules/appointmentRules';
+import { isPastAppointment as isPast, isAppointmentPast as isPastEntity } from '@/domain/rules/appointmentRules';
 import type { IAppointmentQueryService } from '@/application/ports/IAppointmentQueryService';
 
 let appointmentQueryService: IAppointmentQueryService;

@@ -1,4 +1,4 @@
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, updateEmail, sendEmailVerification } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateEmail, sendEmailVerification } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth } from '@/infrastructure/firebase/firebaseconfig';
 import { UserRole } from '@/domain/entities/UserRole';
@@ -141,6 +141,35 @@ export const login = async (
         console.error('Login error:', error); // Log the actual error object
         const message = error instanceof Error ? error.message : 'Failed to log in';
         throw new Error(message || 'Failed to log in');
+    }
+};
+
+// Google sign-in (popup) — reuses the same session + profile resolution as email/password login.
+export const loginWithGoogle = async (): Promise<{ user: User; role: UserRole; emailVerified: boolean }> => {
+    try {
+        const provider = new GoogleAuthProvider();
+        const userCredential = await signInWithPopup(auth, provider);
+        const user = userCredential.user;
+
+        const emailVerified = user.emailVerified === true;
+
+        const idToken = await user.getIdToken(true);
+        await establishServerSession(idToken);
+
+        const currentProfile = await fetchCurrentUserProfile();
+        const resolvedRole = normalizeRole(currentProfile.role) ?? UserRole.Patient;
+
+        try {
+            await user.getIdToken(true);
+        } catch (refreshError) {
+            console.warn('Failed to refresh token after session setup', refreshError);
+        }
+
+        return { user, role: resolvedRole, emailVerified };
+    } catch (error) {
+        console.error('Google login error:', error);
+        const message = error instanceof Error ? error.message : 'Failed to sign in with Google';
+        throw new Error(message || 'Failed to sign in with Google');
     }
 };
 

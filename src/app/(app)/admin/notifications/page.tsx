@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ToastProvider } from '../components/ToastProvider';
-import DashboardShell from '@/app/components/DashboardShell';
 import { useTranslation } from 'react-i18next';
 import '@i18n';
 import { AdminNotificationFeed } from '@/presentation/components/admin/AdminNotificationFeed';
@@ -67,30 +66,28 @@ export default function AdminNotificationsPage() {
 
   return (
     <ToastProvider>
-      <DashboardShell>
-        <RequestStateGate
-          loading={loading && notifications.length === 0}
-          error={error}
-          onRetry={() => setRetryKey((k) => k + 1)}
-          homeHref={ADMIN_PATHS.root}
-          loadingLabel={t('loading')}
-          skeleton={<StatsPageSkeleton />}
-          analyticsPrefix="admin.notifications"
-        >
-          <div className="p-4 md:p-6 space-y-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
-                {t('secureAccessEyebrow') ?? 'Secure access'}
-              </p>
-              <h1 className="text-2xl font-bold text-gray-900">{t('notifications')}</h1>
-              <p className="text-sm text-gray-600">
-                {t('notificationsSubtitle') ?? 'Latest care updates and actions.'}
-              </p>
-            </div>
-            <AdminNotificationFeed items={notifications} />
+      <RequestStateGate
+        loading={loading && notifications.length === 0}
+        error={error}
+        onRetry={() => setRetryKey((k) => k + 1)}
+        homeHref={ADMIN_PATHS.root}
+        loadingLabel={t('loading')}
+        skeleton={<StatsPageSkeleton />}
+        analyticsPrefix="admin.notifications"
+      >
+        <div className="space-y-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
+              {t('secureAccessEyebrow') ?? 'Secure access'}
+            </p>
+            <h1 className="text-[15px] font-bold text-gray-900">{t('notifications')}</h1>
+            <p className="text-[12.5px] text-gray-500">
+              {t('notificationsSubtitle') ?? 'Latest care updates and actions.'}
+            </p>
           </div>
-        </RequestStateGate>
-      </DashboardShell>
+          <AdminNotificationFeed items={notifications} />
+        </div>
+      </RequestStateGate>
     </ToastProvider>
   );
 }

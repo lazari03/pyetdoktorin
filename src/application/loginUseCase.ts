@@ -13,4 +13,10 @@ export class LoginUseCase {
     this.analytics?.track('user_logged_in', { email: email.split('@')[0] + '@***' });
     return { role: result.role, emailVerified: result.emailVerified };
   }
+
+  async executeWithGoogle(): Promise<{ role: UserRole; emailVerified: boolean }> {
+    const result = await this.authLoginService.loginWithGoogle();
+    this.analytics?.track('user_logged_in', { method: 'google' });
+    return { role: result.role, emailVerified: result.emailVerified };
+  }
 }

@@ -1,5 +1,5 @@
 import type { User } from '@/domain/entities/User';
-import { IAdminUserService, AdminUsersPage, AdminUserItem } from '@/application/ports/IAdminUserService';
+import { IAdminUserService, AdminUsersPage } from '@/application/ports/IAdminUserService';
 import {
   createAdminUser,
   deleteAdminUser,

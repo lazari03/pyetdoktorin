@@ -2,5 +2,6 @@ import type { UserRole } from '@/domain/entities/UserRole';
 
 export interface IAuthLoginService {
   login(email: string, password: string): Promise<{ role: UserRole; emailVerified: boolean }>;
+  loginWithGoogle(): Promise<{ role: UserRole; emailVerified: boolean }>;
   testConnection(): Promise<void>;
 }
