@@ -18,12 +18,35 @@ const DEFAULT_MAX_BUCKETS = Number(process.env.RATE_LIMIT_MAX_BUCKETS ?? 10000) 
 const PRUNE_INTERVAL_MS = 30_000;
 let lastPrunedAt = 0;
 
-function getClientKey(req: Request, prefix: string) {
+// Number of *trusted* reverse proxies in front of this service.
+// `X-Forwarded-For` is client-controllable, so trusting an arbitrary entry lets an
+// attacker rotate fake IPs and bypass rate limiting (credential stuffing / abuse).
+// We only trust the last `TRUSTED_PROXY_HOPS` hops of the forwarding chain and fall
+// back to the real TCP peer address. Default 0 = ignore the header entirely and key
+// on the socket peer, which is the safe default for a directly exposed service.
+// Set TRUSTED_PROXY_HOPS=1 (or the real hop count) when deployed behind a load balancer.
+const TRUSTED_PROXY_HOPS = Math.max(0, Math.trunc(Number(process.env.TRUSTED_PROXY_HOPS ?? 0)) || 0);
+
+function getClientIp(req: Request): string {
   const forwardedFor = req.headers['x-forwarded-for'];
-  const ip = Array.isArray(forwardedFor)
-    ? forwardedFor[0]
-    : forwardedFor?.split(',')[0] || req.socket.remoteAddress || 'unknown';
-  return `${prefix}:${String(ip).trim()}`;
+  const forwardedList = (Array.isArray(forwardedFor) ? forwardedFor : [forwardedFor])
+    .filter((value): value is string => typeof value === 'string')
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  // Mirror Express `trust proxy = n` semantics: the resolved client is the
+  // (n+1)-th address counted from the right of `[...xff, socketPeer]`.
+  const chain = [...forwardedList, req.socket.remoteAddress].filter(
+    (value): value is string => typeof value === 'string' && value.length > 0,
+  );
+  if (chain.length === 0) return 'unknown';
+  const index = Math.max(0, chain.length - 1 - TRUSTED_PROXY_HOPS);
+  return chain[index] ?? 'unknown';
+}
+
+function getClientKey(req: Request, prefix: string) {
+  return `${prefix}:${getClientIp(req).trim()}`;
 }
 
 function pruneBuckets(now: number, maxBuckets: number) {

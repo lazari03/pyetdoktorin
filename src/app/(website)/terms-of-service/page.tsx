@@ -526,7 +526,7 @@ export default async function TermsOfServicePage() {
                   <a
                     href={reference.href}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-purple-700"
                   >
                     {reference.label}

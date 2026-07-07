@@ -36,7 +36,10 @@ function buildCsp({ nonce, reportOnly }: { nonce: string; reportOnly: boolean })
 	    "style-src 'self' 'unsafe-inline'",
 	    "img-src 'self' data: blob: https:",
 	    "font-src 'self' data: https:",
-	    "connect-src 'self' https: wss: http:",
+	    // Restrict outbound connections to secure transports only. Plaintext
+	    // `http:`/`ws:` are intentionally excluded so a script cannot exfiltrate
+	    // over an unencrypted channel.
+	    "connect-src 'self' https: wss:",
     "frame-src 'self' https:",
     "object-src 'none'",
     "report-uri /api/csp-report",

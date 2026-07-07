@@ -4,6 +4,15 @@ set -euo pipefail
 echo "🔍 Pre-commit checks..."
 
 # ──────────────────────────────────────────────
+# 0. Security audit (staged files only)
+# ──────────────────────────────────────────────
+echo "   • security audit ..."
+if ! node tools/security-audit.cjs --staged; then
+  echo "❌ Security audit found issues in staged files. Fix them before committing."
+  exit 1
+fi
+
+# ──────────────────────────────────────────────
 # 1. TypeScript compilation
 # ──────────────────────────────────────────────
 echo "   • tsc --noEmit ..."

@@ -51,7 +51,18 @@ router.post('/dismiss/:id', requireAuth(), async (req: AuthenticatedRequest, res
   const { id } = req.params as { id: string };
   const user = req.user!;
   const admin = getFirebaseAdmin();
-  await admin.firestore().collection('appointments').doc(id).set({
+  const docRef = admin.firestore().collection('appointments').doc(id);
+  const snapshot = await docRef.get();
+  if (!snapshot.exists) {
+    return res.status(404).json({ error: 'NOT_FOUND' });
+  }
+  // Prevent IDOR: only a participant (or an admin) may dismiss an appointment.
+  const data = snapshot.data() ?? {};
+  const isParticipant = data.patientId === user.uid || data.doctorId === user.uid;
+  if (user.role !== UserRole.Admin && !isParticipant) {
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  }
+  await docRef.set({
     dismissedBy: { [user.uid]: true },
   }, { merge: true });
   res.json({ ok: true });

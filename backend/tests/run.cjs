@@ -126,6 +126,46 @@ async function main() {
     }
   });
 
+  await test("rate limiter ignores spoofed X-Forwarded-For and keys on the socket peer", () => {
+    // Default TRUSTED_PROXY_HOPS=0 => the client-controllable X-Forwarded-For
+    // header must not create a fresh bucket. Two requests from the same TCP peer
+    // but different forwarded values must share one bucket.
+    const limiter = createRateLimiter({
+      windowMs: 1000,
+      max: 1,
+      keyPrefix: `xff-${Date.now()}`,
+    });
+
+    const originalNow = Date.now;
+    let now = 20_000;
+    Date.now = () => now;
+
+    try {
+      const reqA = {
+        headers: { "x-forwarded-for": "1.1.1.1" },
+        socket: { remoteAddress: "10.0.0.5" },
+      };
+      const reqB = {
+        headers: { "x-forwarded-for": "2.2.2.2, 3.3.3.3" },
+        socket: { remoteAddress: "10.0.0.5" },
+      };
+
+      let allowed = 0;
+      const resA = createMockResponse();
+      limiter(reqA, resA, () => { allowed += 1; });
+      assert.equal(allowed, 1);
+
+      // Same socket peer, different (spoofed) forwarded header => still blocked.
+      const resB = createMockResponse();
+      limiter(reqB, resB, () => { allowed += 1; });
+      assert.equal(allowed, 1);
+      assert.equal(resB.statusCode, 429);
+      assert.deepEqual(resB.body, { error: "RATE_LIMIT_EXCEEDED" });
+    } finally {
+      Date.now = originalNow;
+    }
+  });
+
   await test("blog payload helpers normalize slugs, keywords, and publish timestamps", () => {
     const now = "2026-03-29T10:00:00.000Z";
     assert.equal(slugifyBlogTitle(" Heart Health & Wellness "), "heart-health-wellness");

@@ -22,6 +22,12 @@ import { logEvent, logRequestError } from '@/utils/logging';
 
 const app = express();
 
+// Trust only the configured number of reverse-proxy hops so `req.ip` and the
+// rate limiter resolve the real client address instead of a spoofed
+// `X-Forwarded-For` value. Keep this in sync with TRUSTED_PROXY_HOPS.
+const trustedProxyHops = Math.max(0, Math.trunc(Number(process.env.TRUSTED_PROXY_HOPS ?? 0)) || 0);
+app.set('trust proxy', trustedProxyHops);
+
 app.use(helmet());
 const isProd = process.env.NODE_ENV === 'production';
 const allowedOrigins = [
@@ -58,7 +64,10 @@ app.use(cors({
 }));
 app.use(attachRequestContext);
 
-const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 150, keyPrefix: 'auth' });
+// Auth endpoints are brute-force / credential-stuffing targets, so keep the
+// window tight. Overridable via AUTH_RATE_LIMIT_MAX for legitimate bursty flows.
+const authLimiterMax = Math.max(1, Math.trunc(Number(process.env.AUTH_RATE_LIMIT_MAX ?? 30)) || 30);
+const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: authLimiterMax, keyPrefix: 'auth' });
 const writeLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 120, keyPrefix: 'write' });
 const readLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 600, keyPrefix: 'read' });
 const webhookLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 300, keyPrefix: 'webhook' });
