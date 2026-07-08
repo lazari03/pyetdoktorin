@@ -109,11 +109,11 @@ export default function DoctorSearch({
 	}, [filteredDoctors, selectedDoctor]);
 
 	if (authLoading) {
-		return <p className="text-center">Loading authentication...</p>;
+		return <p className="text-center">{t('loadingAuth')}</p>;
 	}
 
 	if (!isAuthenticated) {
-		return <p className="text-center text-red-500">You must be logged in to search for doctors.</p>;
+		return <p className="text-center text-red-500">{t('mustBeLoggedInSearchDoctors')}</p>;
 	}
 
 	return (
@@ -170,7 +170,7 @@ export default function DoctorSearch({
 				</div>
 			</div>
 
-			{loading && <p className="text-center py-2">Loading results...</p>}
+			{loading && <p className="text-center py-2">{t('loadingResults')}</p>}
 			{error && <p className="text-red-500 text-center py-2">{error}</p>}
 
 			{isEditing && resultDoctors.length > 0 && (

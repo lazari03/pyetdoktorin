@@ -187,42 +187,42 @@ export function UserSidepanel() {
             <div className="mb-3 flex items-center justify-between">
               <div className="text-sm">
                 <span className="inline-flex items-center rounded-full px-2 py-1 text-xs bg-yellow-100 text-yellow-700">
-                  Pending approval
+                  {t('pendingApproval')}
                 </span>
               </div>
-              <button className="px-3 py-1.5 rounded-full bg-green-600 text-white hover:bg-green-700 disabled:opacity-60" disabled={loading} onClick={approve}>Approve</button>
+              <button className="px-3 py-1.5 rounded-full bg-green-600 text-white hover:bg-green-700 disabled:opacity-60" disabled={loading} onClick={approve}>{t('approve')}</button>
             </div>
           )}
           {!user ? (
-            <div className="text-gray-600">No user selected.</div>
+            <div className="text-gray-600">{t('noUserSelected')}</div>
           ) : (
             <div className="space-y-6">
               {/* Role selector */}
               <div>
-                <label className="text-sm text-gray-600">Role</label>
+                <label className="text-sm text-gray-600">{t('role')}</label>
                 <select className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.role ?? UserRole.Patient} onChange={e => setLocal({ ...local, role: e.target.value as unknown as UserRole })}>
-                  <option value={UserRole.Patient}>Patient</option>
-                  <option value={UserRole.Doctor}>Doctor</option>
-                  <option value={UserRole.Admin}>Admin</option>
+                  <option value={UserRole.Patient}>{t('patient')}</option>
+                  <option value={UserRole.Doctor}>{t('doctor')}</option>
+                  <option value={UserRole.Admin}>{t('admin')}</option>
                 </select>
               </div>
 
               {/* Base user fields (always shown) */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-gray-700">User details</h4>
+                  <h4 className="text-sm font-semibold text-gray-700">{t('userDetails')}</h4>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="block">
-                    <span className="text-sm text-gray-600">Name</span>
+                    <span className="text-sm text-gray-600">{t('name')}</span>
                     <input className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.name ?? ''} onChange={e => setLocal({ ...local, name: e.target.value })} />
                   </label>
                   <label className="block">
-                    <span className="text-sm text-gray-600">Surname</span>
+                    <span className="text-sm text-gray-600">{t('surname')}</span>
                     <input className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.surname ?? ''} onChange={e => setLocal({ ...local, surname: e.target.value })} />
                   </label>
                   <label className="block sm:col-span-2">
-                    <span className="text-sm text-gray-600">Email</span>
+                    <span className="text-sm text-gray-600">{t('email')}</span>
                     <input type="email" className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.email ?? ''} onChange={e => setLocal({ ...local, email: e.target.value })} />
                   </label>
                 </div>
@@ -232,15 +232,15 @@ export function UserSidepanel() {
               {local.role === UserRole.Doctor && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-gray-700">Doctor details</h4>
+                    <h4 className="text-sm font-semibold text-gray-700">{t('doctorDetails')}</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block">
-                      <span className="text-sm text-gray-600">Specialization</span>
+                      <span className="text-sm text-gray-600">{t('specialization')}</span>
                       <input className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" value={local.specialization ?? ''} onChange={e => setLocal({ ...local, specialization: e.target.value })} />
                     </label>
                     <label className="block sm:col-span-2">
-                      <span className="text-sm text-gray-600">Bio</span>
+                      <span className="text-sm text-gray-600">{t('bio')}</span>
                       <textarea className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300" rows={4} value={local.bio ?? ''} onChange={e => setLocal({ ...local, bio: e.target.value })} />
                     </label>
                   </div>
@@ -308,35 +308,35 @@ export function UserSidepanel() {
               {/* Utilities */}
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-	                  <button className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-60" disabled={loading} onClick={save}>Save changes</button>
-	                  <button className="px-4 py-2 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-100" disabled={loading} onClick={closePanel}>Cancel</button>
+	                  <button className="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-60" disabled={loading} onClick={save}>{t('saveChanges')}</button>
+	                  <button className="px-4 py-2 rounded-full border border-gray-300 text-gray-800 hover:bg-gray-100" disabled={loading} onClick={closePanel}>{t('cancel')}</button>
 	                  <button
                       className="px-4 py-2 rounded-full border border-red-300 text-red-600 hover:bg-red-50"
                       disabled={loading}
                       onClick={async () => {
-                        if (!user || !confirm('Delete this user?')) return;
+                        if (!user || !confirm(t('deleteUserConfirm'))) return;
                         try {
                           await deleteUser(user.id);
                           showToast(t('userDeletedSuccess') || 'User deleted.', 'success');
                           closePanel();
                         } catch (e) {
-                          showToast(e instanceof Error ? e.message : 'Failed to delete user', 'error');
+                          showToast(e instanceof Error ? e.message : t('deleteUserFailed'), 'error');
                         }
                       }}
                     >
-                      Delete user
+                      {t('deleteUser')}
                     </button>
 	                </div>
 
                 <div className="mt-2 rounded-xl border bg-gray-50 p-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-medium">Password reset</div>
-                      <div className="text-xs text-gray-600">Generate and copy a reset link</div>
+                      <div className="text-sm font-medium">{t('passwordReset')}</div>
+                      <div className="text-xs text-gray-600">{t('generateResetLink')}</div>
                     </div>
                     <div className="flex gap-2">
-                      <button className="px-3 py-1.5 rounded-full bg-white border border-gray-300 hover:bg-gray-100" disabled={loading} onClick={generateReset}>Generate</button>
-                      <button className="px-3 py-1.5 rounded-full bg-white border border-gray-300 hover:bg-gray-100" disabled={!resetLink} onClick={copyReset}>Copy</button>
+                      <button className="px-3 py-1.5 rounded-full bg-white border border-gray-300 hover:bg-gray-100" disabled={loading} onClick={generateReset}>{t('generate')}</button>
+                      <button className="px-3 py-1.5 rounded-full bg-white border border-gray-300 hover:bg-gray-100" disabled={!resetLink} onClick={copyReset}>{t('copy')}</button>
                     </div>
                   </div>
                   {resetLink && (

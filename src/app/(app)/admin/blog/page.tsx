@@ -17,7 +17,7 @@ import {
   updateBlogPost,
   deleteBlogPost,
   slugify,
-} from "@/infrastructure/services/blogService";
+} from "@/network/blogService";
 
 type EditorMode = "list" | "create" | "edit";
 
@@ -184,7 +184,7 @@ export default function AdminBlogPage() {
               {/* Tag + Status row */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Category</label>
+                  <label className="text-sm font-medium text-gray-700">{t('category')}</label>
                   <select
                     className="select select-bordered w-full"
                     value={form.tag}
@@ -198,7 +198,7 @@ export default function AdminBlogPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Status</label>
+                  <label className="text-sm font-medium text-gray-700">{t('status')}</label>
                   <select
                     className="select select-bordered w-full"
                     value={form.status}
@@ -206,15 +206,15 @@ export default function AdminBlogPage() {
                       setForm((f) => ({ ...f, status: e.target.value as BlogPost["status"] }))
                     }
                   >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
+                    <option value="draft">{t('draft')}</option>
+                    <option value="published">{t('published')}</option>
                   </select>
                 </div>
               </div>
 
               {/* Author */}
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Author</label>
+                <label className="text-sm font-medium text-gray-700">{t('author')}</label>
                 <Input
                   value={form.author}
                   onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
@@ -347,9 +347,9 @@ export default function AdminBlogPage() {
             <section className="bg-white rounded-3xl shadow-lg border border-purple-50 p-6 space-y-3">
               {posts.length === 0 ? (
                 <div className="rounded-2xl border border-gray-200 bg-gray-50/60 px-4 py-10 text-center">
-                  <p className="text-gray-500 text-sm">No articles yet.</p>
+                  <p className="text-gray-500 text-sm">{t('noArticlesYet')}</p>
                   <Button variant="outline" className="mt-4" onClick={openCreate}>
-                    Write your first article
+                    {t('writeFirstArticle')}
                   </Button>
                 </div>
               ) : (

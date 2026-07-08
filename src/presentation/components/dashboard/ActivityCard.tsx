@@ -1,4 +1,6 @@
+import "@/i18n/i18n";
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 type Stat = { label: string; value: string };
 
@@ -11,11 +13,12 @@ type ActivityCardProps = {
 };
 
 export function ActivityCard({ score, stats, note, actionLabel, onAction }: ActivityCardProps) {
+  const { t } = useTranslation();
   return (
     <section className="card-premium card-premium-hover p-4 sm:p-5 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-gray-900">Activity score</p>
+          <p className="text-sm font-semibold text-gray-900">{t('activityScore')}</p>
           <div className="space-y-1 text-sm text-gray-800">
             {stats.map((s) => (
               <div key={s.label} className="flex justify-between w-52">
@@ -27,7 +30,7 @@ export function ActivityCard({ score, stats, note, actionLabel, onAction }: Acti
         </div>
         <div
           className="relative h-24 w-24"
-          aria-label="Activity gauge"
+          aria-label={t('activityGauge')}
           style={{ background: `conic-gradient(#22c55e 0% ${score}%, #e5e7eb ${score}% 100%)` }}
         >
           <div className="absolute inset-3 rounded-full bg-white flex items-center justify-center text-sm font-semibold text-gray-900">

@@ -12,7 +12,7 @@ export default function DoctorStatsSection() {
         <div className="hidden md:flex flex-1 items-center justify-center">
           <Image
             src="https://pyetdoktorin-storage.fra1.digitaloceanspaces.com/img/pexels-shvetsa-4225920.jpg"
-            alt="Doctor Telemedicine"
+            alt={t('doctorsStatsImageAlt')}
             width={380}
             height={380}
             className="object-cover w-full h-72 sm:h-80 border-purple-100 bg-white"

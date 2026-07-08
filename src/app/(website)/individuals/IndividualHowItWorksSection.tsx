@@ -1,19 +1,23 @@
+import "@/i18n/i18n";
+import { useTranslation } from 'react-i18next';
 import { UserPlusIcon, CalendarDaysIcon, VideoCameraIcon, ChatBubbleLeftRightIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
 
-const steps = [
-  { icon: UserPlusIcon, label: 'Sign up & create your profile' },
-  { icon: CalendarDaysIcon, label: 'Book an appointment' },
-  { icon: VideoCameraIcon, label: 'Consult with a doctor' },
-  { icon: ChatBubbleLeftRightIcon, label: 'Chat & follow up' },
-  { icon: ShieldCheckIcon, label: 'Access your health records' },
-];
-
 export default function IndividualHowItWorksSection() {
+  const { t } = useTranslation();
+
+  const steps = [
+    { icon: UserPlusIcon, label: t('signUpCreateProfile') },
+    { icon: CalendarDaysIcon, label: t('bookAnAppointment') },
+    { icon: VideoCameraIcon, label: t('consultWithADoctor') },
+    { icon: ChatBubbleLeftRightIcon, label: t('chatAndFollowUp') },
+    { icon: ShieldCheckIcon, label: t('accessYourHealthRecords') },
+  ];
+
   return (
     <section className="w-full py-16 px-2 bg-white mb-12 flex items-center justify-center">
       <div className="max-w-5xl mx-auto flex flex-col items-center">
-        <h3 className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-1 text-center">How It Works</h3>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-8 text-center">Get started in a few easy steps</h2>
+        <h3 className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-1 text-center">{t('howItWorks')}</h3>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-8 text-center">{t('individualsHowTitle')}</h2>
         <div className="relative w-full flex justify-center">
           {/* Line only on md+ screens */}
           <div className="hidden md:block absolute top-1/2 left-8 right-8 h-0.5 bg-purple-100" style={{transform: 'translateY(-50%)'}} />
@@ -29,7 +33,7 @@ export default function IndividualHowItWorksSection() {
           </ol>
         </div>
         <p className="text-sm text-gray-600 mt-8 text-center max-w-xl">
-          Experience seamless healthcare: register, book, consult, chat, and manage your health records—all in one place.
+          {t('individualsHowText')}
         </p>
       </div>
     </section>

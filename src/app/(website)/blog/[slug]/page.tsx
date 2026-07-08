@@ -6,6 +6,7 @@ import WebsiteCta from "@/presentation/components/website/WebsiteCta";
 import SeoHead from "@/presentation/components/seo/SeoHead";
 import Link from "next/link";
 import { buildMetadata, buildMedicalWebPageSchema, buildBreadcrumbSchema } from "@/app/seo";
+import { getServerTranslations } from "@/i18n/serverTranslations";
 import {
   getBlogPostBySlugServer as getBlogPostBySlug,
   getPublishedBlogPostsServer as getPublishedBlogPosts,
@@ -45,6 +46,7 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const t = await getServerTranslations();
   const post = await getBlogPostBySlug(slug).catch(() => null);
   if (!post) notFound();
 
@@ -105,7 +107,7 @@ export default async function BlogPostPage({
             href="/blog"
             className="inline-flex items-center gap-1 text-sm text-purple-600 font-semibold mb-6 hover:underline"
           >
-            ← Kthehu te Blog
+            ← {t('backToBlog')}
           </Link>
 
           <div className="flex items-center gap-3 flex-wrap text-sm text-slate-500 mb-4">
@@ -141,16 +143,16 @@ export default async function BlogPostPage({
 
           {/* Internal links — drives SEO and keeps users on site */}
           <div className="mt-12 p-6 bg-purple-50 rounded-2xl">
-            <p className="text-sm font-semibold text-purple-700 mb-3">Shërbime të lidhura</p>
+            <p className="text-sm font-semibold text-purple-700 mb-3">{t('relatedServices')}</p>
             <div className="flex flex-wrap gap-2">
               <Link href="/konsulte-mjeku-online" className="text-sm text-purple-600 hover:underline font-medium">
-                Konsultë Mjeku Online →
+                {t('onlineConsultHeroEyebrow')} →
               </Link>
               <Link href="/recete-elektronike" className="text-sm text-purple-600 hover:underline font-medium">
-                Recetë Elektronike →
+                {t('eprescriptionHeroEyebrow')} →
               </Link>
               <Link href="/individuals" className="text-sm text-purple-600 hover:underline font-medium">
-                Gjej Mjekun Tënd →
+                {t('findADoctor')} →
               </Link>
             </div>
           </div>
@@ -160,10 +162,10 @@ export default async function BlogPostPage({
       <WebsiteSection variant="alt">
         <div className="website-container">
           <WebsiteCta
-            title="Rezervo Vizitë me Mjek Sot"
-            subtitle="Platforma nr.1 shqiptare për takime mjekësore online."
-            primary={{ label: "Fillo Tani", href: "/register" }}
-            secondary={{ label: "Mëso Më Shumë", href: "/individuals" }}
+            title={t('blogCtaTitle')}
+            subtitle={t('blogCtaSubtitle')}
+            primary={{ label: t('startNow'), href: "/register" }}
+            secondary={{ label: t('learnMore'), href: "/individuals" }}
           />
         </div>
       </WebsiteSection>

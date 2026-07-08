@@ -1,4 +1,6 @@
+import "@/i18n/i18n";
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { z } from '@/config/zIndex';
 
 interface ModalProps {
@@ -9,6 +11,7 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, labelledById }) => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,7 +57,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, labelledById }
         <button
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl font-bold"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t('close')}
         >
           &times;
         </button>

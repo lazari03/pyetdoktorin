@@ -1,7 +1,9 @@
 "use client";
 
+import "@/i18n/i18n";
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { useDI } from '@/context/DIContext';
 import { Button } from '@/presentation/ui/Button';
 import { Card } from '@/presentation/ui/Card';
@@ -11,6 +13,7 @@ import { ROUTES } from '@/config/routes';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const { resetUserPasswordUseCase } = useDI();
@@ -30,9 +33,9 @@ export default function ForgotPasswordPage() {
         },
       });
       setSubmitted(true);
-      toast({ variant: 'success', message: 'Password reset email sent. Check your inbox.' });
+      toast({ variant: 'success', message: t('passwordResetEmailSent') });
     } catch {
-      toast({ variant: 'error', message: 'Failed to send password reset email. Please try again.' });
+      toast({ variant: 'error', message: t('passwordResetEmailFailed') });
     }
   };
 
@@ -41,34 +44,34 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md shadow-lg">
         <div className="card-body">
           <h2 className="card-title text-2xl font-bold text-center mb-4 text-gray-900">
-            Forgot Password
+            {t('forgotPassword')}
           </h2>
           {submitted ? (
             <p className="text-center text-gray-700">
-              If an account with that email exists, you will receive a password reset link shortly.
+              {t('forgotPasswordSuccess')}
             </p>
           ) : (
             <form onSubmit={handleSubmit} className="form-control gap-4">
               <div>
                 <label className="label">
-                  <span className="label-text text-gray-900">Email</span>
+                  <span className="label-text text-gray-900">{t('email')}</span>
                 </label>
                 <Input
                   type="email"
-                  placeholder="your.email@example.com"
+                  placeholder={t('emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
               <Button type="submit" className="w-full mt-2">
-                Reset Password
+                {t('resetPassword')}
               </Button>
             </form>
           )}
           <div className="text-center mt-4">
             <Link href={ROUTES.LOGIN} className="link text-primary">
-              Back to Login
+              {t('backToLogin')}
             </Link>
           </div>
         </div>

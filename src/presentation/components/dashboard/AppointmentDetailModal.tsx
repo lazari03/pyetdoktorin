@@ -56,7 +56,7 @@ export default function AppointmentDetailModal({
           <button
             onClick={onClose}
             className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-            aria-label="Close"
+            aria-label={t('close')}
           >
             <XMarkIcon className="h-5 w-5 text-white" />
           </button>

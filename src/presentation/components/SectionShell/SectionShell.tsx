@@ -217,7 +217,7 @@ export default function SectionShell({
             setMobileMenuOpen((open) => !open);
           }}
           className="text-gray-800 hover:text-gray-900"
-          aria-label="Toggle navigation menu"
+          aria-label={t('toggleNavigationMenu')}
           data-analytics={`${sectionId}.mobile_menu.toggle`}
         >
           {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
@@ -243,7 +243,7 @@ export default function SectionShell({
               setProfileMenuOpen((open) => !open);
             }}
             className={profileButtonClassName}
-            aria-label="Open profile menu"
+            aria-label={t('openProfileMenu')}
             data-analytics={`${sectionId}.profile.toggle`}
           >
             {initials}
@@ -323,7 +323,7 @@ export default function SectionShell({
           <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-6 px-10 py-4">
             {desktopLeftNode}
 
-            <nav className="flex flex-1 items-center justify-center" aria-label="Primary navigation">
+            <nav className="flex flex-1 items-center justify-center" aria-label={t('primaryNavigation')}>
               <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/10 p-1 shadow-sm backdrop-blur">
                 {renderedNav.map((item) => {
                   const active = activePath === item.href;

@@ -62,15 +62,15 @@ export default function ContactForm() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <label className="block text-sm font-semibold text-gray-700 mb-1">{t('yourName')}</label>
-                <input id="name" {...register('name', { required: true })} type="text" placeholder="John Doe" className="w-full px-4 py-3 rounded-lg border border-purple-100 text-gray-900 placeholder-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none text-base shadow-sm" />
+                <input id="name" {...register('name', { required: true })} type="text" placeholder={t('namePlaceholder')} className="w-full px-4 py-3 rounded-lg border border-purple-100 text-gray-900 placeholder-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none text-base shadow-sm" />
               </div>
               <div className="flex-1">
                 <label className="block text-sm font-semibold text-gray-700 mb-1">{t('yourEmail')}</label>
-                <input id="email" {...register('email', { required: true })} type="email" placeholder="john@email.com" className="w-full px-4 py-3 rounded-lg border border-purple-100 text-gray-900 placeholder-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none text-base shadow-sm" />
+                <input id="email" {...register('email', { required: true })} type="email" placeholder={t('emailPlaceholder')} className="w-full px-4 py-3 rounded-lg border border-purple-100 text-gray-900 placeholder-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none text-base shadow-sm" />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Dëshiron konsultë</label>
-                <input id="deshironKonsulte" {...register('deshironKonsulte')} type="text" placeholder="Po/Jo" className="w-full px-4 py-3 rounded-lg border border-purple-100 text-gray-900 placeholder-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none text-base shadow-sm" />
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t('wantsConsultation')}</label>
+                <input id="deshironKonsulte" {...register('deshironKonsulte')} type="text" placeholder={t('yesNo')} className="w-full px-4 py-3 rounded-lg border border-purple-100 text-gray-900 placeholder-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 focus:outline-none text-base shadow-sm" />
               </div>
             </div>
             <div>

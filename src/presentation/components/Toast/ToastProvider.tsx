@@ -1,6 +1,8 @@
 "use client";
 
+import "@/i18n/i18n";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "@/config/zIndex";
 
 export type ToastVariant = "success" | "error" | "info";
@@ -37,6 +39,7 @@ function variantClasses(variant: ToastVariant) {
 }
 
 export default function ToastProvider({ children }: { children: React.ReactNode }) {
+  const { t: translate } = useTranslation();
   const [items, setItems] = useState<ToastItem[]>([]);
   const timersRef = useRef<Map<string, number>>(new Map());
 
@@ -103,7 +106,7 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
               <button
                 className="text-xs font-semibold opacity-70 hover:opacity-100"
                 onClick={() => dismiss(t.id)}
-                aria-label="Dismiss notification"
+                aria-label={translate('dismissNotification')}
               >
                 ×
               </button>
