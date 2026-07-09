@@ -443,7 +443,7 @@ export default function SectionShell({
             setMobileMenuOpen((open) => !open);
           }}
           className="text-gray-800 hover:text-gray-900"
-          aria-label="Toggle navigation menu"
+          aria-label={t('toggleNavigationMenu')}
           data-analytics={`${sectionId}.mobile_menu.toggle`}
         >
           {mobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
@@ -631,43 +631,6 @@ export default function SectionShell({
                 </span>
               )}
             </button>
-            {profileMenuOpen && (
-              <div
-                className={`absolute bottom-full left-0 mb-2 w-56 rounded-xl bg-white shadow-lg border border-gray-200 py-2 text-sm text-gray-900 ${z.maximum}`}
-              >
-                {renderedProfileMenu.map((entry) => {
-                  if (entry.kind === 'divider') {
-                    return <div key={entry.key} className="my-2 border-t border-gray-100" />;
-                  }
-                  if (entry.kind === 'action') {
-                    return (
-                      <button
-                        key={entry.key}
-                        type="button"
-                        onClick={() => handleAction(entry.actionId)}
-                        className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
-                        data-analytics={entry.analyticsId}
-                      >
-                        {menuIcon({ iconKey: entry.iconKey, sectionId })}
-                        <span className="font-medium">{entry.name}</span>
-                      </button>
-                    );
-                  }
-                  return (
-                    <Link
-                      key={entry.key}
-                      href={entry.href}
-                      onClick={() => setProfileMenuOpen(false)}
-                      className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-                      data-analytics={entry.analyticsId}
-                    >
-                      {menuIcon({ iconKey: entry.iconKey, sectionId })}
-                      <span className="font-medium">{entry.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </div>
       </aside>

@@ -10,6 +10,8 @@ type BackendErrorPayload = {
   detail?: unknown;
 };
 
+export type { BackendError };
+
 const parseBackendError = (text: string): BackendErrorPayload | null => {
   try {
     return JSON.parse(text) as BackendErrorPayload;

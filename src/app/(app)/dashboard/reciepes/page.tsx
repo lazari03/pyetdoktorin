@@ -29,6 +29,13 @@ type Reciepe = {
   signatureDataUrl?: string;
 };
 
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return parts.length >= 2
+    ? (parts[0][0] + parts[1][0]).toUpperCase()
+    : (name[0] ?? "?").toUpperCase();
+}
+
 export default function PatientReciepesPage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
@@ -46,17 +53,19 @@ export default function PatientReciepesPage() {
     try {
       const response = await getReciepesByPatientUseCase.execute(user.uid);
       const mapped = (response || []).map((r: ReciepePayload) => ({
-        id: r.id || (r.patientId + String(r.createdAt ?? "")),
+        id: r.id || r.patientId + String(r.createdAt ?? ""),
         doctor: r.doctorName || "",
         type: r.type || "standard",
         reimbursementCode: r.reimbursementCode,
         pharmacy: r.pharmacyName,
         title: r.title || t("reciepeTitleDoctor") || "Reciepe",
-        medicines: Array.isArray(r.medicines) ? r.medicines.join(", ") : String(r.medicines ?? ""),
+        medicines: Array.isArray(r.medicines)
+          ? r.medicines.join(", ")
+          : String(r.medicines ?? ""),
         dosage: r.dosage || "",
         notes: r.notes,
         date: new Date(r.createdAt ?? Date.now()).toISOString().split("T")[0],
-        status: r.status || "pending",
+        status: (r.status as Reciepe["status"]) || "pending",
         signatureDataUrl: r.signatureDataUrl,
       }));
       setReciepes(mapped);
@@ -73,9 +82,7 @@ export default function PatientReciepesPage() {
     load();
   }, [load]);
 
-  if (role !== UserRole.Patient) {
-    return <RedirectingModal show />;
-  }
+  if (role !== UserRole.Patient) return <RedirectingModal show />;
 
   const active = reciepes.find((r) => r.id === activeId) || reciepes[0];
 
@@ -89,149 +96,229 @@ export default function PatientReciepesPage() {
       skeleton={<TableSkeleton />}
       analyticsPrefix="dashboard.reciepes"
     >
-      <div className="py-4 sm:py-6 px-3">
-        <div className="max-w-5xl mx-auto space-y-4">
+      <div className="page">
+        <div className="page-inner page-inner-md">
+
+          {/* Page header */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[.13em] text-purple-600">
+            <p className="page-eyebrow">
               {t("secureAccessEyebrow") || "Secure access"}
             </p>
-            <h1 className="text-[15px] font-bold text-gray-900">{t("myReciepesTitle") || "My reciepes"}</h1>
-            <p className="text-[12.5px] text-gray-500">
-              {t("myReciepesSubtitle") || "Your prescriptions, kept private and ready for your care decisions."}
+            <h1 className="page-title">
+              {t("myReciepesTitle") || "My Prescriptions"}
+            </h1>
+            <p className="page-subtitle">
+              {t("myReciepesSubtitle") ||
+                "Your prescriptions, kept private and ready for your care decisions."}
             </p>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <aside className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3 h-full">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {([
-                  ["all", t("all") || "All"],
-                  ["pending", t("pending") || "Pending"],
-                  ["accepted", t("accepted") || "Accepted"],
-                  ["rejected", t("rejected") || "Rejected"],
-                ] as const).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setStatusFilter(value)}
-                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                      statusFilter === value
-                        ? "bg-purple-600 text-white"
-                        : "border border-gray-200 text-gray-600 hover:border-purple-200"
-                    }`}
+          <div className="rx-layout">
+            {/* Sidebar list */}
+            <aside className="panel space-y-2">
+              {reciepes.length === 0 ? (
+                <div className="empty-state">
+                  <svg
+                    className="h-10 w-10 empty-state-icon"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
                   >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div className="space-y-2">
-                {reciepes
-                  .filter((r) => statusFilter === "all" || r.status === statusFilter)
-                  .map((r) => (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p className="empty-state-title">
+                    {t("noReciepesYet") || "No prescriptions yet"}
+                  </p>
+                  <p className="empty-state-hint">
+                    {t("noReciepesHint") ||
+                      "Your doctor-issued prescriptions will appear here."}
+                  </p>
+                </div>
+              ) : (
+                reciepes.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => setActiveId(r.id)}
-                    className={`w-full text-left rounded-lg border px-3 py-2 flex items-start gap-2.5 ${
-                      active?.id === r.id ? "border-purple-400 bg-purple-50" : "border-gray-100 hover:border-purple-200"
+                    className={`rx-item ${
+                      active?.id === r.id ? "rx-item-active" : ""
                     }`}
                   >
-                    <span className="h-8 w-8 shrink-0 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center text-[11px] font-bold">
-                      {initialsOf(r.doctor)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
-                      <p className="text-[11px] text-gray-500">
-                        {r.type === "reimbursement"
-                          ? (t("prescriptionTypeReimbursement") || "Reimbursement")
-                          : (t("prescriptionTypeStandard") || "Standard")}
-                      </p>
-                      <p className="text-xs text-gray-600 truncate">{r.doctor}</p>
-                      <p className="text-[11px] text-gray-500">{r.date}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </aside>
-
-            <section className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-3">
-              {active ? (
-                <>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{active.title}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <span>{active.doctor}</span>
-                        <span>•</span>
-                        <span>{active.date}</span>
-                        {active.status ? (
+                    <div className="flex items-start gap-3">
+                      <div className="avatar-sm">{initials(r.doctor || "?")}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {r.title}
+                          </p>
+                          {r.status && (
+                            <span className={`badge badge-${r.status}`}>
+                              {t(r.status)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 truncate">
+                          {r.doctor || t("doctor")}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[11px] text-gray-400">
+                            {r.date}
+                          </span>
                           <span
-                            className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
-                              active.status === "accepted"
-                                ? "bg-green-50 text-green-700"
-                                : active.status === "rejected"
-                                  ? "bg-red-50 text-red-700"
-                                  : "bg-amber-50 text-amber-700"
+                            className={`badge ${
+                              r.type === "reimbursement"
+                                ? "badge-reimbursement"
+                                : "badge-standard"
                             }`}
                           >
+                            {r.type === "reimbursement"
+                              ? t("prescriptionTypeReimbursement") || "Reimb."
+                              : t("prescriptionTypeStandard") || "Std."}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </aside>
+
+            {/* Detail panel */}
+            <section className="panel space-y-4" style={{ minHeight: "320px" }}>
+              {active ? (
+                <>
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div>
+                      <p className="detail-title">{active.title}</p>
+                      <div className="flex items-center gap-2 flex-wrap mt-1">
+                        <span className="detail-meta">{active.doctor}</span>
+                        <span className="detail-meta">•</span>
+                        <span className="detail-meta">{active.date}</span>
+                        {active.status && (
+                          <span className={`badge badge-${active.status}`}>
                             {t(active.status)}
                           </span>
-                        ) : null}
+                        )}
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-2 text-sm text-gray-800">
-                    <div>
-                      <span className="font-semibold">{t("prescriptionTypeLabel") || "Prescription type"}: </span>
-                      <span>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="tile tile-muted">
+                      <p className="tile-label">
+                        {t("prescriptionTypeLabel") || "Type"}
+                      </p>
+                      <span
+                        className={`badge ${
+                          active.type === "reimbursement"
+                            ? "badge-reimbursement"
+                            : "badge-standard"
+                        }`}
+                      >
                         {active.type === "reimbursement"
-                          ? (t("prescriptionTypeReimbursement") || "Reimbursement")
-                          : (t("prescriptionTypeStandard") || "Standard")}
+                          ? t("prescriptionTypeReimbursement") || "Reimbursement"
+                          : t("prescriptionTypeStandard") || "Standard"}
                       </span>
                     </div>
-                    {active.reimbursementCode ? (
-                      <div>
-                        <span className="font-semibold">{t("reimbursementCodeLabel") || "Reimbursement code"}: </span>
-                        <span>{active.reimbursementCode}</span>
+                    {active.reimbursementCode && (
+                      <div className="tile tile-sky">
+                        <p className="tile-label tile-label-sky">
+                          {t("reimbursementCodeLabel") || "Reimbursement code"}
+                        </p>
+                        <p
+                          className="tile-value"
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          {active.reimbursementCode}
+                        </p>
                       </div>
-                    ) : null}
-                    {active.type === "reimbursement" ? (
-                      <div>
-                        <span className="font-semibold">{t("pharmacyName") || "Pharmacy"}: </span>
-                        <span>{active.pharmacy || "-"}</span>
+                    )}
+                    {active.type === "reimbursement" && active.pharmacy && (
+                      <div className="tile tile-muted">
+                        <p className="tile-label">
+                          {t("pharmacyName") || "Pharmacy"}
+                        </p>
+                        <p className="tile-value">{active.pharmacy}</p>
                       </div>
-                    ) : null}
-                    {active.type === "standard" ? (
-                      <>
-                        <div className="flex items-center gap-1.5">
-                          <PillIcon className="h-4 w-4 text-purple-500 shrink-0" />
-                          <span className="font-semibold">{t("medicinesLabel") || "Medicines"}: </span>
-                          <span>{active.medicines}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <ClipboardIcon className="h-4 w-4 text-purple-500 shrink-0" />
-                          <span className="font-semibold">{t("dosageLabel") || "Dosage"}: </span>
-                          <span>{active.dosage}</span>
-                        </div>
-                        {active.notes ? (
-                          <div className="text-gray-700">
-                            <span className="font-semibold">{t("notesLabel")}: </span>
-                            <span>{active.notes}</span>
-                          </div>
-                        ) : null}
-                      </>
-                    ) : null}
+                    )}
                   </div>
-                  {active.signatureDataUrl ? (
-                    <div className="mt-3">
-                      <p className="text-xs font-semibold text-gray-700">Signature</p>
-                      <div className="mt-1 max-w-xs border border-gray-200 rounded overflow-hidden">
-                        <Image src={active.signatureDataUrl} alt="Signature" width={300} height={120} />
+
+                  {active.type === "standard" && (
+                    <div className="space-y-2">
+                      {active.medicines && (
+                        <div className="tile tile-primary">
+                          <p className="tile-label tile-label-primary">
+                            {t("medicinesLabel") || "Medicines"}
+                          </p>
+                          <p className="tile-value">{active.medicines}</p>
+                        </div>
+                      )}
+                      {active.dosage && (
+                        <div className="tile tile-muted">
+                          <p className="tile-label">
+                            {t("dosageLabel") || "Dosage"}
+                          </p>
+                          <p className="tile-value">{active.dosage}</p>
+                        </div>
+                      )}
+                      {active.notes && (
+                        <div className="tile tile-muted">
+                          <p className="tile-label">
+                            {t("notesLabel") || "Notes"}
+                          </p>
+                          <p className="tile-value">{active.notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {active.signatureDataUrl && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-2">
+                        {t("doctorSignature") || "Doctor signature"}
+                      </p>
+                      <div className="inline-block border border-gray-200 rounded-xl overflow-hidden bg-white p-2">
+                        <Image
+                          src={active.signatureDataUrl}
+                          alt={t("doctorSignature") || "Doctor signature"}
+                          width={300}
+                          height={120}
+                          unoptimized
+                          className="h-auto w-auto max-w-[280px]"
+                        />
                       </div>
                     </div>
-                  ) : null}
+                  )}
                 </>
               ) : (
-                <p className="text-sm text-gray-500">{t("noReciepes") || "No reciepes found."}</p>
+                <div className="empty-state" style={{ minHeight: "280px" }}>
+                  <svg
+                    className="h-12 w-12 empty-state-icon"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p className="empty-state-title">
+                    {t("noReciepesYet") || "No prescriptions yet"}
+                  </p>
+                  <p className="empty-state-hint">
+                    {t("noReciepesHint") ||
+                      "Your doctor-issued prescriptions will appear here."}
+                  </p>
+                </div>
               )}
             </section>
           </div>

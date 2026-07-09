@@ -30,7 +30,7 @@ function RegisterPageInner() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const nav = useNavigationCoordinator();
-    const { registerUserUseCase, authService } = useDI();
+    const { registerUserUseCase, establishSessionAllowUnverifiedUseCase } = useDI();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -81,7 +81,7 @@ function RegisterPageInner() {
                 },
             });
 
-            await authService.establishSessionAllowUnverified();
+            await establishSessionAllowUnverifiedUseCase.execute();
             nav.replacePath(DASHBOARD_PATHS.root);
         } catch (error) {
             setError(

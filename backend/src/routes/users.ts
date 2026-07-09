@@ -252,7 +252,7 @@ router.get('/me', requireAuth(undefined, { allowUnverified: true }), async (req:
   res.json(mapCurrentUserResponse(uid, role, data, authUser));
 });
 
-router.patch('/me', requireAuth(allUserRoles, { allowUnverified: true }), async (req: AuthenticatedRequest, res) => {
+router.patch('/me', requireAuth(allUserRoles), async (req: AuthenticatedRequest, res) => {
   const payload = validateBody(res, selfProfileSchema, req.body, 'NO_FIELDS_TO_UPDATE');
   if (!payload) return;
   const uid = req.user!.uid;

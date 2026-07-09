@@ -158,7 +158,7 @@ export default function Calendar({ events, availability, onSelectEvent }: Calend
                         <button
                             onClick={() => setCurrentDate((prev) => subWeeks(prev, 1))}
                             className="h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 flex items-center justify-center"
-                            aria-label="Previous week"
+                            aria-label={t('previousWeek')}
                         >
                             <ChevronLeftIcon className="h-4 w-4" />
                         </button>
@@ -171,7 +171,7 @@ export default function Calendar({ events, availability, onSelectEvent }: Calend
                         <button
                             onClick={() => setCurrentDate((prev) => addWeeks(prev, 1))}
                             className="h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 flex items-center justify-center"
-                            aria-label="Next week"
+                            aria-label={t('nextWeek')}
                         >
                             <ChevronRightIcon className="h-4 w-4" />
                         </button>

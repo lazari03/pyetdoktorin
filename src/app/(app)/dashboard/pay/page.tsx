@@ -4,16 +4,17 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
+import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
-import { syncPaddlePaymentWithRetry } from '@/network/payments';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 
 export default function PayPage() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { paymentCheckoutService } = useDI();
+  const { user } = useAuth();
+  const { prepareCheckoutUseCase, openCheckoutUseCase, syncPaymentUseCase } = useDI();
 
   const appointmentId = searchParams?.get('appointmentId') || '';
 
@@ -24,7 +25,7 @@ export default function PayPage() {
   useEffect(() => {
     let cancelled = false;
     trackAnalyticsEvent('payment_page_loaded', { appointmentId });
-    paymentCheckoutService.prepare()
+    prepareCheckoutUseCase.execute()
       .then(() => {
         if (!cancelled) setPaddleReady(true);
       })
@@ -37,7 +38,7 @@ export default function PayPage() {
     return () => {
       cancelled = true;
     };
-  }, [appointmentId, t]);
+  }, [appointmentId, prepareCheckoutUseCase, t]);
 
   const openCheckout = useCallback(() => {
     if (!appointmentId) {
@@ -49,12 +50,12 @@ export default function PayPage() {
     setStatus('loading');
     setErrorMessage(null);
     trackAnalyticsEvent('payment_checkout_opened', { appointmentId });
-    paymentCheckoutService.openCheckout({
+    openCheckoutUseCase.execute({
       appointmentId,
       onClose: () => {
         setStatus('idle');
         trackAnalyticsEvent('payment_checkout_closed', { appointmentId });
-        syncPaddlePaymentWithRetry(appointmentId)
+        syncPaymentUseCase.execute(appointmentId)
           .then((result) => {
             if (result.isPaid) {
               router.replace(`${DASHBOARD_PATHS.appointments}?paid=${encodeURIComponent(appointmentId)}`);
@@ -74,7 +75,7 @@ export default function PayPage() {
       setErrorMessage(t('paymentFailed'));
       trackAnalyticsEvent('payment_checkout_failed', { appointmentId, reason: 'open_failed' });
     });
-  }, [appointmentId, router, t, paymentCheckoutService]);
+  }, [appointmentId, openCheckoutUseCase, router, syncPaymentUseCase, t, user?.uid]);
 
   if (!appointmentId) {
     return (

@@ -1,15 +1,30 @@
 import { create } from "zustand";
 import { Appointment } from "@/domain/entities/Appointment";
-import { getAppointmentAction } from "@/domain/rules/appointmentRules";
+import { getAppointmentAction, isPastAppointment, isAppointmentPast } from "@/domain/rules/appointmentRules";
 import { APPOINTMENT_DURATION_MINUTES } from '@/config/appointmentConfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { APPOINTMENT_ERROR_CODES } from '@/config/errorCodes';
 import { BackendError } from '@/application/errors/BackendError';
-import { isPastAppointment as isPast, isAppointmentPast as isPastEntity } from '@/domain/rules/appointmentRules';
-import type { IAppointmentQueryService } from '@/application/ports/IAppointmentQueryService';
+import { AppointmentService } from '@/infrastructure/services/appointmentService';
 
-let appointmentQueryService: IAppointmentQueryService;
-export function setAppointmentQueryService(svc: IAppointmentQueryService) { appointmentQueryService = svc; }
+const appointmentService = new AppointmentService();
+
+/**
+ * Convert a time string (either "HH:mm" or "hh:mm AM/PM") into "HH:mm" 24-hour format
+ * so it can be used in `new Date("YYYY-MM-DDThh:mm")`.
+ */
+function normalizeTo24h(time: string): string {
+  const ampmMatch = time.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
+  if (ampmMatch) {
+    let hours = parseInt(ampmMatch[1], 10);
+    const minutes = ampmMatch[2];
+    const period = ampmMatch[3].toUpperCase();
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  }
+  return time; // already in HH:mm
+}
 
 function resolveAppointmentFetchError(error: unknown): string {
   if (error instanceof BackendError) {
@@ -24,9 +39,10 @@ interface AppointmentState {
   isDoctor: boolean | null;
   loading: boolean;
   error: string | null;
+  lastFetchedAt: number;
   setAppointments: (appointments: Appointment[]) => void;
   setIsDoctor: (isDoctor: boolean | null) => void;
-  fetchAppointments: (role?: UserRole | null) => Promise<void>;
+  fetchAppointments: (role?: UserRole | null, forceRefresh?: boolean) => Promise<void>;
   subscribeAppointments: (userId: string, role: UserRole) => () => void;
   setAppointmentPaid: (appointmentId: string, setAppointmentPaidUseCase: (appointmentId: string) => Promise<void>) => Promise<void>;
   handlePayNow: (
@@ -50,15 +66,28 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   isDoctor: null,
   loading: false,
   error: null,
+  lastFetchedAt: 0,
   setAppointments: (appointments) => set({ appointments }),
   setIsDoctor: (isDoctor) => set({ isDoctor }),
-  fetchAppointments: async (role) => {
+  fetchAppointments: async (role, forceRefresh = false) => {
+    const state = get();
+    // Skip the network call if we already have fresh data (< 10 s old)
+    // and no explicit refresh was requested. Prevents redundant fetches
+    // when multiple components mount and call fetchAppointments in parallel.
+    if (
+      !forceRefresh &&
+      state.appointments.length > 0 &&
+      Date.now() - state.lastFetchedAt < 10_000
+    ) {
+      return;
+    }
     set({ loading: true, error: null });
     try {
-      const response = await appointmentQueryService.listAppointments();
+      const response = { items: await appointmentService.listAppointments() };
       set({
         appointments: response.items,
         loading: false,
+        lastFetchedAt: Date.now(),
         isDoctor: typeof role === 'undefined' ? get().isDoctor : role === UserRole.Doctor,
       });
     } catch (error) {
@@ -71,7 +100,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
     const refreshFromBackend = async () => {
       try {
-        const response = await appointmentQueryService.listAppointments();
+        const response = { items: await appointmentService.listAppointments() };
         if (disposed) return;
         set({ appointments: response.items, loading: false, error: null });
       } catch (error) {
@@ -117,8 +146,8 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   handlePayNow: async (appointmentId, amount, handlePayNowUseCase, options) =>
     handlePayNowUseCase(appointmentId, amount, options),
   checkIfPastAppointment: async (appointmentId, checkIfPastAppointmentUseCase) => checkIfPastAppointmentUseCase(appointmentId),
-  isPastAppointment: (date, time) => isPast(date, time),
-  isAppointmentPast: (appointment) => isPastEntity(appointment, APPOINTMENT_DURATION_MINUTES),
+  isPastAppointment: (date, time) => isPastAppointment(date, time),
+  isAppointmentPast: (appointment) => isAppointmentPast(appointment, APPOINTMENT_DURATION_MINUTES),
   getAppointmentAction: (appointment) => getAppointmentAction(appointment, get().isAppointmentPast),
 }));
 

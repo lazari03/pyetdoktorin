@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import type { User } from '@/domain/entities/User';
-import type { IAdminUserService, AdminUserCreatePayload, AdminUserUpdatePayload } from '@/application/ports/IAdminUserService';
+import type { AdminUserCreatePayload, AdminUserUpdatePayload } from '@/application/ports/IAdminUserService';
+import { AdminUserService } from '@/infrastructure/services/adminUserService';
 
-let adminUserService: IAdminUserService;
-export function setAdminUserService(svc: IAdminUserService) { adminUserService = svc; }
+const adminUserService = new AdminUserService();
 
 type EditableUser = User & {
   // optional base profile fields (may be absent in base User entity)
@@ -115,7 +115,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const id = get().selectedUserId; if (!id) return;
     set({ loading: true, error: null });
     try {
-      await adminUserService.updateUserAdmin(id, payload);
+      await adminUserService.updateDoctorProfileAdmin(id, payload);
       const users = get().users.map(u => (u.id === id ? { ...u, ...payload } : u));
       set({ users });
     } catch (e) {

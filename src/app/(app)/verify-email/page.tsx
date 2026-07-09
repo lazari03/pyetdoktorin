@@ -27,6 +27,7 @@ function getSiteOrigin(): string {
 
 export default function VerifyEmailPage() {
   const { t } = useTranslation();
+  const { applyVerificationCodeUseCase, establishSessionUseCase, sendVerificationEmailUseCase, reloadUserUseCase } = useDI();
   const searchParams = useSearchParams();
   const { loading, user, role, emailVerified } = useAuth();
   const { authService } = useDI();
@@ -47,10 +48,10 @@ export default function VerifyEmailPage() {
   }, [emailVerified]);
 
   const refreshVerification = useCallback(async () => {
-    const verified = await authService.reloadUser();
+    const verified = await reloadUserUseCase.execute();
     setLocalVerified(verified);
     return verified;
-  }, [authService]);
+  }, [reloadUserUseCase]);
 
   useEffect(() => {
     const mode = searchParams?.get('mode');
@@ -63,7 +64,7 @@ export default function VerifyEmailPage() {
     setNotice(null);
     (async () => {
       try {
-        await authService.applyVerificationCode(oobCode);
+        await applyVerificationCodeUseCase.execute(oobCode);
         setCodeApplied(true);
 
         // Remove one-time action params from the URL to avoid re-applying on refresh.
@@ -82,7 +83,7 @@ export default function VerifyEmailPage() {
         const verified = await refreshVerification();
         if (verified) {
           try {
-            await authService.establishSession();
+            await establishSessionUseCase.execute();
             window.location.replace(destination);
             return;
           } catch {
@@ -107,7 +108,7 @@ export default function VerifyEmailPage() {
         setBusy(false);
       }
     })();
-  }, [codeApplied, destination, refreshVerification, searchParams, t]);
+  }, [applyVerificationCodeUseCase, codeApplied, destination, establishSessionUseCase, refreshVerification, searchParams, t]);
 
   const resend = async () => {
     if (Date.now() < resendCooldownUntil) return;
@@ -117,7 +118,7 @@ export default function VerifyEmailPage() {
     try {
       const origin = getSiteOrigin();
       const continueUrl = `${origin}/verify-email?next=${encodeURIComponent(destination)}`;
-      await authService.sendVerificationEmail({ continueUrl });
+      await sendVerificationEmailUseCase.execute(continueUrl);
       setNotice(t('verifyEmailSent', { defaultValue: 'Verification email sent. Please check your inbox.' }));
       setResendCooldownUntil(Date.now() + 30_000);
     } catch (e) {
@@ -138,7 +139,7 @@ export default function VerifyEmailPage() {
         setNotice(t('verifyEmailStillPending', { defaultValue: 'Email not verified yet. Open the link in your email, then try again.' }));
         return;
       }
-      await authService.establishSession();
+      await establishSessionUseCase.execute();
       window.location.replace(destination);
     } catch (e) {
       const msg = e instanceof Error ? e.message : null;

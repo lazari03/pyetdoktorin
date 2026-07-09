@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { Clinic } from '@/domain/entities/Clinic';
 import { z } from '@/config/zIndex';
-import { backendFetch } from '@/network/backendClient';
+import { useDI } from '@/context/DIContext';
 import { UserRole } from '@/domain/entities/UserRole';
 import AppointmentConfirmation from '@/presentation/components/appointment/AppointmentConfirmation';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
@@ -17,6 +17,7 @@ import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';
 export default function ClinicsPage() {
   const { t } = useTranslation();
   const { user, role } = useAuth();
+  const { getClinicsUseCase, createClinicBookingUseCase } = useDI();
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
@@ -35,8 +36,8 @@ export default function ClinicsPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await backendFetch<{ items: Clinic[] }>('/api/clinics/private', { method: 'GET' });
-      setClinics(response.items ?? []);
+      const items = await getClinicsUseCase.execute();
+      setClinics(items);
     } catch (err) {
       console.error('Failed to load clinics', err);
       setClinics([]);
@@ -44,7 +45,7 @@ export default function ClinicsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getClinicsUseCase]);
 
   useEffect(() => {
     loadClinics();
@@ -65,17 +66,15 @@ export default function ClinicsPage() {
       preferredDate,
     });
     try {
-      await backendFetch('/api/clinics/bookings', {
-        method: 'POST',
-        body: JSON.stringify({
-          clinicId: selectedClinic.id,
-          clinicName: selectedClinic.name,
-          patientName: userDisplayName,
-          patientEmail: userEmail,
-          patientPhone: userPhone,
-          note,
-          preferredDate,
-        }),
+      await createClinicBookingUseCase.execute({
+        clinicId: selectedClinic.id,
+        clinicName: selectedClinic.name,
+        patientId: user?.uid ?? '',
+        patientName: userDisplayName,
+        patientEmail: userEmail,
+        patientPhone: userPhone,
+        note,
+        preferredDate,
       });
       setFeedback(null);
       setShowConfirmation(true);

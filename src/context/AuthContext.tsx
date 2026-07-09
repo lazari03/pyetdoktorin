@@ -3,9 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
-import { fetchCurrentUserProfile } from '@/network/currentUser';
 import { useDI } from '@/context/DIContext';
-import { setAuthToken } from '@/application/auth/tokenHolder';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -35,49 +33,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancel = false;
-
-    const unsubToken = authService.observeIdToken((token) => {
-      setAuthToken(token);
-    });
-
-    const unsubscribe = authService.observeAuthState(async (authState) => {
-      if (cancel) return;
-
-      if (authState.userId) {
-        let resolvedEmailVerified = authService.isEmailVerified();
-        try {
-          if (!resolvedEmailVerified) {
-            resolvedEmailVerified = await authService.reloadUser();
-          }
-        } catch {
-          // ignore reload failures
-        }
-
-        const currentUserInfo = authService.getCurrentUserInfo();
-
+    const unsubscribe = authService.observeFullAuthState(async (firebaseUser) => {
+      if (firebaseUser) {
         setIsAuthenticated(true);
-        setUid(authState.userId);
-        setEmailVerified(resolvedEmailVerified);
+        setUid(firebaseUser.uid);
+        setEmailVerified(firebaseUser.emailVerified);
         try {
-          const userData = await fetchCurrentUserProfile();
+          const userData = await authService.fetchCurrentUser();
           const normalizedRole = normalizeRole(userData.role);
           setRole(normalizedRole);
           setUser({
-            uid: authState.userId,
-            name: userData.name || currentUserInfo?.displayName || 'Unknown',
-            email: userData.email || currentUserInfo?.email || undefined,
-            phoneNumber: userData.phoneNumber || currentUserInfo?.phoneNumber || undefined,
+            uid: firebaseUser.uid,
+            name: userData.name || firebaseUser.displayName || 'Unknown',
+            email: userData.email || firebaseUser.email || undefined,
+            phoneNumber: userData.phoneNumber || firebaseUser.phoneNumber || undefined,
           });
           setEmailVerified(
             typeof userData.emailVerified === 'boolean'
               ? userData.emailVerified
-              : resolvedEmailVerified,
+              : firebaseUser.emailVerified,
           );
         } catch {
           setRole(null);
           setUser(null);
-          setEmailVerified(resolvedEmailVerified);
+          setEmailVerified(firebaseUser.emailVerified);
         }
       } else {
         setIsAuthenticated(false);
@@ -86,16 +65,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setRole(null);
         setEmailVerified(false);
       }
-
-      if (!cancel) setLoading(false);
+      setLoading(false);
     });
 
-    return () => {
-      cancel = true;
-      unsubscribe();
-      unsubToken();
-    };
-  }, []);
+    return () => unsubscribe();
+  }, [authService]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, uid, user, emailVerified, role, loading }}>

@@ -8,9 +8,21 @@ import { useSearchParams } from 'next/navigation';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
-import type { UserRole } from '@/domain/entities/UserRole';
+import { UserRole } from '@/domain/entities/UserRole';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 import { GoogleIcon } from '@/presentation/components/icons/MiniIcons';
+
+function isPathAllowedForRole(path: string, role?: UserRole | null): boolean {
+  if (!role) return false;
+  if (path.startsWith('/pharmacy') && role !== UserRole.Pharmacy) return false;
+  if (path.startsWith('/admin')    && role !== UserRole.Admin)    return false;
+  if (path.startsWith('/clinic')   && role !== UserRole.Clinic)   return false;
+  if (
+    path.startsWith('/dashboard') &&
+    (role === UserRole.Pharmacy || role === UserRole.Admin || role === UserRole.Clinic)
+  ) return false;
+  return true;
+}
 
 type TFunc = (key: string, options?: Record<string, unknown>) => string;
 
@@ -121,7 +133,14 @@ function LoginPageContent() {
           password: '[redacted]',
         },
       });
-      goToRoleLanding(result?.role);
+      const next = sanitizeNextPath(searchParams?.get('next'));
+      const from = sanitizeNextPath(searchParams?.get('from'));
+      const roleLanding = getRoleLandingPath(result?.role);
+      const requested = next || from;
+      const target = (requested && isPathAllowedForRole(requested, result?.role))
+        ? requested
+        : roleLanding;
+      window.location.replace(target);
     } catch (err) {
       setErrorMsg(toLoginErrorMessage(err, t as unknown as TFunc));
       console.error('Login error:', err);

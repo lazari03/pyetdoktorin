@@ -1,14 +1,13 @@
 :root {
-  --website-bg: #fcfcfc;
-  --website-bg-alt: #ffffff;
+  --website-bg: #ffffff;
+  --website-bg-alt: #f8fafc;
   --website-ink: #0f172a;
-  --website-muted: #64748b;
+  --website-muted: #475569;
   --website-accent: #6d28d9;
-  --website-accent-strong: #4c1d95;
-  --website-soft: rgba(109, 40, 217, 0.08);
-  /* Softened from 0.12 */
-  --website-border: rgba(0, 0, 0, 0.04);
-  /* Premium near-invisible border */
+  --website-accent-strong: #5b21b6;
+  --website-soft: #f5f3ff;
+  --website-soft-border: #ddd6fe;
+  --website-border: #e2e8f0;
 }
 
 .navbar-wrapper {
@@ -20,9 +19,7 @@
 
 .website-page {
   min-height: 100vh;
-  background: radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.03), transparent 45%),
-    radial-gradient(circle at 80% 5%, rgba(14, 165, 233, 0.03), transparent 35%),
-    var(--website-bg);
+  background: var(--website-bg);
   color: var(--website-ink);
 }
 
@@ -33,11 +30,13 @@
 }
 
 .website-section {
-  padding: 80px 0;
+  padding: 88px 0;
 }
 
 .website-section-alt {
   background: var(--website-bg-alt);
+  border-top: 1px solid var(--website-border);
+  border-bottom: 1px solid var(--website-border);
 }
 
 .website-section-nopad {
@@ -48,56 +47,17 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: #f4f4f5;
-  color: var(--website-ink);
-  font-size: 13px;
-  font-weight: 500;
+  color: var(--website-accent);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .website-hero {
-  padding: 96px 0 72px;
+  padding: 88px 0 72px;
   position: relative;
-  overflow: hidden;
-}
-
-.website-hero--home {
-  background: radial-gradient(circle at 15% 10%, rgba(124, 58, 237, 0.05), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(56, 189, 248, 0.04), transparent 40%);
-}
-
-.website-hero--doctors {
-  background: radial-gradient(circle at 20% 15%, rgba(99, 102, 241, 0.05), transparent 45%),
-    radial-gradient(circle at 80% 0%, rgba(14, 116, 144, 0.04), transparent 40%);
-}
-
-.website-hero--individuals {
-  background: radial-gradient(circle at 10% 10%, rgba(168, 85, 247, 0.05), transparent 45%),
-    radial-gradient(circle at 90% 5%, rgba(59, 130, 246, 0.04), transparent 40%);
-}
-
-.website-hero--clinics {
-  background: radial-gradient(circle at 15% 10%, rgba(124, 58, 237, 0.05), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(34, 197, 94, 0.03), transparent 40%);
-}
-
-.website-hero--contact {
-  background: radial-gradient(circle at 15% 10%, rgba(124, 58, 237, 0.03), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(14, 165, 233, 0.03), transparent 40%);
-}
-
-.website-hero::after {
-  content: '';
-  position: absolute;
-  right: -120px;
-  top: 120px;
-  width: 320px;
-  height: 320px;
-  border-radius: 999px;
-  background: rgba(124, 58, 237, 0.22);
-  filter: blur(80px);
-  pointer-events: none;
+  border-bottom: 1px solid var(--website-border);
 }
 
 .website-hero-grid {
@@ -116,7 +76,7 @@
 }
 
 .website-hero-copy {
-  max-width: 540px;
+  max-width: 560px;
 }
 
 .website-hero-media {
@@ -125,39 +85,38 @@
 }
 
 .website-hero-title {
-  font-size: clamp(2.5rem, 4vw, 4.25rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
+  font-size: clamp(2.4rem, 4vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
   margin-top: 18px;
-  font-weight: 800;
+  font-weight: 700;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
+  gap: 14px;
 }
 
 .website-hero-highlight {
   display: inline-block;
-  background: var(--website-accent);
-  color: #fff;
-  padding: 0.12em 0.6em;
-  border-radius: 999px;
-  margin-left: 0;
-  font-size: clamp(0.62em, 2.4vw, 0.72em);
-  line-height: 1.1;
+  background: var(--website-soft);
+  color: var(--website-accent-strong);
+  border: 1px solid var(--website-soft-border);
+  padding: 0.14em 0.5em;
+  border-radius: 10px;
+  font-size: clamp(0.5em, 2vw, 0.58em);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
   max-width: 100%;
   white-space: nowrap;
-  box-shadow: 0 4px 10px rgba(109, 40, 217, 0.15);
-  /* More subtle glow */
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
 }
 
 .website-hero-subtitle {
-  margin-top: 16px;
-  font-size: 1.1rem;
+  margin-top: 20px;
+  font-size: 1.125rem;
+  line-height: 1.7;
   color: var(--website-muted);
-  max-width: 520px;
+  max-width: 540px;
 }
 
 .website-hero-grid.centered .website-hero-subtitle {
@@ -175,19 +134,19 @@
 }
 
 .website-hero-actions {
-  margin-top: 28px;
+  margin-top: 32px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
 }
 
 .website-hero-meta {
-  margin-top: 24px;
+  margin-top: 28px;
   display: flex;
   align-items: center;
   gap: 10px;
   color: var(--website-muted);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   flex-wrap: wrap;
 }
 
@@ -204,7 +163,6 @@
   object-fit: cover;
   background: #e2e8f0;
   margin-left: -10px;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
 }
 
 .website-avatar:first-child {
@@ -215,35 +173,11 @@
   position: relative;
   width: min(420px, 100%);
   aspect-ratio: 4 / 5;
-  border-radius: 24px;
-  /* Slightly sharper radius */
+  border-radius: 16px;
   overflow: hidden;
   background: #fff;
   border: 1px solid var(--website-border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 20px 40px -5px rgba(0, 0, 0, 0.08);
-  /* Premium shadow */
-}
-
-/* We remove colored soft glowing shadow boxes out of preference for a clinical, sleek look, 
-keeping them extremely subdued if they exist at all. */
-.website-hero-card.is-soft {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 20px 40px -5px rgba(76, 29, 149, 0.06);
-}
-
-.website-hero--home .website-hero-card {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 20px 40px -5px rgba(76, 29, 149, 0.06);
-}
-
-.website-hero--doctors .website-hero-card {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 20px 40px -5px rgba(30, 64, 175, 0.06);
-}
-
-.website-hero--individuals .website-hero-card {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 20px 40px -5px rgba(147, 51, 234, 0.06);
-}
-
-.website-hero--clinics .website-hero-card {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 20px 40px -5px rgba(16, 185, 129, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 16px 32px -16px rgba(15, 23, 42, 0.12);
 }
 
 .website-hero-image {
@@ -255,30 +189,30 @@ keeping them extremely subdued if they exist at all. */
   top: 16px;
   left: 16px;
   padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
-  /* Frosty */
-  backdrop-filter: blur(12px);
-  /* Glassmorphism */
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
   color: var(--website-ink);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--website-border);
 }
 
 .website-hero-floating {
   position: absolute;
-  bottom: 18px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.85);
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.9);
   color: #fff;
-  font-size: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .website-dot {
@@ -292,14 +226,13 @@ keeping them extremely subdued if they exist at all. */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  padding: 12px 24px;
+  border-radius: 10px;
+  padding: 12px 22px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9375rem;
   text-decoration: none;
   border: 1px solid transparent;
-  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-  /* Modern transition curve */
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .website-btn:focus-visible {
@@ -307,44 +240,39 @@ keeping them extremely subdued if they exist at all. */
   outline-offset: 2px;
 }
 
-.website-btn:active {
-  transform: scale(0.98);
-  /* Tactile feedback */
-}
-
 .website-btn-solid {
-  background: var(--website-ink);
+  background: var(--website-accent);
   color: #fff;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 14px 24px -5px rgba(0, 0, 0, 0.15);
-  /* Layered button shadow */
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 .website-btn-solid:hover {
-  background: #000;
-  transform: translateY(-1px);
+  background: var(--website-accent-strong);
 }
 
 .website-btn-ghost {
   background: #fff;
-  border: 1px solid var(--website-border);
+  border: 1px solid #cbd5e1;
   color: var(--website-ink);
 }
 
 .website-btn-ghost:hover {
-  background: var(--website-bg);
+  background: var(--website-bg-alt);
+  border-color: #94a3b8;
 }
 
 .website-section-title {
-  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-size: clamp(1.75rem, 2.6vw, 2.35rem);
   font-weight: 700;
   margin: 16px 0 12px;
-  letter-spacing: -0.015em;
-  line-height: 1.1;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .website-section-body {
   color: var(--website-muted);
   max-width: 560px;
+  line-height: 1.7;
 }
 
 .website-grid {
@@ -354,43 +282,43 @@ keeping them extremely subdued if they exist at all. */
 }
 
 .website-card {
-  padding: 24px;
-  border-radius: 16px;
-  /* Keep sharper Apple-esque corners */
+  padding: 28px;
+  border-radius: 12px;
   background: #fff;
   border: 1px solid var(--website-border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 10px 15px -3px rgba(0, 0, 0, 0.04);
-  /* Subtler shadow depth */
-  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .website-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 20px 25px -5px rgba(0, 0, 0, 0.05);
-  /* Softer float effect */
+  border-color: var(--website-soft-border);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
 .website-card-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: var(--website-soft);
+  border: 1px solid var(--website-soft-border);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--website-accent);
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .website-card-title {
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   margin-bottom: 8px;
 }
 
 .website-card-body {
   color: var(--website-muted);
-  font-size: 0.95rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
 }
 
 .pricing-plan-card {
@@ -399,16 +327,13 @@ keeping them extremely subdued if they exist at all. */
 }
 
 .pricing-plan-card--featured {
-  border-color: #c4b5fd;
-  background:
-    radial-gradient(circle at top right, rgba(168, 85, 247, 0.12), transparent 40%),
-    linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
-  box-shadow: 0 18px 38px -24px rgba(124, 58, 237, 0.45);
+  border-color: var(--website-soft-border);
+  background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+  box-shadow: 0 12px 28px -18px rgba(109, 40, 217, 0.35);
 }
 
 .pricing-plan-card--sales {
-  background:
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border-color: #dbe4f0;
 }
 
@@ -426,8 +351,8 @@ keeping them extremely subdued if they exist at all. */
 .pricing-plan-badge {
   display: inline-flex;
   align-items: center;
-  border-radius: 9999px;
-  padding: 6px 10px;
+  border-radius: 6px;
+  padding: 5px 9px;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -438,11 +363,13 @@ keeping them extremely subdued if they exist at all. */
 .pricing-plan-badge--featured {
   background: #ecfdf3;
   color: #047857;
+  border: 1px solid #a7f3d0;
 }
 
 .pricing-plan-badge--sales {
   background: #eef2ff;
   color: #4338ca;
+  border: 1px solid #c7d2fe;
 }
 
 .pricing-plan-price {
@@ -453,7 +380,7 @@ keeping them extremely subdued if they exist at all. */
 
 .pricing-plan-price--featured {
   font-size: clamp(2.05rem, 4vw, 2.6rem);
-  font-weight: 800;
+  font-weight: 700;
   color: #111827;
 }
 
@@ -469,7 +396,7 @@ keeping them extremely subdued if they exist at all. */
 
 .website-split {
   display: grid;
-  gap: 32px;
+  gap: 48px;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   align-items: center;
 }
@@ -483,16 +410,17 @@ keeping them extremely subdued if they exist at all. */
 }
 
 .website-list {
-  margin-top: 20px;
+  margin-top: 24px;
   display: grid;
-  gap: 12px;
+  gap: 14px;
   color: var(--website-muted);
 }
 
 .website-list li {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
+  line-height: 1.6;
 }
 
 .website-check {
@@ -523,12 +451,10 @@ keeping them extremely subdued if they exist at all. */
   position: relative;
   width: min(520px, 100%);
   aspect-ratio: 5 / 4;
-  border-radius: 24px;
-  /* Default */
+  border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--website-border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 20px 40px -5px rgba(0, 0, 0, 0.08);
-  /* Modern, soft shadow */
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 16px 32px -16px rgba(15, 23, 42, 0.12);
   background: #fff;
 }
 
@@ -538,36 +464,34 @@ keeping them extremely subdued if they exist at all. */
 
 .website-stats {
   display: grid;
-  gap: 24px;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   background: #0f172a;
-  /* Solid dark instead of gradient, for severe minimalism */
   color: #fff;
-  border-radius: 24px;
-  /* default */
-  padding: 32px;
+  border-radius: 16px;
+  padding: 48px 40px;
 }
 
 .website-stat-value {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .website-stat-label {
-  font-size: 0.9rem;
-  opacity: 0.85;
+  margin-top: 6px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .website-cta {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 40px;
-  /* back to default */
-  border-radius: 28px;
-  /* back to default */
-  background: #f8fafc;
-  /* Lighter background for CTA */
+  padding: 48px;
+  border-radius: 16px;
+  background: var(--website-bg-alt);
   color: var(--website-ink);
   border: 1px solid var(--website-border);
 }
@@ -606,7 +530,7 @@ keeping them extremely subdued if they exist at all. */
   }
 
   .website-hero {
-    padding: 72px 0 56px;
+    padding: 64px 0 56px;
   }
 
   .website-hero-grid {
@@ -615,6 +539,11 @@ keeping them extremely subdued if they exist at all. */
 
   .website-cta {
     padding: 32px;
+  }
+
+  .website-stats {
+    padding: 36px 28px;
+    gap: 24px;
   }
 }
 
@@ -636,15 +565,11 @@ keeping them extremely subdued if they exist at all. */
   .website-hero-card {
     aspect-ratio: 3 / 4;
   }
-
-  .website-stats {
-    padding: 24px;
-  }
 }
 
 @media (max-width: 480px) {
   .website-section-title {
-    font-size: clamp(1.6rem, 7vw, 2.2rem);
+    font-size: clamp(1.5rem, 6.5vw, 2rem);
   }
 
   .website-cta {

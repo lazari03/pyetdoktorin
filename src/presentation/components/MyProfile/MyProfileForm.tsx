@@ -67,7 +67,7 @@ const ProfileImage = React.memo<{
     <div className="flex flex-col items-center w-full md:w-40 mb-4 md:mb-0 gap-3">
       <Image
         src={previewUrl || profilePicture || "/img/profile_placeholder.png"}
-        alt="Profile Preview"
+        alt={t('profilePreview')}
         width={88}
         height={88}
         className="w-22 h-22 rounded-full object-cover border border-purple-100 shadow-sm"

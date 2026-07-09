@@ -35,6 +35,7 @@ export default function useNewAppointment() {
   const [availableTimes, setAvailableTimes] = useState<{ time: string; disabled: boolean }[]>();
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const { user } = useAuth();
+  const { createAppointmentUseCase, getResolvedSlotsUseCase } = useDI();
 
   useEffect(() => {
     if (user?.name) {
@@ -76,7 +77,7 @@ export default function useNewAppointment() {
 
       setAvailabilityLoading(true);
       try {
-        const slots = await appointmentBookingService.getResolvedSlots(selectedDoctor.id, preferredDate);
+        const slots = await getResolvedSlotsUseCase.execute(selectedDoctor.id, preferredDate);
         if (!active) return;
         setAvailableTimes(
           slots.map((slot) => ({
@@ -97,7 +98,7 @@ export default function useNewAppointment() {
     return () => {
       active = false;
     };
-  }, [preferredDate, selectedDoctor?.id]);
+  }, [getResolvedSlotsUseCase, preferredDate, selectedDoctor?.id]);
 
   const handleSubmit = async (
     e: React.FormEvent,
@@ -145,7 +146,7 @@ export default function useNewAppointment() {
       status: AppointmentStatus.Pending,
     };
     try {
-      await appointmentBookingService.createAppointment({
+      await createAppointmentUseCase.execute({
         doctorId: appointmentData.doctorId,
         doctorName: appointmentData.doctorName,
         appointmentType,

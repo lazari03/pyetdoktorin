@@ -1,5 +1,5 @@
 import type { User } from '@/domain/entities/User';
-import { IAdminUserService, AdminUsersPage } from '@/application/ports/IAdminUserService';
+import { IAdminUserService, AdminUsersPage, AdminUserCreatePayload, AdminUserUpdatePayload } from '@/application/ports/IAdminUserService';
 import {
   createAdminUser,
   deleteAdminUser,
@@ -15,8 +15,13 @@ export class AdminUserService implements IAdminUserService {
     return response.items as unknown as User[];
   }
 
-  async getUsersPage(page: number, pageSize: number, search?: string, role?: string): Promise<AdminUsersPage> {
-    const response = await fetchAdminUsers({ page, pageSize, search, role });
+  async getUsersByRole(role: string, pageSize: number): Promise<User[]> {
+    const response = await fetchAdminUsers({ role, pageSize });
+    return response.items as User[];
+  }
+
+  async getUsersPage(page: number, pageSize: number, search?: string): Promise<AdminUsersPage> {
+    const response = await fetchAdminUsers({ page, pageSize, search: search || undefined });
     return {
       items: response.items,
       total: response.total,
@@ -41,12 +46,12 @@ export class AdminUserService implements IAdminUserService {
     await deleteAdminUser(id);
   }
 
-  async createAdminUser(payload: { name: string; surname: string; email: string; password: string; role: User['role']; phone?: string }): Promise<User> {
+  async createAdminUser(payload: AdminUserCreatePayload): Promise<User> {
     const created = await createAdminUser(payload);
     return { id: created.id, email: payload.email, role: payload.role } as User;
   }
 
-  async updateUserAdmin(id: string, payload: { name?: string; surname?: string; role?: User['role']; email?: string }): Promise<void> {
+  async updateUserAdmin(id: string, payload: AdminUserUpdatePayload): Promise<void> {
     await updateAdminUser(id, { ...payload });
   }
 

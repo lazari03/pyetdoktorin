@@ -1,4 +1,4 @@
-import { IAdminStatsService } from '@/application/ports/IAdminStatsService';
+import { IAdminStatsService, AdminDashboardStats } from '@/application/ports/IAdminStatsService';
 import { fetchTopDoctors } from '@/network/stats';
 import { fetchAdminDashboardStats } from '@/network/adminStats';
 
@@ -13,7 +13,7 @@ export class AdminStatsServiceAdapter implements IAdminStatsService {
     return response.items;
   }
 
-  async getDashboardStats() {
+  async getDashboardStats(): Promise<AdminDashboardStats> {
     return fetchAdminDashboardStats();
   }
 }

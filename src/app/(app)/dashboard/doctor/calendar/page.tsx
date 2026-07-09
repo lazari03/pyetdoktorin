@@ -15,8 +15,8 @@ import { useDI } from '@/context/DIContext';
 import { Appointment } from '@/domain/entities/Appointment';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
-import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';import { useToast } from '@/presentation/components/Toast/ToastProvider';
-import { getAuthToken } from '@/application/auth/tokenHolder';
+import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';
+import { useToast } from '@/presentation/components/Toast/ToastProvider';
 import type { DoctorAvailability } from '@/domain/entities/DoctorAvailability';
 
 import type { CalendarEvent } from '../Calendar';
@@ -49,7 +49,7 @@ export default function DoctorCalendarPage() {
   const { user, role } = useAuth();
   const { appointments, loading, error, isAppointmentPast, fetchAppointments } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
-  const { generateRoomCodeUseCase, availabilityService } = useDI();
+  const { generateRoomCodeUseCase, getAvailabilityUseCase, getIdTokenUseCase } = useDI();
   const { toast } = useToast();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showRedirecting, setShowRedirecting] = useState(false);
@@ -76,7 +76,7 @@ export default function DoctorCalendarPage() {
       setAvailabilityLoading(true);
       setAvailabilityError(null);
       try {
-        const nextAvailability = await availabilityService.getMyAvailability();
+        const nextAvailability = await getAvailabilityUseCase.execute();
         if (!mounted) return;
         setAvailability(nextAvailability);
       } catch (nextError) {
@@ -97,7 +97,7 @@ export default function DoctorCalendarPage() {
     return () => {
       mounted = false;
     };
-  }, [role, t]);
+  }, [getAvailabilityUseCase, role, t]);
 
   // Map stored appointments → calendar events (stable reference via useMemo)
   const events = useMemo<CalendarEvent[]>(() =>
@@ -144,8 +144,10 @@ export default function DoctorCalendarPage() {
         return;
       }
 
-      const idToken = getAuthToken();
-      if (!idToken) {
+      let idToken: string;
+      try {
+        idToken = await getIdTokenUseCase.execute();
+      } catch {
         setShowRedirecting(false);
         toast({ variant: 'error', message: t('sessionExpired') || 'Your session has expired. Please log in again.' });
         return;
@@ -169,7 +171,7 @@ export default function DoctorCalendarPage() {
       const message = error instanceof Error ? error.message : 'An error occurred. Please try again.';
       toast({ variant: 'error', message });
     }
-  }, [appointments, isAppointmentPast, user, generateRoomCodeUseCase, setAuthStatus, t, toast]);
+  }, [appointments, isAppointmentPast, user, generateRoomCodeUseCase, getIdTokenUseCase, setAuthStatus, t, toast]);
 
   const upcomingCount = useMemo(() =>
     events.filter(e => {
@@ -188,8 +190,8 @@ export default function DoctorCalendarPage() {
           if (role) fetchAppointments(role);
           setAvailabilityLoading(true);
           setAvailabilityError(null);
-          availabilityService
-            .getMyAvailability()
+          getAvailabilityUseCase
+            .execute()
             .then((nextAvailability) => {
               setAvailability(nextAvailability);
             })
@@ -208,7 +210,7 @@ export default function DoctorCalendarPage() {
         }}
         homeHref={DASHBOARD_PATHS.root}
         loadingLabel={t('loading')}
-      skeleton={<StatsPageSkeleton />}
+        skeleton={<StatsPageSkeleton />}
         analyticsPrefix="doctor_calendar"
       >
         <div>

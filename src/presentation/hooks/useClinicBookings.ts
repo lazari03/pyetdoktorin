@@ -9,7 +9,7 @@ interface Options {
 }
 
 export function useClinicBookings({ clinicId, patientId }: Options) {
-  const { clinicBookingService } = useDI();
+  const { getClinicBookingsUseCase, updateClinicBookingStatusUseCase } = useDI();
   const [bookings, setBookings] = useState<ClinicBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
@@ -18,14 +18,14 @@ export function useClinicBookings({ clinicId, patientId }: Options) {
     setLoading(true);
     setError(null);
     try {
-      const items = await clinicBookingService.getBookings({ clinicId, patientId });
+      const items = await getClinicBookingsUseCase.execute({ clinicId, patientId });
       setBookings(items);
     } catch (err) {
       setError(err);
     } finally {
       setLoading(false);
     }
-  }, [clinicId, patientId, clinicBookingService]);
+  }, [clinicId, getClinicBookingsUseCase, patientId]);
 
   useEffect(() => {
     fetchBookings();
@@ -34,7 +34,7 @@ export function useClinicBookings({ clinicId, patientId }: Options) {
   const updateStatus = useCallback(
     async (bookingId: string, status: ClinicBookingStatus) => {
       try {
-        await clinicBookingService.updateBookingStatus(bookingId, status);
+        await updateClinicBookingStatusUseCase.execute(bookingId, status);
         setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status } : b)));
         trackAnalyticsEvent('clinic_booking_status_updated', { bookingId, status });
       } catch (error) {
@@ -46,7 +46,7 @@ export function useClinicBookings({ clinicId, patientId }: Options) {
         throw error;
       }
     },
-    [clinicBookingService],
+    [updateClinicBookingStatusUseCase],
   );
 
   return { bookings, loading, error, refresh: fetchBookings, updateStatus };

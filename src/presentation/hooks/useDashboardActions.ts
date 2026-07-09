@@ -7,15 +7,15 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useTranslation } from 'react-i18next';
 import { getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation/utils/errorMessages';
-import { getAuthToken } from '@/application/auth/tokenHolder';
 import { dashboardVideoSessionUrl } from '@/navigation/paths';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
+import { getAuthToken } from '@/application/auth/tokenHolder';
 
 export function useDashboardActions() {
   const { user, role } = useAuth();
   const { setAuthStatus, generateRoomCodeAndStore } = useVideoStore();
-  const { handlePayNow: storeHandlePayNow, setAppointments } = useAppointmentStore();
-  const { handlePayNowUseCase, generateRoomCodeUseCase, paymentSyncService, appointmentQueryService } = useDI();
+  const { handlePayNow: storeHandlePayNow, fetchAppointments } = useAppointmentStore();
+  const { handlePayNowUseCase, syncPaymentUseCase, clearPaymentProcessingUseCase, generateRoomCodeUseCase } = useDI();
   const { t } = useTranslation();
   const { toast } = useToast();
 
@@ -70,18 +70,16 @@ export function useDashboardActions() {
     try {
       await storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
         onClose: () => {
-          paymentSyncService.clearPaymentProcessing(appointmentId).catch((error) => {
+          clearPaymentProcessingUseCase.execute(appointmentId).catch((error) => {
             console.warn('Payment processing clear failed', error);
           });
           (async () => {
             try {
-              await paymentSyncService.syncPaymentWithRetry(appointmentId);
+              await syncPaymentUseCase.execute(appointmentId);
             } catch (error) {
               console.warn('Payment sync failed', error);
             } finally {
-              appointmentQueryService.listAppointments()
-                .then((refreshed) => setAppointments(refreshed.items))
-                .catch((error) => console.warn('Appointment refresh after payment failed', error));
+              fetchAppointments(role).catch((error) => console.warn('Appointment refresh after payment failed', error));
             }
           })();
         },
@@ -94,7 +92,7 @@ export function useDashboardActions() {
       const translatedMessage = getAppointmentErrorMessage(error, t);
       toast({ variant: 'error', message: translatedMessage ?? t('genericError') });
     }
-  }, [storeHandlePayNow, handlePayNowUseCase, paymentSyncService, appointmentQueryService, setAppointments, t, toast]);
+  }, [storeHandlePayNow, handlePayNowUseCase, syncPaymentUseCase, clearPaymentProcessingUseCase, fetchAppointments, role, t, toast]);
 
   return { handleJoinCall, handlePayNow };
 }

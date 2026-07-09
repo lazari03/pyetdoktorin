@@ -5,7 +5,7 @@ import { useDI } from '@/context/DIContext';
 import type { AdminDashboardStats } from '@/application/ports/IAdminStatsService';
 
 export function useAdminDashboardStats() {
-  const { adminStatsService } = useDI();
+  const { getAdminDashboardStatsUseCase } = useDI();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -14,14 +14,14 @@ export function useAdminDashboardStats() {
     setLoading(true);
     setError(null);
     try {
-      const data = await adminStatsService.getDashboardStats();
+      const data = await getAdminDashboardStatsUseCase.execute();
       setStats(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load stats'));
     } finally {
       setLoading(false);
     }
-  }, [adminStatsService]);
+  }, [getAdminDashboardStatsUseCase]);
 
   useEffect(() => {
     fetchStats();

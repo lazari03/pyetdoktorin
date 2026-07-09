@@ -2,11 +2,11 @@ import { IPaymentCheckoutService } from '@/application/ports/IPaymentCheckoutSer
 import { openPaddleCheckout, preparePaddleCheckout } from '@/infrastructure/services/paddleCheckout';
 
 export class PaymentCheckoutService implements IPaymentCheckoutService {
-  async openCheckout(params: { appointmentId: string; onClose?: () => void }): Promise<void> {
+  async openCheckout(params: { appointmentId: string; userId?: string | null; onClose?: () => void }): Promise<void> {
     await openPaddleCheckout(params);
   }
 
-  async prepare(): Promise<void> {
+  async prepareCheckout(): Promise<void> {
     await preparePaddleCheckout();
   }
 }

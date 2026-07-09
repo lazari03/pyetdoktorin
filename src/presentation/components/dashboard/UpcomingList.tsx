@@ -1,6 +1,8 @@
+import "@/i18n/i18n";
 import { Appointment } from "@/domain/entities/Appointment";
 import { ClockIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 type UpcomingListProps = {
   items: Appointment[];
@@ -8,9 +10,10 @@ type UpcomingListProps = {
 };
 
 export function UpcomingList({ items, onJoin }: UpcomingListProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2">
-      {items.length === 0 && <p className="text-xs text-gray-500">No upcoming appointments</p>}
+      {items.length === 0 && <p className="text-xs text-gray-500">{t('noUpcoming')}</p>}
       {items.map((appt) => (
         <div key={appt.id} className="flex items-center justify-between bg-purple-50 rounded-2xl px-3 py-2">
           <div className="flex items-center gap-3">

@@ -40,7 +40,7 @@ export default async function Home() {
         highlight={t("homeHeroHighlight")}
         subtitle={t("homeHeroSubtitle")}
         primaryCta={{ label: t("homeHeroPrimaryCta"), href: "/register" }}
-        secondaryCta={{ label: t("homeHeroSecondaryCta"), href: "/contact" }}
+        secondaryCta={{ label: t("homeHeroSecondaryCta"), href: "/si-funksionon" }}
         imageSrc="/website/home-hero-premium.svg"
         imageAlt={t("homeHeroImageAlt")}
         chip={t("homeHeroChip")}
@@ -62,7 +62,8 @@ export default async function Home() {
                   description: t("homeFeature1Desc"),
                   icon: (
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path d="M5 7h9a3 3 0 0 1 3 3v0a3 3 0 0 1-3 3H5l-3 3V7z" stroke="currentColor" strokeWidth="2" />
+                      <path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7l7-4z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ),
                 },
@@ -71,7 +72,9 @@ export default async function Home() {
                   description: t("homeFeature2Desc"),
                   icon: (
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7l7-4z" stroke="currentColor" strokeWidth="2" />
+                      <rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" strokeWidth="2" />
+                      <path d="M3 10h18" stroke="currentColor" strokeWidth="2" />
+                      <path d="M7 15h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                   ),
                 },
@@ -80,37 +83,13 @@ export default async function Home() {
                   description: t("homeFeature3Desc"),
                   icon: (
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path d="M3 8h18v8H3z" stroke="currentColor" strokeWidth="2" />
-                      <path d="M7 12h4" stroke="currentColor" strokeWidth="2" />
+                      <path d="M7 3h7l4 4v14H7V3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                      <path d="M12 10v6M9 13h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                   ),
                 },
               ]}
             />
-          </div>
-        </div>
-      </WebsiteSection>
-
-      <WebsiteSection variant="alt">
-        <div className="website-container">
-          <div className="website-pill">{t("homeLinksEyebrow")}</div>
-          <h2 className="website-section-title">{t("homeLinksTitle")}</h2>
-          <p className="website-section-body">{t("homeLinksSubtitle")}</p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { href: "/si-funksionon", label: t("homeLinkHowItWorks"), desc: t("homeLinkHowItWorksDesc") },
-              { href: "/doctors", label: t("homeLinkDoctors"), desc: t("homeLinkDoctorsDesc") },
-              { href: "/services", label: t("homeLinkSpecialties"), desc: t("homeLinkSpecialtiesDesc") },
-              { href: "/pricing", label: t("homeLinkPricing"), desc: t("homeLinkPricingDesc") },
-              { href: "/blog", label: t("homeLinkBlog"), desc: t("homeLinkBlogDesc") },
-            ].map((link) => (
-              <Link key={link.href} href={link.href} className="website-card group">
-                <div className="text-sm font-semibold text-slate-900 group-hover:text-purple-600">
-                  {link.label}
-                </div>
-                <p className="mt-2 text-xs text-slate-600">{link.desc}</p>
-              </Link>
-            ))}
           </div>
         </div>
       </WebsiteSection>
@@ -134,18 +113,43 @@ export default async function Home() {
 
       <WebsiteSection>
         <div className="website-container">
+          <div className="website-pill">{t("homeLinksEyebrow")}</div>
+          <h2 className="website-section-title">{t("homeLinksTitle")}</h2>
+          <p className="website-section-body">{t("homeLinksSubtitle")}</p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { href: "/si-funksionon", label: t("homeLinkHowItWorks"), desc: t("homeLinkHowItWorksDesc") },
+              { href: "/doctors", label: t("homeLinkDoctors"), desc: t("homeLinkDoctorsDesc") },
+              { href: "/services", label: t("homeLinkSpecialties"), desc: t("homeLinkSpecialtiesDesc") },
+              { href: "/pricing", label: t("homeLinkPricing"), desc: t("homeLinkPricingDesc") },
+              { href: "/blog", label: t("homeLinkBlog"), desc: t("homeLinkBlogDesc") },
+            ].map((link) => (
+              <Link key={link.href} href={link.href} className="website-card group">
+                <div className="flex items-center justify-between text-sm font-semibold text-slate-900 group-hover:text-purple-700">
+                  <span>{link.label}</span>
+                  <span aria-hidden className="text-slate-300 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-purple-700">→</span>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">{link.desc}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </WebsiteSection>
+
+      <WebsiteSection variant="alt">
+        <div className="website-container">
           <WebsiteStatsStrip
             stats={[
-              { value: "98%", label: t("homeStat1Label") },
+              { value: "€13", label: t("homeStat1Label") },
               { value: "24/7", label: t("homeStat2Label") },
-              { value: "2x", label: t("homeStat3Label") },
-              { value: "1M+", label: t("homeStat4Label") },
+              { value: "3", label: t("homeStat3Label") },
+              { value: "100%", label: t("homeStat4Label") },
             ]}
           />
         </div>
       </WebsiteSection>
 
-      <WebsiteSection variant="alt">
+      <WebsiteSection>
         <div className="website-container">
           <WebsiteCta
             title={t("homeCtaTitle")}

@@ -19,7 +19,7 @@ export default function EmailVerificationRequiredModal({
   onLogout: () => void;
 }) {
   const { t } = useTranslation();
-  const { authService } = useDI();
+  const { authService, reloadUserUseCase, sendVerificationEmailUseCase, establishSessionUseCase } = useDI();
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +34,10 @@ export default function EmailVerificationRequiredModal({
     };
   }, [isOpen]);
 
+  const refreshVerification = async (): Promise<boolean> => {
+    return reloadUserUseCase.execute();
+  };
+
   const resend = async () => {
     if (Date.now() < resendCooldownUntil) return;
     setBusy(true);
@@ -43,7 +47,7 @@ export default function EmailVerificationRequiredModal({
       const origin = getSiteOrigin();
       const next = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/dashboard';
       const continueUrl = `${origin}/verify-email?next=${encodeURIComponent(next)}`;
-      await authService.sendVerificationEmail({ continueUrl });
+      await sendVerificationEmailUseCase.execute(continueUrl);
       setNotice(t('verifyEmailSent', { defaultValue: 'Verification email sent. Please check your inbox.' }));
       setResendCooldownUntil(Date.now() + 30_000);
     } catch (e) {
@@ -64,7 +68,7 @@ export default function EmailVerificationRequiredModal({
         setNotice(t('verifyEmailStillPending', { defaultValue: 'Email not verified yet. Open the link in your email, then try again.' }));
         return;
       }
-      await authService.establishSession();
+      await establishSessionUseCase.execute();
       if (typeof window !== 'undefined') window.location.reload();
     } catch (e) {
       const msg = e instanceof Error ? e.message : null;

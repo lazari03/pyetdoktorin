@@ -1,8 +1,10 @@
 "use client";
+import "@/i18n/i18n";
 import Link from 'next/link';
 import { Bars3Icon, XMarkIcon, ArrowRightOnRectangleIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { z } from '@/config/zIndex';
 
 export type NavBarItem = {
@@ -27,6 +29,7 @@ export default function NavBar({
   navItems: NavBarItem[];
   labels: NavBarLabels;
 }) {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -43,7 +46,7 @@ export default function NavBar({
     (hasSession ? (
       <Link
         href="/dashboard"
-        className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/40"
+        className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/40"
         onClick={() => mobile && setIsMenuOpen(false)}
         data-analytics="nav.goto_dashboard"
       >
@@ -53,7 +56,7 @@ export default function NavBar({
       <>
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:border-slate-300 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
           onClick={() => mobile && setIsMenuOpen(false)}
           data-analytics="nav.sign_in"
         >
@@ -62,7 +65,7 @@ export default function NavBar({
         </Link>
         <Link
           href="/register"
-          className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300"
+          className="inline-flex items-center gap-2 rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-300"
           onClick={() => mobile && setIsMenuOpen(false)}
           data-analytics="nav.register"
         >
@@ -94,18 +97,18 @@ export default function NavBar({
             <button
               className="h-10 w-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center"
               onClick={() => setIsMenuOpen(false)}
-              aria-label="Close menu"
+              aria-label={t('closeMenu')}
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
-          <nav className="flex flex-col px-4 py-4" aria-label="Mobile navigation">
+          <nav className="flex flex-col px-4 py-4" aria-label={t('mobileNavigation')}>
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`flex items-center justify-between rounded-xl px-4 py-3 text-[15px] font-semibold transition ${
-                  pathname === item.path ? 'bg-slate-900 text-white' : 'text-slate-900 hover:bg-slate-50'
+                className={`flex items-center justify-between rounded-lg px-4 py-3 text-[15px] font-semibold transition ${
+                  pathname === item.path ? 'bg-purple-50 text-purple-700' : 'text-slate-900 hover:bg-slate-50'
                 }`}
                 onClick={() => {
                   setIsMenuOpen(false);
@@ -114,7 +117,7 @@ export default function NavBar({
                 data-analytics={`nav.mobile.${item.path}`}
               >
                 <span className="truncate">{item.label}</span>
-                <span className={`text-xs ${pathname === item.path ? 'text-white/70' : 'text-slate-400'}`}>›</span>
+                <span className={`text-xs ${pathname === item.path ? 'text-purple-400' : 'text-slate-400'}`}>›</span>
               </Link>
             ))}
           </nav>
@@ -126,35 +129,35 @@ export default function NavBar({
           </div>
         </div>
       </div>
-      <div className="w-full border-b border-slate-200/70 bg-white/85 shadow-sm backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 md:px-10 md:py-5">
+      <div className="w-full border-b border-slate-200 bg-white/95 backdrop-blur-lg">
+        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 md:px-10">
           <div className="md:hidden">
             <button
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-purple-200"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-900 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-200"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Open menu"
+              aria-label={isMenuOpen ? t('closeMenu') : t('openMenu')}
               aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
             </button>
           </div>
 
-          <Link href="/" className="select-none font-extrabold tracking-tight text-2xl text-slate-900 md:text-3xl" data-analytics="nav.home">
-            PYET <span className="text-purple-600">DOKTORIN</span>
+          <Link href="/" className="select-none font-bold tracking-tight text-xl text-slate-900 md:text-2xl" data-analytics="nav.home">
+            PYET <span className="text-purple-700">DOKTORIN</span>
           </Link>
 
-          <nav className="hidden flex-1 items-center justify-center md:flex" aria-label="Primary navigation">
-            <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 bg-white/70 px-1.5 py-1 shadow-sm backdrop-blur">
+          <nav className="hidden flex-1 items-center justify-center md:flex" aria-label={t('primaryNavigation')}>
+            <div className="inline-flex items-center gap-1">
               {navItems.map((item) => {
                 const active = pathname === item.path || (item.path !== '/' && pathname?.startsWith(`${item.path}/`));
                 return (
                   <Link
                     key={item.path}
                     href={item.path}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    className={`rounded-lg px-3.5 py-2 text-sm font-medium transition ${
                       active
-                        ? 'bg-slate-900 text-white shadow-sm'
-                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                        ? 'bg-purple-50 text-purple-700'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                     aria-current={active ? 'page' : undefined}
                     data-analytics={`nav.desktop.${item.path}`}

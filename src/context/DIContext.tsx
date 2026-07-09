@@ -22,54 +22,78 @@ import { GetReciepesByDoctorUseCase } from '@/application/getReciepesByDoctorUse
 import { GetReciepesByPatientUseCase } from '@/application/getReciepesByPatientUseCase';
 import { GetReciepesByPharmacyUseCase } from '@/application/getReciepesByPharmacyUseCase';
 import { UpdateReciepeStatusUseCase } from '@/application/updateReciepeStatusUseCase';
-import { CurrentUserRepository } from '@/infrastructure/repositories/CurrentUserRepository';
-import { FirebaseSessionRepository } from '@/infrastructure/repositories/FirebaseSessionRepository';
-import { AuthServiceAdapter } from '@/infrastructure/services/authServiceAdapter';
-import { UserProfileService } from '@/infrastructure/services/userProfileService';
-import { DoctorProfileService } from '@/infrastructure/services/doctorProfileService';
-import { VideoSessionService } from '@/infrastructure/services/videoSessionService';
-import { AdminStatsServiceAdapter } from '@/infrastructure/services/adminStatsServiceAdapter';
-import { AdminUserService } from '@/infrastructure/services/adminUserService';
-import { SessionService } from '@/infrastructure/services/sessionService';
-import { RealtimeAppointmentsService } from '@/infrastructure/services/realtimeAppointmentsService';
-import { AuthLoginService } from '@/infrastructure/services/authLoginService';
-import { RegistrationService } from '@/infrastructure/services/registrationService';
-import { DoctorSearchService } from '@/infrastructure/services/doctorSearchService';
-import { GA4AnalyticsService } from '@/infrastructure/services/analyticsService';
-import { IAnalyticsService } from '@/application/ports/IAnalyticsService';
-import { IAuthService } from '@/application/ports/IAuthService';
-import { IPaymentCheckoutService } from '@/application/ports/IPaymentCheckoutService';
-import { IBlogService } from '@/application/ports/IBlogService';
-import { IAvailabilityService } from '@/application/ports/IAvailabilityService';
-import { IAdminUserService } from '@/application/ports/IAdminUserService';
-import { IAdminStatsService } from '@/application/ports/IAdminStatsService';
-import { IAppointmentQueryService } from '@/application/ports/IAppointmentQueryService';
-import { IAppointmentBookingService } from '@/application/ports/IAppointmentBookingService';
-import { IClinicBookingService } from '@/application/ports/IClinicBookingService';
-import { IPaymentSyncService } from '@/application/ports/IPaymentSyncService';
-import { BlogServiceAdapter } from '@/infrastructure/services/blogServiceAdapter';
-import { AvailabilityServiceAdapter } from '@/infrastructure/services/availabilityServiceAdapter';
-import { AppointmentQueryServiceAdapter } from '@/infrastructure/services/appointmentQueryServiceAdapter';
-import { AppointmentBookingServiceAdapter } from '@/infrastructure/services/appointmentBookingServiceAdapter';
-import { ClinicBookingServiceAdapter } from '@/infrastructure/services/clinicBookingServiceAdapter';
-import { PaymentSyncServiceAdapter } from '@/infrastructure/services/paymentSyncServiceAdapter';
-import { ReciepeService } from '@/infrastructure/services/reciepeService';
-import { setAdminUserService } from '@/store/adminStore';
-import { setAppointmentQueryService } from '@/store/appointmentStore';
-import { AppointmentPaymentService } from '@/infrastructure/services/appointmentPaymentService';
-import { PaymentCheckoutService } from '@/infrastructure/services/paymentCheckoutService';
+import { GetAvailabilityUseCase } from '@/application/getAvailabilityUseCase';
+import { GetAvailabilityPresetsUseCase } from '@/application/getAvailabilityPresetsUseCase';
+import { SaveAvailabilityUseCase } from '@/application/saveAvailabilityUseCase';
+import { GetResolvedSlotsUseCase } from '@/application/getResolvedSlotsUseCase';
+import { GetIdTokenUseCase } from '@/application/getIdTokenUseCase';
+import { ReauthenticateUseCase } from '@/application/reauthenticateUseCase';
+import { SendVerificationEmailUseCase } from '@/application/sendVerificationEmailUseCase';
+import { EstablishSessionUseCase } from '@/application/establishSessionUseCase';
+import { ReloadUserUseCase } from '@/application/reloadUserUseCase';
+import { GetUsersByRoleUseCase } from '@/application/getUsersByRoleUseCase';
+import { SyncPaymentUseCase } from '@/application/syncPaymentUseCase';
+import { ApplyVerificationCodeUseCase } from '@/application/applyVerificationCodeUseCase';
+import { EstablishSessionAllowUnverifiedUseCase } from '@/application/establishSessionAllowUnverifiedUseCase';
+import { PrepareCheckoutUseCase } from '@/application/prepareCheckoutUseCase';
+import { ClearPaymentProcessingUseCase } from '@/application/clearPaymentProcessingUseCase';
+import { ListAppointmentsUseCase } from '@/application/listAppointmentsUseCase';
+import { CreateAppointmentUseCase } from '@/application/createAppointmentUseCase';
+import { GetAdminDashboardStatsUseCase } from '@/application/getAdminDashboardStatsUseCase';
+import { GetSecurityLogsUseCase } from '@/application/getSecurityLogsUseCase';
+import { DismissNotificationByIdUseCase } from '@/application/dismissNotificationByIdUseCase';
+import { OpenCheckoutUseCase } from '@/application/openCheckoutUseCase';
+import { GetClinicsUseCase } from '@/application/getClinicsUseCase';
+import { GetClinicBookingsUseCase } from '@/application/getClinicBookingsUseCase';
+import { CreateClinicBookingUseCase } from '@/application/createClinicBookingUseCase';
+import { UpdateClinicBookingStatusUseCase } from '@/application/updateClinicBookingStatusUseCase';
+import { DismissNotificationUseCase } from '@/application/dismissNotificationUseCase';
+import { UpdateAppointmentStatusAndNotifyUseCase } from '@/application/updateAppointmentStatusAndNotifyUseCase';
+import { GetPharmaciesUseCase } from '@/application/getPharmaciesUseCase';
+import {
+  authService,
+  paymentCheckoutService,
+  blogService,
+  availabilityService,
+  adminUserService,
+  adminStatsService,
+  appointmentQueryService,
+  appointmentBookingService,
+  clinicBookingService,
+  paymentSyncService,
+  userRepo,
+  sessionRepo,
+  userProfileService,
+  doctorProfileService,
+  videoSessionService,
+  sessionService,
+  realtimeAppointmentsService,
+  authLoginService,
+  registrationService,
+  doctorSearchService,
+  analyticsService,
+  reciepeService,
+  appointmentPaymentService,
+  securityLogsService,
+  notificationService,
+  appointmentService,
+  clinicRepository,
+  clinicBookingRepository,
+  pharmacyService,
+  appointmentNotificationService,
+} from './di.services';
 
 interface DIContextValue {
-  authService: IAuthService;
-  paymentCheckoutService: IPaymentCheckoutService;
-  blogService: IBlogService;
-  availabilityService: IAvailabilityService;
-  adminUserService: IAdminUserService;
-  adminStatsService: IAdminStatsService;
-  appointmentQueryService: IAppointmentQueryService;
-  appointmentBookingService: IAppointmentBookingService;
-  clinicBookingService: IClinicBookingService;
-  paymentSyncService: IPaymentSyncService;
+  authService: typeof authService;
+  paymentCheckoutService: typeof paymentCheckoutService;
+  blogService: typeof blogService;
+  availabilityService: typeof availabilityService;
+  adminUserService: typeof adminUserService;
+  adminStatsService: typeof adminStatsService;
+  appointmentQueryService: typeof appointmentQueryService;
+  appointmentBookingService: typeof appointmentBookingService;
+  clinicBookingService: typeof clinicBookingService;
+  paymentSyncService: typeof paymentSyncService;
   handlePayNowUseCase: HandlePayNowUseCase;
   generateRoomCodeUseCase: GenerateRoomCodeUseCase;
   getTopDoctorsByAppointmentsUseCase: GetTopDoctorsByAppointmentsUseCase;
@@ -92,37 +116,39 @@ interface DIContextValue {
   getReciepesByPatientUseCase: GetReciepesByPatientUseCase;
   getReciepesByPharmacyUseCase: GetReciepesByPharmacyUseCase;
   updateReciepeStatusUseCase: UpdateReciepeStatusUseCase;
+  getAvailabilityUseCase: GetAvailabilityUseCase;
+  getAvailabilityPresetsUseCase: GetAvailabilityPresetsUseCase;
+  saveAvailabilityUseCase: SaveAvailabilityUseCase;
+  getResolvedSlotsUseCase: GetResolvedSlotsUseCase;
+  getIdTokenUseCase: GetIdTokenUseCase;
+  reauthenticateUseCase: ReauthenticateUseCase;
+  sendVerificationEmailUseCase: SendVerificationEmailUseCase;
+  establishSessionUseCase: EstablishSessionUseCase;
+  reloadUserUseCase: ReloadUserUseCase;
+  getUsersByRoleUseCase: GetUsersByRoleUseCase;
+  syncPaymentUseCase: SyncPaymentUseCase;
+  applyVerificationCodeUseCase: ApplyVerificationCodeUseCase;
+  establishSessionAllowUnverifiedUseCase: EstablishSessionAllowUnverifiedUseCase;
+  prepareCheckoutUseCase: PrepareCheckoutUseCase;
+  clearPaymentProcessingUseCase: ClearPaymentProcessingUseCase;
+  listAppointmentsUseCase: ListAppointmentsUseCase;
+  createAppointmentUseCase: CreateAppointmentUseCase;
+  getAdminDashboardStatsUseCase: GetAdminDashboardStatsUseCase;
+  getSecurityLogsUseCase: GetSecurityLogsUseCase;
+  dismissNotificationByIdUseCase: DismissNotificationByIdUseCase;
+  openCheckoutUseCase: OpenCheckoutUseCase;
+  getClinicsUseCase: GetClinicsUseCase;
+  getClinicBookingsUseCase: GetClinicBookingsUseCase;
+  createClinicBookingUseCase: CreateClinicBookingUseCase;
+  updateClinicBookingStatusUseCase: UpdateClinicBookingStatusUseCase;
+  dismissNotificationUseCase: DismissNotificationUseCase;
+  updateAppointmentStatusAndNotifyUseCase: UpdateAppointmentStatusAndNotifyUseCase;
+  getPharmaciesUseCase: GetPharmaciesUseCase;
 }
 
 const DIContext = createContext<DIContextValue | undefined>(undefined);
 
 export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const userRepo = new CurrentUserRepository();
-  const sessionRepo = new FirebaseSessionRepository();
-  const authService = new AuthServiceAdapter();
-  const userProfileService = new UserProfileService();
-  const doctorProfileService = new DoctorProfileService();
-  const videoSessionService = new VideoSessionService();
-  const adminStatsService = new AdminStatsServiceAdapter();
-  const adminUserService = new AdminUserService();
-  setAdminUserService(adminUserService);
-  const sessionService = new SessionService();
-  const realtimeAppointmentsService = new RealtimeAppointmentsService();
-  const authLoginService = new AuthLoginService();
-  const registrationService = new RegistrationService();
-  const doctorSearchService = new DoctorSearchService();
-  const analyticsService: IAnalyticsService = new GA4AnalyticsService();
-  const reciepeService = new ReciepeService();
-  const appointmentPaymentService = new AppointmentPaymentService();
-  const paymentCheckoutService = new PaymentCheckoutService();
-  const blogService: IBlogService = new BlogServiceAdapter();
-  const availabilityService: IAvailabilityService = new AvailabilityServiceAdapter();
-  const appointmentQueryService: IAppointmentQueryService = new AppointmentQueryServiceAdapter();
-  const appointmentBookingService: IAppointmentBookingService = new AppointmentBookingServiceAdapter();
-  const clinicBookingService: IClinicBookingService = new ClinicBookingServiceAdapter();
-  const paymentSyncService: IPaymentSyncService = new PaymentSyncServiceAdapter();
-  setAppointmentQueryService(appointmentQueryService);
-
   const handlePayNowUseCase = new HandlePayNowUseCase(appointmentPaymentService, paymentCheckoutService);
   const generateRoomCodeUseCase = new GenerateRoomCodeUseCase(videoSessionService, analyticsService);
   const getTopDoctorsByAppointmentsUseCase = new GetTopDoctorsByAppointmentsUseCase(adminStatsService);
@@ -145,6 +171,34 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const getReciepesByPatientUseCase = new GetReciepesByPatientUseCase(reciepeService);
   const getReciepesByPharmacyUseCase = new GetReciepesByPharmacyUseCase(reciepeService);
   const updateReciepeStatusUseCase = new UpdateReciepeStatusUseCase(reciepeService);
+  const getAvailabilityUseCase = new GetAvailabilityUseCase(availabilityService);
+  const getAvailabilityPresetsUseCase = new GetAvailabilityPresetsUseCase(availabilityService);
+  const saveAvailabilityUseCase = new SaveAvailabilityUseCase(availabilityService);
+  const getResolvedSlotsUseCase = new GetResolvedSlotsUseCase(availabilityService);
+  const getIdTokenUseCase = new GetIdTokenUseCase(authService);
+  const reauthenticateUseCase = new ReauthenticateUseCase(authService);
+  const sendVerificationEmailUseCase = new SendVerificationEmailUseCase(authService);
+  const establishSessionUseCase = new EstablishSessionUseCase(authService);
+  const reloadUserUseCase = new ReloadUserUseCase(authService);
+  const getUsersByRoleUseCase = new GetUsersByRoleUseCase(adminUserService);
+  const syncPaymentUseCase = new SyncPaymentUseCase(appointmentPaymentService);
+  const applyVerificationCodeUseCase = new ApplyVerificationCodeUseCase(authService);
+  const establishSessionAllowUnverifiedUseCase = new EstablishSessionAllowUnverifiedUseCase(authService);
+  const prepareCheckoutUseCase = new PrepareCheckoutUseCase(paymentCheckoutService);
+  const clearPaymentProcessingUseCase = new ClearPaymentProcessingUseCase(appointmentPaymentService);
+  const listAppointmentsUseCase = new ListAppointmentsUseCase(appointmentService);
+  const createAppointmentUseCase = new CreateAppointmentUseCase(appointmentService);
+  const getAdminDashboardStatsUseCase = new GetAdminDashboardStatsUseCase(adminStatsService);
+  const getSecurityLogsUseCase = new GetSecurityLogsUseCase(securityLogsService);
+  const dismissNotificationByIdUseCase = new DismissNotificationByIdUseCase(notificationService);
+  const openCheckoutUseCase = new OpenCheckoutUseCase(paymentCheckoutService);
+  const getClinicsUseCase = new GetClinicsUseCase(clinicRepository);
+  const getClinicBookingsUseCase = new GetClinicBookingsUseCase(clinicBookingRepository);
+  const createClinicBookingUseCase = new CreateClinicBookingUseCase(clinicBookingRepository);
+  const updateClinicBookingStatusUseCase = new UpdateClinicBookingStatusUseCase(clinicBookingRepository);
+  const dismissNotificationUseCase = new DismissNotificationUseCase(notificationService);
+  const updateAppointmentStatusAndNotifyUseCase = new UpdateAppointmentStatusAndNotifyUseCase(appointmentNotificationService);
+  const getPharmaciesUseCase = new GetPharmaciesUseCase(pharmacyService);
 
   return (
     <DIContext.Provider
@@ -181,6 +235,34 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         getReciepesByPatientUseCase,
         getReciepesByPharmacyUseCase,
         updateReciepeStatusUseCase,
+        getAvailabilityUseCase,
+        getAvailabilityPresetsUseCase,
+        saveAvailabilityUseCase,
+        getResolvedSlotsUseCase,
+        getIdTokenUseCase,
+        reauthenticateUseCase,
+        sendVerificationEmailUseCase,
+        establishSessionUseCase,
+        reloadUserUseCase,
+        getUsersByRoleUseCase,
+        syncPaymentUseCase,
+        applyVerificationCodeUseCase,
+        establishSessionAllowUnverifiedUseCase,
+        prepareCheckoutUseCase,
+        clearPaymentProcessingUseCase,
+        listAppointmentsUseCase,
+        createAppointmentUseCase,
+        getAdminDashboardStatsUseCase,
+        getSecurityLogsUseCase,
+        dismissNotificationByIdUseCase,
+        openCheckoutUseCase,
+        getClinicsUseCase,
+        getClinicBookingsUseCase,
+        createClinicBookingUseCase,
+        updateClinicBookingStatusUseCase,
+        dismissNotificationUseCase,
+        updateAppointmentStatusAndNotifyUseCase,
+        getPharmaciesUseCase,
       }}
     >
       {children}

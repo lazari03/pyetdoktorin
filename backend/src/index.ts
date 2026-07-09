@@ -79,7 +79,7 @@ app.use('/api/paddle/sync', writeLimiter);
 app.use('/api/users', readLimiter);
 app.use('/api/blog', readLimiter);
 app.use('/api/clinics', readLimiter);
-app.use('/api/prescriptions', readLimiter);
+app.use('/api/prescriptions', writeLimiter);
 app.use('/api/notifications', readLimiter);
 app.use('/api/stats', readLimiter);
 app.use('/api/availability', readLimiter);

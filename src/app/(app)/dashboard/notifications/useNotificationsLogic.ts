@@ -7,7 +7,6 @@ import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useDI } from '@/context/DIContext';
 import type { ReciepePayload } from '@/application/ports/IReciepeService';
 import type { Appointment } from '@/domain/entities/Appointment';
-import { backendFetch } from '@/network/backendClient';
 
 interface PrescriptionNotification {
   id: string;
@@ -26,6 +25,8 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     getReciepesByDoctorUseCase,
     getReciepesByPatientUseCase,
     getReciepesByPharmacyUseCase,
+    dismissNotificationUseCase,
+    updateAppointmentStatusAndNotifyUseCase,
   } = useDI();
   const userRole = role;
   const [dismissedLocal, setDismissedLocal] = useState<Set<string>>(() => new Set());
@@ -135,23 +136,16 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
         )
       );
 
-      // Persist on the backend (source of truth).
-      await backendFetch(`/api/notifications/dismiss/${id}`, {
-        method: 'POST',
-        body: JSON.stringify({ userId: user.uid }),
-      });
+      await dismissNotificationUseCase.execute(id, user.uid);
       trackAnalyticsEvent('notification_dismissed', { appointmentId: id });
     } catch {
       trackAnalyticsEvent('notification_dismiss_failed', { appointmentId: id });
     }
-  }, [setAppointments, user]);
+  }, [dismissNotificationUseCase, setAppointments, user]);
 
   const handleAppointmentAction = useCallback(async (appointmentId: string, action: 'accepted' | 'rejected') => {
     try {
-      await backendFetch(`/api/appointments/${appointmentId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: action }),
-      });
+      await updateAppointmentStatusAndNotifyUseCase.execute(appointmentId, action);
       const latest = useAppointmentStore.getState().appointments;
       setAppointments(
         latest.map((a) => (a.id === appointmentId ? { ...a, status: action as Appointment['status'] } : a))
@@ -165,7 +159,7 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
     } catch {
       trackAnalyticsEvent('appointment_decision_failed', { appointmentId, action });
     }
-  }, [setAppointments]);
+  }, [setAppointments, updateAppointmentStatusAndNotifyUseCase]);
 
   const retry = useCallback(() => {
     if (!userRole) return;

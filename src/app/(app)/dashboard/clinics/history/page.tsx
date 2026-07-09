@@ -4,14 +4,15 @@ import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { backendFetch } from '@/network/backendClient';
+import { useDI } from '@/context/DIContext';
 import { ClinicBooking } from '@/domain/entities/ClinicBooking';
 import { UserRole } from '@/domain/entities/UserRole';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';
 export default function ClinicBookingHistoryPage() {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
+  const { getClinicBookingsUseCase } = useDI();
   const { t } = useTranslation();
   const [bookings, setBookings] = useState<ClinicBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,8 +22,8 @@ export default function ClinicBookingHistoryPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await backendFetch<{ items: ClinicBooking[] }>('/api/clinics/bookings');
-      setBookings(response.items);
+      const items = await getClinicBookingsUseCase.execute({ patientId: user?.uid });
+      setBookings(items);
     } catch (err) {
       console.error('Failed to load clinic bookings', err);
       setBookings([]);
@@ -30,7 +31,7 @@ export default function ClinicBookingHistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getClinicBookingsUseCase, user?.uid]);
 
   useEffect(() => {
     load();

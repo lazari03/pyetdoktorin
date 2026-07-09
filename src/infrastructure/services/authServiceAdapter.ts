@@ -1,14 +1,15 @@
-import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { IAuthService, AuthState, CurrentUserInfo } from '@/application/ports/IAuthService';
+import { getAuth, EmailAuthProvider, reauthenticateWithCredential, applyActionCode } from 'firebase/auth';
+import { IAuthService, AuthState, FullAuthUser, CurrentUserProfile } from '@/application/ports/IAuthService';
 import {
   isAuthenticated,
   fetchUserDetails,
   resetUserPassword,
   updateUserEmail,
-  sendVerificationEmail,
+  sendVerificationEmail as sendVerificationEmailService,
   establishSessionForCurrentUser,
   establishSessionForCurrentUserAllowUnverified,
-  reloadCurrentUser,
+  subscribeToFullAuthState,
+  fetchCurrentUser as fetchCurrentUserInfra,
 } from '@/infrastructure/services/authService';
 
 export class AuthServiceAdapter implements IAuthService {
@@ -37,59 +38,55 @@ export class AuthServiceAdapter implements IAuthService {
     await updateUserEmail(userId, email);
   }
 
-  async sendVerificationEmail(params?: { continueUrl?: string }): Promise<void> {
-    await sendVerificationEmail(params);
+  async getIdToken(): Promise<string> {
+    const currentUser = getAuth().currentUser;
+    if (!currentUser) throw new Error('No authenticated user');
+    return currentUser.getIdToken();
+  }
+
+  async reauthenticate(password: string): Promise<void> {
+    const authInstance = getAuth();
+    const currentUser = authInstance.currentUser;
+    if (!currentUser) throw new Error('No authenticated user');
+    const email = currentUser.email;
+    if (!email) throw new Error('Missing email for re-authentication');
+    const credential = EmailAuthProvider.credential(email, password);
+    await reauthenticateWithCredential(currentUser, credential);
+    await currentUser.getIdToken(true);
+  }
+
+  async sendVerificationEmail(continueUrl?: string): Promise<void> {
+    await sendVerificationEmailService({ continueUrl });
   }
 
   async establishSession(): Promise<void> {
     await establishSessionForCurrentUser();
   }
 
+  async reloadUser(): Promise<boolean> {
+    const currentUser = getAuth().currentUser;
+    if (!currentUser) return false;
+    await currentUser.reload();
+    return currentUser.emailVerified === true;
+  }
+
+  async applyVerificationCode(oobCode: string): Promise<void> {
+    await applyActionCode(getAuth(), oobCode);
+  }
+
   async establishSessionAllowUnverified(): Promise<void> {
     await establishSessionForCurrentUserAllowUnverified();
   }
 
-  async reloadUser(): Promise<boolean> {
-    return reloadCurrentUser();
+  getLastSignInTime(): string | null {
+    return null;
   }
 
-  getCurrentUserId(): string | null {
-    const auth = getAuth();
-    return auth.currentUser?.uid ?? null;
+  observeFullAuthState(callback: (user: FullAuthUser | null) => Promise<void> | void): () => void {
+    return subscribeToFullAuthState(callback);
   }
 
-  async applyVerificationCode(oobCode: string): Promise<void> {
-    const { applyActionCode } = await import('firebase/auth');
-    const auth = getAuth();
-    await applyActionCode(auth, oobCode);
-  }
-
-  isEmailVerified(): boolean {
-    const auth = getAuth();
-    return auth.currentUser?.emailVerified === true;
-  }
-
-  getLastSignInTime(): string | undefined {
-    const auth = getAuth();
-    return auth.currentUser?.metadata?.lastSignInTime ?? undefined;
-  }
-
-  getCurrentUserInfo(): CurrentUserInfo | null {
-    const user = getAuth().currentUser;
-    if (!user) return null;
-    return {
-      email: user.email,
-      displayName: user.displayName,
-      phoneNumber: user.phoneNumber,
-      emailVerified: user.emailVerified === true,
-    };
-  }
-
-  async reauthenticate(password: string): Promise<void> {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-    if (!currentUser?.email) throw new Error('User not authenticated');
-    const credential = EmailAuthProvider.credential(currentUser.email, password);
-    await reauthenticateWithCredential(currentUser, credential);
+  async fetchCurrentUser(): Promise<CurrentUserProfile> {
+    return fetchCurrentUserInfra();
   }
 }

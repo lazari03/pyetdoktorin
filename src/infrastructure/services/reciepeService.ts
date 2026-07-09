@@ -22,6 +22,48 @@ const mapPrescription = (p: Prescription): ReciepePayload => ({
   statusUpdatedAt: p.statusUpdatedAt,
 });
 
+// Module-level cache shared across all ReciepeService instances.
+// Prevents duplicate network calls when listByDoctor, listByPatient,
+// and listByPharmacy are all called in the same session.
+const CACHE_TTL = 30_000; // 30 seconds
+
+let cache: {
+  data: ReciepePayload[] | null;
+  fetchedAt: number;
+  inflight: Promise<ReciepePayload[]> | null;
+} = { data: null, fetchedAt: 0, inflight: null };
+
+async function fetchAll(): Promise<ReciepePayload[]> {
+  const now = Date.now();
+
+  // Return cached data if it's still fresh.
+  if (cache.data !== null && now - cache.fetchedAt < CACHE_TTL) {
+    return cache.data;
+  }
+
+  // Deduplicate concurrent callers — return the same promise to all of them.
+  if (cache.inflight !== null) {
+    return cache.inflight;
+  }
+
+  cache.inflight = fetchPrescriptions()
+    .then((response) => {
+      const mapped = (response.items || []).map(mapPrescription);
+      cache = { data: mapped, fetchedAt: Date.now(), inflight: null };
+      return mapped;
+    })
+    .catch((err) => {
+      cache = { ...cache, inflight: null };
+      throw err;
+    });
+
+  return cache.inflight;
+}
+
+function invalidateCache(): void {
+  cache = { data: null, fetchedAt: 0, inflight: null };
+}
+
 export class ReciepeService implements IReciepeService {
   async createReciepe(data: ReciepePayload): Promise<ReciepePayload> {
     const created = await createPrescription({
@@ -38,34 +80,33 @@ export class ReciepeService implements IReciepeService {
       title: data.title,
       signatureDataUrl: data.signatureDataUrl,
     });
+    invalidateCache();
     return mapPrescription(created);
   }
 
   async listByDoctor(doctorId: string): Promise<ReciepePayload[]> {
-    const response = await fetchPrescriptions();
-    return (response.items || [])
+    const all = await fetchAll();
+    return all
       .filter((p) => p.doctorId === doctorId)
-      .map(mapPrescription)
       .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
   }
 
   async listByPatient(patientId: string): Promise<ReciepePayload[]> {
-    const response = await fetchPrescriptions();
-    return (response.items || [])
+    const all = await fetchAll();
+    return all
       .filter((p) => p.patientId === patientId)
-      .map(mapPrescription)
       .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
   }
 
   async listByPharmacy(pharmacyId: string): Promise<ReciepePayload[]> {
-    const response = await fetchPrescriptions();
-    return (response.items || [])
+    const all = await fetchAll();
+    return all
       .filter((p) => (p.pharmacyId ?? "") === pharmacyId)
-      .map(mapPrescription)
       .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
   }
 
   async updateStatus(id: string, status: "accepted" | "rejected"): Promise<void> {
     await updatePrescriptionStatus(id, status);
+    invalidateCache();
   }
 }

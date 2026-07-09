@@ -1,6 +1,6 @@
 import type { IBlogService } from '@/application/ports/IBlogService';
 import type { BlogPost, CreateBlogPostPayload, UpdateBlogPostPayload } from '@/domain/entities/BlogPost';
-import { getAllBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from '@/infrastructure/services/blogService';
+import { getAllBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from '@/network/blogService';
 
 export class BlogServiceAdapter implements IBlogService {
   async getAll(): Promise<BlogPost[]> {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
-import { createPrescription, listPrescriptionsForRole, updatePrescriptionStatus, getPrescriptionById, type PrescriptionInput, type PrescriptionStatus, type PrescriptionType } from '@/services/prescriptionsService';
+import { createPrescription, listPrescriptionsForRole, updatePrescriptionStatus, getPrescriptionById, type PrescriptionInput, type PrescriptionType } from '@/services/prescriptionsService';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 import { z } from 'zod';
 import { validateBody } from '@/routes/validation';
@@ -24,7 +24,7 @@ const createPrescriptionSchema = z.object({
 }).strict();
 
 const updatePrescriptionStatusSchema = z.object({
-  status: z.string().min(1),
+  status: z.enum(['pending', 'accepted', 'rejected']),
 });
 
 const REAUTH_WINDOW_MS = 5 * 60 * 1000;
@@ -97,7 +97,7 @@ router.patch('/:id/status', requireAuth([UserRole.Pharmacy, UserRole.Doctor, Use
   const { id } = req.params as { id: string };
   const requestPayload = validateBody(res, updatePrescriptionStatusSchema, req.body, 'MISSING_STATUS');
   if (!requestPayload) return;
-  const status = requestPayload.status as PrescriptionStatus;
+  const status = requestPayload.status;
   const user = (req as AuthenticatedRequest).user!;
   const prescription = await getPrescriptionById(id);
   if (!prescription) {
@@ -106,7 +106,7 @@ router.patch('/:id/status', requireAuth([UserRole.Pharmacy, UserRole.Doctor, Use
   if (user.role === UserRole.Doctor && prescription.doctorId !== user.uid) {
     return res.status(403).json({ error: 'Forbidden' });
   }
-  if (user.role === UserRole.Pharmacy && prescription.pharmacyId && prescription.pharmacyId !== user.uid) {
+  if (user.role === UserRole.Pharmacy && prescription.pharmacyId !== user.uid) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   await updatePrescriptionStatus(id, status);

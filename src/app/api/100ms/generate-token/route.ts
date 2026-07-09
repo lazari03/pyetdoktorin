@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getAdmin } from '@/app/api/_lib/admin';
 import { VIDEO_ERROR_CODES } from '@/config/errorCodes';
 import { API_ENDPOINTS } from '@/config/routes';
-import { SecurityAuditService } from '@/infrastructure/services/securityAuditService';
+import { securityAuditService } from '@/infrastructure/di/serverContainer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -159,7 +159,7 @@ export async function POST(req: Request) {
   }
 
   if (userIdParam !== authenticatedUserId) {
-    await new SecurityAuditService().logVideoAccessAttempt({
+    await securityAuditService.logVideoAccessAttempt({
       userId: authenticatedUserId,
       appointmentId: roomIdParam,
       role: safeRole,
@@ -183,7 +183,7 @@ export async function POST(req: Request) {
   let isPaid = Boolean(appointmentData?.isPaid);
 
   if (!isDoctor && !isPatient) {
-    await new SecurityAuditService().logVideoAccessAttempt({
+    await securityAuditService.logVideoAccessAttempt({
       userId: authenticatedUserId,
       appointmentId: roomIdParam,
       role: safeRole,
@@ -217,7 +217,7 @@ export async function POST(req: Request) {
 
   if (isPatient) {
     if (!isPaid) {
-      await new SecurityAuditService().logVideoAccessAttempt({
+      await securityAuditService.logVideoAccessAttempt({
         userId: authenticatedUserId,
         appointmentId: roomIdParam,
         role: safeRole,
@@ -229,7 +229,7 @@ export async function POST(req: Request) {
       return jsonError(VIDEO_ERROR_CODES.PaymentRequired, 402);
     }
     if (!isAccepted) {
-      await new SecurityAuditService().logVideoAccessAttempt({
+      await securityAuditService.logVideoAccessAttempt({
         userId: authenticatedUserId,
         appointmentId: roomIdParam,
         role: safeRole,
@@ -524,7 +524,7 @@ export async function POST(req: Request) {
       console.warn('Failed to persist appointment room metadata', persistError);
     }
 
-    await new SecurityAuditService().logVideoAccessAttempt({
+    await securityAuditService.logVideoAccessAttempt({
       userId: authenticatedUserId,
       appointmentId: roomIdParam,
       role: expectedRole,

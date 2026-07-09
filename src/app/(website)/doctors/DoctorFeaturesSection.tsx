@@ -13,7 +13,7 @@ export default function DoctorFeaturesSection() {
         <div className="hidden md:flex flex-1 items-center justify-center">
           <Image
             src="https://pyetdoktorin-storage.fra1.digitaloceanspaces.com/img/Screenshot%202025-08-25%20at%209.27.02%E2%80%AFPM.png"
-            alt="Doctor at work"
+            alt={t('doctorsFeaturesImageAlt')}
             width={380}
             height={380}
             className="object-cover w-full h-72 sm:h-80 rounded-2xl shadow border-2 border-purple-100 bg-white"
