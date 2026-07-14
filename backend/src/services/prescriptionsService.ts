@@ -2,6 +2,7 @@ import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { UserRole } from '@/domain/entities/UserRole';
 import { canListPrescriptionsForRole } from '@/domain/rules/userRoleRules';
 import { getUserProfile } from '@/services/userProfileService';
+import { createUserNotification } from '@/services/userNotificationsService';
 
 export type PrescriptionStatus = 'pending' | 'accepted' | 'rejected';
 export type PrescriptionType = 'standard' | 'reimbursement';
@@ -80,6 +81,17 @@ export async function createPrescription(input: PrescriptionInput): Promise<Pres
       reimbursementCode: payload.reimbursementCode,
       reimbursementCodeUpdatedAt: createdAt,
     }, { merge: true });
+  }
+  try {
+    await createUserNotification({
+      userId: input.patientId,
+      type: 'prescription_issued',
+      title: 'New prescription issued',
+      body: `Dr. ${input.doctorName} issued you a new prescription.`,
+      metadata: { prescriptionId: ref.id },
+    });
+  } catch (error) {
+    console.error('Failed to create prescription notification:', error);
   }
   return { id: ref.id, ...payload };
 }

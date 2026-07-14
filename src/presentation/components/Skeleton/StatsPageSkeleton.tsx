@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/presentation/ui/Skeleton';
 
 interface StatsPageSkeletonProps {
@@ -6,8 +9,9 @@ interface StatsPageSkeletonProps {
 }
 
 export function StatsPageSkeleton({ cardCount = 4, className = '' }: StatsPageSkeletonProps) {
+  const { t } = useTranslation();
   return (
-    <div className={`space-y-4 ${className}`} role="status" aria-label="Loading stats page">
+    <div className={`space-y-4 ${className}`} role="status" aria-label={t('loadingStatsPage') || 'Loading stats page'}>
       <div className="flex items-center gap-3">
         <Skeleton className="h-8 w-8 rounded-lg" />
         <div className="space-y-1">

@@ -149,7 +149,7 @@ function AdminUsersContent() {
                 type="button"
                 onClick={() => setPanelOpen(false)}
                 className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                aria-label="Close panel"
+                aria-label={t('closePanel') || 'Close panel'}
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -174,7 +174,7 @@ function AdminUsersContent() {
                 />
               </label>
               <label className="block text-sm text-gray-700">
-                Email
+                {t('email')}
                 <input
                   type="email"
                   className="mt-1 w-full rounded-2xl border border-gray-300 px-3 py-2 text-sm"

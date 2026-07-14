@@ -38,4 +38,5 @@ export const env = {
   paywallAmountUsd: parseNumberEnv('PAYWALL_AMOUNT_USD', parseNumberEnv('NEXT_PUBLIC_PAYWALL_AMOUNT_USD', 13)),
   corsOrigins: parseCsvEnv('CORS_ORIGINS', []),
   frontendUrl: process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_BASE_URL || '',
+  notificationsCleanupSecret: process.env.NOTIFICATIONS_CLEANUP_SECRET ?? '',
 };

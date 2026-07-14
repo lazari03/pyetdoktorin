@@ -18,6 +18,7 @@ import { DashboardTutorialGate } from "@/presentation/components/dashboard/Dashb
 import { PatientKpiCards, PatientKpiData } from "@/presentation/components/dashboard/PatientKpiCards";
 import { DoctorKpiCards, DoctorKpiData } from "@/presentation/components/dashboard/DoctorKpiCards";
 import { PatientQuickActions } from "@/presentation/components/dashboard/PatientQuickActions";
+import { QuickAppointmentCard } from "@/presentation/components/dashboard/QuickAppointmentCard";
 import { useNavigationCoordinator } from "@/navigation/NavigationCoordinator";
 import { UserRole } from "@/domain/entities/UserRole";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
@@ -325,7 +326,7 @@ export default function Dashboard() {
 
               {/* 2. Hero + Activity feed */}
               <div className="grid gap-3 lg:grid-cols-3">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 flex flex-col gap-3">
                   {heroAppointment ? (
                     <HeroCard
                       title={heroAppointment.doctorName || t("yourNextConsultation") || "Your next consultation"}
@@ -352,6 +353,7 @@ export default function Dashboard() {
                       ctaLabel={t("bookNow") || "Book now"}
                     />
                   )}
+                  <QuickAppointmentCard />
                 </div>
                 <div className="lg:col-span-1">
                   <PatientQuickActions />

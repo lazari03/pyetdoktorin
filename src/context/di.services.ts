@@ -28,6 +28,8 @@ import { ClinicBookingRepository } from '@/infrastructure/services/clinicBooking
 import { PharmacyService } from '@/infrastructure/services/pharmacyService';
 import { AppointmentNotificationService } from '@/infrastructure/services/appointmentNotificationService';
 import { BackendClinicRepository } from '@/infrastructure/services/backendClinicRepository';
+import { UserNotificationsService } from '@/infrastructure/services/userNotificationsService';
+import type { IUserNotificationsService } from '@/application/ports/IUserNotificationsService';
 import type { IAnalyticsService } from '@/application/ports/IAnalyticsService';
 import type { IAuthService } from '@/application/ports/IAuthService';
 import type { IPaymentCheckoutService } from '@/application/ports/IPaymentCheckoutService';
@@ -70,3 +72,4 @@ export const clinicRepository = new BackendClinicRepository();
 export const clinicBookingRepository = new ClinicBookingRepository();
 export const pharmacyService = new PharmacyService();
 export const appointmentNotificationService = new AppointmentNotificationService();
+export const userNotificationsService: IUserNotificationsService = new UserNotificationsService();

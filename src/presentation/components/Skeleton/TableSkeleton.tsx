@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/presentation/ui/Skeleton';
 
 interface TableSkeletonProps {
@@ -7,8 +10,9 @@ interface TableSkeletonProps {
 }
 
 export function TableSkeleton({ rows = 5, cols = 4, className = '' }: TableSkeletonProps) {
+  const { t } = useTranslation();
   return (
-    <div className={`space-y-3 ${className}`} role="status" aria-label="Loading table">
+    <div className={`space-y-3 ${className}`} role="status" aria-label={t('loadingTable') || 'Loading table'}>
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex gap-4">
           {Array.from({ length: cols }).map((_, j) => (

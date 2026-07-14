@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/presentation/ui/Skeleton';
 
 interface ListSkeletonProps {
@@ -6,8 +9,9 @@ interface ListSkeletonProps {
 }
 
 export function ListSkeleton({ items = 4, className = '' }: ListSkeletonProps) {
+  const { t } = useTranslation();
   return (
-    <div className={`space-y-3 ${className}`} role="status" aria-label="Loading list">
+    <div className={`space-y-3 ${className}`} role="status" aria-label={t('loadingList') || 'Loading list'}>
       {Array.from({ length: items }).map((_, i) => (
         <div key={i} className="flex items-center gap-3">
           <Skeleton className="h-8 w-8 rounded-full" />

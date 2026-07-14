@@ -40,6 +40,8 @@ export default async function PrivacyPolicyPage() {
             <p className="text-gray-700 mb-2">{t('whatDataWeCollectText')}</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('howYourDataIsStored')}</h2>
             <p className="text-gray-700 mb-2">{t('howYourDataIsStoredText')}</p>
+            <h2 className="text-xl font-bold mt-8 mb-2">{t('privacyCookiesTitle')}</h2>
+            <p className="text-gray-700 mb-2">{t('privacyCookiesText')}</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('yourRights')}</h2>
             <p className="text-gray-700 mb-2">{t('yourRightsText')} <a href="mailto:info@pyetdoktorin.al" className="text-purple-500 hover:underline">info@pyetdoktorin.al</a>.</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('dataProtectionStandards')}</h2>
@@ -48,6 +50,7 @@ export default async function PrivacyPolicyPage() {
             <p className="text-gray-700 mb-2">{t('securityText')}</p>
             <h2 className="text-xl font-bold mt-8 mb-2">{t('policyUpdates')}</h2>
             <p className="text-gray-700 mb-2">{t('policyUpdatesText')}</p>
+            <p className="text-sm text-gray-400 mt-8">{t('privacyLastUpdated')}</p>
           </section>
         </div>
       </main>

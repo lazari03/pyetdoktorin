@@ -25,3 +25,8 @@ export async function fetchDoctors(searchTerm: string, searchType: SearchType): 
     throw new Error('Failed to fetch doctors');
   }
 }
+
+export async function getSpecializations(): Promise<string[]> {
+  const response = await backendFetch<{ items: string[] }>('/api/doctors/specializations');
+  return response.items;
+}

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { LogoutSessionUseCase } from '../application/logoutSessionUseCase';
 import { LogoutServerUseCase } from '@/application/logoutServerUseCase';
-import { SESSION_IDLE_TIMEOUT_MS, SESSION_LAST_ACTIVITY_KEY, SESSION_REFRESH_THROTTLE_MS } from '@/config/sessionConfig';
+import { SESSION_COOKIE_REFRESH_MS, SESSION_IDLE_TIMEOUT_MS, SESSION_LAST_ACTIVITY_KEY, SESSION_REFRESH_THROTTLE_MS } from '@/config/sessionConfig';
 import { ROUTES } from '@/config/routes';
 
 const IDLE_MS = SESSION_IDLE_TIMEOUT_MS;
@@ -29,11 +29,11 @@ interface SessionState {
   idleMs: number;
   _intervalId: number | null;
   _lastRefresh: number;
+  _lastSessionRenew: number;
   _stopFn?: () => void;
-  initMonitor: (logoutSessionUseCase: LogoutSessionUseCase) => void;
+  initMonitor: (logoutSessionUseCase: LogoutSessionUseCase, renewSession?: () => Promise<void>) => void;
   stopMonitor: () => void;
   touchActivity: () => void;
-  refreshSlidingCookies: () => void;
   logoutForIdle: (logoutSessionUseCase: LogoutSessionUseCase) => void;
   logout: (reason?: string, logoutSessionUseCase?: LogoutSessionUseCase, logoutServerUseCase?: LogoutServerUseCase) => void;
 }
@@ -44,8 +44,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   idleMs: IDLE_MS,
   _intervalId: null,
   _lastRefresh: 0,
+  _lastSessionRenew: 0,
 
-  initMonitor: (logoutSessionUseCase: LogoutSessionUseCase) => {
+  initMonitor: (logoutSessionUseCase: LogoutSessionUseCase, renewSession?: () => Promise<void>) => {
     if (typeof window === 'undefined') return;
     if (get().isMonitoring) return;
 
@@ -85,10 +86,17 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       const inactive = Date.now() - last > idleMs;
       if (inactive) {
         get().logoutForIdle(logoutSessionUseCase);
+        return;
+      }
+      // User is active: re-mint the httpOnly server session cookie before its
+      // absolute expiry so activity — not cookie age — decides when they log out.
+      if (renewSession && Date.now() - get()._lastSessionRenew > SESSION_COOKIE_REFRESH_MS) {
+        set({ _lastSessionRenew: Date.now() });
+        void renewSession().catch(() => {});
       }
     }, 30 * 1000);
 
-    set({ isMonitoring: true, _intervalId: id });
+    set({ isMonitoring: true, _intervalId: id, _lastSessionRenew: Date.now() });
 
     // Store a stop function bound to this closure
     const stop = () => {
@@ -116,13 +124,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   touchActivity: () => {
     const now = Date.now();
     set({ lastActivity: now });
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(SESSION_LAST_ACTIVITY_KEY, String(now));
-    }
-  },
-
-  refreshSlidingCookies: () => {
-    const now = Date.now();
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(SESSION_LAST_ACTIVITY_KEY, String(now));
     }

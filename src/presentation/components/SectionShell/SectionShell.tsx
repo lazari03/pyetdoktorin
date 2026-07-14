@@ -35,6 +35,9 @@ import type { MenuEntryDef, NavItemDef } from '@/navigation/navConfig';
 import { useNotificationsLogic } from '@/app/(app)/dashboard/notifications/useNotificationsLogic';
 import { useNotificationReadState } from '@/presentation/hooks/useNotificationReadState';
 import { useAuth } from '@/context/AuthContext';
+import type { UserNotificationDTO } from '@/application/ports/IUserNotificationsService';
+
+const USER_NOTIFICATIONS_POLL_MS = 60_000;
 
 export type AppSectionId = 'dashboard' | 'admin' | 'clinic' | 'pharmacy';
 export type MenuActionId = Extract<MenuEntryDef, { kind: 'action' }>['actionId'];
@@ -253,7 +256,7 @@ export default function SectionShell({
   const topbarProfileMenuRef = useRef<HTMLDivElement | null>(null);
   const notifMenuRef = useRef<HTMLDivElement | null>(null);
   const { t } = useTranslation();
-  const { fetchDoctorsUseCase } = useDI();
+  const { fetchDoctorsUseCase, listUserNotificationsUseCase, markUserNotificationReadUseCase, markAllUserNotificationsReadUseCase } = useDI();
   const nav = useNavigationCoordinator();
   const { user } = useAuth();
   const { filteredDoctors, setSearchTerm: setDoctorSearchTerm, fetchDoctors, reset: resetDoctorSearch } = useDoctorSearchStore();
@@ -262,6 +265,25 @@ export default function SectionShell({
     prescriptionNotifications,
   } = useNotificationsLogic(nav);
   const { isRead, markRead, markManyRead, unreadCount } = useNotificationReadState(user?.uid);
+
+  const [userNotifItems, setUserNotifItems] = useState<UserNotificationDTO[]>([]);
+  const [userNotifUnreadCount, setUserNotifUnreadCount] = useState(0);
+
+  const refreshUserNotifications = useCallback(() => {
+    listUserNotificationsUseCase
+      .execute()
+      .then(({ items, unreadCount: count }) => {
+        setUserNotifItems(items);
+        setUserNotifUnreadCount(count);
+      })
+      .catch(() => {});
+  }, [listUserNotificationsUseCase]);
+
+  useEffect(() => {
+    refreshUserNotifications();
+    const id = setInterval(refreshUserNotifications, USER_NOTIFICATIONS_POLL_MS);
+    return () => clearInterval(id);
+  }, [refreshUserNotifications]);
 
   const notifFeed = useMemo(() => {
     const fromAppointments = appointmentNotifications.slice(0, 8).map((a) => {
@@ -286,6 +308,7 @@ export default function SectionShell({
         color: tone.color,
         text,
         ts: new Date(a.createdAt).getTime(),
+        read: undefined as boolean | undefined,
       };
     });
     const fromPrescriptions = prescriptionNotifications.slice(0, 8).map((p) => ({
@@ -296,19 +319,62 @@ export default function SectionShell({
       color: 'text-blue-700',
       text: t('notificationNewPrescription', { doctor: p.doctorName || t('doctor') }) || `New prescription issued by ${p.doctorName || t('doctor')}.`,
       ts: p.updatedAt,
+      read: undefined as boolean | undefined,
     }));
-    return [...fromAppointments, ...fromPrescriptions]
+    const fromUserNotifications = userNotifItems.map((n) => ({
+      id: `un-${n.id}`,
+      appointmentId: null as string | null,
+      icon: BellIcon,
+      bg: 'bg-purple-100',
+      color: 'text-purple-700',
+      text: n.title,
+      ts: n.createdAt,
+      read: n.read as boolean | undefined,
+    }));
+    return [...fromAppointments, ...fromPrescriptions, ...fromUserNotifications]
       .filter((n) => Number.isFinite(n.ts))
       .sort((a, b) => b.ts - a.ts)
       .slice(0, 8);
-  }, [appointmentNotifications, prescriptionNotifications, t]);
+  }, [appointmentNotifications, prescriptionNotifications, userNotifItems, t]);
 
-  const notifFeedIds = useMemo(() => notifFeed.map((n) => n.id), [notifFeed]);
-  const notifUnreadCount = unreadCount(notifFeedIds);
+  const legacyNotifFeedIds = useMemo(
+    () => notifFeed.filter((n) => n.read === undefined).map((n) => n.id),
+    [notifFeed],
+  );
+  const notifUnreadCount = unreadCount(legacyNotifFeedIds) + userNotifUnreadCount;
 
   const markAllRead = useCallback(() => {
-    markManyRead(notifFeedIds);
-  }, [notifFeedIds, markManyRead]);
+    markManyRead(legacyNotifFeedIds);
+    if (userNotifUnreadCount > 0) {
+      markAllUserNotificationsReadUseCase
+        .execute()
+        .then(() => {
+          setUserNotifItems((items) => items.map((n) => ({ ...n, read: true, readAt: n.readAt ?? Date.now() })));
+          setUserNotifUnreadCount(0);
+        })
+        .catch(() => {});
+    }
+  }, [legacyNotifFeedIds, markManyRead, userNotifUnreadCount, markAllUserNotificationsReadUseCase]);
+
+  const handleNotifClick = useCallback(
+    (id: string) => {
+      if (id.startsWith('un-')) {
+        const realId = id.slice(3);
+        markUserNotificationReadUseCase
+          .execute(realId)
+          .then(() => {
+            setUserNotifItems((items) =>
+              items.map((n) => (n.id === realId ? { ...n, read: true, readAt: n.readAt ?? Date.now() } : n)),
+            );
+            setUserNotifUnreadCount((count) => Math.max(0, count - 1));
+          })
+          .catch(() => {});
+      } else {
+        markRead(id);
+      }
+    },
+    [markRead, markUserNotificationReadUseCase],
+  );
 
   const handleDoctorSearchChange = useCallback((value: string) => {
     setSearchValue(value);
@@ -469,7 +535,7 @@ export default function SectionShell({
               setProfileMenuOpen((open) => !open);
             }}
             className="h-9 w-9 rounded-full bg-purple-600 text-sm font-bold text-white flex items-center justify-center hover:bg-purple-700 transition-colors"
-            aria-label="Open profile menu"
+            aria-label={t('openProfileMenu') || 'Open profile menu'}
             data-analytics={`${sectionId}.profile.toggle`}
           >
             {initials}
@@ -575,7 +641,7 @@ export default function SectionShell({
           </p>
         )}
 
-        <nav className="flex-1 overflow-y-auto px-3 py-1 space-y-0.5" aria-label="Primary navigation">
+        <nav className="flex-1 overflow-y-auto px-3 py-1 space-y-0.5" aria-label={t('primaryNavigation') || 'Primary navigation'}>
           {renderedNav.map((item) => {
             const active = activePath === item.href;
             return (
@@ -616,7 +682,7 @@ export default function SectionShell({
               className={`flex w-full items-center gap-3 rounded-xl p-2 hover:bg-gray-50 transition-colors ${
                 collapsed ? 'justify-center' : ''
               }`}
-              aria-label="Open profile menu"
+              aria-label={t('openProfileMenu') || 'Open profile menu'}
               data-analytics={`${sectionId}.profile.toggle`}
             >
               <span className="h-9 w-9 shrink-0 rounded-full bg-purple-600 text-sm font-bold text-white flex items-center justify-center">
@@ -652,7 +718,7 @@ export default function SectionShell({
           {/* Left: greeting (hidden on narrower desktop widths to make room for search + actions) */}
           <div className="hidden lg:flex flex-col justify-center shrink-0 min-w-0 max-w-[220px]">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-purple-600 truncate">
-              OVERVIEW
+              {t('overview') || 'OVERVIEW'}
             </p>
             <p className="text-base font-bold text-gray-900 leading-tight truncate">
               {greeting}{displayName ? `, ${displayName.split(' ')[0]}` : ''}
@@ -751,7 +817,7 @@ export default function SectionShell({
                     ) : (
                       notifFeed.map((n) => {
                         const Icon = n.icon;
-                        const unread = !isRead(n.id);
+                        const unread = n.read === undefined ? !isRead(n.id) : !n.read;
                         const href = n.appointmentId
                           ? `${sectionNotificationsHref(sectionId)}?focus=${encodeURIComponent(n.appointmentId)}`
                           : sectionNotificationsHref(sectionId);
@@ -759,7 +825,7 @@ export default function SectionShell({
                           <Link
                             key={n.id}
                             href={href}
-                            onClick={() => { markRead(n.id); setNotifOpen(false); }}
+                            onClick={() => { handleNotifClick(n.id); setNotifOpen(false); }}
                             className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${unread ? 'bg-purple-50/40' : ''}`}
                             data-analytics={`${sectionId}.topbar.notifications.open`}
                           >
@@ -801,7 +867,7 @@ export default function SectionShell({
                 type="button"
                 onClick={() => { setProfileMenuOpen(false); setNotifOpen(false); setTopbarProfileOpen((o) => !o); }}
                 className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1 lg:pr-3 hover:bg-gray-100 transition-colors"
-                aria-label="Open profile menu"
+                aria-label={t('openProfileMenu') || 'Open profile menu'}
                 data-analytics={`${sectionId}.topbar.profile`}
               >
                 <span className="h-8 w-8 shrink-0 rounded-full bg-purple-600 text-xs font-bold text-white flex items-center justify-center">{initials}</span>

@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/presentation/ui/Skeleton';
 
 interface CardSkeletonProps {
@@ -5,8 +8,9 @@ interface CardSkeletonProps {
 }
 
 export function CardSkeleton({ className = '' }: CardSkeletonProps) {
+  const { t } = useTranslation();
   return (
-    <div className={`rounded-xl border border-gray-100 bg-white p-4 shadow-sm ${className}`} role="status" aria-label="Loading card">
+    <div className={`rounded-xl border border-gray-100 bg-white p-4 shadow-sm ${className}`} role="status" aria-label={t('loadingCard') || 'Loading card'}>
       <div className="flex items-center gap-3">
         <Skeleton className="h-10 w-10 rounded-full" />
         <div className="flex-1 space-y-2">

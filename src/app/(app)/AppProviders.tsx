@@ -1,8 +1,8 @@
 'use client';
 
 import '@/i18n/i18n';
-import { Suspense, useEffect } from 'react';
-import { AuthProvider } from '@/context/AuthContext';
+import { Suspense, useCallback, useEffect } from 'react';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { DIProvider, useDI } from '@/context/DIContext';
 import { useSessionActivity } from '@/presentation/hooks/useSessionActivity';
 import ToastProvider from '@/presentation/components/Toast/ToastProvider';
@@ -12,8 +12,13 @@ import ClientErrorReporter from '@/presentation/components/ClientErrorReporter/C
 
 export default function AppProviders({ children }: { children: React.ReactNode }) {
   function SessionActivityHost() {
-    const { logoutSessionUseCase } = useDI();
-    useSessionActivity(logoutSessionUseCase);
+    const { logoutSessionUseCase, establishSessionUseCase } = useDI();
+    const { isAuthenticated } = useAuth();
+    const renewSession = useCallback(
+      () => establishSessionUseCase.execute(),
+      [establishSessionUseCase],
+    );
+    useSessionActivity(logoutSessionUseCase, isAuthenticated, renewSession);
     return null;
   }
 

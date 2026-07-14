@@ -8,6 +8,7 @@ import { VIDEO_ERROR_CODES } from "@/config/errorCodes";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
 import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';
+import { useSessionStore } from "@/store/sessionStore";
 export default function VideoSessionPage() {
   const [loading, setLoading] = useState(true);
   const [roomCode, setRoomCode] = useState<string | null>(null);
@@ -21,6 +22,16 @@ export default function VideoSessionPage() {
   const { getIdTokenUseCase } = useDI();
   const { t } = useTranslation();
   const [attempt, setAttempt] = useState(0);
+  const touchActivity = useSessionStore((s) => s.touchActivity);
+
+  // The 100ms call runs in an iframe, so mouse/keyboard activity inside it never
+  // reaches our idle monitor. Being on this page IS activity — keep the session
+  // alive for the duration of the call so users aren't logged out mid-consultation.
+  useEffect(() => {
+    touchActivity();
+    const id = window.setInterval(touchActivity, 60 * 1000);
+    return () => window.clearInterval(id);
+  }, [touchActivity]);
 
   useEffect(() => {
     let isActive = true;

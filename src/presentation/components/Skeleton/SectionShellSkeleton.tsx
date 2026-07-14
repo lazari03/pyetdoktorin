@@ -1,8 +1,12 @@
+'use client';
+
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/presentation/ui/Skeleton';
 
 export function SectionShellSkeleton() {
+  const { t } = useTranslation();
   return (
-    <div className="h-screen flex flex-col md:flex-row bg-[#f5f6fa] overflow-hidden" role="status" aria-label="Loading application layout">
+    <div className="h-screen flex flex-col md:flex-row bg-[#f5f6fa] overflow-hidden" role="status" aria-label={t('loadingApplicationLayout') || 'Loading application layout'}>
       {/* Mobile top bar */}
       <div className="md:hidden flex items-center justify-between h-14 shrink-0 bg-white border-b border-gray-200 px-4">
         <Skeleton className="h-8 w-8 rounded-lg" />

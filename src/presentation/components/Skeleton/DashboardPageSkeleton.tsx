@@ -1,8 +1,12 @@
+'use client';
+
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/presentation/ui/Skeleton';
 
 export function DashboardPageSkeleton() {
+  const { t } = useTranslation();
   return (
-    <div className="space-y-4 p-4 md:p-0" role="status" aria-label="Loading dashboard">
+    <div className="space-y-4 p-4 md:p-0" role="status" aria-label={t('loadingDashboard') || 'Loading dashboard'}>
       {/* KPI cards row */}
       <div className="grid gap-3 md:grid-cols-3">
         <Skeleton className="h-24 rounded-xl" />

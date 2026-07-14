@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import MyProfileForm, { FormField, MyProfileFormData } from "./MyProfileForm";
 import PasswordResetSection from "./PasswordResetSection";
+import ExportActivityLogButton from "./ExportActivityLogButton";
 import { UserRole } from "@/domain/entities/UserRole";
 import LanguageSwitcher from "@/presentation/components/LanguageSwitcher/LanguageSwitcher";
 import AnalyticsConsentControl from "@/presentation/components/AnalyticsConsentControl/AnalyticsConsentControl";
@@ -115,6 +116,15 @@ export function ProfileLayout(props: Props) {
               </p>
               <LanguageSwitcher />
               <AnalyticsConsentControl />
+            </div>
+
+            <div className="mt-5 bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
+              <p className="text-sm font-semibold text-gray-900">{t("dataPrivacySection") ?? "Your data"}</p>
+              <p className="text-xs text-gray-600">
+                {t("dataPrivacyCopy") ??
+                  "Request a copy of your activity log — we'll email it to your account address."}
+              </p>
+              <ExportActivityLogButton />
             </div>
           </aside>
         </div>

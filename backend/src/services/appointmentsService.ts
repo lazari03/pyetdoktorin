@@ -1,6 +1,7 @@
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { UserRole } from '@/domain/entities/UserRole';
 import { canListAppointmentsForRole } from '@/domain/rules/userRoleRules';
+import { createUserNotification } from '@/services/userNotificationsService';
 import {
   AppointmentNotFoundError,
   InvalidAppointmentStatusError,
@@ -185,6 +186,12 @@ export async function getAppointmentById(id: string): Promise<Appointment | null
   return base;
 }
 
+const APPOINTMENT_STATUS_NOTIFICATION_COPY: Partial<Record<AppointmentStatus, { title: string; body: string }>> = {
+  accepted: { title: 'Appointment accepted', body: 'Your appointment has been accepted by the doctor.' },
+  rejected: { title: 'Appointment rejected', body: 'Your appointment request was declined by the doctor.' },
+  completed: { title: 'Appointment completed', body: 'Your appointment has been marked as completed.' },
+};
+
 export async function updateAppointmentStatus(id: string, status: AppointmentStatus, actor: UserRole): Promise<void> {
   const normalizedStatus = normalizeStatus(status);
   if (!['pending', 'accepted', 'rejected', 'completed'].includes(normalizedStatus)) {
@@ -192,6 +199,7 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
   }
   const admin = getFirebaseAdmin();
   const db = admin.firestore();
+  let patientId: string | undefined;
   await db.runTransaction(async (tx) => {
     const appointmentRef = db.collection(COLLECTION).doc(id);
     const appointmentSnap = await tx.get(appointmentRef);
@@ -199,6 +207,7 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
       throw new AppointmentNotFoundError();
     }
     const appointment = appointmentSnap.data() as Appointment & { slotId?: string };
+    patientId = appointment.patientId;
     const updates: Record<string, unknown> = { status: normalizedStatus };
     if (normalizedStatus === 'accepted' && actor === UserRole.Doctor) {
       updates.confirmedAt = Date.now();
@@ -212,6 +221,21 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
       }
     }
   });
+
+  const copy = APPOINTMENT_STATUS_NOTIFICATION_COPY[normalizedStatus];
+  if (copy && patientId) {
+    try {
+      await createUserNotification({
+        userId: patientId,
+        type: `appointment_${normalizedStatus}`,
+        title: copy.title,
+        body: copy.body,
+        metadata: { appointmentId: id },
+      });
+    } catch (error) {
+      console.error('Failed to create appointment status notification:', error);
+    }
+  }
 }
 
 export async function markAppointmentPaid(id: string, transactionId: string): Promise<void> {

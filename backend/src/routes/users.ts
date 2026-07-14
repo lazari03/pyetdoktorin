@@ -10,6 +10,7 @@ import {
   type SecurityAccountSummary,
   writeSecurityAuditLog,
 } from '@/services/securityAuditService';
+import { createUserNotification } from '@/services/userNotificationsService';
 
 const router = Router();
 
@@ -395,6 +396,23 @@ router.patch('/:id', requireAuth([UserRole.Admin]), async (req, res) => {
       firestoreUpdates.phoneNumber = updates.phone;
     }
     await admin.firestore().collection('users').doc(id).set(firestoreUpdates, { merge: true });
+    const targetRole = stringOrUndefined(existingData.role) ?? updates.role;
+    if (
+      updates.approvalStatus === 'approved' &&
+      existingData.approvalStatus !== 'approved' &&
+      targetRole === UserRole.Doctor
+    ) {
+      try {
+        await createUserNotification({
+          userId: id,
+          type: 'doctor_approved',
+          title: 'Your account has been approved',
+          body: 'An admin has approved your doctor account. You can now receive appointments.',
+        });
+      } catch (error) {
+        console.error('Failed to create doctor-approval notification:', error);
+      }
+    }
     if (updates.role) {
       const updatedRole = updates.role as UserRole;
       await admin.auth().setCustomUserClaims(id, {

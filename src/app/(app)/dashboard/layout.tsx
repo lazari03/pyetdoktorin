@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
 import { useInitializeAppointments } from '@/store/appointmentStore';
 import { useDI } from '@/context/DIContext';
@@ -19,6 +20,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import EmailVerificationRequiredModal from '@/presentation/components/auth/EmailVerificationRequiredModal';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const pathname = usePathname();
 
   const { role, loading, isAuthenticated, user, emailVerified } = useAuth();
@@ -92,7 +94,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           data-analytics="dashboard.topbar.new_appointment"
         >
           <PlusIcon className="h-4 w-4 shrink-0" />
-          <span className="hidden lg:inline">New appointment</span>
+          <span className="hidden lg:inline">{t('newAppointment') || 'New appointment'}</span>
         </Link>
       }
     >

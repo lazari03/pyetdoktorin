@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import {
   CalendarDaysIcon,
   ClipboardDocumentListIcon,
@@ -72,11 +73,12 @@ export function PatientKpiCards({
   data: PatientKpiData;
   loading?: boolean;
 }) {
+  const { t } = useTranslation();
   const cards: KpiCard[] = [
     {
-      label: 'Upcoming Visits',
+      label: t('kpiUpcomingVisits') || 'Upcoming Visits',
       value: data.upcomingVisits,
-      helper: 'Scheduled consultations',
+      helper: t('kpiScheduledConsultations') || 'Scheduled consultations',
       href: DASHBOARD_PATHS.appointments,
       Icon: CalendarDaysIcon,
       accent: 'text-purple-700',
@@ -90,9 +92,9 @@ export function PatientKpiCards({
         : null,
     },
     {
-      label: 'Prescriptions',
+      label: t('kpiPrescriptions') || 'Prescriptions',
       value: data.prescriptions,
-      helper: 'Issued to you',
+      helper: t('kpiIssuedToYou') || 'Issued to you',
       href: DASHBOARD_PATHS.reciepes,
       Icon: DocumentTextIcon,
       accent: 'text-teal-700',
@@ -106,9 +108,9 @@ export function PatientKpiCards({
         : null,
     },
     {
-      label: 'Total Visits',
+      label: t('kpiTotalVisits') || 'Total Visits',
       value: data.totalVisits,
-      helper: 'All time',
+      helper: t('kpiAllTime') || 'All time',
       href: DASHBOARD_PATHS.appointments,
       Icon: ClipboardDocumentListIcon,
       accent: 'text-indigo-700',
@@ -122,9 +124,9 @@ export function PatientKpiCards({
         : null,
     },
     {
-      label: 'Pending Actions',
+      label: t('kpiPendingActions') || 'Pending Actions',
       value: data.pendingActions,
-      helper: 'Need your attention',
+      helper: t('kpiNeedYourAttention') || 'Need your attention',
       href: `${DASHBOARD_PATHS.appointments}?filter=pending`,
       Icon: ExclamationCircleIcon,
       accent: data.pendingActions > 0 ? 'text-amber-700' : 'text-gray-600',
@@ -177,7 +179,7 @@ export function PatientKpiCards({
             </div>
             <p className="text-[11px] text-gray-400 leading-none">{card.helper}</p>
             {card.spark.length > 0 && (
-              <Sparkline values={card.spark} color={card.sparkColor} label="7-month trend" />
+              <Sparkline values={card.spark} color={card.sparkColor} label={t('kpiSevenMonthTrend') || '7-month trend'} />
             )}
           </Link>
         );

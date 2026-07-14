@@ -1,0 +1,17 @@
+name: notifications-cleanup
+
+on:
+  schedule:
+    - cron: "0 4 1 * *"
+  workflow_dispatch: {}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call admin cleanup endpoint
+        run: |
+          curl -sSf -X POST "${{ secrets.BACKEND_BASE_URL }}/api/user-notifications/admin/cleanup" \
+            -H "X-Admin-Cleanup-Secret: ${{ secrets.NOTIFICATIONS_CLEANUP_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{}'

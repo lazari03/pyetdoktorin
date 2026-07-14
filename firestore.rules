@@ -375,6 +375,40 @@ service cloud.firestore {
     }
 
     // -------------------------
+    // User notifications (real per-user notification feed — distinct from the
+    // legacy `notifications` collection above, which is only the doctor-
+    // registration admin-approval inbox). All real writes happen server-side
+    // via the Admin SDK, which bypasses these rules; they exist as defense in
+    // depth against a compromised/misused client token.
+    // -------------------------
+    match /userNotifications/{notificationId} {
+      allow get, list: if isAdmin() || (isEmailVerified() && request.auth.uid == resource.data.userId);
+
+      allow create: if isAdmin();
+
+      // Owner may only flip read/readAt on their own notification.
+      allow update: if isAdmin() || (
+        isEmailVerified() &&
+        request.auth.uid == resource.data.userId &&
+        changedKeys().hasOnly(["read", "readAt"]) &&
+        request.resource.data.read is bool &&
+        (request.resource.data.readAt == null || request.resource.data.readAt is int)
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------
+    // User notification archive (permanent per-user activity log, written by
+    // the monthly cleanup job). Read-only for the owner; all writes admin/
+    // backend-only.
+    // -------------------------
+    match /userNotificationArchive/{archiveId} {
+      allow get, list: if isAdmin() || (isEmailVerified() && request.auth.uid == resource.data.userId);
+      allow write: if isAdmin();
+    }
+
+    // -------------------------
     // Prescriptions / recipe
     // -------------------------
     match /recipe/{reciepeId} {

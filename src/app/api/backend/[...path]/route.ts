@@ -31,6 +31,12 @@ function cloneRequestHeaders(req: Request): Headers {
   const headers = new Headers(req.headers);
   headers.delete('host');
   headers.delete('content-length');
+  // This is a server-to-server call, not a browser cross-origin request —
+  // forwarding the browser's own Origin/Referer would make the backend's
+  // CORS check evaluate the wrong thing (the browser's origin instead of
+  // trusting the proxy).
+  headers.delete('origin');
+  headers.delete('referer');
   return headers;
 }
 

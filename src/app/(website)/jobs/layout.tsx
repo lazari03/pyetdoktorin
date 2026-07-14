@@ -3,7 +3,7 @@ import { buildMetadata } from "@/app/seo";
 
 export const metadata: Metadata = buildMetadata({
   title: "Jobs | Pyet Doktorin",
-  description: "Build the future of telemedicine with Pyet Doktorin.",
+  description: "Help build the platform connecting patients with licensed doctors, at Pyet Doktorin.",
   path: "/jobs",
 });
 

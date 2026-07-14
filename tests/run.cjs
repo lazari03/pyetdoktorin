@@ -8,6 +8,7 @@ const {
   resolveSlotsForDate,
   countWeeklyCapacity,
 } = require("../src/domain/rules/availabilityRules.ts");
+const { rankDoctorMatches, timeToMinutes } = require("../src/domain/rules/quickMatchRules.ts");
 
 async function test(name, fn) {
   try {
@@ -66,6 +67,45 @@ async function main() {
     assert.equal(slots.some((slot) => slot.time === "11:00" && slot.booked), true);
     assert.equal(slots.some((slot) => slot.time === "13:00" && slot.booked), true);
     assert.ok(countWeeklyCapacity(availability) > 0);
+  });
+
+  await test("timeToMinutes parses HH:MM and rejects garbage", () => {
+    assert.equal(timeToMinutes("09:30"), 570);
+    assert.equal(timeToMinutes("00:00"), 0);
+    assert.equal(timeToMinutes("25:00"), null);
+    assert.equal(timeToMinutes("nope"), null);
+  });
+
+  await test("rankDoctorMatches picks nearest free slot and skips fully booked doctors", () => {
+    const drA = { id: "a", name: "Dr A", specialization: ["cardio"] };
+    const drB = { id: "b", name: "Dr B", specialization: ["cardio"] };
+    const drC = { id: "c", name: "Dr C", specialization: ["cardio"] };
+    const matches = rankDoctorMatches(
+      [
+        { doctor: drA, slots: [{ time: "09:00", booked: false, past: false }, { time: "14:00", booked: false, past: false }] },
+        { doctor: drB, slots: [{ time: "10:00", booked: true, past: false }, { time: "10:30", booked: false, past: false }] },
+        { doctor: drC, slots: [{ time: "10:00", booked: true, past: false }, { time: "11:00", booked: false, past: true }] },
+      ],
+      "10:00",
+    );
+    assert.equal(matches.length, 2);
+    assert.equal(matches[0].doctor.id, "b"); // 10:30 is 30min away, beats Dr A's 09:00 (60min)
+    assert.equal(matches[0].time, "10:30");
+    assert.equal(matches[1].doctor.id, "a");
+    assert.equal(matches[1].time, "09:00");
+  });
+
+  await test("rankDoctorMatches breaks distance ties by flexibility (more free slots)", () => {
+    const drA = { id: "a", name: "Dr A", specialization: [] };
+    const drB = { id: "b", name: "Dr B", specialization: [] };
+    const matches = rankDoctorMatches(
+      [
+        { doctor: drA, slots: [{ time: "10:00", booked: false, past: false }] },
+        { doctor: drB, slots: [{ time: "10:00", booked: false, past: false }, { time: "16:00", booked: false, past: false }] },
+      ],
+      "10:00",
+    );
+    assert.equal(matches[0].doctor.id, "b");
   });
 }
 

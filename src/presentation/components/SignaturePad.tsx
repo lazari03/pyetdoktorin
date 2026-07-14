@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   onChange: (dataUrl: string) => void;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function SignaturePad({ onChange, onDraftChange, saveSignal, autoSave = true }: Props) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [draftDataUrl, setDraftDataUrl] = useState("");
@@ -151,7 +153,7 @@ export function SignaturePad({ onChange, onDraftChange, saveSignal, autoSave = t
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-gray-700">Signature</p>
+      <p className="text-xs font-medium text-gray-700">{t("signature") || "Signature"}</p>
       <div className="rounded-2xl border border-gray-300 bg-white overflow-hidden">
         <canvas
           ref={canvasRef}
@@ -166,7 +168,7 @@ export function SignaturePad({ onChange, onDraftChange, saveSignal, autoSave = t
       </div>
       <div className="flex justify-end">
         <button type="button" onClick={clear} className="text-xs text-purple-600 hover:underline">
-          Clear
+          {t("clear") || "Clear"}
         </button>
       </div>
     </div>

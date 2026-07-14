@@ -11,6 +11,7 @@ import { LoginUseCase } from '@/application/loginUseCase';
 import { TestAuthConnectionUseCase } from '@/application/testAuthConnectionUseCase';
 import { RegisterUserUseCase } from '@/application/registerUserUseCase';
 import { FetchDoctorsUseCase } from '@/application/fetchDoctorsUseCase';
+import { GetSpecializationsUseCase } from '@/application/getSpecializationsUseCase';
 import { GetUserProfileUseCase } from '@/application/getUserProfileUseCase';
 import { UpdateUserProfileUseCase } from '@/application/updateUserProfileUseCase';
 import { UploadProfilePictureUseCase } from '@/application/uploadProfilePictureUseCase';
@@ -39,6 +40,7 @@ import { PrepareCheckoutUseCase } from '@/application/prepareCheckoutUseCase';
 import { ClearPaymentProcessingUseCase } from '@/application/clearPaymentProcessingUseCase';
 import { ListAppointmentsUseCase } from '@/application/listAppointmentsUseCase';
 import { CreateAppointmentUseCase } from '@/application/createAppointmentUseCase';
+import { QuickMatchDoctorUseCase } from '@/application/quickMatchDoctorUseCase';
 import { GetAdminDashboardStatsUseCase } from '@/application/getAdminDashboardStatsUseCase';
 import { GetSecurityLogsUseCase } from '@/application/getSecurityLogsUseCase';
 import { DismissNotificationByIdUseCase } from '@/application/dismissNotificationByIdUseCase';
@@ -50,6 +52,10 @@ import { UpdateClinicBookingStatusUseCase } from '@/application/updateClinicBook
 import { DismissNotificationUseCase } from '@/application/dismissNotificationUseCase';
 import { UpdateAppointmentStatusAndNotifyUseCase } from '@/application/updateAppointmentStatusAndNotifyUseCase';
 import { GetPharmaciesUseCase } from '@/application/getPharmaciesUseCase';
+import { ListUserNotificationsUseCase } from '@/application/listUserNotificationsUseCase';
+import { MarkUserNotificationReadUseCase } from '@/application/markUserNotificationReadUseCase';
+import { MarkAllUserNotificationsReadUseCase } from '@/application/markAllUserNotificationsReadUseCase';
+import { RequestUserNotificationsExportUseCase } from '@/application/requestUserNotificationsExportUseCase';
 import {
   authService,
   paymentCheckoutService,
@@ -81,6 +87,7 @@ import {
   clinicBookingRepository,
   pharmacyService,
   appointmentNotificationService,
+  userNotificationsService,
 } from './di.services';
 
 interface DIContextValue {
@@ -105,6 +112,11 @@ interface DIContextValue {
   testAuthConnectionUseCase: TestAuthConnectionUseCase;
   registerUserUseCase: RegisterUserUseCase;
   fetchDoctorsUseCase: FetchDoctorsUseCase;
+  getSpecializationsUseCase: GetSpecializationsUseCase;
+  listUserNotificationsUseCase: ListUserNotificationsUseCase;
+  markUserNotificationReadUseCase: MarkUserNotificationReadUseCase;
+  markAllUserNotificationsReadUseCase: MarkAllUserNotificationsReadUseCase;
+  requestUserNotificationsExportUseCase: RequestUserNotificationsExportUseCase;
   getUserProfileUseCase: GetUserProfileUseCase;
   updateUserProfileUseCase: UpdateUserProfileUseCase;
   uploadProfilePictureUseCase: UploadProfilePictureUseCase;
@@ -133,6 +145,7 @@ interface DIContextValue {
   clearPaymentProcessingUseCase: ClearPaymentProcessingUseCase;
   listAppointmentsUseCase: ListAppointmentsUseCase;
   createAppointmentUseCase: CreateAppointmentUseCase;
+  quickMatchDoctorUseCase: QuickMatchDoctorUseCase;
   getAdminDashboardStatsUseCase: GetAdminDashboardStatsUseCase;
   getSecurityLogsUseCase: GetSecurityLogsUseCase;
   dismissNotificationByIdUseCase: DismissNotificationByIdUseCase;
@@ -160,6 +173,11 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const testAuthConnectionUseCase = new TestAuthConnectionUseCase(authLoginService);
   const registerUserUseCase = new RegisterUserUseCase(registrationService, analyticsService);
   const fetchDoctorsUseCase = new FetchDoctorsUseCase(doctorSearchService);
+  const getSpecializationsUseCase = new GetSpecializationsUseCase(doctorSearchService);
+  const listUserNotificationsUseCase = new ListUserNotificationsUseCase(userNotificationsService);
+  const markUserNotificationReadUseCase = new MarkUserNotificationReadUseCase(userNotificationsService);
+  const markAllUserNotificationsReadUseCase = new MarkAllUserNotificationsReadUseCase(userNotificationsService);
+  const requestUserNotificationsExportUseCase = new RequestUserNotificationsExportUseCase(userNotificationsService);
   const getUserProfileUseCase = new GetUserProfileUseCase(userProfileService);
   const updateUserProfileUseCase = new UpdateUserProfileUseCase(userProfileService, authService);
   const uploadProfilePictureUseCase = new UploadProfilePictureUseCase(userProfileService);
@@ -188,6 +206,7 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const clearPaymentProcessingUseCase = new ClearPaymentProcessingUseCase(appointmentPaymentService);
   const listAppointmentsUseCase = new ListAppointmentsUseCase(appointmentService);
   const createAppointmentUseCase = new CreateAppointmentUseCase(appointmentService);
+  const quickMatchDoctorUseCase = new QuickMatchDoctorUseCase(doctorSearchService, availabilityService);
   const getAdminDashboardStatsUseCase = new GetAdminDashboardStatsUseCase(adminStatsService);
   const getSecurityLogsUseCase = new GetSecurityLogsUseCase(securityLogsService);
   const dismissNotificationByIdUseCase = new DismissNotificationByIdUseCase(notificationService);
@@ -229,6 +248,11 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         testAuthConnectionUseCase,
         registerUserUseCase,
         fetchDoctorsUseCase,
+        getSpecializationsUseCase,
+        listUserNotificationsUseCase,
+        markUserNotificationReadUseCase,
+        markAllUserNotificationsReadUseCase,
+        requestUserNotificationsExportUseCase,
         checkProfileCompleteUseCase,
         createReciepeUseCase,
         getReciepesByDoctorUseCase,
@@ -252,6 +276,7 @@ export const DIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         clearPaymentProcessingUseCase,
         listAppointmentsUseCase,
         createAppointmentUseCase,
+        quickMatchDoctorUseCase,
         getAdminDashboardStatsUseCase,
         getSecurityLogsUseCase,
         dismissNotificationByIdUseCase,

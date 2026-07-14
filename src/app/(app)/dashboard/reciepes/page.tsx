@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
 import { useTranslation } from "react-i18next";
@@ -11,8 +11,9 @@ import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
 import { TableSkeleton } from '@/presentation/components/Skeleton/TableSkeleton';
 import { DASHBOARD_PATHS } from "@/navigation/paths";
-import { PillIcon, ClipboardIcon } from "@/presentation/components/icons/MiniIcons";
-import { initialsOf } from "@/presentation/utils/initials";
+import Pager from "@/presentation/components/Pager/Pager";
+
+const PAGE_SIZE = 10;
 
 type Reciepe = {
   id: string;
@@ -29,13 +30,6 @@ type Reciepe = {
   signatureDataUrl?: string;
 };
 
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  return parts.length >= 2
-    ? (parts[0][0] + parts[1][0]).toUpperCase()
-    : (name[0] ?? "?").toUpperCase();
-}
-
 export default function PatientReciepesPage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
@@ -44,7 +38,8 @@ export default function PatientReciepesPage() {
   const [reciepes, setReciepes] = useState<Reciepe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     if (!user?.uid) return;
@@ -82,9 +77,24 @@ export default function PatientReciepesPage() {
     load();
   }, [load]);
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return reciepes;
+    return reciepes.filter((r) =>
+      [r.title, r.doctor, r.medicines, r.date]
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [reciepes, search]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   if (role !== UserRole.Patient) return <RedirectingModal show />;
 
-  const active = reciepes.find((r) => r.id === activeId) || reciepes[0];
+  const active = filtered.find((r) => r.id === activeId) || paged[0];
 
   return (
     <RequestStateGate
@@ -115,8 +125,20 @@ export default function PatientReciepesPage() {
 
           <div className="rx-layout">
             {/* Sidebar list */}
-            <aside className="panel space-y-2">
-              {reciepes.length === 0 ? (
+            <aside className="panel panel-compact space-y-1">
+              {reciepes.length > 0 && (
+                <input
+                  type="search"
+                  className="input"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder={t("searchPrescriptions") || "Search…"}
+                />
+              )}
+              {filtered.length === 0 ? (
                 <div className="empty-state">
                   <svg
                     className="h-10 w-10 empty-state-icon"
@@ -133,15 +155,19 @@ export default function PatientReciepesPage() {
                     />
                   </svg>
                   <p className="empty-state-title">
-                    {t("noReciepesYet") || "No prescriptions yet"}
+                    {search
+                      ? t("noSearchResults") || "No matches"
+                      : t("noReciepesYet") || "No prescriptions yet"}
                   </p>
                   <p className="empty-state-hint">
-                    {t("noReciepesHint") ||
-                      "Your doctor-issued prescriptions will appear here."}
+                    {search
+                      ? t("tryOtherSearch") || "Try a different search."
+                      : t("noReciepesHint") ||
+                        "Your doctor-issued prescriptions will appear here."}
                   </p>
                 </div>
               ) : (
-                reciepes.map((r) => (
+                paged.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => setActiveId(r.id)}
@@ -149,43 +175,26 @@ export default function PatientReciepesPage() {
                       active?.id === r.id ? "rx-item-active" : ""
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="avatar-sm">{initials(r.doctor || "?")}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-0.5">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
-                            {r.title}
-                          </p>
-                          {r.status && (
-                            <span className={`badge badge-${r.status}`}>
-                              {t(r.status)}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-600 truncate">
-                          {r.doctor || t("doctor")}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[11px] text-gray-400">
-                            {r.date}
-                          </span>
-                          <span
-                            className={`badge ${
-                              r.type === "reimbursement"
-                                ? "badge-reimbursement"
-                                : "badge-standard"
-                            }`}
-                          >
-                            {r.type === "reimbursement"
-                              ? t("prescriptionTypeReimbursement") || "Reimb."
-                              : t("prescriptionTypeStandard") || "Std."}
-                          </span>
-                        </div>
-                      </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[13px] font-semibold text-gray-900 truncate">
+                        {r.title}
+                      </p>
+                      {r.status && (
+                        <span className={`badge badge-${r.status}`}>
+                          {t(r.status)}
+                        </span>
+                      )}
                     </div>
+                    <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                      {r.doctor || t("doctor")} · {r.date} ·{" "}
+                      {r.type === "reimbursement"
+                        ? t("prescriptionTypeReimbursement") || "Reimb."
+                        : t("prescriptionTypeStandard") || "Std."}
+                    </p>
                   </button>
                 ))
               )}
+              <Pager page={safePage} pageCount={pageCount} onChange={setPage} />
             </aside>
 
             {/* Detail panel */}

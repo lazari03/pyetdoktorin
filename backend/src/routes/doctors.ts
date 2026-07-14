@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '@/middleware/auth';
 import { UserRole } from '@/domain/entities/UserRole';
 import { validateQuery } from '@/routes/validation';
-import { getDoctorById, searchDoctors } from '@/services/doctorsService';
+import { getDoctorById, listSpecializations, searchDoctors } from '@/services/doctorsService';
 
 const router = Router();
 
@@ -30,6 +30,16 @@ router.get('/', requireAuth([...allowedRoles]), async (req, res) => {
   } catch (error) {
     console.error('Error searching doctors', error);
     res.status(500).json({ message: 'Failed to fetch doctors' });
+  }
+});
+
+router.get('/specializations', requireAuth([...allowedRoles]), async (_req, res) => {
+  try {
+    const items = await listSpecializations();
+    res.json({ items });
+  } catch (error) {
+    console.error('Error listing specializations', error);
+    res.status(500).json({ message: 'Failed to fetch specializations' });
   }
 });
 

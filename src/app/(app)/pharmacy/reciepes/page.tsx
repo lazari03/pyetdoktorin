@@ -14,6 +14,9 @@ import { PillIcon, ClipboardIcon, UserIcon } from "@/presentation/components/ico
 import { initialsOf } from "@/presentation/utils/initials";
 import { UserRole } from "@/domain/entities/UserRole";
 import { useToast } from "@/presentation/components/Toast/ToastProvider";
+import Pager from "@/presentation/components/Pager/Pager";
+
+const PAGE_SIZE = 10;
 
 type Reciepe = {
   id: string;
@@ -33,13 +36,6 @@ type Reciepe = {
 
 type StatusFilter = "all" | "pending" | "accepted" | "rejected";
 
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  return parts.length >= 2
-    ? (parts[0][0] + parts[1][0]).toUpperCase()
-    : (name[0] ?? "?").toUpperCase();
-}
-
 export default function PharmacyReciepesPage() {
   const { role, user } = useAuth();
   const { getReciepesByPharmacyUseCase, updateReciepeStatusUseCase } = useDI();
@@ -50,6 +46,8 @@ export default function PharmacyReciepesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     if (!user?.uid) return;
@@ -94,15 +92,26 @@ export default function PharmacyReciepesPage() {
     load();
   }, [load]);
 
-  const filtered = useMemo(
-    () =>
+  const filtered = useMemo(() => {
+    const byStatus =
       statusFilter === "all"
         ? reciepes
-        : reciepes.filter((r) => r.status === statusFilter),
-    [reciepes, statusFilter]
-  );
+        : reciepes.filter((r) => r.status === statusFilter);
+    const q = search.trim().toLowerCase();
+    if (!q) return byStatus;
+    return byStatus.filter((r) =>
+      [r.title, r.patient, r.doctor, r.medicines, r.createdAt]
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [reciepes, statusFilter, search]);
 
-  const active = filtered.find((r) => r.id === activeId) || filtered[0];
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const active = filtered.find((r) => r.id === activeId) || paged[0];
 
   if (role !== UserRole.Pharmacy) return <RedirectingModal show />;
 
@@ -184,6 +193,7 @@ export default function PharmacyReciepesPage() {
                 onClick={() => {
                   setStatusFilter(f.value);
                   setActiveId(null);
+                  setPage(1);
                 }}
                 className={`filter-pill ${
                   statusFilter === f.value
@@ -205,11 +215,23 @@ export default function PharmacyReciepesPage() {
           <div className="rx-layout">
 
             {/* Sidebar list */}
-            <aside className="panel space-y-2">
+            <aside className="panel panel-compact space-y-1">
+              {reciepes.length > 0 && (
+                <input
+                  type="search"
+                  className="input"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder={t("searchPrescriptions") || "Search…"}
+                />
+              )}
               {loading && reciepes.length === 0 ? (
                 <>
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="skeleton" style={{ height: "72px" }} />
+                    <div key={i} className="skeleton" style={{ height: "44px" }} />
                   ))}
                 </>
               ) : filtered.length === 0 ? (
@@ -229,20 +251,24 @@ export default function PharmacyReciepesPage() {
                     />
                   </svg>
                   <p className="empty-state-title">
-                    {statusFilter === "all"
+                    {search
+                      ? t("noSearchResults") || "No matches"
+                      : statusFilter === "all"
                       ? t("noPrescriptionsYet") || "No prescriptions yet"
                       : t("noPrescriptionsStatus") ||
                         `No ${statusFilter} prescriptions`}
                   </p>
                   <p className="empty-state-hint">
-                    {statusFilter === "all"
+                    {search
+                      ? t("tryOtherSearch") || "Try a different search."
+                      : statusFilter === "all"
                       ? t("noPrescriptionsHint") ||
                         "Prescriptions assigned to your pharmacy will appear here."
                       : t("tryOtherFilter") || "Try a different filter."}
                   </p>
                 </div>
               ) : (
-                filtered.map((r) => (
+                paged.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => setActiveId(r.id)}
@@ -250,44 +276,24 @@ export default function PharmacyReciepesPage() {
                       active?.id === r.id ? "rx-item-active" : ""
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="avatar-sm">{initials(r.patient)}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-0.5">
-                          <p
-                            className="text-sm font-semibold text-gray-900 truncate"
-                            style={{ lineHeight: 1.3 }}
-                          >
-                            {r.title}
-                          </p>
-                          <span className={`badge badge-${r.status}`}>
-                            {t(r.status)}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-600 truncate">
-                          {r.patient}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[11px] text-gray-400">
-                            {r.createdAt}
-                          </span>
-                          <span
-                            className={`badge ${
-                              r.type === "reimbursement"
-                                ? "badge-reimbursement"
-                                : "badge-standard"
-                            }`}
-                          >
-                            {r.type === "reimbursement"
-                              ? t("prescriptionTypeReimbursement") || "Reimb."
-                              : t("prescriptionTypeStandard") || "Std."}
-                          </span>
-                        </div>
-                      </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[13px] font-semibold text-gray-900 truncate">
+                        {r.title}
+                      </p>
+                      <span className={`badge badge-${r.status}`}>
+                        {t(r.status)}
+                      </span>
                     </div>
+                    <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                      {r.patient} · {r.createdAt} ·{" "}
+                      {r.type === "reimbursement"
+                        ? t("prescriptionTypeReimbursement") || "Reimb."
+                        : t("prescriptionTypeStandard") || "Std."}
+                    </p>
                   </button>
                 ))
               )}
+              <Pager page={safePage} pageCount={pageCount} onChange={setPage} />
             </aside>
 
             {/* Detail panel */}

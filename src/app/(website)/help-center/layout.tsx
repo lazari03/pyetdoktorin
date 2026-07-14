@@ -3,7 +3,7 @@ import { buildMetadata } from "@/app/seo";
 
 export const metadata: Metadata = buildMetadata({
   title: "Help Center | Pyet Doktorin",
-  description: "Guides, onboarding, and support for the Pyet Doktorin telemedicine platform.",
+  description: "Guides, onboarding, and support for the Pyet Doktorin platform.",
   path: "/help-center",
 });
 

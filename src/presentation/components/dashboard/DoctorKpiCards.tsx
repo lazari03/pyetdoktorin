@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import {
   CalendarDaysIcon,
   ExclamationCircleIcon,
@@ -18,11 +19,12 @@ export type DoctorKpiData = {
 };
 
 export function DoctorKpiCards({ data }: { data: DoctorKpiData }) {
+  const { t } = useTranslation();
   const cards = [
     {
-      label: "Today's Appointments",
+      label: t('kpiTodayAppointments') || "Today's Appointments",
       value: data.todayAppointments,
-      helper: 'Scheduled for today',
+      helper: t('kpiScheduledForToday') || 'Scheduled for today',
       href: DASHBOARD_PATHS.appointments,
       Icon: CalendarDaysIcon,
       accent: 'text-purple-700',
@@ -30,9 +32,9 @@ export function DoctorKpiCards({ data }: { data: DoctorKpiData }) {
       hoverBg: 'hover:border-purple-300 hover:bg-purple-50/60',
     },
     {
-      label: 'Pending Requests',
+      label: t('kpiPendingRequests') || 'Pending Requests',
       value: data.pendingRequests,
-      helper: 'Awaiting your response',
+      helper: t('kpiAwaitingResponse') || 'Awaiting your response',
       href: `${DASHBOARD_PATHS.appointments}?filter=pending`,
       Icon: ExclamationCircleIcon,
       accent: data.pendingRequests > 0 ? 'text-amber-700' : 'text-gray-600',
@@ -42,9 +44,9 @@ export function DoctorKpiCards({ data }: { data: DoctorKpiData }) {
         : 'hover:border-gray-300 hover:bg-gray-50/60',
     },
     {
-      label: 'Earnings This Month',
+      label: t('kpiEarningsThisMonth') || 'Earnings This Month',
       value: `$${data.monthlyEarnings.toFixed(2)}`,
-      helper: 'Net payout so far',
+      helper: t('kpiNetPayoutSoFar') || 'Net payout so far',
       href: DASHBOARD_PATHS.earnings,
       Icon: CurrencyDollarIcon,
       accent: 'text-emerald-700',
@@ -52,9 +54,9 @@ export function DoctorKpiCards({ data }: { data: DoctorKpiData }) {
       hoverBg: 'hover:border-emerald-300 hover:bg-emerald-50/60',
     },
     {
-      label: 'Active Patients',
+      label: t('kpiActivePatients') || 'Active Patients',
       value: data.activePatients,
-      helper: 'Under your care',
+      helper: t('kpiUnderYourCare') || 'Under your care',
       href: DASHBOARD_PATHS.patients,
       Icon: UserGroupIcon,
       accent: 'text-indigo-700',

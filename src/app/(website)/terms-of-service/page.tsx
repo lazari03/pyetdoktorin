@@ -51,20 +51,20 @@ function getCopy(locale: Locale, companyName: string): Copy {
     return {
       metadataTitle: "Terms and Conditions | Pyet Doktorin",
       metadataDescription:
-        "Albania-focused terms and conditions for the use of Pyet Doktorin's telemedicine platform.",
+        "Terms and conditions for Pyet Doktorin, a software platform providing video-consultation and payment technology for independent doctors and their patients.",
       eyebrow: "Legal",
       title: "Terms and Conditions",
       subtitle:
-        "These terms are drafted for an Albanian digital-health platform. Mandatory Albanian consumer, healthcare and data-protection rights prevail over any conflicting wording in this page.",
+        "Pyet Doktorin is a technology platform, not a healthcare provider. Mandatory Albanian consumer, e-commerce and data-protection rights prevail over any conflicting wording in this page.",
       heroPrimary: "Contact legal support",
       heroSecondary: "Home",
       sectionEyebrow: "Albanian-law framework",
       sectionTitle: "Your agreement with Pyet Doktorin",
       sectionSubtitle:
-        "This page replaces the previous placeholder summary with a fuller operational terms draft for bookings, payments, privacy, clinician obligations and patient rights.",
+        "This page sets out the operational terms for bookings, payments, privacy, doctor obligations and patient rights on the Pyet Doktorin platform.",
       legalNoticeTitle: "Important legal notice",
       legalNoticeBody:
-        "These terms are designed to align with Albanian law, including healthcare, consumer, electronic-commerce and personal-data rules. If Albanian mandatory law gives the user broader rights, Albanian law controls.",
+        "These terms are designed to align with Albanian consumer, electronic-commerce and personal-data law. Doctors using the platform remain independently subject to Albanian healthcare regulation. If Albanian mandatory law gives the user broader rights, Albanian law controls.",
       effectiveDateLabel: "Last updated",
       effectiveDateValue: "March 30, 2026",
       operatorTitle: "Platform operator details",
@@ -79,7 +79,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
         {
           title: "1. Scope and acceptance",
           paragraphs: [
-            "These terms govern access to and use of the Pyet Doktorin website, user dashboard, booking flows, messaging features, payment flows, and any digital healthcare functionality made available through the platform.",
+            "These terms govern access to and use of the Pyet Doktorin website, user dashboard, booking flows, messaging features, video-call technology, and payment processing made available through the platform.",
             "By creating an account, booking a consultation, or otherwise using the platform, the user confirms that they have read and accepted these terms and the privacy policy.",
           ],
           note: "Nothing in these terms removes or limits rights that Albanian law grants to consumers, patients, minors, or data subjects.",
@@ -87,13 +87,14 @@ function getCopy(locale: Locale, companyName: string): Copy {
         {
           title: "2. Role of the platform",
           paragraphs: [
-            "Pyet Doktorin operates as a digital platform that enables users to discover healthcare professionals, request appointments, receive remote consultations where clinically appropriate, and manage related communication and payment flows.",
-            "The platform is not an ambulance service, emergency dispatch center, hospital, or substitute for urgent in-person examination when remote care is not appropriate.",
+            "Pyet Doktorin is a software-as-a-service (SaaS) platform. We provide independent, licensed doctors with the technology to offer video consultations to patients and to collect payment for their services. We connect patients with independent doctors — we do not provide medical services ourselves.",
+            "Pyet Doktorin does not employ doctors, does not practice medicine, and does not provide medical advice, diagnosis, or treatment. Before a doctor can join the platform, we verify their identity and the professional license or credentials they submit; this verification does not make the platform a party to, or provider of, the consultation itself.",
+            "Each doctor is an independent professional, solely and exclusively responsible for the medical services they choose to provide through the platform. The platform is not an ambulance service, emergency dispatch center, hospital, or substitute for urgent in-person examination.",
           ],
           bullets: [
             "For urgent medical emergencies, contact Albania's National Medical Emergency service at 127.",
-            "A clinician may refuse or stop a remote consultation if an in-person visit, emergency referral, or additional verification is medically necessary.",
-            "Professional medical acts remain the responsibility of the clinician or healthcare institution providing the service.",
+            "A doctor may refuse or stop a remote consultation if an in-person visit, emergency referral, or additional verification is medically necessary.",
+            "All professional medical acts, judgments and decisions remain the sole responsibility of the independent doctor providing the consultation — never the platform.",
           ],
         },
         {
@@ -110,37 +111,37 @@ function getCopy(locale: Locale, companyName: string): Copy {
         {
           title: "4. Bookings, pricing, payments, cancellations and refunds",
           paragraphs: [
-            "Any fee payable through the platform must be shown clearly before the user confirms the order or booking request. The platform should provide an electronic confirmation and, where legally required, the corresponding fiscal or commercial documentation.",
-            "Specific cancellation, rebooking, no-show and refund rules may differ by service type, clinician or institution, but they must be disclosed before checkout or in the booking confirmation.",
+            "Pyet Doktorin operates the checkout and processes payment on behalf of the independent doctor for each booked consultation. Any fee payable through the platform must be shown clearly before the user confirms the order or booking request. The platform should provide an electronic confirmation and, where legally required, the corresponding fiscal or commercial documentation.",
+            "Specific cancellation, rebooking, no-show and refund rules may differ by service type, doctor or institution, but they must be disclosed before checkout or in the booking confirmation.",
           ],
           bullets: [
             "No hidden charges should be applied after confirmation unless the user expressly accepts a change.",
             "Where Albanian consumer law grants mandatory pre-contract information or withdrawal-related rights, those rights prevail.",
-            "If a consultation cannot be delivered because the clinician declines it or the platform cancels it without user fault, the user should receive the remedy disclosed at checkout or otherwise required by law.",
+            "If a consultation cannot be delivered because the doctor declines it or the platform cancels it without user fault, the user should receive the remedy disclosed at checkout or otherwise required by law.",
           ],
         },
         {
-          title: "5. Medical services, patient rights and informed participation",
+          title: "5. The independent doctor's service and patient rights",
           paragraphs: [
-            "Users must provide truthful health information, symptoms, medications and other information relevant to the consultation. Incomplete or inaccurate information may affect the safety and suitability of remote care.",
-            "Patients retain the rights granted by Albanian healthcare law and patient-rights standards, including the right to understandable information, dignity, confidentiality, and informed participation in care decisions.",
+            "The consultation itself — the medical advice, diagnosis, prescription or treatment — is a service provided directly by the independent doctor the patient books, not by Pyet Doktorin. Users must provide truthful health information, symptoms, medications and other information relevant to the consultation. Incomplete or inaccurate information may affect the safety and suitability of remote care.",
+            "Patients retain the rights granted by Albanian healthcare law and patient-rights standards, including the right to understandable information, dignity, confidentiality, and informed participation in care decisions, in their relationship with the doctor.",
           ],
           bullets: [
             "Remote care may have limits compared with a physical examination.",
-            "Prescriptions, recommendations, referrals and follow-up instructions must be used only by the named patient and in accordance with the clinician's instructions and Albanian law.",
-            "The platform may make summary records, booking logs and communication metadata available to the patient or clinician as required for lawful service delivery and recordkeeping.",
+            "Prescriptions, recommendations, referrals and follow-up instructions must be used only by the named patient and in accordance with the doctor's instructions and Albanian law.",
+            "The platform may make summary records, booking logs and communication metadata available to the patient or doctor as required for lawful service delivery and recordkeeping.",
           ],
         },
         {
-          title: "6. Clinician and provider obligations",
+          title: "6. Independent doctor obligations",
           paragraphs: [
-            "Healthcare professionals and institutions using the platform must hold the licenses, registrations, authorizations or professional status required by Albanian law for the services they provide.",
-            "Unless expressly stated otherwise, clinicians remain independently responsible for the legality, quality and professional standard of the healthcare service they deliver to the patient.",
+            "Doctors and clinics using the platform act as independent, freelance professionals — never as employees or agents of Pyet Doktorin. They must hold the licenses, registrations, authorizations or professional status required by Albanian law for the services they provide, and the platform verifies this documentation before granting access.",
+            "Doctors remain solely and independently responsible for the legality, quality and professional standard of the medical service they deliver to the patient. Pyet Doktorin's role is limited to providing the video-call technology, scheduling tools and payment processing that support that independent relationship.",
           ],
           bullets: [
-            "Clinicians must not provide services outside their scope of practice.",
-            "Clinicians must respect confidentiality, recordkeeping and informed-consent obligations applicable under Albanian law.",
-            "The platform may suspend a clinician account where there is evidence of licensing, safety, fraud or professional-conduct concerns.",
+            "Doctors must not provide services outside their scope of practice.",
+            "Doctors must respect confidentiality, recordkeeping and informed-consent obligations applicable under Albanian law.",
+            "The platform may suspend a doctor's account where there is evidence of licensing, safety, fraud or professional-conduct concerns.",
           ],
         },
         {
@@ -149,7 +150,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
             "Users may not use the platform for unlawful activity, impersonation, abuse of medical staff, scraping, reverse engineering beyond what the law mandatorily permits, malware distribution, spam, unauthorized access, or submission of deliberately false medical or payment information.",
           ],
           bullets: [
-            "No harassment, threats or discriminatory conduct toward staff, clinicians or other users.",
+            "No harassment, threats or discriminatory conduct toward staff, doctors or other users.",
             "No use of the platform to obtain prescriptions or medical documents by fraud.",
             "No interference with system integrity, security measures or audit logs.",
           ],
@@ -176,7 +177,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
           title: "10. Liability",
           paragraphs: [
             "Pyet Doktorin does not exclude liability that cannot legally be excluded under Albanian law. Any limitation of liability in these terms must be interpreted narrowly and only to the extent allowed by mandatory law.",
-            "To the extent permitted by law, the platform is not liable for losses caused by inaccurate user information, third-party internet outages, force majeure, or independent medical decisions taken by a properly authorized clinician acting within their professional responsibility.",
+            "Because Pyet Doktorin is a technology platform and not a healthcare provider, and to the extent permitted by law, the platform is not liable for the medical acts, advice, diagnosis, treatment or professional decisions of any independent doctor, nor for losses caused by inaccurate user information, third-party internet outages, or force majeure. Liability for medical services rests with the independent doctor who provided them.",
           ],
         },
         {
@@ -201,7 +202,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
       ],
       referencesTitle: "Legal basis used for this draft",
       referencesBody:
-        "This page was drafted against the Albanian legal framework most relevant to a telemedicine marketplace. These links are included so the legal basis stays visible instead of hidden behind generic language.",
+        "These laws primarily govern the independent doctors who use the platform, and the consumer, e-commerce and data-protection obligations that apply to Pyet Doktorin as a technology platform. These links are included so the legal basis stays visible instead of hidden behind generic language.",
       references: [
         {
           label: "Law No. 10107, dated 30.03.2009, on Healthcare in the Republic of Albania",
@@ -231,7 +232,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
       ],
       ctaTitle: "Need a legally tailored version?",
       ctaSubtitle:
-        "Complete the registered-office and tax-number fields before publication and have Albanian counsel review the final text against your booking, refund and clinician onboarding workflow.",
+        "Complete the registered-office and tax-number fields before publication and have Albanian counsel review the final text against your booking, refund and doctor onboarding workflow.",
       ctaPrimary: "Contact the team",
       ctaSecondary: "View privacy policy",
     };
@@ -240,20 +241,20 @@ function getCopy(locale: Locale, companyName: string): Copy {
   return {
     metadataTitle: "Kushtet dhe kushtet e përdorimit | Pyet Doktorin",
     metadataDescription:
-      "Kushte dhe kushte përdorimi të hartuara për një platformë telemjekësie në Shqipëri, me fokus te ligji shqiptar.",
+      "Kushtet e përdorimit të Pyet Doktorin, një platformë softuerike që ofron teknologji video-konsultimi dhe pagese për mjekë të pavarur dhe pacientët e tyre.",
     eyebrow: "Juridike",
     title: "Kushtet dhe Kushtet e Përdorimit",
     subtitle:
-      "Ky tekst është hartuar për një platformë shqiptare të shëndetit digjital. Të drejtat e detyrueshme sipas ligjit shqiptar për konsumatorin, kujdesin shëndetësor dhe mbrojtjen e të dhënave kanë përparësi ndaj çdo formulimi konfliktual në këtë faqe.",
+      "Pyet Doktorin është një platformë teknologjike, jo një ofrues i kujdesit shëndetësor. Të drejtat e detyrueshme sipas ligjit shqiptar për konsumatorin, tregtinë elektronike dhe mbrojtjen e të dhënave kanë përparësi ndaj çdo formulimi konfliktual në këtë faqe.",
     heroPrimary: "Kontaktoni mbështetjen ligjore",
     heroSecondary: "Ballina",
     sectionEyebrow: "Kuadri ligjor shqiptar",
     sectionTitle: "Marrëveshja juaj me Pyet Doktorin",
     sectionSubtitle:
-      "Kjo faqe zëvendëson përmbledhjen e shkurtër ekzistuese me një draft më të plotë për rezervimet, pagesat, privatësinë, detyrimet e profesionistëve dhe të drejtat e pacientit.",
+      "Kjo faqe përcakton kushtet operacionale për rezervimet, pagesat, privatësinë, detyrimet e mjekëve dhe të drejtat e pacientit në platformën Pyet Doktorin.",
     legalNoticeTitle: "Njoftim i rëndësishëm ligjor",
     legalNoticeBody:
-      "Këto kushte janë hartuar për t'u përafruar me ligjin shqiptar, përfshirë rregullat për shëndetësinë, mbrojtjen e konsumatorit, tregtinë elektronike dhe të dhënat personale. Nëse ligji shqiptar i detyrueshëm i jep përdoruesit të drejta më të gjera, zbatohet ligji shqiptar.",
+      "Këto kushte janë hartuar për t'u përafruar me ligjin shqiptar për mbrojtjen e konsumatorit, tregtinë elektronike dhe të dhënat personale. Mjekët që përdorin platformën i nënshtrohen në mënyrë të pavarur rregullimit shqiptar të kujdesit shëndetësor. Nëse ligji shqiptar i detyrueshëm i jep përdoruesit të drejta më të gjera, zbatohet ligji shqiptar.",
     effectiveDateLabel: "Përditësuar më",
     effectiveDateValue: "30 mars 2026",
     operatorTitle: "Të dhënat e operatorit të platformës",
@@ -268,7 +269,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
       {
         title: "1. Fusha e zbatimit dhe pranimi i kushteve",
         paragraphs: [
-          "Këto kushte rregullojnë aksesin dhe përdorimin e faqes Pyet Doktorin, panelit të përdoruesit, rrjedhave të rezervimit, funksioneve të komunikimit, pagesave dhe çdo funksionaliteti digjital shëndetësor që vihet në dispozicion në platformë.",
+          "Këto kushte rregullojnë aksesin dhe përdorimin e faqes Pyet Doktorin, panelit të përdoruesit, rrjedhave të rezervimit, funksioneve të komunikimit, teknologjisë së video-thirrjeve dhe përpunimit të pagesave që vihen në dispozicion në platformë.",
           "Duke krijuar llogari, duke rezervuar konsultë ose duke përdorur platformën në çfarëdo forme, përdoruesi konfirmon se i ka lexuar dhe pranuar këto kushte dhe politikën e privatësisë.",
         ],
         note: "Asgjë në këto kushte nuk heq ose kufizon të drejtat që ligji shqiptar u jep konsumatorëve, pacientëve, të miturve ose subjekteve të të dhënave.",
@@ -276,13 +277,14 @@ function getCopy(locale: Locale, companyName: string): Copy {
       {
         title: "2. Roli i platformës",
         paragraphs: [
-          "Pyet Doktorin vepron si platformë digjitale që i lejon përdoruesit të gjejnë profesionistë shëndetësorë, të kërkojnë takime, të marrin konsultë në distancë kur kjo është klinikisht e përshtatshme, si dhe të menaxhojnë komunikimin dhe pagesat që lidhen me shërbimin.",
-          "Platforma nuk është ambulancë, urgjencë kombëtare, spital apo zëvendësim i ekzaminimit fizik kur kujdesi në distancë nuk është i përshtatshëm.",
+          "Pyet Doktorin është një platformë softuerike (SaaS). Ne u ofrojmë mjekëve të pavarur e të licencuar teknologjinë për të ofruar video-konsultime me pacientët dhe për të mbledhur pagesën për shërbimet e tyre. Ne lidhim pacientët me mjekë të pavarur — ne vetë nuk ofrojmë shërbime mjekësore.",
+          "Pyet Doktorin nuk punëson mjekë, nuk ushtron mjekësinë dhe nuk jep këshilla mjekësore, diagnozë apo trajtim. Përpara se një mjek të bashkohet me platformën, ne verifikojmë identitetin dhe licencën apo kredencialet profesionale që ai paraqet; ky verifikim nuk e bën platformën palë në konsultë apo ofrues të saj.",
+          "Çdo mjek është një profesionist i pavarur, i vetmi dhe ekskluzivi përgjegjës për shërbimet mjekësore që zgjedh t'i ofrojë përmes platformës. Platforma nuk është ambulancë, urgjencë kombëtare, spital apo zëvendësim i ekzaminimit fizik urgjent.",
         ],
         bullets: [
           "Për urgjenca shëndetësore, kontaktoni Urgjencën Kombëtare Mjekësore në numrin 127.",
-          "Mjeku ose institucioni mund të refuzojë ose ndërpresë konsultën online nëse nevojitet vizitë fizike, referim urgjent ose verifikim shtesë.",
-          "Aktet profesionale mjekësore mbeten përgjegjësi e mjekut ose institucionit shëndetësor që jep shërbimin.",
+          "Mjeku mund të refuzojë ose ndërpresë konsultën online nëse nevojitet vizitë fizike, referim urgjent ose verifikim shtesë.",
+          "Të gjitha aktet, gjykimet dhe vendimet profesionale mjekësore mbeten përgjegjësi vetëm e mjekut të pavarur që jep konsultën — kurrë e platformës.",
         ],
       },
       {
@@ -299,7 +301,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
       {
         title: "4. Rezervimet, çmimet, pagesat, anulimet dhe rimbursimet",
         paragraphs: [
-          "Çdo tarifë që paguhet përmes platformës duhet të shfaqet qartë para se përdoruesi të konfirmojë porosinë ose kërkesën për rezervim. Platforma duhet të japë konfirmim elektronik dhe, kur kërkohet nga ligji, dokumentacionin përkatës fiskal ose tregtar.",
+          "Pyet Doktorin menaxhon procesin e pagesës dhe e përpunon atë në emër të mjekut të pavarur për çdo konsultë të rezervuar. Çdo tarifë që paguhet përmes platformës duhet të shfaqet qartë para se përdoruesi të konfirmojë porosinë ose kërkesën për rezervim. Platforma duhet të japë konfirmim elektronik dhe, kur kërkohet nga ligji, dokumentacionin përkatës fiskal ose tregtar.",
           "Rregullat specifike për anulim, ricaktim, mungesë në takim dhe rimbursim mund të ndryshojnë sipas llojit të shërbimit, mjekut ose institucionit, por ato duhet t'i bëhen të njohura përdoruesit para pagesës ose në konfirmimin e rezervimit.",
         ],
         bullets: [
@@ -309,10 +311,10 @@ function getCopy(locale: Locale, companyName: string): Copy {
         ],
       },
       {
-        title: "5. Shërbimi mjekësor, të drejtat e pacientit dhe pjesëmarrja e informuar",
+        title: "5. Shërbimi i mjekut të pavarur dhe të drejtat e pacientit",
         paragraphs: [
-          "Përdoruesi duhet të japë informacion të vërtetë për gjendjen shëndetësore, simptomat, medikamentet dhe çdo të dhënë tjetër të rëndësishme për konsultën. Informacioni i pasaktë ose i paplotë mund të ndikojë në sigurinë dhe përshtatshmërinë e kujdesit në distancë.",
-          "Pacientët ruajnë të drejtat që u njeh ligji shqiptar i kujdesit shëndetësor dhe standardet për të drejtat e pacientit, përfshirë të drejtën për informacion të kuptueshëm, dinjitet, konfidencialitet dhe pjesëmarrje të informuar në vendimmarrjen për kujdesin.",
+          "Vetë konsulta — këshilla mjekësore, diagnoza, receta apo trajtimi — është një shërbim i ofruar drejtpërdrejt nga mjeku i pavarur që pacienti rezervon, jo nga Pyet Doktorin. Përdoruesi duhet të japë informacion të vërtetë për gjendjen shëndetësore, simptomat, medikamentet dhe çdo të dhënë tjetër të rëndësishme për konsultën. Informacioni i pasaktë ose i paplotë mund të ndikojë në sigurinë dhe përshtatshmërinë e kujdesit në distancë.",
+          "Pacientët ruajnë të drejtat që u njeh ligji shqiptar i kujdesit shëndetësor dhe standardet për të drejtat e pacientit, përfshirë të drejtën për informacion të kuptueshëm, dinjitet, konfidencialitet dhe pjesëmarrje të informuar në vendimmarrjen për kujdesin, në marrëdhënien e tyre me mjekun.",
         ],
         bullets: [
           "Kujdesi në distancë mund të ketë kufizime krahasuar me një ekzaminim fizik.",
@@ -321,15 +323,15 @@ function getCopy(locale: Locale, companyName: string): Copy {
         ],
       },
       {
-        title: "6. Detyrimet e mjekëve dhe ofruesve",
+        title: "6. Detyrimet e mjekut të pavarur",
         paragraphs: [
-          "Profesionistët dhe institucionet shëndetësore që përdorin platformën duhet të kenë licencat, regjistrimet, autorizimet ose statusin profesional që kërkohet nga ligji shqiptar për shërbimet që ofrojnë.",
-          "Përveç kur thuhet shprehimisht ndryshe, mjekët mbeten personalisht dhe profesionalisht përgjegjës për ligjshmërinë, cilësinë dhe standardin profesional të kujdesit që ofrojnë.",
+          "Mjekët dhe klinikat që përdorin platformën veprojnë si profesionistë të pavarur, freelance — kurrë si punonjës apo agjentë të Pyet Doktorin. Ata duhet të kenë licencat, regjistrimet, autorizimet ose statusin profesional që kërkohet nga ligji shqiptar për shërbimet që ofrojnë, dhe platforma verifikon këtë dokumentacion përpara se t'u japë akses.",
+          "Mjekët mbeten të vetmit dhe në mënyrë të pavarur përgjegjës për ligjshmërinë, cilësinë dhe standardin profesional të shërbimit mjekësor që i japin pacientit. Roli i Pyet Doktorin kufizohet në ofrimin e teknologjisë së video-thirrjeve, mjeteve të planifikimit dhe përpunimit të pagesave që mbështesin këtë marrëdhënie të pavarur.",
         ],
         bullets: [
           "Mjekët nuk duhet të ofrojnë shërbime jashtë fushës së tyre të kompetencës.",
           "Mjekët duhet të respektojnë detyrimet ligjore për konfidencialitetin, dokumentimin dhe pëlqimin e informuar.",
-          "Platforma mund të pezullojë një llogari profesionale kur ka indicie për probleme licencimi, sigurie, mashtrimi ose sjelljeje profesionale.",
+          "Platforma mund të pezullojë llogarinë e një mjeku kur ka indicie për probleme licencimi, sigurie, mashtrimi ose sjelljeje profesionale.",
         ],
       },
       {
@@ -365,7 +367,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
         title: "10. Përgjegjësia",
         paragraphs: [
           "Pyet Doktorin nuk përjashton përgjegjësinë që nuk mund të përjashtohet ligjërisht sipas ligjit shqiptar. Çdo kufizim përgjegjësie në këtë faqe interpretohet ngushtësisht dhe vetëm në masën që lejohet nga ligji i detyrueshëm.",
-          "Në masën që lejohet nga ligji, platforma nuk përgjigjet për humbje të shkaktuara nga informacion i pasaktë i përdoruesit, ndërprerje të internetit nga palë të treta, force majeure ose vendime të pavarura mjekësore të marra nga mjeku i autorizuar brenda përgjegjësisë së tij profesionale.",
+          "Meqenëse Pyet Doktorin është një platformë teknologjike dhe jo një ofrues i kujdesit shëndetësor, dhe në masën që lejohet nga ligji, platforma nuk përgjigjet për aktet mjekësore, këshillat, diagnozën, trajtimin apo vendimet profesionale të asnjë mjeku të pavarur, as për humbje të shkaktuara nga informacion i pasaktë i përdoruesit, ndërprerje interneti nga palë të treta, ose force majeure. Përgjegjësia për shërbimet mjekësore i takon mjekut të pavarur që i ka ofruar ato.",
         ],
       },
       {
@@ -390,7 +392,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
     ],
     referencesTitle: "Baza ligjore e përdorur për këtë draft",
     referencesBody:
-      "Kjo faqe është hartuar duke u mbështetur te kuadri ligjor shqiptar më i rëndësishëm për një platformë telemjekësie. Lidhjet më poshtë janë shtuar që baza ligjore të jetë e dukshme dhe jo e fshehur pas një teksti të përgjithshëm marketingu.",
+      "Këto ligje rregullojnë kryesisht mjekët e pavarur që përdorin platformën, si dhe detyrimet për konsumatorin, tregtinë elektronike dhe mbrojtjen e të dhënave që zbatohen për Pyet Doktorin si platformë teknologjike. Lidhjet më poshtë janë shtuar që baza ligjore të jetë e dukshme dhe jo e fshehur pas një teksti të përgjithshëm marketingu.",
     references: [
       {
         label: "Ligji nr. 10107, datë 30.03.2009, “Për kujdesin shëndetësor në Republikën e Shqipërisë”",

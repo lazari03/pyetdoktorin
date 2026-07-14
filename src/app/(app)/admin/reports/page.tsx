@@ -211,7 +211,7 @@ export default function AdminReportsPage() {
           <div className="flex flex-col gap-3">
             {/* Users by role */}
             <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-4">
-              <p className="text-[13.5px] font-bold text-gray-900 mb-3">Users by role</p>
+              <p className="text-[13.5px] font-bold text-gray-900 mb-3">{t('usersByRole') || 'Users by role'}</p>
               <div className="flex flex-col gap-2.5">
                 {roleSplit.map((r) => (
                   <div key={r.label}>
@@ -230,7 +230,7 @@ export default function AdminReportsPage() {
             {/* Top doctors */}
             {topDoctors.length > 0 && (
               <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-4">
-                <p className="text-[13.5px] font-bold text-gray-900 mb-2">Top doctors</p>
+                <p className="text-[13.5px] font-bold text-gray-900 mb-2">{t('topDoctors') || 'Top doctors'}</p>
                 <div className="flex flex-col gap-0.5">
                   {topDoctors.slice(0, 5).map((doc, i) => (
                     <div key={doc.doctorId} className="flex items-center gap-2.5 py-1.5">

@@ -77,8 +77,8 @@ const posts = await getPublishedBlogPosts().catch((e) => { console.error('Blog f
       <WebsiteSection variant="alt">
         <div className="website-container">
           <WebsiteCta
-            title={t("blogCtaTitle")}
-            subtitle={t("blogCtaSubtitle")}
+            title={t("blogListCtaTitle")}
+            subtitle={t("blogListCtaSubtitle")}
             primary={{ label: t("blogCtaPrimary"), href: "/contact" }}
             secondary={{ label: t("register"), href: "/register" }}
           />

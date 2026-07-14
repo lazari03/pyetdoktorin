@@ -12,10 +12,12 @@ export type PublicDoctorProfile = {
 
 function normalizeSpecializations(data: Record<string, unknown>): string[] {
   if (Array.isArray(data.specializations)) {
-    return data.specializations.filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+    return data.specializations
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((value) => value.trim());
   }
   if (typeof data.specialization === 'string' && data.specialization.trim().length > 0) {
-    return [data.specialization];
+    return [data.specialization.trim()];
   }
   return [];
 }
@@ -51,12 +53,7 @@ function mapDoctorDoc(id: string, data: Record<string, unknown>): PublicDoctorPr
   return profile;
 }
 
-export async function searchDoctors(searchTerm: string, searchType: DoctorSearchType): Promise<PublicDoctorProfile[]> {
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  if (!normalizedSearch) {
-    return [];
-  }
-
+async function fetchApprovedDoctors(): Promise<PublicDoctorProfile[]> {
   const admin = getFirebaseAdmin();
   const snapshot = await admin
     .firestore()
@@ -64,9 +61,30 @@ export async function searchDoctors(searchTerm: string, searchType: DoctorSearch
     .where('role', '==', 'doctor')
     .get();
 
-  const doctors = snapshot.docs
+  return snapshot.docs
     .map((doc) => mapDoctorDoc(doc.id, doc.data() as Record<string, unknown>))
     .filter((doctor): doctor is PublicDoctorProfile => Boolean(doctor));
+}
+
+export async function listSpecializations(): Promise<string[]> {
+  const doctors = await fetchApprovedDoctors();
+  const seen = new Map<string, string>();
+  for (const doctor of doctors) {
+    for (const specialization of doctor.specialization) {
+      const key = specialization.toLowerCase();
+      if (!seen.has(key)) seen.set(key, specialization);
+    }
+  }
+  return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
+}
+
+export async function searchDoctors(searchTerm: string, searchType: DoctorSearchType): Promise<PublicDoctorProfile[]> {
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  if (!normalizedSearch) {
+    return [];
+  }
+
+  const doctors = await fetchApprovedDoctors();
 
   if (searchType === 'specializations') {
     return doctors.filter((doctor) =>

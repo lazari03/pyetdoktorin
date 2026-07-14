@@ -1,8 +1,28 @@
 
 import { getAuthToken, waitForToken } from '@/application/auth/tokenHolder';
 import { BackendError } from '@/application/errors/BackendError';
+import { ROUTES } from '@/config/routes';
+import { SESSION_LAST_ACTIVITY_KEY } from '@/config/sessionConfig';
 
 const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
+
+const APP_SECTION_PREFIXES = ['/dashboard', '/pharmacy', '/admin', '/clinic'];
+let sessionExpiredHandled = false;
+
+// The backend definitively rejected our credentials (401 even after a fresh
+// token retry): the session is dead. Sign out and send the user to login with
+// a `next` param so they land back where they were after re-authenticating.
+function handleSessionExpired() {
+  if (typeof window === 'undefined' || sessionExpiredHandled) return;
+  const path = window.location.pathname;
+  if (!APP_SECTION_PREFIXES.some((prefix) => path.startsWith(prefix))) return;
+  sessionExpiredHandled = true;
+  void import('firebase/auth')
+    .then(({ getAuth, signOut }) => signOut(getAuth()))
+    .catch(() => {});
+  window.localStorage.removeItem(SESSION_LAST_ACTIVITY_KEY);
+  window.location.href = `${ROUTES.LOGIN}?reason=session-expired&next=${encodeURIComponent(path)}`;
+}
 
 type BackendErrorPayload = {
   error?: unknown;
@@ -135,6 +155,9 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
     }
 
     console.error('backendFetch error response:', response.status, text);
+    if (response.status === 401) {
+      handleSessionExpired();
+    }
     const payload = parseBackendError(text);
     const code = typeof payload?.error === 'string' ? payload.error : undefined;
     const message =
