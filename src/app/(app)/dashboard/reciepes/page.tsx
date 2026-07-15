@@ -6,6 +6,7 @@ import { useDI } from "@/context/DIContext";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import Image from "next/image";
+import { DocumentTextIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { UserRole } from "@/domain/entities/UserRole";
 import type { ReciepePayload } from "@/application/ports/IReciepeService";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
@@ -29,6 +30,32 @@ type Reciepe = {
   status?: "pending" | "accepted" | "rejected";
   signatureDataUrl?: string;
 };
+
+const STATUS_STYLES: Record<string, string> = {
+  pending: "bg-amber-50 text-amber-700",
+  accepted: "bg-green-50 text-green-700",
+  rejected: "bg-red-50 text-red-600",
+};
+
+function StatusBadge({ status, label }: { status: string; label: string }) {
+  return (
+    <span
+      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[status] ?? "bg-gray-100 text-gray-600"}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function EmptyState({ title, hint }: { title: string; hint: string }) {
+  return (
+    <div className="flex flex-col items-center text-center gap-2 py-10 px-4">
+      <DocumentTextIcon className="h-10 w-10 text-gray-300" />
+      <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <p className="text-xs text-gray-400 max-w-[22rem]">{hint}</p>
+    </div>
+  );
+}
 
 export default function PatientReciepesPage() {
   const { t } = useTranslation();
@@ -106,30 +133,29 @@ export default function PatientReciepesPage() {
       skeleton={<TableSkeleton />}
       analyticsPrefix="dashboard.reciepes"
     >
-      <div className="page">
-        <div className="page-inner page-inner-md">
+      <div className="max-w-5xl mx-auto space-y-5">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-purple-600">
+            {t("secureAccessEyebrow") || "Secure access"}
+          </p>
+          <h1 className="text-xl font-bold text-gray-900 mt-0.5">
+            {t("myReciepesTitle") || "My Prescriptions"}
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {t("myReciepesSubtitle") ||
+              "Your prescriptions, kept private and ready for your care decisions."}
+          </p>
+        </div>
 
-          {/* Page header */}
-          <div>
-            <p className="page-eyebrow">
-              {t("secureAccessEyebrow") || "Secure access"}
-            </p>
-            <h1 className="page-title">
-              {t("myReciepesTitle") || "My Prescriptions"}
-            </h1>
-            <p className="page-subtitle">
-              {t("myReciepesSubtitle") ||
-                "Your prescriptions, kept private and ready for your care decisions."}
-            </p>
-          </div>
-
-          <div className="rx-layout">
-            {/* Sidebar list */}
-            <aside className="panel panel-compact space-y-1">
-              {reciepes.length > 0 && (
+        <div className="grid gap-4 lg:grid-cols-[minmax(260px,1fr)_2fr] items-start">
+          {/* List */}
+          <aside className="rounded-2xl border border-gray-100 bg-white shadow-sm p-3 space-y-2">
+            {reciepes.length > 0 && (
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                 <input
                   type="search"
-                  className="input"
+                  className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -137,200 +163,151 @@ export default function PatientReciepesPage() {
                   }}
                   placeholder={t("searchPrescriptions") || "Search…"}
                 />
-              )}
-              {filtered.length === 0 ? (
-                <div className="empty-state">
-                  <svg
-                    className="h-10 w-10 empty-state-icon"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <p className="empty-state-title">
-                    {search
-                      ? t("noSearchResults") || "No matches"
-                      : t("noReciepesYet") || "No prescriptions yet"}
-                  </p>
-                  <p className="empty-state-hint">
-                    {search
-                      ? t("tryOtherSearch") || "Try a different search."
-                      : t("noReciepesHint") ||
-                        "Your doctor-issued prescriptions will appear here."}
-                  </p>
-                </div>
-              ) : (
-                paged.map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => setActiveId(r.id)}
-                    className={`rx-item ${
-                      active?.id === r.id ? "rx-item-active" : ""
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[13px] font-semibold text-gray-900 truncate">
-                        {r.title}
+              </div>
+            )}
+
+            {filtered.length === 0 ? (
+              <EmptyState
+                title={search ? t("noSearchResults") || "No matches" : t("noReciepesYet") || "No prescriptions yet"}
+                hint={
+                  search
+                    ? t("tryOtherSearch") || "Try a different search."
+                    : t("noReciepesHint") || "Your doctor-issued prescriptions will appear here."
+                }
+              />
+            ) : (
+              <div className="space-y-1">
+                {paged.map((r) => {
+                  const isActive = active?.id === r.id;
+                  return (
+                    <button
+                      key={r.id}
+                      onClick={() => setActiveId(r.id)}
+                      className={`w-full text-left rounded-xl px-3 py-2.5 transition-colors ${
+                        isActive ? "bg-purple-50 border border-purple-200" : "border border-transparent hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[13px] font-semibold text-gray-900 truncate">{r.title}</p>
+                        {r.status && <StatusBadge status={r.status} label={t(r.status) || r.status} />}
+                      </div>
+                      <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                        {r.doctor || t("doctor")} · {r.date} ·{" "}
+                        {r.type === "reimbursement"
+                          ? t("prescriptionTypeReimbursement") || "Reimb."
+                          : t("prescriptionTypeStandard") || "Std."}
                       </p>
-                      {r.status && (
-                        <span className={`badge badge-${r.status}`}>
-                          {t(r.status)}
-                        </span>
-                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <Pager page={safePage} pageCount={pageCount} onChange={setPage} />
+          </aside>
+
+          {/* Detail */}
+          <section className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 min-h-[320px]">
+            {active ? (
+              <div className="space-y-4">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="text-base font-bold text-gray-900">{active.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap mt-1 text-xs text-gray-500">
+                      <span>{active.doctor}</span>
+                      <span>•</span>
+                      <span>{active.date}</span>
+                      {active.status && <StatusBadge status={active.status} label={t(active.status) || active.status} />}
                     </div>
-                    <p className="text-[11px] text-gray-400 truncate mt-0.5">
-                      {r.doctor || t("doctor")} · {r.date} ·{" "}
-                      {r.type === "reimbursement"
-                        ? t("prescriptionTypeReimbursement") || "Reimb."
-                        : t("prescriptionTypeStandard") || "Std."}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                    <p className="text-[10.5px] font-semibold uppercase tracking-wide text-gray-500">
+                      {t("prescriptionTypeLabel") || "Type"}
                     </p>
-                  </button>
-                ))
-              )}
-              <Pager page={safePage} pageCount={pageCount} onChange={setPage} />
-            </aside>
-
-            {/* Detail panel */}
-            <section className="panel space-y-4" style={{ minHeight: "320px" }}>
-              {active ? (
-                <>
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div>
-                      <p className="detail-title">{active.title}</p>
-                      <div className="flex items-center gap-2 flex-wrap mt-1">
-                        <span className="detail-meta">{active.doctor}</span>
-                        <span className="detail-meta">•</span>
-                        <span className="detail-meta">{active.date}</span>
-                        {active.status && (
-                          <span className={`badge badge-${active.status}`}>
-                            {t(active.status)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    <span
+                      className={`inline-block mt-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        active.type === "reimbursement" ? "bg-sky-50 text-sky-700" : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {active.type === "reimbursement"
+                        ? t("prescriptionTypeReimbursement") || "Reimbursement"
+                        : t("prescriptionTypeStandard") || "Standard"}
+                    </span>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="tile tile-muted">
-                      <p className="tile-label">
-                        {t("prescriptionTypeLabel") || "Type"}
+                  {active.reimbursementCode && (
+                    <div className="rounded-xl border border-sky-100 bg-sky-50 p-3">
+                      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-sky-600">
+                        {t("reimbursementCodeLabel") || "Reimbursement code"}
                       </p>
-                      <span
-                        className={`badge ${
-                          active.type === "reimbursement"
-                            ? "badge-reimbursement"
-                            : "badge-standard"
-                        }`}
-                      >
-                        {active.type === "reimbursement"
-                          ? t("prescriptionTypeReimbursement") || "Reimbursement"
-                          : t("prescriptionTypeStandard") || "Standard"}
-                      </span>
-                    </div>
-                    {active.reimbursementCode && (
-                      <div className="tile tile-sky">
-                        <p className="tile-label tile-label-sky">
-                          {t("reimbursementCodeLabel") || "Reimbursement code"}
-                        </p>
-                        <p
-                          className="tile-value"
-                          style={{ fontFamily: "monospace" }}
-                        >
-                          {active.reimbursementCode}
-                        </p>
-                      </div>
-                    )}
-                    {active.type === "reimbursement" && active.pharmacy && (
-                      <div className="tile tile-muted">
-                        <p className="tile-label">
-                          {t("pharmacyName") || "Pharmacy"}
-                        </p>
-                        <p className="tile-value">{active.pharmacy}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {active.type === "standard" && (
-                    <div className="space-y-2">
-                      {active.medicines && (
-                        <div className="tile tile-primary">
-                          <p className="tile-label tile-label-primary">
-                            {t("medicinesLabel") || "Medicines"}
-                          </p>
-                          <p className="tile-value">{active.medicines}</p>
-                        </div>
-                      )}
-                      {active.dosage && (
-                        <div className="tile tile-muted">
-                          <p className="tile-label">
-                            {t("dosageLabel") || "Dosage"}
-                          </p>
-                          <p className="tile-value">{active.dosage}</p>
-                        </div>
-                      )}
-                      {active.notes && (
-                        <div className="tile tile-muted">
-                          <p className="tile-label">
-                            {t("notesLabel") || "Notes"}
-                          </p>
-                          <p className="tile-value">{active.notes}</p>
-                        </div>
-                      )}
+                      <p className="text-sm text-gray-900 font-mono mt-1">{active.reimbursementCode}</p>
                     </div>
                   )}
-
-                  {active.signatureDataUrl && (
-                    <div>
-                      <p className="text-xs font-semibold text-gray-600 mb-2">
-                        {t("doctorSignature") || "Doctor signature"}
+                  {active.type === "reimbursement" && active.pharmacy && (
+                    <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-gray-500">
+                        {t("pharmacyName") || "Pharmacy"}
                       </p>
-                      <div className="inline-block border border-gray-200 rounded-xl overflow-hidden bg-white p-2">
-                        <Image
-                          src={active.signatureDataUrl}
-                          alt={t("doctorSignature") || "Doctor signature"}
-                          width={300}
-                          height={120}
-                          unoptimized
-                          className="h-auto w-auto max-w-[280px]"
-                        />
-                      </div>
+                      <p className="text-sm text-gray-900 mt-1">{active.pharmacy}</p>
                     </div>
                   )}
-                </>
-              ) : (
-                <div className="empty-state" style={{ minHeight: "280px" }}>
-                  <svg
-                    className="h-12 w-12 empty-state-icon"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <p className="empty-state-title">
-                    {t("noReciepesYet") || "No prescriptions yet"}
-                  </p>
-                  <p className="empty-state-hint">
-                    {t("noReciepesHint") ||
-                      "Your doctor-issued prescriptions will appear here."}
-                  </p>
                 </div>
-              )}
-            </section>
-          </div>
+
+                {active.type === "standard" && (
+                  <div className="space-y-2">
+                    {active.medicines && (
+                      <div className="rounded-xl border border-purple-100 bg-purple-50/60 p-3">
+                        <p className="text-[10.5px] font-semibold uppercase tracking-wide text-purple-600">
+                          {t("medicinesLabel") || "Medicines"}
+                        </p>
+                        <p className="text-sm text-gray-900 mt-1">{active.medicines}</p>
+                      </div>
+                    )}
+                    {active.dosage && (
+                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                        <p className="text-[10.5px] font-semibold uppercase tracking-wide text-gray-500">
+                          {t("dosageLabel") || "Dosage"}
+                        </p>
+                        <p className="text-sm text-gray-900 mt-1">{active.dosage}</p>
+                      </div>
+                    )}
+                    {active.notes && (
+                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                        <p className="text-[10.5px] font-semibold uppercase tracking-wide text-gray-500">
+                          {t("notesLabel") || "Notes"}
+                        </p>
+                        <p className="text-sm text-gray-900 mt-1">{active.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {active.signatureDataUrl && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-2">
+                      {t("doctorSignature") || "Doctor signature"}
+                    </p>
+                    <div className="inline-block border border-gray-200 rounded-xl overflow-hidden bg-white p-2">
+                      <Image
+                        src={active.signatureDataUrl}
+                        alt={t("doctorSignature") || "Doctor signature"}
+                        width={300}
+                        height={120}
+                        unoptimized
+                        className="h-auto w-auto max-w-[280px]"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <EmptyState
+                title={t("noReciepesYet") || "No prescriptions yet"}
+                hint={t("noReciepesHint") || "Your doctor-issued prescriptions will appear here."}
+              />
+            )}
+          </section>
         </div>
       </div>
     </RequestStateGate>
