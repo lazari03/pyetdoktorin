@@ -56,7 +56,7 @@ const SPECIALTIES: Record<
       {
         question: "A mund të konsultohem me pediatër për foshnjën time?",
         answer:
-          "Po, pediatrat tanë janë të specializuar për të gjitha grupmoshat, duke filluar nga të porsalindurit.",
+          "Po, pediatrit e pavarur në platformë janë të specializuar për të gjitha grupmoshat, duke filluar nga të porsalindurit.",
       },
     ],
   },
@@ -69,9 +69,9 @@ const SPECIALTIES: Record<
       "Trajto problemet e lëkurës me ndihmën e dermatologëve specialistë.",
     faqs: [
       {
-        question: "A mund të dërgoj foto për diagnozë online?",
+        question: "A mund të tregoj problemin e lëkurës gjatë videokonsultës?",
         answer:
-          "Po, dermatologët mund të vlerësojnë gjendjen e lëkurës bazuar në foto që dërgon gjatë konsultës.",
+          "Po, dermatologu mund të shohë dhe vlerësojë gjendjen e lëkurës drejtpërdrejt gjatë videokonsultës.",
       },
     ],
   },
