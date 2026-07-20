@@ -33,38 +33,43 @@ import { normalizeAppointmentStatus } from "@/presentation/utils/appointmentStat
 import { getAppointmentAction } from "@/domain/rules/appointmentRules";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
-import { syncPaddlePaymentWithRetry } from "@/network/payments";
+import { syncPaymentWithRetry } from "@/network/payments";
 import { listAppointments } from "@/network/appointments";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { useEffect, useRef, useState } from "react";
 import { useDI } from "@/context/DIContext";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
 import { DashboardPageSkeleton } from "@/presentation/components/Skeleton/DashboardPageSkeleton";
+import { useToast } from "@/presentation/components/Toast/ToastProvider";
 
 // Helper function to calculate monthly earnings
-function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string, _role: UserRole) {
+function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string; feeAmount?: number }>, userId: string, _role: UserRole) {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  
+
   const payoutPercentage = DOCTOR_PAYOUT_RATE;
-  const appointmentAmount = APPOINTMENT_PRICE_EUR;
-  
+  // Each appointment carries its own fee, snapshotted from the doctor's rate at
+  // booking time; older appointments predating per-doctor fees fall back to the
+  // global default.
+  const sumEarnings = (apps: Array<{ feeAmount?: number }>) =>
+    apps.reduce((sum, a) => sum + (a.feeAmount ?? APPOINTMENT_PRICE_EUR) * payoutPercentage, 0);
+
   // Filter completed/paid appointments for this doctor
   const doctorAppointments = appointments.filter(a =>
     a.doctorId === userId &&
     isCompletedStatus(a.status) &&
     a.isPaid
   );
-  
+
   // Current month earnings
   const currentMonthAppointments = doctorAppointments.filter(a => {
     const appDate = new Date(a.preferredDate);
     return appDate.getMonth() === currentMonth && appDate.getFullYear() === currentYear;
   });
-  
-  const currentMonthEarnings = currentMonthAppointments.length * appointmentAmount * payoutPercentage;
-  
+
+  const currentMonthEarnings = sumEarnings(currentMonthAppointments);
+
   // Previous month earnings
   const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
   const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
@@ -72,8 +77,8 @@ function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patien
     const appDate = new Date(a.preferredDate);
     return appDate.getMonth() === prevMonth && appDate.getFullYear() === prevYear;
   });
-  
-  const previousMonthEarnings = previousMonthAppointments.length * appointmentAmount * payoutPercentage;
+
+  const previousMonthEarnings = sumEarnings(previousMonthAppointments);
   
   // Build monthly history (last 6 months)
   const monthlyHistory: MonthlyEarning[] = [];
@@ -94,7 +99,7 @@ function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patien
     monthlyHistory.push({
       month: monthNames[monthIndex],
       year,
-      amount: monthApps.length * appointmentAmount * payoutPercentage,
+      amount: sumEarnings(monthApps),
       appointmentCount: monthApps.length
     });
   }
@@ -126,7 +131,8 @@ export default function Dashboard() {
   };
   const vm = useDashboardViewModel(authContext);
   const effectiveRole = role ?? vm.role;
-  const { getReciepesByPatientUseCase } = useDI();
+  const { getReciepesByPatientUseCase, updateAppointmentStatusAndNotifyUseCase } = useDI();
+  const { toast } = useToast();
   const [prescriptionCount, setPrescriptionCount] = useState<number | null>(null);
   const [appointmentsPage, setAppointmentsPage] = useState(0);
 
@@ -141,7 +147,7 @@ export default function Dashboard() {
     if (!paidAppointmentId) return;
     if (paidSyncRef.current === paidAppointmentId) return;
     paidSyncRef.current = paidAppointmentId;
-    syncPaddlePaymentWithRetry(paidAppointmentId)
+    syncPaymentWithRetry(paidAppointmentId)
       .catch((error) => {
         console.warn("Payment sync after checkout failed", error);
       })
@@ -174,6 +180,21 @@ export default function Dashboard() {
       vm.setShowRedirecting(false);
     }
   };
+
+  // Doctor accepting/rejecting a pending request. The backend notifies the
+  // patient as part of this call (see updateAppointmentStatus in
+  // appointmentsService.ts) — nothing extra to trigger here.
+  const respondToRequest = async (appointmentId: string, action: "accepted" | "rejected") => {
+    try {
+      await updateAppointmentStatusAndNotifyUseCase.execute(appointmentId, action);
+      if (effectiveRole) await fetchAppointments(effectiveRole, true);
+    } catch (error) {
+      console.warn("Failed to update appointment status", error);
+      toast({ variant: "error", message: t("genericError") || "Something went wrong. Please try again." });
+    }
+  };
+  const handleAccept = (appointmentId: string) => respondToRequest(appointmentId, "accepted");
+  const handleReject = (appointmentId: string) => respondToRequest(appointmentId, "rejected");
 
   // DashboardLayout already guards auth + role, so avoid a second full-screen loader here.
   if (!effectiveRole) return null;
@@ -333,7 +354,7 @@ export default function Dashboard() {
                       subtitle={heroAppointment.appointmentType || t("stayPrepared") || "Stay prepared for your upcoming session"}
                       helper={`${t("consultation") || "Consultation"} • ${heroAppointment.preferredDate ?? (t("today") || "Today")}`}
                       onJoin={heroPresentation?.type === "join" ? () => handleJoinCall(heroAppointment.id) : undefined}
-                      onPay={heroPresentation?.type === "pay" ? () => vm.handlePayNow(heroAppointment.id, APPOINTMENT_PRICE_EUR) : undefined}
+                      onPay={heroPresentation?.type === "pay" ? () => vm.handlePayNow(heroAppointment.id, heroAppointment.feeAmount ?? APPOINTMENT_PRICE_EUR) : undefined}
                       isPaid={heroIsPaid}
                       isProcessing={heroIsProcessing}
                       isWaiting={heroIsWaiting}
@@ -378,6 +399,8 @@ export default function Dashboard() {
                     isAppointmentPast={vm.isAppointmentPast}
                     handleJoinCall={handleJoinCall}
                     handlePayNow={vm.handlePayNow}
+                    handleAccept={handleAccept}
+                    handleReject={handleReject}
                     maxRows={DASHBOARD_APPOINTMENTS_PAGE_SIZE}
                     variant="embedded"
                   />

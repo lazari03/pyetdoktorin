@@ -2,6 +2,7 @@
 
 import '@/i18n/i18n';
 import { Suspense, useCallback, useEffect } from 'react';
+import { SWRConfig } from 'swr';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { DIProvider, useDI } from '@/context/DIContext';
 import { useSessionActivity } from '@/presentation/hooks/useSessionActivity';
@@ -55,18 +56,20 @@ export default function AppProviders({ children }: { children: React.ReactNode }
   }, []);
 
   return (
-    <DIProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <SessionActivityHost />
-          <ClientErrorReporter />
-          <Suspense fallback={null}>
-            <AnalyticsScripts />
-            <Analytics />
-          </Suspense>
-          {children}
-        </ToastProvider>
-      </AuthProvider>
-    </DIProvider>
+    <SWRConfig value={{ revalidateOnFocus: false, shouldRetryOnError: false }}>
+      <DIProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <SessionActivityHost />
+            <ClientErrorReporter />
+            <Suspense fallback={null}>
+              <AnalyticsScripts />
+              <Analytics />
+            </Suspense>
+            {children}
+          </ToastProvider>
+        </AuthProvider>
+      </DIProvider>
+    </SWRConfig>
   );
 }

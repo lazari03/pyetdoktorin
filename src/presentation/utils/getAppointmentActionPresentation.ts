@@ -7,7 +7,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { AppointmentActionKey } from '@/domain/entities/AppointmentAction';
 
 export interface AppointmentActionPresentation {
-  type: 'join' | 'pay' | 'processing' | 'disabled' | 'waiting' | 'past' | 'none';
+  type: 'join' | 'pay' | 'processing' | 'disabled' | 'waiting' | 'past' | 'review' | 'none';
   label: string;
   disabled?: boolean;
 }
@@ -15,13 +15,19 @@ export interface AppointmentActionPresentation {
 export function getAppointmentActionPresentation(
   appointment: Appointment,
   role: UserRole,
-  action: { label: string; disabled: boolean }
+  action: { label: string; disabled: boolean; variant?: string }
 ): AppointmentActionPresentation {
   const isPatient = role !== UserRole.Doctor;
 
   // Past appointments are always disabled regardless of role
   if (action.label === AppointmentActionKey.Past) {
     return { type: 'past', label: AppointmentActionKey.Past, disabled: true };
+  }
+
+  // A doctor's own pending request to review — distinct from "waiting for payment"
+  // (payment isn't even allowed until the doctor accepts).
+  if (!isPatient && action.variant === 'review') {
+    return { type: 'review', label: '', disabled: false };
   }
 
   if (action.disabled) {

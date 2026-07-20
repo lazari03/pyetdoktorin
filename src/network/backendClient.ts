@@ -114,8 +114,8 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
   try {
     response = await fetchWithRetry(url, baseOptions);
     if (response.status === 401 && !hasAuthHeader) {
-      // After a redirect/reload (e.g. returning from Paddle), Firebase Auth can take a moment to hydrate.
-      // Give it longer on the 401 retry so payment sync doesn't fail spuriously.
+      // After a redirect/reload, Firebase Auth can take a moment to hydrate.
+      // Give it longer on the 401 retry so requests don't fail spuriously.
       const token = await getOptionalIdToken(15000);
       if (token) {
         const retryHeaders = new Headers(headers);

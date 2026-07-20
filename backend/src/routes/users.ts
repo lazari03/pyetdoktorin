@@ -71,6 +71,7 @@ const selfProfileSchema = z.object({
   dashboardTutorialSeen: z.boolean().optional(),
   dashboardTutorialVersion: z.number().int().min(0).max(100).optional(),
   dashboardTutorialSeenAt: z.string().max(80).optional(),
+  consultationFee: z.number().min(1).max(2000).optional(),
 }).strict().refine((data) => Object.keys(data).length > 0, {
   message: 'No fields to update',
 });
@@ -259,6 +260,9 @@ router.patch('/me', requireAuth(allUserRoles), async (req: AuthenticatedRequest,
   const uid = req.user!.uid;
   const role = req.user!.role;
   const admin = getFirebaseAdmin();
+  if (payload.consultationFee !== undefined && role !== UserRole.Doctor) {
+    delete payload.consultationFee;
+  }
   const updates = normalizeSelfProfileUpdate(payload);
 
   await admin.firestore().collection('users').doc(uid).set(updates, { merge: true });

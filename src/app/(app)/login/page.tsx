@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/i18n';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { getRoleLandingPath } from '@/navigation/roleRoutes';
@@ -90,6 +90,7 @@ function toLoginErrorMessage(error: unknown, t: TFunc): string {
 function LoginPageContent() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -109,7 +110,7 @@ function LoginPageContent() {
     const next = sanitizeNextPath(searchParams?.get('next'));
     const from = sanitizeNextPath(searchParams?.get('from'));
     const target = next || from || getRoleLandingPath(role);
-    window.location.replace(target);
+    router.replace(target);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -140,7 +141,7 @@ function LoginPageContent() {
       const target = (requested && isPathAllowedForRole(requested, result?.role))
         ? requested
         : roleLanding;
-      window.location.replace(target);
+      router.replace(target);
     } catch (err) {
       setErrorMsg(toLoginErrorMessage(err, t as unknown as TFunc));
       console.error('Login error:', err);

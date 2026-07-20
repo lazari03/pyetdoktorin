@@ -17,13 +17,19 @@ export const DASHBOARD_PATHS = {
   reciepe: `${ROUTES.DASHBOARD}/reciepe`,
   reciepes: `${ROUTES.DASHBOARD}/reciepes`,
   patients: `${ROUTES.DASHBOARD}/patients`,
+  pay: `${ROUTES.DASHBOARD}/pay`,
 } as const;
+
+export function dashboardPayUrl(appointmentId: string): string {
+  return `${DASHBOARD_PATHS.pay}?appointmentId=${encodeURIComponent(appointmentId)}`;
+}
 
 export const ADMIN_PATHS = {
   root: ROUTES.ADMIN,
   users: `${ROUTES.ADMIN}/users`,
   notifications: `${ROUTES.ADMIN}/notifications`,
   reports: `${ROUTES.ADMIN}/reports`,
+  payouts: `${ROUTES.ADMIN}/payouts`,
   security: `${ROUTES.ADMIN}/security`,
   profile: `${ROUTES.ADMIN}/profile`,
   blog: `${ROUTES.ADMIN}/blog`,

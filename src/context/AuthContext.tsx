@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { useDI } from '@/context/DIContext';
+import { useCurrentUserProfile } from '@/presentation/hooks/useCurrentUserProfile';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -16,7 +17,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
-  uid: null, 
+  uid: null,
   user: null,
   emailVerified: false,
   role: null, // Set default to null
@@ -27,49 +28,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { authService } = useDI();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uid, setUid] = useState<string | null>(null);
-  const [user, setUser] = useState<{ uid: string; name: string; email?: string; phoneNumber?: string } | null>(null);
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [firebaseEmailVerified, setFirebaseEmailVerified] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = authService.observeFullAuthState(async (firebaseUser) => {
+    const unsubscribe = authService.observeFullAuthState((firebaseUser) => {
       if (firebaseUser) {
         setIsAuthenticated(true);
         setUid(firebaseUser.uid);
-        setEmailVerified(firebaseUser.emailVerified);
-        try {
-          const userData = await authService.fetchCurrentUser();
-          const normalizedRole = normalizeRole(userData.role);
-          setRole(normalizedRole);
-          setUser({
-            uid: firebaseUser.uid,
-            name: userData.name || firebaseUser.displayName || 'Unknown',
-            email: userData.email || firebaseUser.email || undefined,
-            phoneNumber: userData.phoneNumber || firebaseUser.phoneNumber || undefined,
-          });
-          setEmailVerified(
-            typeof userData.emailVerified === 'boolean'
-              ? userData.emailVerified
-              : firebaseUser.emailVerified,
-          );
-        } catch {
-          setRole(null);
-          setUser(null);
-          setEmailVerified(firebaseUser.emailVerified);
-        }
+        setFirebaseEmailVerified(firebaseUser.emailVerified);
       } else {
         setIsAuthenticated(false);
         setUid(null);
-        setUser(null);
-        setRole(null);
-        setEmailVerified(false);
+        setFirebaseEmailVerified(false);
       }
-      setLoading(false);
+      setAuthLoading(false);
     });
 
     return () => unsubscribe();
   }, [authService]);
+
+  const { data: profile, isLoading: profileLoading } = useCurrentUserProfile(isAuthenticated ? uid : null);
+
+  const role = profile ? normalizeRole(profile.role) : null;
+  const user = profile && uid
+    ? {
+        uid,
+        name: profile.name || 'Unknown',
+        email: profile.email,
+        phoneNumber: profile.phoneNumber,
+      }
+    : null;
+  const emailVerified = typeof profile?.emailVerified === 'boolean' ? profile.emailVerified : firebaseEmailVerified;
+  const loading = authLoading || (isAuthenticated && profileLoading);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, uid, user, emailVerified, role, loading }}>

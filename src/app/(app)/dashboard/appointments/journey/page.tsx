@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { UserRole } from "@/domain/entities/UserRole";
 import { useRouter, useSearchParams } from "next/navigation";
-import { syncPaddlePaymentWithRetry } from "@/network/payments";
+import { syncPaymentWithRetry } from "@/network/payments";
 import { listAppointments } from "@/network/appointments";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { DASHBOARD_PATHS } from "@/navigation/paths";
@@ -43,7 +43,7 @@ function JourneyPage() {
     if (!paidAppointmentId) return;
     if (paidSyncRef.current === paidAppointmentId) return;
     paidSyncRef.current = paidAppointmentId;
-    syncPaddlePaymentWithRetry(paidAppointmentId)
+    syncPaymentWithRetry(paidAppointmentId)
       .catch((error) => {
         console.warn("Payment sync after checkout failed", error);
       })

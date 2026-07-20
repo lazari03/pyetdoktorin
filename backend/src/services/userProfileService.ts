@@ -8,6 +8,7 @@ export interface UserProfile {
   pharmacyName?: string;
   clinicName?: string;
   signatureDataUrl?: string;
+  consultationFee?: number;
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {

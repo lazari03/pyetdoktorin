@@ -123,7 +123,8 @@ export const login = async (
         const emailVerified = user.emailVerified === true;
 
         // Establish server session for app navigation (API access is still blocked server-side until verified).
-        const idToken = await user.getIdToken(true);
+        // Token was just minted by signInWithEmailAndPassword, so no forced refresh needed here.
+        const idToken = await user.getIdToken();
         await establishServerSession(idToken);
 
         const currentProfile = await fetchCurrentUserProfile();
@@ -153,7 +154,8 @@ export const loginWithGoogle = async (): Promise<{ user: User; role: UserRole; e
 
         const emailVerified = user.emailVerified === true;
 
-        const idToken = await user.getIdToken(true);
+        // Token was just minted by signInWithPopup, so no forced refresh needed here.
+        const idToken = await user.getIdToken();
         await establishServerSession(idToken);
 
         const currentProfile = await fetchCurrentUserProfile();

@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePathname } from 'next/navigation';
-import { useInitializeAppointments } from '@/store/appointmentStore';
 import { useDI } from '@/context/DIContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useSessionStore } from '@/store/sessionStore';
-import { UserRole } from '@/domain/entities/UserRole';
 import RedirectingModal from '@/presentation/components/RedirectingModal/RedirectingModal';
 import { SectionShellSkeleton } from '@/presentation/components/Skeleton/SectionShellSkeleton';
 import MissingRole from '@/presentation/components/MissingRole/MissingRole';
@@ -25,18 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const { role, loading, isAuthenticated, user, emailVerified } = useAuth();
   const { logoutSessionUseCase, logoutServerUseCase } = useDI();
-  const initializeAppointments = useInitializeAppointments();
   const { redirecting } = useDashboardGuard({ loading, isAuthenticated, role, pathname });
-
-  const initializedRef = useRef(false);
-  useEffect(() => {
-    if (!emailVerified) return;
-    if (!initializedRef.current && isAuthenticated && role && user && initializeAppointments) {
-      if (role !== UserRole.Doctor && role !== UserRole.Patient) return;
-      initializeAppointments(role);
-      initializedRef.current = true;
-    }
-  }, [emailVerified, isAuthenticated, role, user, initializeAppointments]);
 
   const nav = useNavigationCoordinator();
 

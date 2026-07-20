@@ -1,12 +1,18 @@
 import { IPaymentCheckoutService } from '@/application/ports/IPaymentCheckoutService';
-import { openPaddleCheckout, preparePaddleCheckout } from '@/infrastructure/services/paddleCheckout';
+import { renderPayPalButtons, preparePayPalCheckout } from '@/infrastructure/services/paypalCheckout';
 
 export class PaymentCheckoutService implements IPaymentCheckoutService {
-  async openCheckout(params: { appointmentId: string; userId?: string | null; onClose?: () => void }): Promise<void> {
-    await openPaddleCheckout(params);
+  async renderCheckout(params: {
+    containerId: string;
+    appointmentId: string;
+    onSuccess?: () => void;
+    onCancel?: () => void;
+    onError?: (err: unknown) => void;
+  }): Promise<void> {
+    await renderPayPalButtons(params);
   }
 
   async prepareCheckout(): Promise<void> {
-    await preparePaddleCheckout();
+    await preparePayPalCheckout();
   }
 }

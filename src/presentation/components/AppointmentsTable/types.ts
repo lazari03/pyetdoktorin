@@ -8,6 +8,8 @@ export interface AppointmentsTableProps {
   isAppointmentPast: (appointment: Appointment) => boolean;
   handleJoinCall: (appointmentId: string) => void;
   handlePayNow: (appointmentId: string, amount: number) => void;
+  handleAccept?: (appointmentId: string) => void;
+  handleReject?: (appointmentId: string) => void;
   showActions?: boolean;
   maxRows?: number;
   loading?: boolean;

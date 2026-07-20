@@ -1,6 +1,6 @@
 import { IAppointmentPaymentService, PaymentSyncResult } from '@/application/ports/IAppointmentPaymentService';
 import { markPaymentProcessing, clearPaymentProcessing } from '@/network/appointments';
-import { syncPaddlePaymentWithRetry } from '@/network/payments';
+import { syncPaymentWithRetry } from '@/network/payments';
 
 export class AppointmentPaymentService implements IAppointmentPaymentService {
   async markPaymentProcessing(appointmentId: string): Promise<void> {
@@ -8,7 +8,7 @@ export class AppointmentPaymentService implements IAppointmentPaymentService {
   }
 
   async syncPaymentWithRetry(appointmentId: string): Promise<PaymentSyncResult> {
-    return syncPaddlePaymentWithRetry(appointmentId);
+    return syncPaymentWithRetry(appointmentId);
   }
 
   async clearPaymentProcessing(appointmentId: string): Promise<void> {

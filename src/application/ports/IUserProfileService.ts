@@ -20,6 +20,7 @@ export interface UserProfileData {
   dashboardTutorialSeen?: boolean;
   dashboardTutorialVersion?: number;
   dashboardTutorialSeenAt?: string; // ISO timestamp
+  consultationFee?: number; // doctors only: total patient-facing price per appointment
 }
 
 export interface IUserProfileService {

@@ -5,6 +5,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { SignaturePad } from '@/presentation/components/SignaturePad';
 import { Button } from '@/presentation/ui/Button';
 import { Input } from '@/presentation/ui/Input';
+import { APPOINTMENT_PRICE_CURRENCY } from '@/config/paywallConfig';
 
 export interface MyProfileFormData {
   name: string;
@@ -21,6 +22,7 @@ export interface MyProfileFormData {
   emergencyContactPhone?: string;
   signatureDataUrl?: string;
   reimbursementCode?: string;
+  consultationFee?: string;
   [key: string]: unknown;
 }
 
@@ -36,7 +38,8 @@ export type FormField =
   | 'preferredLanguage'
   | 'timeZone'
   | 'emergencyContactName'
-  | 'emergencyContactPhone';
+  | 'emergencyContactPhone'
+  | 'consultationFee';
 
 interface MyProfileFormProps {
   formData: MyProfileFormData;
@@ -305,6 +308,22 @@ const MyProfileForm = ({
             {/* Doctor-only fields */}
             {role === UserRole.Doctor && (
               <>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    {t('consultationFee') || 'Consultation fee'} ({APPOINTMENT_PRICE_CURRENCY})
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    step="0.01"
+                    value={formData.consultationFee ?? ''}
+                    onChange={(e) => handleInputChange(e, 'consultationFee')}
+                    className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                  />
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    {t('consultationFeeHelp') || 'The price a patient pays for an appointment with you.'}
+                  </p>
+                </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">{t('about') || 'About'}</label>
                   <textarea

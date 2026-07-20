@@ -16,29 +16,33 @@ import { StatsPageSkeleton } from "@/presentation/components/Skeleton/StatsPageS
 
 
 // Helper function to calculate earnings data
-function calculateEarningsData(appointments: Array<{ doctorId: string; status?: string; isPaid: boolean; preferredDate: string }>, userId: string) {
+function calculateEarningsData(appointments: Array<{ doctorId: string; status?: string; isPaid: boolean; preferredDate: string; feeAmount?: number }>, userId: string) {
   const payoutPercentage = DOCTOR_PAYOUT_RATE;
-  const appointmentAmount = APPOINTMENT_PRICE_EUR;
-  
+  // Each appointment carries its own fee, snapshotted from the doctor's rate at
+  // booking time; older appointments predating per-doctor fees fall back to the
+  // global default.
+  const doctorEarnings = (a: { feeAmount?: number }) => (a.feeAmount ?? APPOINTMENT_PRICE_EUR) * payoutPercentage;
+  const sumEarnings = (apps: Array<{ feeAmount?: number }>) => apps.reduce((sum, a) => sum + doctorEarnings(a), 0);
+
   // Filter completed/paid appointments for this doctor
   const doctorAppointments = appointments.filter(a =>
     a.doctorId === userId &&
     isCompletedStatus(a.status) &&
     a.isPaid
   );
-  
+
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  
+
   // Current month earnings
   const currentMonthApps = doctorAppointments.filter(a => {
     const appDate = new Date(a.preferredDate);
     return appDate.getMonth() === currentMonth && appDate.getFullYear() === currentYear;
   });
-  
-  const currentMonthEarnings = currentMonthApps.length * appointmentAmount * payoutPercentage;
-  
+
+  const currentMonthEarnings = sumEarnings(currentMonthApps);
+
   // Previous month earnings
   const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
   const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
@@ -46,11 +50,11 @@ function calculateEarningsData(appointments: Array<{ doctorId: string; status?: 
     const appDate = new Date(a.preferredDate);
     return appDate.getMonth() === prevMonth && appDate.getFullYear() === prevYear;
   });
-  
-  const previousMonthEarnings = previousMonthApps.length * appointmentAmount * payoutPercentage;
-  
+
+  const previousMonthEarnings = sumEarnings(previousMonthApps);
+
   // Total earnings
-  const totalEarnings = doctorAppointments.length * appointmentAmount * payoutPercentage;
+  const totalEarnings = sumEarnings(doctorAppointments);
   const totalAppointments = doctorAppointments.length;
   
   // Monthly breakdown for last 12 months
@@ -69,8 +73,8 @@ function calculateEarningsData(appointments: Array<{ doctorId: string; status?: 
       return appDate.getMonth() === monthIndex && appDate.getFullYear() === year;
     });
     
-    const monthEarnings = monthApps.length * appointmentAmount * payoutPercentage;
-    
+    const monthEarnings = sumEarnings(monthApps);
+
     // Calculate comparison with previous month
     const prevMonthIndex = monthIndex === 0 ? 11 : monthIndex - 1;
     const prevMonthYear = monthIndex === 0 ? year - 1 : year;
@@ -78,7 +82,7 @@ function calculateEarningsData(appointments: Array<{ doctorId: string; status?: 
       const appDate = new Date(a.preferredDate);
       return appDate.getMonth() === prevMonthIndex && appDate.getFullYear() === prevMonthYear;
     });
-    const prevMonthEarnings = prevMonthApps.length * appointmentAmount * payoutPercentage;
+    const prevMonthEarnings = sumEarnings(prevMonthApps);
     
     const percentageChange = prevMonthEarnings > 0 
       ? ((monthEarnings - prevMonthEarnings) / prevMonthEarnings) * 100 
@@ -265,7 +269,7 @@ export default function EarningsPage() {
           <p className="text-[12px] text-blue-800">
             <strong>{t("note") || "Note"}:</strong>{" "}
             {t("earningsInfo") ||
-              `You receive ${DOCTOR_PAYOUT_PERCENTAGE}% of each appointment fee (${APPOINTMENT_PRICE_CURRENCY} ${APPOINTMENT_PRICE_EUR}). Earnings are calculated based on completed and paid appointments only.`}
+              `You receive ${DOCTOR_PAYOUT_PERCENTAGE}% of your consultation fee (set in your profile, ${APPOINTMENT_PRICE_CURRENCY}) per appointment. Earnings are calculated based on completed and paid appointments only.`}
           </p>
         </div>
       </div>

@@ -89,28 +89,6 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function syncPaymentIfPossible(appointmentId: string, idToken: string) {
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    process.env.BACKEND_URL ||
-    'http://localhost:4000';
-
-  try {
-    const res = await fetch(`${backendUrl}/api/paddle/sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`,
-      },
-      body: JSON.stringify({ appointmentId }),
-    });
-    return res.ok;
-  } catch (error) {
-    console.warn('Payment sync request failed', error);
-    return false;
-  }
-}
-
 export async function POST(req: Request) {
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret) {
@@ -207,7 +185,10 @@ export async function POST(req: Request) {
   }
 
   if ((isDoctor || isPatient) && !isPaid) {
-    await syncPaymentIfPossible(roomIdParam, idToken);
+    // PayPal captures are marked paid synchronously by /api/paypal/capture-order;
+    // this short wait only covers the rare case where the webhook reconciliation
+    // is still landing.
+    await sleep(1500);
     const refreshedSnap = await adminDb.collection('appointments').doc(roomIdParam).get();
     if (refreshedSnap.exists) {
       appointmentData = refreshedSnap.data() as AppointmentDoc;

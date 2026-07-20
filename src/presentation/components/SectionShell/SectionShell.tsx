@@ -34,10 +34,8 @@ import { z } from '@/config/zIndex';
 import type { MenuEntryDef, NavItemDef } from '@/navigation/navConfig';
 import { useNotificationsLogic } from '@/app/(app)/dashboard/notifications/useNotificationsLogic';
 import { useNotificationReadState } from '@/presentation/hooks/useNotificationReadState';
+import { useUserNotifications } from '@/presentation/hooks/useUserNotifications';
 import { useAuth } from '@/context/AuthContext';
-import type { UserNotificationDTO } from '@/application/ports/IUserNotificationsService';
-
-const USER_NOTIFICATIONS_POLL_MS = 60_000;
 
 export type AppSectionId = 'dashboard' | 'admin' | 'clinic' | 'pharmacy';
 export type MenuActionId = Extract<MenuEntryDef, { kind: 'action' }>['actionId'];
@@ -199,6 +197,8 @@ function navIcon({ iconKey, sectionId }: { iconKey: string; sectionId: AppSectio
     case 'reciepes':
     case 'myReciepes':
       return <DocumentTextIcon className={cls} />;
+    case 'payouts':
+      return <BanknotesIcon className={cls} />;
     case 'privateClinics':
       return <BuildingOfficeIcon className={cls} />;
     case 'users':
@@ -256,7 +256,7 @@ export default function SectionShell({
   const topbarProfileMenuRef = useRef<HTMLDivElement | null>(null);
   const notifMenuRef = useRef<HTMLDivElement | null>(null);
   const { t } = useTranslation();
-  const { fetchDoctorsUseCase, listUserNotificationsUseCase, markUserNotificationReadUseCase, markAllUserNotificationsReadUseCase } = useDI();
+  const { fetchDoctorsUseCase, markUserNotificationReadUseCase, markAllUserNotificationsReadUseCase } = useDI();
   const nav = useNavigationCoordinator();
   const { user } = useAuth();
   const { filteredDoctors, setSearchTerm: setDoctorSearchTerm, fetchDoctors, reset: resetDoctorSearch } = useDoctorSearchStore();
@@ -266,24 +266,9 @@ export default function SectionShell({
   } = useNotificationsLogic(nav);
   const { isRead, markRead, markManyRead, unreadCount } = useNotificationReadState(user?.uid);
 
-  const [userNotifItems, setUserNotifItems] = useState<UserNotificationDTO[]>([]);
-  const [userNotifUnreadCount, setUserNotifUnreadCount] = useState(0);
-
-  const refreshUserNotifications = useCallback(() => {
-    listUserNotificationsUseCase
-      .execute()
-      .then(({ items, unreadCount: count }) => {
-        setUserNotifItems(items);
-        setUserNotifUnreadCount(count);
-      })
-      .catch(() => {});
-  }, [listUserNotificationsUseCase]);
-
-  useEffect(() => {
-    refreshUserNotifications();
-    const id = setInterval(refreshUserNotifications, USER_NOTIFICATIONS_POLL_MS);
-    return () => clearInterval(id);
-  }, [refreshUserNotifications]);
+  const { data: userNotifData, mutate: mutateUserNotifications } = useUserNotifications(user?.uid);
+  const userNotifItems = useMemo(() => userNotifData?.items ?? [], [userNotifData]);
+  const userNotifUnreadCount = userNotifData?.unreadCount ?? 0;
 
   const notifFeed = useMemo(() => {
     const fromAppointments = appointmentNotifications.slice(0, 8).map((a) => {
@@ -349,12 +334,18 @@ export default function SectionShell({
       markAllUserNotificationsReadUseCase
         .execute()
         .then(() => {
-          setUserNotifItems((items) => items.map((n) => ({ ...n, read: true, readAt: n.readAt ?? Date.now() })));
-          setUserNotifUnreadCount(0);
+          void mutateUserNotifications(
+            (current) =>
+              current && {
+                unreadCount: 0,
+                items: current.items.map((n) => ({ ...n, read: true, readAt: n.readAt ?? Date.now() })),
+              },
+            { revalidate: false },
+          );
         })
         .catch(() => {});
     }
-  }, [legacyNotifFeedIds, markManyRead, userNotifUnreadCount, markAllUserNotificationsReadUseCase]);
+  }, [legacyNotifFeedIds, markManyRead, userNotifUnreadCount, markAllUserNotificationsReadUseCase, mutateUserNotifications]);
 
   const handleNotifClick = useCallback(
     (id: string) => {
@@ -363,17 +354,23 @@ export default function SectionShell({
         markUserNotificationReadUseCase
           .execute(realId)
           .then(() => {
-            setUserNotifItems((items) =>
-              items.map((n) => (n.id === realId ? { ...n, read: true, readAt: n.readAt ?? Date.now() } : n)),
+            void mutateUserNotifications(
+              (current) =>
+                current && {
+                  unreadCount: Math.max(0, current.unreadCount - 1),
+                  items: current.items.map((n) =>
+                    n.id === realId ? { ...n, read: true, readAt: n.readAt ?? Date.now() } : n,
+                  ),
+                },
+              { revalidate: false },
             );
-            setUserNotifUnreadCount((count) => Math.max(0, count - 1));
           })
           .catch(() => {});
       } else {
         markRead(id);
       }
     },
-    [markRead, markUserNotificationReadUseCase],
+    [markRead, markUserNotificationReadUseCase, mutateUserNotifications],
   );
 
   const handleDoctorSearchChange = useCallback((value: string) => {

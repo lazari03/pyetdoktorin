@@ -9,7 +9,7 @@ import { PAYWALL_AMOUNT_USD } from '@/config/paywallConfig';
 import { getAppointmentStatusPresentation } from '@/presentation/utils/getAppointmentStatusPresentation';
 import { AppointmentsTableProps } from './types';
 import { Appointment } from '@/domain/entities/Appointment';
-import { PhoneIcon, CreditCardIcon, CalendarDaysIcon, ClockIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { PhoneIcon, CreditCardIcon, CalendarDaysIcon, ClockIcon, EyeIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { UserRole } from '@/domain/entities/UserRole';
 import { dashboardDoctorProfilePath, DASHBOARD_PATHS } from '@/navigation/paths';
 import { AppointmentActionKey } from '@/domain/entities/AppointmentAction';
@@ -52,11 +52,13 @@ function buildGoJoinLink(appointmentId: string): string {
 const ActionButtons: React.FC<{
 	appointment: Appointment;
 	role: UserRole;
-	action: { label: string; disabled: boolean };
+	action: { label: string; disabled: boolean; variant?: string };
 	onJoinCall: (id: string) => void;
 	onPayNow: (id: string, amount: number) => void;
+	onAccept?: (id: string) => void;
+	onReject?: (id: string) => void;
 	compact?: boolean;
-}> = ({ appointment, role, action, onJoinCall, onPayNow, compact = false }) => {
+}> = ({ appointment, role, action, onJoinCall, onPayNow, onAccept, onReject, compact = false }) => {
 	const { t } = useTranslation();
 	const presentation = getAppointmentActionPresentation(appointment, role, action);
   const canAddToCalendar = action.label !== AppointmentActionKey.Past && Boolean(appointment.preferredDate);
@@ -142,6 +144,53 @@ const ActionButtons: React.FC<{
         >
           {t(presentation.label)}
         </span>
+        {CalendarButton}
+      </div>
+		);
+	}
+
+	if (presentation.type === 'review') {
+		if (compact) {
+			return (
+				<div className="inline-flex items-center gap-1.5">
+					<button
+						type="button"
+						className={`${iconBtnSize} inline-flex items-center justify-center rounded-full border border-emerald-300 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-colors shrink-0`}
+						onClick={() => onAccept?.(appointment.id)}
+						title={t('accept')}
+					>
+						<CheckIcon className="h-4 w-4" aria-hidden />
+					</button>
+					<button
+						type="button"
+						className={`${iconBtnSize} inline-flex items-center justify-center rounded-full border border-rose-200 text-rose-600 hover:bg-rose-500 hover:text-white transition-colors shrink-0`}
+						onClick={() => onReject?.(appointment.id)}
+						title={t('reject')}
+					>
+						<XMarkIcon className="h-4 w-4" aria-hidden />
+					</button>
+					{CalendarButton}
+				</div>
+			);
+		}
+		return (
+      <div className="inline-flex items-center gap-2">
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 transition-colors whitespace-nowrap"
+          onClick={() => onAccept?.(appointment.id)}
+        >
+          <CheckIcon className="h-3.5 w-3.5" aria-hidden />
+          {t('accept')}
+        </button>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 px-3 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors whitespace-nowrap"
+          onClick={() => onReject?.(appointment.id)}
+        >
+          <XMarkIcon className="h-3.5 w-3.5" aria-hidden />
+          {t('reject')}
+        </button>
         {CalendarButton}
       </div>
 		);
@@ -258,6 +307,8 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 	isAppointmentPast,
 	handleJoinCall,
 	handlePayNow,
+	handleAccept,
+	handleReject,
 	showActions = true,
 	maxRows = 3,
 	loading = false,
@@ -364,6 +415,8 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 														action={action}
 														onJoinCall={handleJoinCall}
 														onPayNow={handlePayNow}
+														onAccept={handleAccept}
+														onReject={handleReject}
 														compact
 													/>
 												</div>
@@ -454,6 +507,8 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 												action={action}
 												onJoinCall={handleJoinCall}
 												onPayNow={handlePayNow}
+												onAccept={handleAccept}
+												onReject={handleReject}
 											/>
 										</div>
 									)}
@@ -533,6 +588,8 @@ const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 											action={action}
 											onJoinCall={handleJoinCall}
 											onPayNow={handlePayNow}
+											onAccept={handleAccept}
+											onReject={handleReject}
 										/>
 									</div>
 								)}

@@ -1,38 +1,42 @@
-import { backendFetch } from "./backendClient";
+import { getAppointment } from "./appointments";
 
-export type PaddlePaymentSyncResponse = {
+export type PaymentSyncResponse = {
   ok: boolean;
   updated?: boolean;
   isPaid?: boolean;
 };
 
-export async function syncPaddlePayment(appointmentId: string): Promise<PaddlePaymentSyncResponse> {
+/**
+ * PayPal orders are captured synchronously (see /api/paypal/capture-order),
+ * so this no longer asks a payment provider to "sync" — it just re-reads the
+ * appointment's own isPaid flag, which the capture call (or the webhook
+ * reconciliation backup) has already set by the time this is called.
+ */
+export async function syncPayment(appointmentId: string): Promise<PaymentSyncResponse> {
   if (!appointmentId) {
     throw new Error("Missing appointment id");
   }
-  return backendFetch<PaddlePaymentSyncResponse>(`/api/paddle/sync`, {
-    method: "POST",
-    body: JSON.stringify({ appointmentId }),
-  });
+  const appointment = await getAppointment(appointmentId);
+  return { ok: true, updated: appointment.isPaid, isPaid: appointment.isPaid };
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function syncPaddlePaymentWithRetry(
+export async function syncPaymentWithRetry(
   appointmentId: string,
   options?: { maxAttempts?: number; initialDelayMs?: number; backoffFactor?: number }
-): Promise<PaddlePaymentSyncResponse> {
+): Promise<PaymentSyncResponse> {
   const maxAttempts = options?.maxAttempts ?? 6;
   const initialDelayMs = options?.initialDelayMs ?? 600;
   const backoffFactor = options?.backoffFactor ?? 1.6;
   let delayMs = initialDelayMs;
 
-  let lastResult: PaddlePaymentSyncResponse = { ok: false, updated: false, isPaid: false };
+  let lastResult: PaymentSyncResponse = { ok: false, updated: false, isPaid: false };
   let lastError: unknown = null;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const result = await syncPaddlePayment(appointmentId);
+      const result = await syncPayment(appointmentId);
       lastResult = result;
       if (result.isPaid) return result;
     } catch (error) {

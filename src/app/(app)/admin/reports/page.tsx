@@ -88,10 +88,17 @@ export default function AdminReportsPage() {
         const ad = new Date(a.preferredDate);
         return ad.getFullYear() === d.getFullYear() && ad.getMonth() === d.getMonth();
       });
+      // Platform commission actually held per paid appointment: total fee minus
+      // the doctor's payout share. Uses each appointment's own snapshotted fee
+      // (set by the doctor), falling back to the global default for older
+      // appointments that predate per-doctor pricing.
+      const platformCommission = monthAppts
+        .filter((a) => a.isPaid)
+        .reduce((sum, a) => sum + (a.feeAmount ?? APPOINTMENT_PRICE_EUR) * (1 - DOCTOR_PAYOUT_RATE), 0);
       return {
         label: MONTH_LABELS[d.getMonth()],
         count: monthAppts.length,
-        revenue: monthAppts.filter((a) => a.isPaid).length * APPOINTMENT_PRICE_EUR * DOCTOR_PAYOUT_RATE,
+        revenue: platformCommission,
       };
     });
   }, [appointments]);
@@ -176,8 +183,8 @@ export default function AdminReportsPage() {
           <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-4">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-[13.5px] font-bold text-gray-900">Appointments &amp; revenue</p>
-                <p className="text-[11.5px] text-gray-500">Last 6 months</p>
+                <p className="text-[13.5px] font-bold text-gray-900">Appointments &amp; commission held</p>
+                <p className="text-[11.5px] text-gray-500">Last 6 months · your platform commission, not the doctor&apos;s share</p>
               </div>
               <div className="flex gap-4">
                 <span className="text-[11px] text-gray-500 flex items-center gap-1.5">

@@ -6,6 +6,7 @@ export enum AppointmentActionVariant {
   Finished = 'finished',
   Join = 'join',
   Pay = 'pay',
+  Review = 'review',
   None = 'none',
 }
 
@@ -13,6 +14,7 @@ const AppointmentActionLabels: Record<AppointmentActionVariant, string> = {
   [AppointmentActionVariant.Finished]: AppointmentActionKey.Completed,
   [AppointmentActionVariant.Join]: AppointmentActionKey.JoinNow,
   [AppointmentActionVariant.Pay]: AppointmentActionKey.PayNow,
+  [AppointmentActionVariant.Review]: AppointmentActionKey.None,
   [AppointmentActionVariant.None]: AppointmentActionKey.None,
 };
 
@@ -29,6 +31,13 @@ export function getAppointmentAction(
     };
   }
   if (role === UserRole.Doctor) {
+    if (appointment.status === 'pending') {
+      return {
+        label: '',
+        disabled: false,
+        variant: AppointmentActionVariant.Review,
+      };
+    }
     if (appointment.isPaid) {
       return {
         label: AppointmentActionLabels[AppointmentActionVariant.Join],

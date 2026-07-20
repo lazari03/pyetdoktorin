@@ -10,13 +10,14 @@ import usersRouter from '@/routes/users';
 import appointmentsRouter from '@/routes/appointments';
 import prescriptionsRouter from '@/routes/prescriptions';
 import clinicsRouter from '@/routes/clinics';
-import paddleRouter from '@/routes/paddle';
+import paypalRouter from '@/routes/paypal';
 import statsRouter from '@/routes/stats';
 import notificationsRouter from '@/routes/notifications';
 import userNotificationsRouter from '@/routes/userNotifications';
 import availabilityRouter from '@/routes/availability';
 import doctorsRouter from '@/routes/doctors';
 import securityLogsRouter from '@/routes/securityLogs';
+import payoutsRouter from '@/routes/payouts';
 import { createRateLimiter } from '@/middleware/rateLimit';
 import { attachRequestContext } from '@/middleware/requestContext';
 import { logEvent, logRequestError } from '@/utils/logging';
@@ -75,8 +76,9 @@ const webhookLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 300, keyPre
 
 app.use('/api/auth', authLimiter);
 app.use('/api/appointments', writeLimiter);
-app.use('/api/paddle/webhook', webhookLimiter);
-app.use('/api/paddle/sync', writeLimiter);
+app.use('/api/paypal/webhook', webhookLimiter);
+app.use('/api/paypal/create-order', writeLimiter);
+app.use('/api/paypal/capture-order', writeLimiter);
 app.use('/api/users', readLimiter);
 app.use('/api/blog', readLimiter);
 app.use('/api/clinics', readLimiter);
@@ -87,7 +89,7 @@ app.use('/api/stats', readLimiter);
 app.use('/api/availability', readLimiter);
 app.use('/api/doctors', readLimiter);
 app.use('/api/security-logs', readLimiter);
-app.use('/api/paddle', paddleRouter);
+app.use('/api/payouts', writeLimiter);
 app.use(express.json());
 app.use(cookieParser());
 morgan.token('request-id', (req) => (req as express.Request).requestId ?? '-');
@@ -109,6 +111,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/blog', blogRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/appointments', appointmentsRouter);
+app.use('/api/paypal', paypalRouter);
 app.use('/api/prescriptions', prescriptionsRouter);
 app.use('/api/clinics', clinicsRouter);
 app.use('/api/stats', statsRouter);
@@ -117,6 +120,7 @@ app.use('/api/user-notifications', userNotificationsRouter);
 app.use('/api/availability', availabilityRouter);
 app.use('/api/doctors', doctorsRouter);
 app.use('/api/security-logs', securityLogsRouter);
+app.use('/api/payouts', payoutsRouter);
 
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   // Ensure CORS headers are present on error responses so the browser

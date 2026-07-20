@@ -1,14 +1,14 @@
 import type { IPaymentSyncService } from '@/application/ports/IPaymentSyncService';
-import { syncPaddlePayment, syncPaddlePaymentWithRetry } from '@/network/payments';
+import { syncPayment, syncPaymentWithRetry } from '@/network/payments';
 import { clearPaymentProcessing } from '@/network/appointments';
 
 export class PaymentSyncServiceAdapter implements IPaymentSyncService {
   async syncPayment(appointmentId: string): Promise<void> {
-    await syncPaddlePayment(appointmentId);
+    await syncPayment(appointmentId);
   }
 
   async syncPaymentWithRetry(appointmentId: string): Promise<void> {
-    await syncPaddlePaymentWithRetry(appointmentId);
+    await syncPaymentWithRetry(appointmentId);
   }
 
   async clearPaymentProcessing(appointmentId: string): Promise<void> {

@@ -12,6 +12,7 @@ import {
   type AppointmentStatus,
 } from '@/services/appointmentsService';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
+import { env } from '@/config/env';
 import {
   AppointmentError,
   AppointmentErrorCode,
@@ -68,6 +69,10 @@ router.post('/', requireAuth([UserRole.Patient]), async (req: AuthenticatedReque
       doctorName: doctorDisplayName,
       preferredDate,
       preferredTime,
+      // Snapshot the doctor's current fee at booking time so later changes to
+      // their rate don't retroactively affect appointments already requested.
+      feeAmount: doctorProfile?.consultationFee ?? env.appointmentPriceEur,
+      feeCurrency: env.appointmentPriceCurrency,
       ...(appointmentType !== undefined ? { appointmentType } : {}),
       ...(note !== undefined ? { note } : {}),
       ...(notes !== undefined ? { notes } : {}),

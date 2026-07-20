@@ -1,4 +1,5 @@
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
+import { env } from '@/config/env';
 import { UserRole } from '@/domain/entities/UserRole';
 import { canListAppointmentsForRole } from '@/domain/rules/userRoleRules';
 import { createUserNotification } from '@/services/userNotificationsService';
@@ -22,6 +23,8 @@ export interface AppointmentInput {
   preferredTime?: string;
   note?: string;
   notes?: string;
+  feeAmount?: number;
+  feeCurrency?: string;
 }
 
 export interface Appointment extends AppointmentInput {
@@ -31,6 +34,9 @@ export interface Appointment extends AppointmentInput {
   createdAt: number;
   paymentStatus?: string;
   paymentStartedAt?: number;
+  paymentProvider?: string;
+  transactionId?: string;
+  paidAt?: number;
 }
 
 const COLLECTION = 'appointments';
@@ -170,6 +176,19 @@ export async function createAppointment(input: AppointmentInput): Promise<Appoin
     });
     tx.set(appointmentRef, { ...payload, slotId });
   });
+
+  try {
+    await createUserNotification({
+      userId: rest.doctorId,
+      type: 'appointment_requested',
+      title: 'New appointment request',
+      body: `${rest.patientName || 'A patient'} requested an appointment on ${rest.preferredDate} at ${rest.preferredTime}.`,
+      metadata: { appointmentId: appointmentRef.id },
+    });
+  } catch (error) {
+    console.error('Failed to create new-booking notification:', error);
+  }
+
   return { id: appointmentRef.id, ...payload };
 }
 
@@ -238,14 +257,96 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
   }
 }
 
-export async function markAppointmentPaid(id: string, transactionId: string): Promise<void> {
+const PAYMENTS_COLLECTION = 'payments';
+const DOCTOR_PAYOUTS_COLLECTION = 'doctorPayouts';
+
+/**
+ * You remain the PayPal merchant of record — the patient's payment always lands
+ * in your own PayPal business account first, in full. This just computes and
+ * records what you owe the doctor vs. what you keep, so there's a real ledger
+ * to pay out against (manually, or via a batch PayPal Payouts run) instead of
+ * only aggregate estimates shown in the UI.
+ */
+function splitAppointmentFee(feeAmount: number): { doctorPayoutAmount: number; platformFee: number } {
+  const rate = Math.min(Math.max(env.doctorPayoutPercentage, 0), 100) / 100;
+  const doctorPayoutAmount = Math.round(feeAmount * rate * 100) / 100;
+  const platformFee = Math.round((feeAmount - doctorPayoutAmount) * 100) / 100;
+  return { doctorPayoutAmount, platformFee };
+}
+
+/**
+ * Idempotent via the payments/{transactionId} ledger doc: safe to call twice
+ * for the same transaction (e.g. once from the synchronous capture response,
+ * once again from the webhook reconciliation backup).
+ */
+export async function markAppointmentPaid(
+  id: string,
+  transactionId: string,
+  provider: string,
+  status?: string,
+): Promise<void> {
   const admin = getFirebaseAdmin();
-  await admin.firestore().collection(COLLECTION).doc(id).set({
-    isPaid: true,
-    paymentStatus: 'paid',
-    transactionId,
-    paidAt: Date.now(),
-  }, { merge: true });
+  const db = admin.firestore();
+  let newlyPaidAppointment: Appointment | null = null;
+  await db.runTransaction(async (tx) => {
+    const appointmentRef = db.collection(COLLECTION).doc(id);
+    const paymentRef = db.collection(PAYMENTS_COLLECTION).doc(transactionId);
+    const [appointmentSnap, paymentSnap] = await Promise.all([tx.get(appointmentRef), tx.get(paymentRef)]);
+    if (!appointmentSnap.exists) {
+      throw new AppointmentNotFoundError();
+    }
+    if (paymentSnap.exists) {
+      return;
+    }
+    const appointment = appointmentSnap.data() as Appointment;
+    if (appointment.isPaid) {
+      return;
+    }
+    const feeAmount = appointment.feeAmount ?? env.appointmentPriceEur;
+    const feeCurrency = appointment.feeCurrency ?? env.appointmentPriceCurrency;
+    const { doctorPayoutAmount, platformFee } = splitAppointmentFee(feeAmount);
+    tx.set(paymentRef, {
+      appointmentId: id,
+      transactionId,
+      status: status ?? 'paid',
+      provider,
+      createdAt: Date.now(),
+    });
+    tx.set(appointmentRef, {
+      isPaid: true,
+      paymentStatus: 'paid',
+      transactionId,
+      paymentProvider: provider,
+      paidAt: Date.now(),
+    }, { merge: true });
+    tx.set(db.collection(DOCTOR_PAYOUTS_COLLECTION).doc(transactionId), {
+      appointmentId: id,
+      doctorId: appointment.doctorId,
+      transactionId,
+      totalAmount: feeAmount,
+      currency: feeCurrency,
+      payoutAmount: doctorPayoutAmount,
+      platformFee,
+      status: 'pending',
+      createdAt: Date.now(),
+    });
+    newlyPaidAppointment = appointment;
+  });
+
+  if (newlyPaidAppointment) {
+    const { doctorId, patientName } = newlyPaidAppointment as Appointment;
+    try {
+      await createUserNotification({
+        userId: doctorId,
+        type: 'appointment_paid',
+        title: 'Payment received',
+        body: `${patientName || 'A patient'} has paid for their appointment.`,
+        metadata: { appointmentId: id },
+      });
+    } catch (error) {
+      console.error('Failed to create payment-received notification:', error);
+    }
+  }
 }
 
 export async function markAppointmentPaymentProcessing(
@@ -272,7 +373,7 @@ export async function markAppointmentPaymentProcessing(
     }
     tx.set(appointmentRef, {
       paymentStatus: 'processing',
-      paymentProvider: 'paddle',
+      paymentProvider: 'paypal',
       paymentStartedAt: Date.now(),
     }, { merge: true });
   });

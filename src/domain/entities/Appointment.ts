@@ -13,6 +13,11 @@ export interface Appointment {
 	isPaid: boolean;
 	paymentStatus?: string;
 	paymentStartedAt?: number;
+	paymentProvider?: string;
+	transactionId?: string;
+	paidAt?: number;
+	feeAmount?: number;
+	feeCurrency?: string;
 	createdAt: string;
 	status: AppointmentStatus;
 	roomId?: string; // 100ms room UUID

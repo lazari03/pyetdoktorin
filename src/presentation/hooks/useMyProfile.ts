@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
+import { useCurrentUserProfile } from "@/presentation/hooks/useCurrentUserProfile";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import { useTranslation } from "react-i18next";
 import { BackendError } from "@/application/errors/BackendError";
@@ -13,11 +14,14 @@ export const useMyProfile = () => {
   const { user, role, loading: authLoading } = useAuth(); // Access user, role, and loading from AuthContext
   const {
     authService,
-    getUserProfileUseCase,
     updateUserProfileUseCase,
     uploadProfilePictureUseCase,
     resetUserPasswordUseCase,
   } = useDI();
+  // Shares the same SWR cache entry AuthContext already primed for this uid,
+  // so opening the profile page doesn't re-fetch /api/users/me.
+  const { data: profileData, error: profileFetchError, isLoading: profileLoading, mutate: mutateProfile } =
+    useCurrentUserProfile(user?.uid ?? null);
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
@@ -33,11 +37,17 @@ export const useMyProfile = () => {
     emergencyContactPhone: "",
     signatureDataUrl: "",
     reimbursementCode: "",
+    consultationFee: "",
   });
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [isFetching, setIsFetching] = useState(true); // To handle data fetching state
-  const [fetchError, setFetchError] = useState<unknown>(null);
   const [uploading, setUploading] = useState(false);
+
+  const isFetching = profileLoading;
+  const fetchError = profileFetchError instanceof BackendError
+    ? profileFetchError
+    : profileFetchError instanceof Error
+      ? profileFetchError
+      : null;
 
   const recentLoginAt = useMemo(() => {
     if (!user?.uid) return undefined;
@@ -83,46 +93,26 @@ export const useMyProfile = () => {
   // Removed unused checkProfileComplete function
 
   const refetchProfile = useCallback(async () => {
-    if (!user?.uid) return;
-    setIsFetching(true);
-    setFetchError(null);
-    try {
-      const userData = await getUserProfileUseCase.execute(user.uid);
-      if (userData) {
-        setFormData((prev) => ({
-          ...prev,
-          ...userData,
-          specializations: userData.specializations || [""],
-          education: userData.education || [""],
-          preferredLanguage: userData.preferredLanguage || "",
-          timeZone: userData.timeZone || "",
-          emergencyContactName: userData.emergencyContactName || "",
-          emergencyContactPhone: userData.emergencyContactPhone || "",
-          signatureDataUrl: userData.signatureDataUrl || "",
-          reimbursementCode: userData.reimbursementCode || "",
-        }));
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          email: "",
-        }));
-      }
-    } catch (error) {
-      // Prefer structured errors but never display raw messages to the user here.
-      if (error instanceof BackendError) {
-        setFetchError(error);
-      } else {
-        setFetchError(error instanceof Error ? error : new Error("PROFILE_FETCH_FAILED"));
-      }
-    } finally {
-      setIsFetching(false);
-    }
-  }, [getUserProfileUseCase, user?.uid]);
+    await mutateProfile();
+  }, [mutateProfile]);
 
-  // Fetch user data on mount / user change
+  // Sync local editable form state whenever the cached profile changes.
   useEffect(() => {
-    void refetchProfile();
-  }, [refetchProfile]);
+    if (!profileData) return;
+    setFormData((prev) => ({
+      ...prev,
+      ...profileData,
+      specializations: profileData.specializations || [""],
+      education: profileData.education || [""],
+      preferredLanguage: profileData.preferredLanguage || "",
+      timeZone: profileData.timeZone || "",
+      emergencyContactName: profileData.emergencyContactName || "",
+      emergencyContactPhone: profileData.emergencyContactPhone || "",
+      signatureDataUrl: profileData.signatureDataUrl || "",
+      reimbursementCode: profileData.reimbursementCode || "",
+      consultationFee: profileData.consultationFee != null ? String(profileData.consultationFee) : "",
+    }));
+  }, [profileData]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -183,8 +173,13 @@ export const useMyProfile = () => {
       if (!userId) throw new Error("User not authenticated");
 
       trackAnalyticsEvent("profile_update_attempt");
-      const { reimbursementCode: _, ...profileUpdates } = formData;
-      await updateUserProfileUseCase.execute(userId, profileUpdates);
+      const { reimbursementCode: _, consultationFee, ...profileUpdates } = formData;
+      const parsedFee = consultationFee ? Number(consultationFee) : undefined;
+      await updateUserProfileUseCase.execute(userId, {
+        ...profileUpdates,
+        ...(parsedFee !== undefined && Number.isFinite(parsedFee) ? { consultationFee: parsedFee } : {}),
+      });
+      void mutateProfile();
       void notifyFormSubmission({
         formType: "profile_update",
         source: "my_profile",
