@@ -37,6 +37,7 @@ export function NotificationCard({ appointments }: Props) {
   const { t } = useTranslation();
   const { role, user } = useAuth();
   const notificationsHref = getRoleNotificationsPath(role) || "/dashboard/notifications";
+  const [readIds] = useState<Set<string>>(loadReadIds);
 
   const filtered = useMemo(() => {
     return [...appointments]
@@ -104,6 +105,11 @@ export function NotificationCard({ appointments }: Props) {
       default:                                  return "border-gray-200 bg-gray-50 text-gray-700";
     }
   };
+
+  const getTone = (normalizedStatus: string) => ({
+    dot: getDotClass(normalizedStatus),
+    pill: getPillClass(normalizedStatus),
+  });
 
   const unreadCount = items.filter((i) => !readIds.has(i.id)).length;
 

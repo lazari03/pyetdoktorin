@@ -67,6 +67,7 @@ import {
   dismissNotificationUseCase,
   updateAppointmentStatusAndNotifyUseCase,
   getPharmaciesUseCase,
+  getQuickAppointmentMatchesUseCase,
 } from './di.services';
 
 interface DIContextValue {
@@ -136,6 +137,7 @@ interface DIContextValue {
   dismissNotificationUseCase: typeof dismissNotificationUseCase;
   updateAppointmentStatusAndNotifyUseCase: typeof updateAppointmentStatusAndNotifyUseCase;
   getPharmaciesUseCase: typeof getPharmaciesUseCase;
+  getQuickAppointmentMatchesUseCase: typeof getQuickAppointmentMatchesUseCase;
 }
 
 // All use cases are module-level singletons (see di.services.ts) so this
@@ -207,6 +209,7 @@ const diContextValue: DIContextValue = {
   dismissNotificationUseCase,
   updateAppointmentStatusAndNotifyUseCase,
   getPharmaciesUseCase,
+  getQuickAppointmentMatchesUseCase,
 };
 
 const DIContext = createContext<DIContextValue | undefined>(undefined);

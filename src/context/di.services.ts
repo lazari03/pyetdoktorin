@@ -82,6 +82,9 @@ import { UpdateClinicBookingStatusUseCase } from '@/application/updateClinicBook
 import { DismissNotificationUseCase } from '@/application/dismissNotificationUseCase';
 import { UpdateAppointmentStatusAndNotifyUseCase } from '@/application/updateAppointmentStatusAndNotifyUseCase';
 import { GetPharmaciesUseCase } from '@/application/getPharmaciesUseCase';
+import { GetQuickAppointmentMatchesUseCase } from '@/application/getQuickAppointmentMatchesUseCase';
+import { QuickAppointmentService } from '@/infrastructure/services/quickAppointmentService';
+import type { IQuickAppointmentService } from '@/application/ports/IQuickAppointmentService';
 import { ListUserNotificationsUseCase } from '@/application/listUserNotificationsUseCase';
 import { MarkUserNotificationReadUseCase } from '@/application/markUserNotificationReadUseCase';
 import { MarkAllUserNotificationsReadUseCase } from '@/application/markAllUserNotificationsReadUseCase';
@@ -186,3 +189,5 @@ export const updateClinicBookingStatusUseCase = new UpdateClinicBookingStatusUse
 export const dismissNotificationUseCase = new DismissNotificationUseCase(notificationService);
 export const updateAppointmentStatusAndNotifyUseCase = new UpdateAppointmentStatusAndNotifyUseCase(appointmentNotificationService);
 export const getPharmaciesUseCase = new GetPharmaciesUseCase(pharmacyService);
+export const quickAppointmentService: IQuickAppointmentService = new QuickAppointmentService();
+export const getQuickAppointmentMatchesUseCase = new GetQuickAppointmentMatchesUseCase(quickAppointmentService);

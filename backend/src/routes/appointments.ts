@@ -13,6 +13,7 @@ import {
   type AppointmentStatus,
 } from '@/services/appointmentsService';
 import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
+import { findQuickAppointmentMatches } from '@/services/quickAppointmentsService';
 import { env } from '@/config/env';
 import {
   AppointmentError,

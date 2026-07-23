@@ -22,6 +22,21 @@ if ! npx tsc --noEmit 2>&1; then
 fi
 
 # ──────────────────────────────────────────────
+# 1b. Backend TypeScript compilation
+#     Only when backend files are staged, so frontend-only commits stay fast.
+#     This is what would have caught the missing `findQuickAppointmentMatches`
+#     import before it broke the Render/Railway deploy build.
+# ──────────────────────────────────────────────
+BACKEND_STAGED=$(git diff --cached --name-only --diff-filter=ACM -- backend | grep -E '\.tsx?$' || true)
+if [ -n "$BACKEND_STAGED" ]; then
+  echo "   • backend tsc --noEmit ..."
+  if ! npm --prefix backend run typecheck 2>&1; then
+    echo "❌ Backend TypeScript compilation failed. Fix errors before committing."
+    exit 1
+  fi
+fi
+
+# ──────────────────────────────────────────────
 # 2. Knip (dead code / unused exports)
 # ──────────────────────────────────────────────
 echo "   • knip ..."
