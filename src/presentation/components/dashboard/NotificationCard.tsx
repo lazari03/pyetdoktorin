@@ -37,7 +37,17 @@ export function NotificationCard({ appointments }: Props) {
   const { t } = useTranslation();
   const { role, user } = useAuth();
   const notificationsHref = getRoleNotificationsPath(role) || "/dashboard/notifications";
-  const [readIds] = useState<Set<string>>(loadReadIds);
+  const [readIds, setReadIds] = useState<Set<string>>(loadReadIds);
+
+  const markRead = (id: string) => {
+    setReadIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      saveReadIds(next);
+      return next;
+    });
+  };
 
   const filtered = useMemo(() => {
     return [...appointments]
@@ -117,13 +127,13 @@ export function NotificationCard({ appointments }: Props) {
     <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-[12.5px] font-bold text-gray-900">{t("activity") || "Activity"}</p>
-        {filtered.length > 0 && (
+        {unreadCount > 0 && (
           <span
             className="shrink-0 inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700"
             aria-label={t("notificationsCount") || "Notifications count"}
             data-analytics="dashboard.notifications.count"
           >
-            {filtered.length} {t("new") || "new"}
+            {unreadCount} {t("new") || "new"}
           </span>
         )}
       </div>
@@ -141,6 +151,7 @@ export function NotificationCard({ appointments }: Props) {
               <Link
                 key={item.id}
                 href={`${notificationsHref}?focus=${encodeURIComponent(item.id)}`}
+                onClick={() => markRead(item.id)}
                 className="flex gap-2.5 rounded-lg px-1 py-2 hover:bg-gray-50/80 transition-colors"
                 aria-label={t("openNotification") || "Open notification"}
                 data-analytics="dashboard.notifications.open"

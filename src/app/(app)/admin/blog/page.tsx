@@ -12,13 +12,7 @@ import { ADMIN_PATHS } from "@/navigation/paths";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
 import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';import { useDI } from "@/context/DIContext";
 import type { BlogPost } from "@/domain/entities/BlogPost";
-import {
-  getAllBlogPosts,
-  createBlogPost,
-  updateBlogPost,
-  deleteBlogPost,
-  slugify,
-} from "@/network/blogService";
+import { slugify } from "@/network/blogService";
 
 type EditorMode = "list" | "create" | "edit";
 

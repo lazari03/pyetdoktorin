@@ -17,7 +17,6 @@ import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageS
 import { notifyFormSubmission } from "@/presentation/utils/formNotifications";
 import { PillIcon, ClipboardIcon } from "@/presentation/components/icons/MiniIcons";
 import { initialsOf } from "@/presentation/utils/initials";
-import { DocumentTextIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 const inputClass = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500";
 const fieldLabelClass = "block text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-1";
@@ -70,7 +69,7 @@ export default function DoctorReciepePage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showIssuedModal, setShowIssuedModal] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
+  const [statusFilter, _setStatusFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
   const [reciepesPage, setReciepesPage] = useState(0);
   const toReciepe = useCallback((p: ReciepePayload): Reciepe => ({
     id: p.id || "",
@@ -361,11 +360,6 @@ export default function DoctorReciepePage() {
     w.focus();
     w.print();
   };
-
-  const totalCount = reciepes.length;
-  const pendingCount = reciepes.filter((r) => r.status === "pending").length;
-  const acceptedCount = reciepes.filter((r) => r.status === "accepted").length;
-  const rejectedCount = reciepes.filter((r) => r.status === "rejected").length;
 
   const filteredReciepes = reciepes.filter((r) => statusFilter === "all" || r.status === statusFilter);
   const reciepesTotalPages = Math.max(1, Math.ceil(filteredReciepes.length / RECIEPES_PAGE_SIZE));

@@ -9,23 +9,6 @@ import { AppointmentService } from '@/infrastructure/services/appointmentService
 
 const appointmentService = new AppointmentService();
 
-/**
- * Convert a time string (either "HH:mm" or "hh:mm AM/PM") into "HH:mm" 24-hour format
- * so it can be used in `new Date("YYYY-MM-DDThh:mm")`.
- */
-function normalizeTo24h(time: string): string {
-  const ampmMatch = time.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
-  if (ampmMatch) {
-    let hours = parseInt(ampmMatch[1], 10);
-    const minutes = ampmMatch[2];
-    const period = ampmMatch[3].toUpperCase();
-    if (period === 'PM' && hours !== 12) hours += 12;
-    if (period === 'AM' && hours === 12) hours = 0;
-    return `${hours.toString().padStart(2, '0')}:${minutes}`;
-  }
-  return time; // already in HH:mm
-}
-
 function resolveAppointmentFetchError(error: unknown): string {
   if (error instanceof BackendError) {
     if (error.status === 401) return APPOINTMENT_ERROR_CODES.Unauthorized;

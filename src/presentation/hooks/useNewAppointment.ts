@@ -12,7 +12,6 @@ import { getAppointmentErrorMessage } from '@/presentation/utils/errorMessages';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 
 export default function useNewAppointment() {
-  const { appointmentBookingService } = useDI();
   const {
     selectedDoctor,
     setSelectedDoctor,

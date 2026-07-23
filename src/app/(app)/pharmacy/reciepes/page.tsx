@@ -8,10 +8,7 @@ import RedirectingModal from "@/presentation/components/RedirectingModal/Redirec
 import Image from "next/image";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
-import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';
 import { PHARMACY_PATHS } from "@/navigation/paths";
-import { PillIcon, ClipboardIcon, UserIcon } from "@/presentation/components/icons/MiniIcons";
-import { initialsOf } from "@/presentation/utils/initials";
 import { UserRole } from "@/domain/entities/UserRole";
 import { useToast } from "@/presentation/components/Toast/ToastProvider";
 import Pager from "@/presentation/components/Pager/Pager";

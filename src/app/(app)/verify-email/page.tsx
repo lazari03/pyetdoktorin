@@ -30,7 +30,6 @@ export default function VerifyEmailPage() {
   const { applyVerificationCodeUseCase, establishSessionUseCase, sendVerificationEmailUseCase, reloadUserUseCase } = useDI();
   const searchParams = useSearchParams();
   const { loading, user, role, emailVerified } = useAuth();
-  const { authService } = useDI();
 
   const nextTarget = useMemo(() => sanitizeNextPath(searchParams?.get('next')), [searchParams]);
   const fallbackTarget = useMemo(() => (role ? getRoleLandingPath(role) : '/dashboard'), [role]);

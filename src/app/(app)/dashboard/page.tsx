@@ -34,7 +34,6 @@ import { getAppointmentAction } from "@/domain/rules/appointmentRules";
 import { getAppointmentActionPresentation } from "@/presentation/utils/getAppointmentActionPresentation";
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
 import { syncPaymentWithRetry } from "@/network/payments";
-import { listAppointments } from "@/network/appointments";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { useEffect, useRef, useState } from "react";
 import { useDI } from "@/context/DIContext";

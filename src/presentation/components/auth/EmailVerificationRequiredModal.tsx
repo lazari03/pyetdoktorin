@@ -19,7 +19,7 @@ export default function EmailVerificationRequiredModal({
   onLogout: () => void;
 }) {
   const { t } = useTranslation();
-  const { authService, reloadUserUseCase, sendVerificationEmailUseCase, establishSessionUseCase } = useDI();
+  const { authService, sendVerificationEmailUseCase, establishSessionUseCase } = useDI();
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,10 +33,6 @@ export default function EmailVerificationRequiredModal({
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
-
-  const refreshVerification = async (): Promise<boolean> => {
-    return reloadUserUseCase.execute();
-  };
 
   const resend = async () => {
     if (Date.now() < resendCooldownUntil) return;
