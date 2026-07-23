@@ -112,12 +112,12 @@ function getCopy(locale: Locale, companyName: string): Copy {
           title: "4. Bookings, pricing, payments, cancellations and refunds",
           paragraphs: [
             "Pyet Doktorin operates the checkout and processes payment on behalf of the independent doctor for each booked consultation. Any fee payable through the platform must be shown clearly before the user confirms the order or booking request. The platform should provide an electronic confirmation and, where legally required, the corresponding fiscal or commercial documentation.",
-            "Specific cancellation, rebooking, no-show and refund rules may differ by service type, doctor or institution, but they must be disclosed before checkout or in the booking confirmation.",
+            "Every consultation fee paid through the platform is covered by a 14-day refund guarantee: users may request a full refund within 14 days of payment, for any reason, with no exceptions or conditions attached. Cancellation, rescheduling and no-show handling are separate scheduling matters and do not limit or replace this refund right.",
           ],
           bullets: [
-            "No hidden charges should be applied after confirmation unless the user expressly accepts a change.",
-            "Where Albanian consumer law grants mandatory pre-contract information or withdrawal-related rights, those rights prevail.",
-            "If a consultation cannot be delivered because the doctor declines it or the platform cancels it without user fault, the user should receive the remedy disclosed at checkout or otherwise required by law.",
+            "No hidden charges are applied after confirmation unless the user expressly accepts a change.",
+            "Refund requests made within the 14-day window are honored in full, regardless of consultation status, service type, doctor, or institution.",
+            "Where Albanian consumer law grants additional mandatory pre-contract information or withdrawal rights, those rights apply on top of, and do not reduce, this refund guarantee.",
           ],
         },
         {
@@ -302,12 +302,12 @@ function getCopy(locale: Locale, companyName: string): Copy {
         title: "4. Rezervimet, çmimet, pagesat, anulimet dhe rimbursimet",
         paragraphs: [
           "Pyet Doktorin menaxhon procesin e pagesës dhe e përpunon atë në emër të mjekut të pavarur për çdo konsultë të rezervuar. Çdo tarifë që paguhet përmes platformës duhet të shfaqet qartë para se përdoruesi të konfirmojë porosinë ose kërkesën për rezervim. Platforma duhet të japë konfirmim elektronik dhe, kur kërkohet nga ligji, dokumentacionin përkatës fiskal ose tregtar.",
-          "Rregullat specifike për anulim, ricaktim, mungesë në takim dhe rimbursim mund të ndryshojnë sipas llojit të shërbimit, mjekut ose institucionit, por ato duhet t'i bëhen të njohura përdoruesit para pagesës ose në konfirmimin e rezervimit.",
+          "Çdo tarifë konsultimi e paguar përmes platformës mbulohet nga një garanci rimbursimi prej 14 ditësh: përdoruesit mund të kërkojnë rimbursim të plotë brenda 14 ditëve nga pagesa, për çdo arsye, pa asnjë përjashtim apo kusht. Anulimi, ricaktimi dhe mungesa në takim janë çështje të veçanta të planifikimit dhe nuk e kufizojnë apo zëvendësojnë këtë të drejtë rimbursimi.",
         ],
         bullets: [
-          "Nuk duhet të aplikohen tarifa të fshehura pas konfirmimit, përveç nëse përdoruesi pranon shprehimisht ndryshimin.",
-          "Kur ligji shqiptar i konsumatorit jep të drejta të detyrueshme për informacion para-kontraktor ose të drejta të tjera për kontratat në distancë, ato të drejta kanë përparësi.",
-          "Nëse konsultimi nuk mund të ofrohet sepse mjeku e refuzon ose platforma e anulon pa faj të përdoruesit, përdoruesi duhet të marrë zgjidhjen e njoftuar në checkout ose atë që kërkon ligji.",
+          "Nuk aplikohen tarifa të fshehura pas konfirmimit, përveç nëse përdoruesi pranon shprehimisht ndryshimin.",
+          "Kërkesat për rimbursim brenda afatit 14-ditor respektohen plotësisht, pavarësisht statusit të konsultës, llojit të shërbimit, mjekut apo institucionit.",
+          "Kur ligji shqiptar i konsumatorit jep të drejta shtesë të detyrueshme për informacion para-kontraktor ose tërheqje, ato të drejta zbatohen përveç, dhe nuk zvogëlojnë, këtë garanci rimbursimi.",
         ],
       },
       {

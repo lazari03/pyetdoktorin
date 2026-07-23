@@ -1,4 +1,4 @@
-import { getAppointment } from "./appointments";
+import { backendFetch } from "./backendClient";
 
 export type PaymentSyncResponse = {
   ok: boolean;
@@ -7,17 +7,18 @@ export type PaymentSyncResponse = {
 };
 
 /**
- * PayPal orders are captured synchronously (see /api/paypal/capture-order),
- * so this no longer asks a payment provider to "sync" — it just re-reads the
- * appointment's own isPaid flag, which the capture call (or the webhook
- * reconciliation backup) has already set by the time this is called.
+ * Paddle's overlay checkout doesn't confirm payment back to us synchronously,
+ * so after it closes we ask the backend to check Paddle's own Transactions
+ * API for a match (the webhook may not have landed yet).
  */
 export async function syncPayment(appointmentId: string): Promise<PaymentSyncResponse> {
   if (!appointmentId) {
     throw new Error("Missing appointment id");
   }
-  const appointment = await getAppointment(appointmentId);
-  return { ok: true, updated: appointment.isPaid, isPaid: appointment.isPaid };
+  return backendFetch<PaymentSyncResponse>(`/api/paddle/sync`, {
+    method: "POST",
+    body: JSON.stringify({ appointmentId }),
+  });
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

@@ -1,23 +1,23 @@
 import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAppointmentStore } from '@/store/appointmentStore';
 import { useVideoStore } from '@/store/videoStore';
 import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
 import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useTranslation } from 'react-i18next';
-import { getVideoErrorMessage } from '@/presentation/utils/errorMessages';
-import { dashboardVideoSessionUrl, dashboardPayUrl } from '@/navigation/paths';
+import { getAppointmentErrorMessage, getVideoErrorMessage } from '@/presentation/utils/errorMessages';
+import { dashboardVideoSessionUrl } from '@/navigation/paths';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
 import { getAuthToken } from '@/application/auth/tokenHolder';
 
 export function useDashboardActions() {
   const { user, role } = useAuth();
   const { setAuthStatus, generateRoomCodeAndStore } = useVideoStore();
-  const { generateRoomCodeUseCase } = useDI();
+  const { handlePayNow: storeHandlePayNow, fetchAppointments } = useAppointmentStore();
+  const { handlePayNowUseCase, syncPaymentUseCase, clearPaymentProcessingUseCase, generateRoomCodeUseCase } = useDI();
   const { t } = useTranslation();
   const { toast } = useToast();
-  const router = useRouter();
 
   // Join call using Zustand store and localStorage hydration
   const handleJoinCall = useCallback(async (appointmentId: string) => {
@@ -67,8 +67,32 @@ export function useDashboardActions() {
 
   const handlePayNow = useCallback(async (appointmentId: string, amount: number) => {
     trackAnalyticsEvent('payment_initiated', { appointmentId, amount });
-    router.push(dashboardPayUrl(appointmentId));
-  }, [router]);
+    try {
+      await storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
+        onClose: () => {
+          clearPaymentProcessingUseCase.execute(appointmentId).catch((error) => {
+            console.warn('Payment processing clear failed', error);
+          });
+          (async () => {
+            try {
+              await syncPaymentUseCase.execute(appointmentId);
+            } catch (error) {
+              console.warn('Payment sync failed', error);
+            } finally {
+              fetchAppointments(role).catch((error) => console.warn('Appointment refresh after payment failed', error));
+            }
+          })();
+        },
+      });
+    } catch (error) {
+      trackAnalyticsEvent('payment_failed', {
+        appointmentId,
+        reason: error instanceof Error ? error.message.slice(0, 120) : 'unknown_error',
+      });
+      const translatedMessage = getAppointmentErrorMessage(error, t);
+      toast({ variant: 'error', message: translatedMessage ?? t('genericError') });
+    }
+  }, [storeHandlePayNow, handlePayNowUseCase, syncPaymentUseCase, clearPaymentProcessingUseCase, fetchAppointments, role, t, toast]);
 
   return { handleJoinCall, handlePayNow };
 }

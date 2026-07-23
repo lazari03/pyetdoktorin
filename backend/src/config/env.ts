@@ -32,10 +32,9 @@ function parseCsvEnv(name: string, fallback: string[] = []): string[] {
 export const env = {
   port: parseInt(process.env.PORT || '4000', 10),
   firebaseServiceAccount: requireEnv('FIREBASE_SERVICE_ACCOUNT'),
-  paypalEnv: process.env.PAYPAL_ENV ?? 'sandbox',
-  paypalClientId: process.env.PAYPAL_CLIENT_ID ?? '',
-  paypalClientSecret: process.env.PAYPAL_CLIENT_SECRET ?? '',
-  paypalWebhookId: process.env.PAYPAL_WEBHOOK_ID ?? '',
+  paddleEnv: process.env.PADDLE_ENV ?? 'sandbox',
+  paddleApiKey: process.env.PADDLE_API_KEY ?? '',
+  paddleWebhookSecret: process.env.PADDLE_WEBHOOK_SECRET ?? '',
   paywallAmountUsd: parseNumberEnv('PAYWALL_AMOUNT_USD', parseNumberEnv('NEXT_PUBLIC_PAYWALL_AMOUNT_USD', 13)),
   appointmentPriceEur: parseNumberEnv('APPOINTMENT_PRICE_EUR', parseNumberEnv('NEXT_PUBLIC_APPOINTMENT_PRICE_EUR', 13)),
   appointmentPriceCurrency: process.env.APPOINTMENT_PRICE_CURRENCY ?? process.env.NEXT_PUBLIC_APPOINTMENT_PRICE_CURRENCY ?? 'EUR',

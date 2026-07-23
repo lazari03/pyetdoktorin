@@ -185,9 +185,8 @@ export async function POST(req: Request) {
   }
 
   if ((isDoctor || isPatient) && !isPaid) {
-    // PayPal captures are marked paid synchronously by /api/paypal/capture-order;
-    // this short wait only covers the rare case where the webhook reconciliation
-    // is still landing.
+    // Payment capture marks the appointment paid synchronously; this short wait
+    // only covers the rare case where a webhook reconciliation is still landing.
     await sleep(1500);
     const refreshedSnap = await adminDb.collection('appointments').doc(roomIdParam).get();
     if (refreshedSnap.exists) {

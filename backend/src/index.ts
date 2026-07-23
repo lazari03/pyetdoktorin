@@ -10,7 +10,7 @@ import usersRouter from '@/routes/users';
 import appointmentsRouter from '@/routes/appointments';
 import prescriptionsRouter from '@/routes/prescriptions';
 import clinicsRouter from '@/routes/clinics';
-import paypalRouter from '@/routes/paypal';
+import paddleRouter from '@/routes/paddle';
 import statsRouter from '@/routes/stats';
 import notificationsRouter from '@/routes/notifications';
 import userNotificationsRouter from '@/routes/userNotifications';
@@ -76,9 +76,8 @@ const webhookLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 300, keyPre
 
 app.use('/api/auth', authLimiter);
 app.use('/api/appointments', writeLimiter);
-app.use('/api/paypal/webhook', webhookLimiter);
-app.use('/api/paypal/create-order', writeLimiter);
-app.use('/api/paypal/capture-order', writeLimiter);
+app.use('/api/paddle/webhook', webhookLimiter);
+app.use('/api/paddle/sync', writeLimiter);
 app.use('/api/users', readLimiter);
 app.use('/api/blog', readLimiter);
 app.use('/api/clinics', readLimiter);
@@ -90,6 +89,11 @@ app.use('/api/availability', readLimiter);
 app.use('/api/doctors', readLimiter);
 app.use('/api/security-logs', readLimiter);
 app.use('/api/payouts', writeLimiter);
+// Paddle's webhook signature covers the raw request body, so this route must
+// read it before the global JSON parser below consumes the stream. Every
+// other route (including /api/paddle/sync) relies on cookieParser() for
+// session auth, so it's mounted normally, after both global parsers.
+app.use('/api/paddle/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(cookieParser());
 morgan.token('request-id', (req) => (req as express.Request).requestId ?? '-');
@@ -111,7 +115,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/blog', blogRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/appointments', appointmentsRouter);
-app.use('/api/paypal', paypalRouter);
+app.use('/api/paddle', paddleRouter);
 app.use('/api/prescriptions', prescriptionsRouter);
 app.use('/api/clinics', clinicsRouter);
 app.use('/api/stats', statsRouter);

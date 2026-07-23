@@ -2,7 +2,6 @@
 import React, { createContext, useContext } from 'react';
 import {
   authService,
-  paymentCheckoutService,
   blogService,
   availabilityService,
   adminUserService,
@@ -11,6 +10,7 @@ import {
   appointmentBookingService,
   clinicBookingService,
   paymentSyncService,
+  paymentCheckoutService,
   handlePayNowUseCase,
   generateRoomCodeUseCase,
   getTopDoctorsByAppointmentsUseCase,
@@ -51,6 +51,8 @@ import {
   applyVerificationCodeUseCase,
   establishSessionAllowUnverifiedUseCase,
   prepareCheckoutUseCase,
+  openCheckoutUseCase,
+  syncPaymentUseCase,
   clearPaymentProcessingUseCase,
   listAppointmentsUseCase,
   createAppointmentUseCase,
@@ -58,7 +60,6 @@ import {
   getAdminDashboardStatsUseCase,
   getSecurityLogsUseCase,
   dismissNotificationByIdUseCase,
-  openCheckoutUseCase,
   getClinicsUseCase,
   getClinicBookingsUseCase,
   createClinicBookingUseCase,
@@ -70,7 +71,6 @@ import {
 
 interface DIContextValue {
   authService: typeof authService;
-  paymentCheckoutService: typeof paymentCheckoutService;
   blogService: typeof blogService;
   availabilityService: typeof availabilityService;
   adminUserService: typeof adminUserService;
@@ -79,6 +79,7 @@ interface DIContextValue {
   appointmentBookingService: typeof appointmentBookingService;
   clinicBookingService: typeof clinicBookingService;
   paymentSyncService: typeof paymentSyncService;
+  paymentCheckoutService: typeof paymentCheckoutService;
   handlePayNowUseCase: typeof handlePayNowUseCase;
   generateRoomCodeUseCase: typeof generateRoomCodeUseCase;
   getTopDoctorsByAppointmentsUseCase: typeof getTopDoctorsByAppointmentsUseCase;
@@ -119,6 +120,8 @@ interface DIContextValue {
   applyVerificationCodeUseCase: typeof applyVerificationCodeUseCase;
   establishSessionAllowUnverifiedUseCase: typeof establishSessionAllowUnverifiedUseCase;
   prepareCheckoutUseCase: typeof prepareCheckoutUseCase;
+  openCheckoutUseCase: typeof openCheckoutUseCase;
+  syncPaymentUseCase: typeof syncPaymentUseCase;
   clearPaymentProcessingUseCase: typeof clearPaymentProcessingUseCase;
   listAppointmentsUseCase: typeof listAppointmentsUseCase;
   createAppointmentUseCase: typeof createAppointmentUseCase;
@@ -126,7 +129,6 @@ interface DIContextValue {
   getAdminDashboardStatsUseCase: typeof getAdminDashboardStatsUseCase;
   getSecurityLogsUseCase: typeof getSecurityLogsUseCase;
   dismissNotificationByIdUseCase: typeof dismissNotificationByIdUseCase;
-  openCheckoutUseCase: typeof openCheckoutUseCase;
   getClinicsUseCase: typeof getClinicsUseCase;
   getClinicBookingsUseCase: typeof getClinicBookingsUseCase;
   createClinicBookingUseCase: typeof createClinicBookingUseCase;
@@ -140,7 +142,6 @@ interface DIContextValue {
 // object is built once, not per-render — DIProvider is a pure pass-through.
 const diContextValue: DIContextValue = {
   authService,
-  paymentCheckoutService,
   blogService,
   availabilityService,
   adminUserService,
@@ -149,6 +150,7 @@ const diContextValue: DIContextValue = {
   appointmentBookingService,
   clinicBookingService,
   paymentSyncService,
+  paymentCheckoutService,
   handlePayNowUseCase,
   generateRoomCodeUseCase,
   getTopDoctorsByAppointmentsUseCase,
@@ -189,6 +191,8 @@ const diContextValue: DIContextValue = {
   applyVerificationCodeUseCase,
   establishSessionAllowUnverifiedUseCase,
   prepareCheckoutUseCase,
+  openCheckoutUseCase,
+  syncPaymentUseCase,
   clearPaymentProcessingUseCase,
   listAppointmentsUseCase,
   createAppointmentUseCase,
@@ -196,7 +200,6 @@ const diContextValue: DIContextValue = {
   getAdminDashboardStatsUseCase,
   getSecurityLogsUseCase,
   dismissNotificationByIdUseCase,
-  openCheckoutUseCase,
   getClinicsUseCase,
   getClinicBookingsUseCase,
   createClinicBookingUseCase,

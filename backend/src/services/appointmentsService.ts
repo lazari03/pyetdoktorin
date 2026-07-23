@@ -261,11 +261,11 @@ const PAYMENTS_COLLECTION = 'payments';
 const DOCTOR_PAYOUTS_COLLECTION = 'doctorPayouts';
 
 /**
- * You remain the PayPal merchant of record — the patient's payment always lands
- * in your own PayPal business account first, in full. This just computes and
- * records what you owe the doctor vs. what you keep, so there's a real ledger
- * to pay out against (manually, or via a batch PayPal Payouts run) instead of
- * only aggregate estimates shown in the UI.
+ * You remain the merchant of record — the patient's payment always lands in
+ * your own account first, in full. This just computes and records what you
+ * owe the doctor vs. what you keep, so there's a real ledger to pay out
+ * against (manually, or via a batch payout run) instead of only aggregate
+ * estimates shown in the UI.
  */
 function splitAppointmentFee(feeAmount: number): { doctorPayoutAmount: number; platformFee: number } {
   const rate = Math.min(Math.max(env.doctorPayoutPercentage, 0), 100) / 100;
@@ -373,7 +373,6 @@ export async function markAppointmentPaymentProcessing(
     }
     tx.set(appointmentRef, {
       paymentStatus: 'processing',
-      paymentProvider: 'paypal',
       paymentStartedAt: Date.now(),
     }, { merge: true });
   });

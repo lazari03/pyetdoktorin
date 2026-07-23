@@ -190,7 +190,7 @@ export default function AdminPayoutsPage() {
             <p className="text-[12px] text-blue-800">
               <strong>{t("note") || "Note"}:</strong>{" "}
               {t("payoutsHoldNote") ||
-                "Patient payments land in your own PayPal account in full. This page only tracks what you owe each doctor — actually paying them (bank transfer, PayPal, etc.) is a separate manual step. Use \"Mark as paid\" once you've sent it."}
+                "Patient payments land in your own account in full. This page only tracks what you owe each doctor — actually paying them (bank transfer, etc.) is a separate manual step. Use \"Mark as paid\" once you've sent it."}
             </p>
           </div>
         </div>
