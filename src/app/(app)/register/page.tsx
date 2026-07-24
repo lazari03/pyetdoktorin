@@ -6,6 +6,7 @@ import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useTranslation } from 'react-i18next';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
+import { PasswordStrengthMeter } from '@/presentation/components/auth/PasswordStrengthMeter';
 import { ROUTES } from '@/config/routes';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
@@ -217,6 +218,7 @@ function RegisterPageInner() {
                 onChange={handleChange}
                 required
               />
+              <PasswordStrengthMeter password={formData.password} />
             </div>
             <div>
               <label className={fieldLabelClass}>{t('confirmPassword')}</label>

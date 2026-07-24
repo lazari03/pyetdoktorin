@@ -19,7 +19,7 @@ interface PrescriptionNotification {
 }
 
 export function useNotificationsLogic(nav: NavigationCoordinator) {
-  const { appointments, loading: isLoading, error, fetchAppointments, setAppointments } = useAppointmentStore();
+  const { appointments, loading: isLoading, error, subscribeAppointments, fetchAppointments, setAppointments } = useAppointmentStore();
   const { user, role } = useAuth();
   const {
     getReciepesByDoctorUseCase,
@@ -34,20 +34,26 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
   const [prescriptionsLoading, setPrescriptionsLoading] = useState(false);
   const [prescriptionsError, setPrescriptionsError] = useState<unknown>(null);
 
-  const didInitRef = useRef(false);
+  const didRedirectRef = useRef(false);
   useEffect(() => {
-    if (didInitRef.current) return;
     if (!user?.uid) {
-      nav.toLogin();
+      if (!didRedirectRef.current) {
+        didRedirectRef.current = true;
+        nav.toLogin();
+      }
       return;
     }
     if (!role) return;
-    didInitRef.current = true;
     // Appointments list is only relevant for doctor/patient notifications.
+    // Subscribed (not one-shot) so the bell and notification cards stay live
+    // — SectionShell mounts this hook for the whole dashboard section, so
+    // this is the one place that needs to keep polling regardless of which
+    // page within the section is currently active.
     if (role === UserRole.Doctor || role === UserRole.Patient) {
-      fetchAppointments(role);
+      const unsubscribe = subscribeAppointments(user.uid, role);
+      return unsubscribe;
     }
-  }, [fetchAppointments, user?.uid, nav, role]);
+  }, [subscribeAppointments, user?.uid, nav, role]);
 
   const appointmentNotifications = useMemo(() => {
     if (!userRole) return [] as Appointment[];

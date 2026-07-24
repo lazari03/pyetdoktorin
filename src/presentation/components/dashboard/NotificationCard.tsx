@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Appointment } from "@/domain/entities/Appointment";
 import { getAppointmentStatusPresentation } from "@/presentation/utils/getAppointmentStatusPresentation";
@@ -9,25 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getRoleNotificationsPath } from "@/navigation/roleRoutes";
 import { UserRole } from "@/domain/entities/UserRole";
 import { BellIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-
-const STORAGE_KEY = "readNotificationIds";
-
-function loadReadIds(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch {
-    return new Set();
-  }
-}
-
-function saveReadIds(ids: Set<string>) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
-  } catch {}
-}
+import { useNotificationReadState } from "@/presentation/hooks/useNotificationReadState";
 
 type Props = {
   appointments: Appointment[];
@@ -37,17 +19,10 @@ export function NotificationCard({ appointments }: Props) {
   const { t } = useTranslation();
   const { role, user } = useAuth();
   const notificationsHref = getRoleNotificationsPath(role) || "/dashboard/notifications";
-  const [readIds, setReadIds] = useState<Set<string>>(loadReadIds);
-
-  const markRead = (id: string) => {
-    setReadIds((prev) => {
-      if (prev.has(id)) return prev;
-      const next = new Set(prev);
-      next.add(id);
-      saveReadIds(next);
-      return next;
-    });
-  };
+  // Shares the same per-user read-state store as the topbar bell dropdown, so
+  // marking a notification read here (or there) stays in sync everywhere,
+  // including after a reload.
+  const { isRead, markRead } = useNotificationReadState(user?.uid);
 
   const filtered = useMemo(() => {
     return [...appointments]
@@ -121,7 +96,7 @@ export function NotificationCard({ appointments }: Props) {
     pill: getPillClass(normalizedStatus),
   });
 
-  const unreadCount = items.filter((i) => !readIds.has(i.id)).length;
+  const unreadCount = items.filter((i) => !isRead(i.id)).length;
 
   return (
     <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">

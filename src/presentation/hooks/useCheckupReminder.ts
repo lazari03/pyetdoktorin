@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
+import { useCurrentUserProfile } from "@/presentation/hooks/useCurrentUserProfile";
 
 const addMonths = (dateString: string, months: number) => {
   const d = new Date(dateString);
@@ -11,30 +12,14 @@ const addMonths = (dateString: string, months: number) => {
 
 export function useCheckupReminder() {
   const { user } = useAuth();
-  const { getUserProfileUseCase, updateUserProfileUseCase } = useDI();
-  const [lastCheckupDate, setLastCheckupDate] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const { updateUserProfileUseCase } = useDI();
+  // Shares the same cache entry as AuthContext/useMyProfile, so a checkup-date
+  // save here is immediately reflected everywhere else that reads the profile.
+  const { data: profile, isLoading: loading, mutate } = useCurrentUserProfile(user?.uid ?? null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      if (!user?.uid) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const profile = await getUserProfileUseCase.execute(user.uid);
-        if (profile?.lastCheckupDate) setLastCheckupDate(profile.lastCheckupDate);
-      } catch (e) {
-        console.error(e);
-        setError("Failed to load check-up reminder.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [user, getUserProfileUseCase]);
+  const lastCheckupDate = profile?.lastCheckupDate ?? "";
 
   const nextCheckupDue = useMemo(() => {
     if (!lastCheckupDate) return null;
@@ -51,7 +36,7 @@ export function useCheckupReminder() {
         lastCheckupDate: date,
         nextCheckupDueDate: next ?? undefined,
       });
-      setLastCheckupDate(date);
+      await mutate();
     } catch (e) {
       console.error(e);
       setError("Failed to save date. Try again.");
@@ -65,7 +50,6 @@ export function useCheckupReminder() {
     saving,
     error,
     lastCheckupDate,
-    setLastCheckupDate,
     nextCheckupDue,
     saveDate,
   };
