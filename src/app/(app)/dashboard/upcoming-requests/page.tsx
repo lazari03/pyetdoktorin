@@ -20,10 +20,13 @@ export default function UpcomingRequestsPage() {
   const { appointments, loading, error, fetchAppointments } = useAppointmentStore();
 
   useEffect(() => {
-    if (isAuthenticated && user && role) {
+    if (isAuthenticated && role) {
       fetchAppointments(role);
     }
-  }, [isAuthenticated, user, role, fetchAppointments]);
+    // `user` from useAuth() is a new object reference on every AuthContext
+    // render — depend on isAuthenticated/role (both primitives) instead so
+    // this doesn't re-fire on every unrelated auth-context render.
+  }, [isAuthenticated, role, fetchAppointments]);
 
   const requests = useMemo(
     () => (isAuthenticated && user ? appointments.filter((appt) => appt.status === 'pending') : []),

@@ -64,7 +64,11 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   // Sync auth status with video store
   useEffect(() => {
     setAuthStatus(isAuthenticated, user?.uid || null, user?.name || null);
-  }, [isAuthenticated, user, setAuthStatus]);
+    // `user` is a new object literal every AuthContext render (not memoized there),
+    // and setAuthStatus's set() has no equality guard — depending on the whole
+    // object here re-fires this effect (and the store update) on every render,
+    // which can cascade into a render loop. Depend on the primitive fields instead.
+  }, [isAuthenticated, user?.uid, user?.name, setAuthStatus]);
 
   // Subscribe to appointments for real-time updates
   useEffect(() => {

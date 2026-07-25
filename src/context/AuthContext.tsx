@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { useDI } from '@/context/DIContext';
@@ -64,22 +64,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: profile, isLoading: profileLoading } = useCurrentUserProfile(isAuthenticated ? uid : null);
 
   const role = profile ? normalizeRole(profile.role) : null;
-  const user = profile && uid
-    ? {
-        uid,
-        name: profile.name || 'Unknown',
-        email: profile.email,
-        phoneNumber: profile.phoneNumber,
-      }
-    : null;
+  const hasProfile = Boolean(profile);
+  const profileName = profile?.name;
+  const profileEmail = profile?.email;
+  const profilePhoneNumber = profile?.phoneNumber;
+
+  // Memoized on the actual primitive fields, not on `profile` object identity
+  // — SWR hands back a freshly-parsed object on every revalidation even when
+  // nothing changed, and an unmemoized `user` here previously caused every
+  // consumer's `useEffect(..., [user])` to re-fire on every AuthContext
+  // render, which cascaded into a "Maximum update depth exceeded" render
+  // loop. `hasProfile` (not `profile`) is deliberate: including the object
+  // itself would defeat this by changing on every revalidation too.
+  const user = useMemo(
+    () =>
+      hasProfile && uid
+        ? {
+            uid,
+            name: profileName || 'Unknown',
+            email: profileEmail,
+            phoneNumber: profilePhoneNumber,
+          }
+        : null,
+    [uid, hasProfile, profileName, profileEmail, profilePhoneNumber],
+  );
   const emailVerified = typeof profile?.emailVerified === 'boolean' ? profile.emailVerified : firebaseEmailVerified;
   const loading = authLoading || (isAuthenticated && profileLoading);
 
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, uid, user, emailVerified, role, loading }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ isAuthenticated, uid, user, emailVerified, role, loading }),
+    [isAuthenticated, uid, user, emailVerified, role, loading],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);

@@ -4,6 +4,7 @@
 // Provides typed, reusable route helpers and encapsulates router.push/replace.
 // Future extensions: analytics, auth guards, prefetching, role-based gating.
 
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/config/routes';
 
@@ -101,7 +102,14 @@ export interface NavigationCoordinator {
 export function useNavigationCoordinator(): NavigationCoordinator {
   const router = useRouter();
 
-  return {
+  // `router` from next/navigation is a stable reference across renders, so
+  // memoizing on it keeps `nav` itself stable too. Without this, every call
+  // site got a brand-new object every render — anywhere that object ended up
+  // in a `useEffect` dependency array (e.g. useNotificationsLogic) would
+  // refire on every single render, which is exactly what caused the
+  // subscribeAppointments → Zustand setState → re-render → repeat loop
+  // ("Maximum update depth exceeded") inside SectionShell.
+  return useMemo<NavigationCoordinator>(() => ({
     push: (key) => router.push(getPath(key)),
     replace: (key) => router.replace(getPath(key)),
     pushPath: (path) => router.push(path),
@@ -134,7 +142,7 @@ export function useNavigationCoordinator(): NavigationCoordinator {
         // ignore dynamic route errors
       }
     },
-  };
+  }), [router]);
 }
 
 // Optional standalone helpers for non-hook usage (e.g., in services after dependency injection).
