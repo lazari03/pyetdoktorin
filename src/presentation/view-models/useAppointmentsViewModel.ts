@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { useAuth } from "@/context/AuthContext";
 import { useVideoStore } from "@/store/videoStore";
@@ -12,7 +13,7 @@ import { getAuthToken } from "@/application/auth/tokenHolder";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
 import { getAppointmentErrorMessage, getVideoErrorMessage } from "@/presentation/utils/errorMessages";
 import { APPOINTMENT_ERROR_CODES, VIDEO_ERROR_CODES } from "@/config/errorCodes";
-import { dashboardVideoSessionUrl } from "@/navigation/paths";
+import { dashboardVideoSessionUrl, dashboardPayUrl } from "@/navigation/paths";
 import { useToast } from "@/presentation/components/Toast/ToastProvider";
 
 /**
@@ -44,20 +45,18 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
   const [showRedirecting, setShowRedirecting] = useState(false);
   const { t } = useTranslation();
   const { toast } = useToast();
+  const router = useRouter();
 
   const { user, isAuthenticated, role } = useAuth();
   const {
     appointments,
     isDoctor,
     isAppointmentPast,
-    handlePayNow: storeHandlePayNow,
-    setAppointments,
     subscribeAppointments,
   } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
   const {
     generateRoomCodeUseCase,
-    handlePayNowUseCase,
     paymentSyncService,
     appointmentQueryService,
   } = useDI();
@@ -218,33 +217,7 @@ export function useAppointmentsViewModel(): AppointmentsViewModelResult {
     handleJoinCall,
     handlePayNow: async (appointmentId, amount) => {
       trackAnalyticsEvent("payment_initiated", { appointmentId, amount });
-      try {
-        await storeHandlePayNow(appointmentId, amount, handlePayNowUseCase.execute.bind(handlePayNowUseCase), {
-          onClose: () => {
-            paymentSyncService.clearPaymentProcessing(appointmentId).catch((error) => {
-              console.warn("Payment processing clear failed", error);
-            });
-            (async () => {
-              try {
-                await paymentSyncService.syncPaymentWithRetry(appointmentId);
-              } catch (error) {
-                console.warn("Payment sync failed", error);
-              } finally {
-                appointmentQueryService.listAppointments()
-                  .then((refreshed) => setAppointments(refreshed.items))
-                  .catch((error) => console.warn("Appointment refresh after payment failed", error));
-              }
-            })();
-          },
-        });
-      } catch (error) {
-        trackAnalyticsEvent("payment_failed", {
-          appointmentId,
-          reason: error instanceof Error ? error.message.slice(0, 120) : "unknown_error",
-        });
-        const translatedMessage = getAppointmentErrorMessage(error, t);
-        toast({ variant: "error", message: translatedMessage ?? t("genericError") });
-      }
+      router.push(dashboardPayUrl(appointmentId));
     },
   };
 }

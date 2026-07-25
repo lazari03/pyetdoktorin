@@ -35,6 +35,7 @@ import { getAppointmentActionPresentation } from "@/presentation/utils/getAppoin
 import { APPOINTMENT_PRICE_EUR, DOCTOR_PAYOUT_RATE } from "@/config/paywallConfig";
 import { syncPaymentWithRetry } from "@/network/payments";
 import { useAppointmentStore } from "@/store/appointmentStore";
+import { useReciepeStore } from "@/store/reciepeStore";
 import { useEffect, useRef, useState } from "react";
 import { useDI } from "@/context/DIContext";
 import RequestStateGate from "@/presentation/components/RequestStateGate/RequestStateGate";
@@ -119,7 +120,6 @@ export default function Dashboard() {
   const router = useRouter();
   const paidAppointmentId = searchParams?.get("paid") || "";
   const paidSyncRef = useRef<string>("");
-  const { syncPaymentUseCase } = useDI();
   const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
   const appointmentsError = useAppointmentStore((s) => s.error);
   const appointmentsLoading = useAppointmentStore((s) => s.loading);
@@ -130,17 +130,20 @@ export default function Dashboard() {
   };
   const vm = useDashboardViewModel(authContext);
   const effectiveRole = role ?? vm.role;
-  const { getReciepesByPatientUseCase, updateAppointmentStatusAndNotifyUseCase } = useDI();
+  const { updateAppointmentStatusAndNotifyUseCase } = useDI();
   const { toast } = useToast();
-  const [prescriptionCount, setPrescriptionCount] = useState<number | null>(null);
   const [appointmentsPage, setAppointmentsPage] = useState(0);
+
+  // Shared with dashboard/reciepes/page.tsx and useNotificationsLogic, so this
+  // is fetched once per patient instead of independently per consumer.
+  const reciepes = useReciepeStore((s) => s.reciepes);
+  const fetchReciepes = useReciepeStore((s) => s.fetchReciepes);
+  const prescriptionCount = effectiveRole === UserRole.Patient ? reciepes.length : null;
 
   useEffect(() => {
     if (effectiveRole !== UserRole.Patient || !user?.uid) return;
-    getReciepesByPatientUseCase.execute(user.uid)
-      .then((list) => setPrescriptionCount(list.length))
-      .catch(() => setPrescriptionCount(null));
-  }, [effectiveRole, user?.uid, getReciepesByPatientUseCase]);
+    fetchReciepes(effectiveRole, user.uid);
+  }, [effectiveRole, user?.uid, fetchReciepes]);
 
   useEffect(() => {
     if (!paidAppointmentId) return;
@@ -160,7 +163,7 @@ export default function Dashboard() {
           router.replace(DASHBOARD_PATHS.root);
         }
       });
-  }, [paidAppointmentId, router, effectiveRole, fetchAppointments, syncPaymentUseCase]);
+  }, [paidAppointmentId, router, effectiveRole, fetchAppointments]);
 
   const sortedDashboardAppointments = sortAppointments(vm.filteredAppointments, vm.filteredAppointments.length);
   const appointmentsTotalPages = Math.max(1, Math.ceil(sortedDashboardAppointments.length / DASHBOARD_APPOINTMENTS_PAGE_SIZE));

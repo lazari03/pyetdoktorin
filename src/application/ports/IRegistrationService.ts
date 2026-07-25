@@ -7,6 +7,7 @@ export interface RegistrationData {
   email: string;
   password: string;
   role: string;
+  acceptedTermsVersion: string;
 }
 
 export interface IRegistrationService {

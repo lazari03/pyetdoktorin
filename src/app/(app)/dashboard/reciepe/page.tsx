@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
+import { useReciepeStore } from "@/store/reciepeStore";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import Modal from "@/presentation/components/Modal/Modal";
@@ -42,9 +43,14 @@ type Reciepe = {
 export default function DoctorReciepePage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const { getUserProfileUseCase, createReciepeUseCase, getReciepesByDoctorUseCase, reauthenticateUseCase, getUsersByRoleUseCase, getPharmaciesUseCase } = useDI();
+  const { getUserProfileUseCase, createReciepeUseCase, reauthenticateUseCase, getUsersByRoleUseCase, getPharmaciesUseCase } = useDI();
   const [showPassword, setShowPassword] = useState(false);
-  const [reciepes, setReciepes] = useState<Reciepe[]>([]);
+  // Shared with dashboard/reciepes/page.tsx (patient), pharmacy pages, and
+  // useNotificationsLogic, so this list is fetched once per doctor instead of
+  // independently per consumer.
+  const rawReciepes = useReciepeStore((s) => s.reciepes);
+  const fetchReciepes = useReciepeStore((s) => s.fetchReciepes);
+  const setRawReciepes = useReciepeStore((s) => s.setReciepes);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [pharmacies, setPharmacies] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,15 +95,15 @@ export default function DoctorReciepePage() {
   }), [t]);
 
   const loadAll = useCallback(async () => {
-    if (!user?.uid) return;
+    if (!user?.uid || !role) return;
     setLoading(true);
     setLoadError(null);
     try {
-      const [patientsRaw, pharmacies, profile, issued] = await Promise.all([
+      const [patientsRaw, pharmacies, profile] = await Promise.all([
         getUsersByRoleUseCase.execute(UserRole.Patient, 500),
         getPharmaciesUseCase.execute(),
         getUserProfileUseCase.execute(user.uid),
-        getReciepesByDoctorUseCase.execute(user.uid),
+        fetchReciepes(role, user.uid, true),
       ]);
 
       const pts = (patientsRaw as unknown as Record<string, unknown>[]).map((u) => ({
@@ -112,24 +118,22 @@ export default function DoctorReciepePage() {
 
       setSavedSignatureUrl(profile?.signatureDataUrl || '');
       setSignatureLoaded(true);
-
-      const mapped = (issued || []).map(toReciepe);
-      setReciepes(mapped);
     } catch (err) {
       setPatients([]);
       setPharmacies([]);
-      setReciepes([]);
       setSavedSignatureUrl('');
       setSignatureLoaded(true);
       setLoadError(err);
     } finally {
       setLoading(false);
     }
-  }, [getReciepesByDoctorUseCase, getPharmaciesUseCase, getUserProfileUseCase, getUsersByRoleUseCase, toReciepe, user?.uid]);
+  }, [fetchReciepes, getPharmaciesUseCase, getUserProfileUseCase, getUsersByRoleUseCase, role, user?.uid]);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
+  const reciepes = useMemo(() => rawReciepes.map(toReciepe), [rawReciepes, toReciepe]);
 
   const filteredPatients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -236,7 +240,7 @@ export default function DoctorReciepePage() {
           notes: form.type === "standard" ? (form.notes || '') : '',
         },
       });
-      setReciepes((prev) => [toReciepe(created), ...prev]);
+      setRawReciepes([created, ...rawReciepes]);
       setForm({
         patientId: '',
         patient: '',

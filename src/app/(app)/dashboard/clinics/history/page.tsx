@@ -3,39 +3,18 @@
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
-import { useDI } from '@/context/DIContext';
-import { ClinicBooking } from '@/domain/entities/ClinicBooking';
+import { useClinicBookings } from '@/presentation/hooks/useClinicBookings';
 import { UserRole } from '@/domain/entities/UserRole';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';
 export default function ClinicBookingHistoryPage() {
   const { role, user } = useAuth();
-  const { getClinicBookingsUseCase } = useDI();
   const { t } = useTranslation();
-  const [bookings, setBookings] = useState<ClinicBooking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const items = await getClinicBookingsUseCase.execute({ patientId: user?.uid });
-      setBookings(items);
-    } catch (err) {
-      console.error('Failed to load clinic bookings', err);
-      setBookings([]);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [getClinicBookingsUseCase, user?.uid]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Shared with clinic/page.tsx, clinic/bookings/page.tsx, and
+  // clinic/calendar/page.tsx, which already use this hook — no need to
+  // reimplement the same fetch here.
+  const { bookings, loading, error, refresh: load } = useClinicBookings({ patientId: user?.uid });
 
   if (role !== UserRole.Patient) {
     return (

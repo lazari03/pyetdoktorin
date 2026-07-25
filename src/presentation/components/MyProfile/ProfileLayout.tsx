@@ -6,6 +6,7 @@ import ExportActivityLogButton from "./ExportActivityLogButton";
 import { UserRole } from "@/domain/entities/UserRole";
 import LanguageSwitcher from "@/presentation/components/LanguageSwitcher/LanguageSwitcher";
 import AnalyticsConsentControl from "@/presentation/components/AnalyticsConsentControl/AnalyticsConsentControl";
+import { DoctorAgreementSection } from "./DoctorAgreementSection";
 
 type Props = {
   formData: MyProfileFormData;
@@ -128,6 +129,8 @@ export function ProfileLayout(props: Props) {
             </div>
           </aside>
         </div>
+
+        {role === UserRole.Doctor && <DoctorAgreementSection />}
       </div>
     </div>
   );

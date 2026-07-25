@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
+import { useReciepeStore } from "@/store/reciepeStore";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import Image from "next/image";
 import { trackAnalyticsEvent } from "@/presentation/utils/trackAnalyticsEvent";
@@ -35,59 +36,61 @@ type StatusFilter = "all" | "pending" | "accepted" | "rejected";
 
 export default function PharmacyReciepesPage() {
   const { role, user } = useAuth();
-  const { getReciepesByPharmacyUseCase, updateReciepeStatusUseCase } = useDI();
+  const { updateReciepeStatusUseCase } = useDI();
   const { t } = useTranslation();
   const { toast } = useToast();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [reciepes, setReciepes] = useState<Reciepe[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  // Shared with pharmacy/page.tsx and useNotificationsLogic, so this list is
+  // fetched once per pharmacy instead of independently per consumer.
+  const rawReciepes = useReciepeStore((s) => s.reciepes);
+  const loading = useReciepeStore((s) => s.loading);
+  const error = useReciepeStore((s) => s.error);
+  const fetchReciepes = useReciepeStore((s) => s.fetchReciepes);
+  const setRawReciepes = useReciepeStore((s) => s.setReciepes);
+
   const load = useCallback(async () => {
-    if (!user?.uid) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const items = await getReciepesByPharmacyUseCase.execute(user.uid);
-      const mapped = (items || []).map((r) => ({
-        id: r.id || `${r.pharmacyId ?? ""}${r.createdAt}`,
-        patient: r.patientName,
-        doctor: r.doctorName || "",
-        type: r.type || "standard",
-        reimbursementCode: r.reimbursementCode,
-        pharmacyName: r.pharmacyName,
-        title:
-          r.title ||
-          (r.type === "reimbursement"
-            ? t("prescriptionTypeReimbursement") || "Reimbursement"
-            : t("reciepeTitleDoctor") || "Reciepe"),
-        medicines: Array.isArray(r.medicines)
-          ? r.medicines.join(", ")
-          : String(r.medicines ?? ""),
-        dosage: r.dosage || "",
-        notes: r.notes,
-        createdAt: new Date(r.createdAt ?? Date.now())
-          .toISOString()
-          .split("T")[0],
-        status: (r.status as Reciepe["status"]) || "pending",
-        signatureDataUrl: r.signatureDataUrl,
-      }));
-      setReciepes(mapped);
-      setActiveId((prev) => prev || mapped[0]?.id || null);
-    } catch (err) {
-      setReciepes([]);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [getReciepesByPharmacyUseCase, t, user?.uid]);
+    if (!user?.uid || !role) return;
+    await fetchReciepes(role, user.uid, true);
+  }, [fetchReciepes, role, user?.uid]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!user?.uid || !role) return;
+    fetchReciepes(role, user.uid);
+  }, [fetchReciepes, role, user?.uid]);
+
+  const reciepes: Reciepe[] = useMemo(() => {
+    return rawReciepes.map((r) => ({
+      id: r.id || `${r.pharmacyId ?? ""}${r.createdAt}`,
+      patient: r.patientName,
+      doctor: r.doctorName || "",
+      type: r.type || "standard",
+      reimbursementCode: r.reimbursementCode,
+      pharmacyName: r.pharmacyName,
+      title:
+        r.title ||
+        (r.type === "reimbursement"
+          ? t("prescriptionTypeReimbursement") || "Reimbursement"
+          : t("reciepeTitleDoctor") || "Reciepe"),
+      medicines: Array.isArray(r.medicines)
+        ? r.medicines.join(", ")
+        : String(r.medicines ?? ""),
+      dosage: r.dosage || "",
+      notes: r.notes,
+      createdAt: new Date(r.createdAt ?? Date.now())
+        .toISOString()
+        .split("T")[0],
+      status: (r.status as Reciepe["status"]) || "pending",
+      signatureDataUrl: r.signatureDataUrl,
+    }));
+  }, [rawReciepes, t]);
+
+  useEffect(() => {
+    setActiveId((prev) => prev || reciepes[0]?.id || null);
+  }, [reciepes]);
 
   const filtered = useMemo(() => {
     const byStatus =
@@ -118,9 +121,7 @@ export default function PharmacyReciepesPage() {
   ) => {
     try {
       await updateReciepeStatusUseCase.execute(id, status);
-      setReciepes((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status } : r))
-      );
+      setRawReciepes(rawReciepes.map((r) => (r.id === id ? { ...r, status } : r)));
       trackAnalyticsEvent("prescription_status_updated", {
         prescriptionId: id,
         status,

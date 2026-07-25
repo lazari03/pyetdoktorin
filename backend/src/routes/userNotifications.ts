@@ -4,8 +4,10 @@ import { z } from 'zod';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { env } from '@/config/env';
+import { UserRole } from '@/domain/entities/UserRole';
 import {
   archiveAndDeleteExpiredNotifications,
+  createUserNotification,
   getArchiveForUser,
   getUnreadCount,
   listUserNotifications,
@@ -14,6 +16,8 @@ import {
   RETENTION_MS,
   type UserNotification,
 } from '@/services/userNotificationsService';
+import { sendPushToUsers } from '@/services/pushService';
+import { listReadMarkIds, markRead as markReadMark, markManyRead as markManyReadMarks } from '@/services/readMarksService';
 import { sendPlatformEmail } from '@/services/emailService';
 import {
   UserNotificationEmailNotConfiguredError,
@@ -25,6 +29,20 @@ const router = Router();
 
 const cleanupSchema = z.object({
   cutoffMs: z.number().optional(),
+});
+
+const readMarkSchema = z.object({
+  id: z.string().min(1),
+});
+
+const readMarksBatchSchema = z.object({
+  ids: z.array(z.string().min(1)).max(500),
+});
+
+const broadcastSchema = z.object({
+  title: z.string().min(1).max(200),
+  body: z.string().min(1).max(2000),
+  target: z.enum(['all', 'patient', 'doctor', 'pharmacy']),
 });
 
 function formatNotificationLine(n: UserNotification): string {
@@ -57,6 +75,49 @@ router.get('/unread-count', requireAuth(), async (req: AuthenticatedRequest, res
   } catch (error) {
     console.error('Error fetching unread notification count:', error);
     res.status(500).json({ error: UserNotificationErrorCode.FetchFailed });
+  }
+});
+
+// Server-persisted read markers for the appointment/prescription notification
+// feeds (client-derived lists that aren't their own Firestore collection, so
+// "read" state can't live on the item itself the way it does for userNotifications).
+// Must not be tracked client-side only (e.g. localStorage) — read state has to
+// survive logout/login and follow the account, not the browser.
+router.get('/read-marks', requireAuth(), async (req: AuthenticatedRequest, res) => {
+  try {
+    const ids = await listReadMarkIds(req.user!.uid);
+    res.json({ ids });
+  } catch (error) {
+    console.error('Error listing read marks:', error);
+    res.status(500).json({ error: 'Failed to fetch read state' });
+  }
+});
+
+router.post('/read-marks', requireAuth(), async (req: AuthenticatedRequest, res) => {
+  const parsed = readMarkSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid request', issues: parsed.error.issues });
+  }
+  try {
+    await markReadMark(req.user!.uid, parsed.data.id);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Error saving read mark:', error);
+    res.status(500).json({ error: 'Failed to save read state' });
+  }
+});
+
+router.post('/read-marks/batch', requireAuth(), async (req: AuthenticatedRequest, res) => {
+  const parsed = readMarksBatchSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid request', issues: parsed.error.issues });
+  }
+  try {
+    await markManyReadMarks(req.user!.uid, parsed.data.ids);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Error saving read marks:', error);
+    res.status(500).json({ error: 'Failed to save read state' });
   }
 });
 
@@ -103,6 +164,34 @@ router.post('/export', requireAuth(), async (req: AuthenticatedRequest, res) => 
     }
     console.error('Error exporting user notifications:', error);
     res.status(500).json({ error: UserNotificationErrorCode.ExportFailed });
+  }
+});
+
+router.post('/admin/broadcast', requireAuth([UserRole.Admin]), async (req: AuthenticatedRequest, res) => {
+  const parsed = broadcastSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid broadcast', issues: parsed.error.issues });
+  }
+  const { title, body, target } = parsed.data;
+
+  try {
+    const admin = getFirebaseAdmin();
+    const usersRef = admin.firestore().collection('users');
+    const query = target === 'all' ? usersRef : usersRef.where('role', '==', target);
+    const snap = await query.get();
+    const userIds = snap.docs.map((doc) => doc.id);
+
+    await Promise.all(
+      userIds.map((userId) =>
+        createUserNotification({ userId, type: 'platform_announcement', title, body }),
+      ),
+    );
+    void sendPushToUsers(userIds, { title, body });
+
+    res.json({ ok: true, count: userIds.length });
+  } catch (error) {
+    console.error('Error broadcasting notification:', error);
+    res.status(500).json({ error: 'Broadcast failed' });
   }
 });
 

@@ -11,6 +11,9 @@ import { getRoleLandingPath } from '@/navigation/roleRoutes';
 import { UserRole } from '@/domain/entities/UserRole';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 import { GoogleIcon } from '@/presentation/components/icons/MiniIcons';
+import { TermsAcceptanceModal } from '@/presentation/components/auth/TermsAcceptanceModal';
+import type { PlatformTerms } from '@/application/ports/IPlatformTermsService';
+import { BackendError } from '@/application/errors/BackendError';
 
 function isPathAllowedForRole(path: string, role?: UserRole | null): boolean {
   if (!role) return false;
@@ -97,7 +100,10 @@ function LoginPageContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [privateDevice, setPrivateDevice] = useState(false);
-  const { loginUseCase, testAuthConnectionUseCase } = useDI();
+  const [terms, setTerms] = useState<PlatformTerms | null>(null);
+  const [termsLoading, setTermsLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const { loginUseCase, testAuthConnectionUseCase, getPlatformTermsUseCase } = useDI();
 
   // Test Firebase connectivity on component mount, but don't block login if it fails
   useEffect(() => {
@@ -150,14 +156,14 @@ function LoginPageContent() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const attemptGoogleLogin = async (acceptedTermsVersion?: string) => {
     setGoogleLoading(true);
     setErrorMsg('');
     try {
       if (!navigator.onLine) {
         throw new Error(t('offlineError'));
       }
-      const result = await loginUseCase.executeWithGoogle();
+      const result = await loginUseCase.executeWithGoogle(acceptedTermsVersion);
       void notifyFormSubmission({
         formType: 'login',
         source: 'login_page_google',
@@ -166,6 +172,18 @@ function LoginPageContent() {
       });
       goToRoleLanding(result?.role);
     } catch (err) {
+      // First-time Google sign-in without terms accepted yet — show the modal
+      // instead of surfacing this as a login error.
+      if (err instanceof BackendError && err.code === 'TERMS_REQUIRED') {
+        setShowTermsModal(true);
+        if (!terms) {
+          setTermsLoading(true);
+          getPlatformTermsUseCase.execute()
+            .then(setTerms)
+            .finally(() => setTermsLoading(false));
+        }
+        return;
+      }
       setErrorMsg(toLoginErrorMessage(err, t as unknown as TFunc));
       console.error('Google login error:', err);
     } finally {
@@ -173,7 +191,16 @@ function LoginPageContent() {
     }
   };
 
+  const handleGoogleLogin = () => attemptGoogleLogin();
+
+  const handleAcceptTermsForGoogle = () => {
+    if (!terms) return;
+    setShowTermsModal(false);
+    void attemptGoogleLogin(terms.version);
+  };
+
   return (
+    <>
     <AuthShell
       eyebrow={t('secureAccessEyebrow') || 'Secure access'}
       title={t('loginTitleSecure') || t('loginTitle')}
@@ -277,6 +304,16 @@ function LoginPageContent() {
         </button>
       </form>
     </AuthShell>
+
+    {showTermsModal && (
+      <TermsAcceptanceModal
+        terms={terms}
+        loading={termsLoading}
+        onAccept={handleAcceptTermsForGoogle}
+        onClose={() => setShowTermsModal(false)}
+      />
+    )}
+    </>
   );
 }
 

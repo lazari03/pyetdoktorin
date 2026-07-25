@@ -14,7 +14,7 @@ Current status:
 - Backend: Express 5, TypeScript, Firebase Admin SDK
 - Auth: Firebase Authentication
 - Data: Firestore, accessed from the backend or server-only modules
-- Billing: Paddle
+- Billing: no processor currently wired (previously Paddle — removed; see CLEAN_ARCHITECTURE.md history)
 
 ## Architecture
 
@@ -116,7 +116,6 @@ npm run env:check
 
 ## Optional Integrations
 
-- Paddle: `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_ID`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`
 - Contact email: `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS` or `SMTP_SERVICE`
 - Client error sinks: `BETTERSTACK_SOURCE_TOKEN` or `DATADOG_API_KEY`
 

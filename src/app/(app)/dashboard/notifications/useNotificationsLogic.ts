@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useAppointmentStore } from '@/store/appointmentStore';
+import { useReciepeStore } from '@/store/reciepeStore';
 import type { NavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/domain/entities/UserRole';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import { useDI } from '@/context/DIContext';
-import type { ReciepePayload } from '@/application/ports/IReciepeService';
 import type { Appointment } from '@/domain/entities/Appointment';
 
 interface PrescriptionNotification {
@@ -22,17 +22,17 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
   const { appointments, loading: isLoading, error, subscribeAppointments, fetchAppointments, setAppointments } = useAppointmentStore();
   const { user, role } = useAuth();
   const {
-    getReciepesByDoctorUseCase,
-    getReciepesByPatientUseCase,
-    getReciepesByPharmacyUseCase,
     dismissNotificationUseCase,
     updateAppointmentStatusAndNotifyUseCase,
   } = useDI();
   const userRole = role;
   const [dismissedLocal, setDismissedLocal] = useState<Set<string>>(() => new Set());
-  const [prescriptionNotifications, setPrescriptionNotifications] = useState<PrescriptionNotification[]>([]);
-  const [prescriptionsLoading, setPrescriptionsLoading] = useState(false);
-  const [prescriptionsError, setPrescriptionsError] = useState<unknown>(null);
+  // Shared with the doctor/patient/pharmacy reciepe pages, so this is fetched
+  // once per role/uid instead of independently per consumer.
+  const rawReciepes = useReciepeStore((s) => s.reciepes);
+  const prescriptionsLoading = useReciepeStore((s) => s.loading);
+  const prescriptionsError = useReciepeStore((s) => s.error);
+  const fetchReciepes = useReciepeStore((s) => s.fetchReciepes);
 
   const didRedirectRef = useRef(false);
   useEffect(() => {
@@ -78,50 +78,31 @@ export function useNotificationsLogic(nav: NavigationCoordinator) {
   }, [appointments, dismissedLocal, user?.uid, userRole]);
 
   useEffect(() => {
-    const fetchPrescriptionUpdates = async () => {
-      if (!user?.uid) return;
-      setPrescriptionsLoading(true);
-      setPrescriptionsError(null);
-      try {
-        let reciepes: ReciepePayload[] = [];
-        if (userRole === UserRole.Doctor) {
-          reciepes = await getReciepesByDoctorUseCase.execute(user.uid);
-        } else if (userRole === UserRole.Patient) {
-          reciepes = await getReciepesByPatientUseCase.execute(user.uid);
-        } else if (userRole === UserRole.Pharmacy) {
-          reciepes = await getReciepesByPharmacyUseCase.execute(user.uid);
+    if (!user?.uid || !userRole) return;
+    fetchReciepes(userRole, user.uid);
+  }, [user?.uid, userRole, fetchReciepes]);
+
+  const prescriptionNotifications = useMemo<PrescriptionNotification[]>(() => {
+    return rawReciepes
+      .filter((p) => {
+        const status = p.status || 'pending';
+        if (userRole === UserRole.Patient || userRole === UserRole.Pharmacy) {
+          return true;
         }
-        const mapped = (reciepes || [])
-          .filter((p) => {
-            const status = p.status || 'pending';
-            if (userRole === UserRole.Patient || userRole === UserRole.Pharmacy) {
-              return true;
-            }
-            return status !== 'pending';
-          })
-          .map((p) => ({
-            id: p.id || '',
-            title: p.title || '',
-            patientName: p.patientName,
-            doctorName: p.doctorName,
-            pharmacyName: p.pharmacyName,
-            status: p.status || 'pending',
-            updatedAt: p.statusUpdatedAt ?? p.createdAt ?? 0,
-          }))
-          .filter((p) => p.id)
-          .sort((a, b) => b.updatedAt - a.updatedAt);
-        setPrescriptionNotifications(mapped);
-      } catch (err) {
-        setPrescriptionNotifications([]);
-        setPrescriptionsError(err);
-      } finally {
-        setPrescriptionsLoading(false);
-      }
-    };
-    if (userRole) {
-      fetchPrescriptionUpdates();
-    }
-  }, [user?.uid, userRole, getReciepesByDoctorUseCase, getReciepesByPatientUseCase, getReciepesByPharmacyUseCase]);
+        return status !== 'pending';
+      })
+      .map((p) => ({
+        id: p.id || '',
+        title: p.title || '',
+        patientName: p.patientName,
+        doctorName: p.doctorName,
+        pharmacyName: p.pharmacyName,
+        status: p.status || 'pending',
+        updatedAt: p.statusUpdatedAt ?? p.createdAt ?? 0,
+      }))
+      .filter((p) => p.id)
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+  }, [rawReciepes, userRole]);
 
   const handleDismissNotification = useCallback(async (id: string) => {
     setDismissedLocal((prev) => {

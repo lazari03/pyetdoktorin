@@ -17,7 +17,7 @@ import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { StatsPageSkeleton } from '@/presentation/components/Skeleton/StatsPageSkeleton';
 import { useToast } from '@/presentation/components/Toast/ToastProvider';
-import type { DoctorAvailability } from '@/domain/entities/DoctorAvailability';
+import { useManageAvailability } from '@/presentation/hooks/useManageAvailability';
 
 import type { CalendarEvent } from '../Calendar';
 
@@ -49,13 +49,19 @@ export default function DoctorCalendarPage() {
   const { user, role } = useAuth();
   const { appointments, loading, error, isAppointmentPast, fetchAppointments } = useAppointmentStore();
   const { setAuthStatus } = useVideoStore();
-  const { generateRoomCodeUseCase, getAvailabilityUseCase, getIdTokenUseCase } = useDI();
+  const { generateRoomCodeUseCase, getIdTokenUseCase } = useDI();
   const { toast } = useToast();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showRedirecting, setShowRedirecting] = useState(false);
-  const [availability, setAvailability] = useState<DoctorAvailability | null>(null);
-  const [availabilityLoading, setAvailabilityLoading] = useState(true);
-  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+  // Shared with dashboard/doctor/availability/page.tsx, so this doctor's
+  // availability is fetched through the same hook instead of reimplementing
+  // the fetch here.
+  const {
+    availability,
+    loading: availabilityLoading,
+    error: availabilityError,
+    refresh: refreshAvailability,
+  } = useManageAvailability(role === UserRole.Doctor ? user?.uid ?? null : null);
 
   // One-time fetch only if store is empty (e.g. direct navigation to this page)
   useEffect(() => {
@@ -63,41 +69,6 @@ export default function DoctorCalendarPage() {
       fetchAppointments(role);
     }
   }, [appointments.length, role, fetchAppointments]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadAvailability = async () => {
-      if (role !== UserRole.Doctor) {
-        if (mounted) setAvailabilityLoading(false);
-        return;
-      }
-
-      setAvailabilityLoading(true);
-      setAvailabilityError(null);
-      try {
-        const nextAvailability = await getAvailabilityUseCase.execute();
-        if (!mounted) return;
-        setAvailability(nextAvailability);
-      } catch (nextError) {
-        if (!mounted) return;
-        const message =
-          nextError instanceof Error
-            ? nextError.message
-            : t('availabilityLoadError', {
-                defaultValue: 'Failed to load availability.',
-              });
-        setAvailabilityError(message);
-      } finally {
-        if (mounted) setAvailabilityLoading(false);
-      }
-    };
-
-    void loadAvailability();
-    return () => {
-      mounted = false;
-    };
-  }, [getAvailabilityUseCase, role, t]);
 
   // Map stored appointments → calendar events (stable reference via useMemo)
   const events = useMemo<CalendarEvent[]>(() =>
@@ -188,25 +159,7 @@ export default function DoctorCalendarPage() {
         error={error || availabilityError}
         onRetry={() => {
           if (role) fetchAppointments(role);
-          setAvailabilityLoading(true);
-          setAvailabilityError(null);
-          getAvailabilityUseCase
-            .execute()
-            .then((nextAvailability) => {
-              setAvailability(nextAvailability);
-            })
-            .catch((nextError) => {
-              const message =
-                nextError instanceof Error
-                  ? nextError.message
-                  : t('availabilityLoadError', {
-                      defaultValue: 'Failed to load availability.',
-                    });
-              setAvailabilityError(message);
-            })
-            .finally(() => {
-              setAvailabilityLoading(false);
-            });
+          void refreshAvailability();
         }}
         homeHref={DASHBOARD_PATHS.root}
         loadingLabel={t('loading')}

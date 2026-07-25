@@ -7,8 +7,8 @@ export class AuthLoginService implements IAuthLoginService {
     return { role: result.role, emailVerified: result.emailVerified };
   }
 
-  async loginWithGoogle() {
-    const result = await loginWithGoogle();
+  async loginWithGoogle(acceptedTermsVersion?: string) {
+    const result = await loginWithGoogle(acceptedTermsVersion);
     return { role: result.role, emailVerified: result.emailVerified };
   }
 

@@ -14,8 +14,8 @@ export class LoginUseCase {
     return { role: result.role, emailVerified: result.emailVerified };
   }
 
-  async executeWithGoogle(): Promise<{ role: UserRole; emailVerified: boolean }> {
-    const result = await this.authLoginService.loginWithGoogle();
+  async executeWithGoogle(acceptedTermsVersion?: string): Promise<{ role: UserRole; emailVerified: boolean }> {
+    const result = await this.authLoginService.loginWithGoogle(acceptedTermsVersion);
     this.analytics?.track('user_logged_in', { method: 'google' });
     return { role: result.role, emailVerified: result.emailVerified };
   }

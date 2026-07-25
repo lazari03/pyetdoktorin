@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useTranslation } from 'react-i18next';
 import { useDI } from '@/context/DIContext';
 import { AuthShell } from '@/presentation/components/auth/AuthShell';
 import { PasswordStrengthMeter } from '@/presentation/components/auth/PasswordStrengthMeter';
+import { TermsAcceptanceModal } from '@/presentation/components/auth/TermsAcceptanceModal';
+import type { PlatformTerms } from '@/application/ports/IPlatformTermsService';
 import { ROUTES } from '@/config/routes';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
 import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
@@ -31,22 +33,28 @@ function RegisterPageInner() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [terms, setTerms] = useState<PlatformTerms | null>(null);
+    const [termsLoading, setTermsLoading] = useState(true);
+    const [showTermsModal, setShowTermsModal] = useState(false);
+    const [acceptedTermsVersion, setAcceptedTermsVersion] = useState<string | null>(null);
     const nav = useNavigationCoordinator();
-    const { registerUserUseCase, establishSessionAllowUnverifiedUseCase } = useDI();
+    const { registerUserUseCase, establishSessionAllowUnverifiedUseCase, getPlatformTermsUseCase } = useDI();
+
+    useEffect(() => {
+        let cancelled = false;
+        getPlatformTermsUseCase.execute()
+            .then((result) => { if (!cancelled) setTerms(result); })
+            .catch(() => {})
+            .finally(() => { if (!cancelled) setTermsLoading(false); });
+        return () => { cancelled = true; };
+    }, [getPlatformTermsUseCase]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (formData.password !== formData.confirmPassword) {
-            setError(t('passwordsDoNotMatch'));
-            return;
-        }
-
+    const performRegistration = async (termsVersion: string) => {
         setError('');
         setLoading(true);
         trackAnalyticsEvent('register_attempt', { role: formData.role });
@@ -64,6 +72,7 @@ function RegisterPageInner() {
 
             await registerUserUseCase.execute({
                 ...payload,
+                acceptedTermsVersion: termsVersion,
             });
 
             void notifyFormSubmission({
@@ -99,7 +108,31 @@ function RegisterPageInner() {
         }
     };
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (formData.password !== formData.confirmPassword) {
+            setError(t('passwordsDoNotMatch'));
+            return;
+        }
+
+        if (acceptedTermsVersion) {
+            void performRegistration(acceptedTermsVersion);
+            return;
+        }
+        setError('');
+        setShowTermsModal(true);
+    };
+
+    const handleAcceptTerms = () => {
+        if (!terms) return;
+        setAcceptedTermsVersion(terms.version);
+        setShowTermsModal(false);
+        void performRegistration(terms.version);
+    };
+
     return (
+      <>
       <AuthShell
         eyebrow={t('secureAccessEyebrow')}
         title={t('createCareAccount')}
@@ -272,6 +305,16 @@ function RegisterPageInner() {
           </button>
         </form>
       </AuthShell>
+
+      {showTermsModal && (
+        <TermsAcceptanceModal
+          terms={terms}
+          loading={termsLoading}
+          onAccept={handleAcceptTerms}
+          onClose={() => setShowTermsModal(false)}
+        />
+      )}
+      </>
     );
 }
 

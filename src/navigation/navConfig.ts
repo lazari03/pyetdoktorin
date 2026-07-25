@@ -84,7 +84,8 @@ export function getAdminNavDefs(): NavItemDef[] {
     { key: "reports", href: ADMIN_PATHS.reports, labelKey: "reports", fallback: "Reports" },
     { key: "payouts", href: ADMIN_PATHS.payouts, labelKey: "payouts", fallback: "Payouts" },
     { key: "security", href: ADMIN_PATHS.security, labelKey: "securityLogs", fallback: "Security Logs" },
-    { key: "blog", href: ADMIN_PATHS.blog, labelKey: "blog", fallback: "Blog" },];
+    { key: "blog", href: ADMIN_PATHS.blog, labelKey: "blog", fallback: "Blog" },
+    { key: "doctorAgreements", href: ADMIN_PATHS.doctorAgreements, labelKey: "doctorAgreements", fallback: "Doctor Agreements" },];
 }
 
 export function getClinicNavDefs(): NavItemDef[] {

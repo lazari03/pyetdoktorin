@@ -5,6 +5,7 @@ import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { useDI } from '@/context/DIContext';
 import { useCurrentUserProfile } from '@/presentation/hooks/useCurrentUserProfile';
+import { setAuthToken } from '@/application/auth/tokenHolder';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -45,6 +46,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setAuthLoading(false);
     });
 
+    return () => unsubscribe();
+  }, [authService]);
+
+  useEffect(() => {
+    // Keeps the shared token cache (tokenHolder) in sync so backendFetch can
+    // attach a bearer token immediately instead of depending solely on the
+    // session cookie — this was previously wired up (port + adapter both
+    // exist) but never actually subscribed to anywhere, so every request
+    // silently fell back to cookie-only auth after a dead 3s wait.
+    const unsubscribe = authService.observeIdToken((token) => {
+      setAuthToken(token);
+    });
     return () => unsubscribe();
   }, [authService]);
 

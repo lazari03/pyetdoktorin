@@ -10,7 +10,6 @@ import usersRouter from '@/routes/users';
 import appointmentsRouter from '@/routes/appointments';
 import prescriptionsRouter from '@/routes/prescriptions';
 import clinicsRouter from '@/routes/clinics';
-import paddleRouter from '@/routes/paddle';
 import statsRouter from '@/routes/stats';
 import notificationsRouter from '@/routes/notifications';
 import userNotificationsRouter from '@/routes/userNotifications';
@@ -18,6 +17,9 @@ import availabilityRouter from '@/routes/availability';
 import doctorsRouter from '@/routes/doctors';
 import securityLogsRouter from '@/routes/securityLogs';
 import payoutsRouter from '@/routes/payouts';
+import pushRouter from '@/routes/push';
+import doctorAgreementsRouter from '@/routes/doctorAgreements';
+import platformTermsRouter from '@/routes/platformTerms';
 import { createRateLimiter } from '@/middleware/rateLimit';
 import { attachRequestContext } from '@/middleware/requestContext';
 import { logEvent, logRequestError } from '@/utils/logging';
@@ -72,12 +74,9 @@ const authLimiterMax = Math.max(1, Math.trunc(Number(process.env.AUTH_RATE_LIMIT
 const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: authLimiterMax, keyPrefix: 'auth' });
 const writeLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 120, keyPrefix: 'write' });
 const readLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 600, keyPrefix: 'read' });
-const webhookLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 300, keyPrefix: 'webhook' });
 
 app.use('/api/auth', authLimiter);
 app.use('/api/appointments', writeLimiter);
-app.use('/api/paddle/webhook', webhookLimiter);
-app.use('/api/paddle/sync', writeLimiter);
 app.use('/api/users', readLimiter);
 app.use('/api/blog', readLimiter);
 app.use('/api/clinics', readLimiter);
@@ -89,11 +88,9 @@ app.use('/api/availability', readLimiter);
 app.use('/api/doctors', readLimiter);
 app.use('/api/security-logs', readLimiter);
 app.use('/api/payouts', writeLimiter);
-// Paddle's webhook signature covers the raw request body, so this route must
-// read it before the global JSON parser below consumes the stream. Every
-// other route (including /api/paddle/sync) relies on cookieParser() for
-// session auth, so it's mounted normally, after both global parsers.
-app.use('/api/paddle/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/push', writeLimiter);
+app.use('/api/doctor-agreements', writeLimiter);
+app.use('/api/platform-terms', readLimiter);
 app.use(express.json());
 app.use(cookieParser());
 morgan.token('request-id', (req) => (req as express.Request).requestId ?? '-');
@@ -115,7 +112,6 @@ app.use('/api/auth', authRouter);
 app.use('/api/blog', blogRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/appointments', appointmentsRouter);
-app.use('/api/paddle', paddleRouter);
 app.use('/api/prescriptions', prescriptionsRouter);
 app.use('/api/clinics', clinicsRouter);
 app.use('/api/stats', statsRouter);
@@ -125,6 +121,9 @@ app.use('/api/availability', availabilityRouter);
 app.use('/api/doctors', doctorsRouter);
 app.use('/api/security-logs', securityLogsRouter);
 app.use('/api/payouts', payoutsRouter);
+app.use('/api/push', pushRouter);
+app.use('/api/doctor-agreements', doctorAgreementsRouter);
+app.use('/api/platform-terms', platformTermsRouter);
 
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   // Ensure CORS headers are present on error responses so the browser

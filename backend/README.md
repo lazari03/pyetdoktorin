@@ -31,9 +31,6 @@ Use [`backend/.env.example`](./.env.example) as the source of truth.
 Common optional variables:
 
 - `PAYWALL_AMOUNT_USD` default `13`
-- `PADDLE_ENV` default `sandbox`
-- `PADDLE_API_KEY`
-- `PADDLE_WEBHOOK_SECRET`
 - `AUTH_COOKIE_MAX_AGE_SECONDS` default `1800`
 - `RATE_LIMIT_MAX_BUCKETS` default `10000`
 
@@ -65,8 +62,6 @@ Common optional variables:
 - `GET /api/availability/:doctorId/slots`
 - `GET/POST/PATCH/DELETE /api/blog`
 - `GET /api/security-logs`
-- `POST /api/paddle/webhook`
-- `POST /api/paddle/sync`
 
 All authenticated routes expect `Authorization: Bearer <Firebase ID token>` unless the route establishes or clears session state itself.
 

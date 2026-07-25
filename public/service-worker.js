@@ -24,6 +24,33 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    return;
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title || 'Pyet Doktorin', {
+      body: payload.body || '',
+      icon: '/apple-touch-icon.png',
+      badge: '/apple-touch-icon.png',
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clients) => {
+      if (clients.length > 0) return clients[0].focus();
+      return self.clients.openWindow('/dashboard/notifications');
+    })
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 

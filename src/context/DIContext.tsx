@@ -10,7 +10,6 @@ import {
   appointmentBookingService,
   clinicBookingService,
   paymentSyncService,
-  paymentCheckoutService,
   handlePayNowUseCase,
   generateRoomCodeUseCase,
   getTopDoctorsByAppointmentsUseCase,
@@ -50,9 +49,6 @@ import {
   getUsersByRoleUseCase,
   applyVerificationCodeUseCase,
   establishSessionAllowUnverifiedUseCase,
-  prepareCheckoutUseCase,
-  openCheckoutUseCase,
-  syncPaymentUseCase,
   clearPaymentProcessingUseCase,
   listAppointmentsUseCase,
   createAppointmentUseCase,
@@ -68,6 +64,19 @@ import {
   updateAppointmentStatusAndNotifyUseCase,
   getPharmaciesUseCase,
   getQuickAppointmentMatchesUseCase,
+  broadcastNotificationUseCase,
+  getVapidPublicKeyUseCase,
+  subscribePushUseCase,
+  unsubscribePushUseCase,
+  listReadMarksUseCase,
+  markReadMarkUseCase,
+  markManyReadMarksUseCase,
+  getDoctorTermsUseCase,
+  getMyDoctorAgreementUseCase,
+  submitDoctorAgreementUseCase,
+  listDoctorAgreementsUseCase,
+  downloadDoctorAgreementPdfUseCase,
+  getPlatformTermsUseCase,
 } from './di.services';
 
 interface DIContextValue {
@@ -80,7 +89,6 @@ interface DIContextValue {
   appointmentBookingService: typeof appointmentBookingService;
   clinicBookingService: typeof clinicBookingService;
   paymentSyncService: typeof paymentSyncService;
-  paymentCheckoutService: typeof paymentCheckoutService;
   handlePayNowUseCase: typeof handlePayNowUseCase;
   generateRoomCodeUseCase: typeof generateRoomCodeUseCase;
   getTopDoctorsByAppointmentsUseCase: typeof getTopDoctorsByAppointmentsUseCase;
@@ -120,9 +128,6 @@ interface DIContextValue {
   getUsersByRoleUseCase: typeof getUsersByRoleUseCase;
   applyVerificationCodeUseCase: typeof applyVerificationCodeUseCase;
   establishSessionAllowUnverifiedUseCase: typeof establishSessionAllowUnverifiedUseCase;
-  prepareCheckoutUseCase: typeof prepareCheckoutUseCase;
-  openCheckoutUseCase: typeof openCheckoutUseCase;
-  syncPaymentUseCase: typeof syncPaymentUseCase;
   clearPaymentProcessingUseCase: typeof clearPaymentProcessingUseCase;
   listAppointmentsUseCase: typeof listAppointmentsUseCase;
   createAppointmentUseCase: typeof createAppointmentUseCase;
@@ -138,6 +143,19 @@ interface DIContextValue {
   updateAppointmentStatusAndNotifyUseCase: typeof updateAppointmentStatusAndNotifyUseCase;
   getPharmaciesUseCase: typeof getPharmaciesUseCase;
   getQuickAppointmentMatchesUseCase: typeof getQuickAppointmentMatchesUseCase;
+  broadcastNotificationUseCase: typeof broadcastNotificationUseCase;
+  getVapidPublicKeyUseCase: typeof getVapidPublicKeyUseCase;
+  subscribePushUseCase: typeof subscribePushUseCase;
+  unsubscribePushUseCase: typeof unsubscribePushUseCase;
+  listReadMarksUseCase: typeof listReadMarksUseCase;
+  markReadMarkUseCase: typeof markReadMarkUseCase;
+  markManyReadMarksUseCase: typeof markManyReadMarksUseCase;
+  getDoctorTermsUseCase: typeof getDoctorTermsUseCase;
+  getMyDoctorAgreementUseCase: typeof getMyDoctorAgreementUseCase;
+  submitDoctorAgreementUseCase: typeof submitDoctorAgreementUseCase;
+  listDoctorAgreementsUseCase: typeof listDoctorAgreementsUseCase;
+  downloadDoctorAgreementPdfUseCase: typeof downloadDoctorAgreementPdfUseCase;
+  getPlatformTermsUseCase: typeof getPlatformTermsUseCase;
 }
 
 // All use cases are module-level singletons (see di.services.ts) so this
@@ -152,7 +170,6 @@ const diContextValue: DIContextValue = {
   appointmentBookingService,
   clinicBookingService,
   paymentSyncService,
-  paymentCheckoutService,
   handlePayNowUseCase,
   generateRoomCodeUseCase,
   getTopDoctorsByAppointmentsUseCase,
@@ -192,9 +209,6 @@ const diContextValue: DIContextValue = {
   getUsersByRoleUseCase,
   applyVerificationCodeUseCase,
   establishSessionAllowUnverifiedUseCase,
-  prepareCheckoutUseCase,
-  openCheckoutUseCase,
-  syncPaymentUseCase,
   clearPaymentProcessingUseCase,
   listAppointmentsUseCase,
   createAppointmentUseCase,
@@ -210,6 +224,19 @@ const diContextValue: DIContextValue = {
   updateAppointmentStatusAndNotifyUseCase,
   getPharmaciesUseCase,
   getQuickAppointmentMatchesUseCase,
+  broadcastNotificationUseCase,
+  getVapidPublicKeyUseCase,
+  subscribePushUseCase,
+  unsubscribePushUseCase,
+  listReadMarksUseCase,
+  markReadMarkUseCase,
+  markManyReadMarksUseCase,
+  getDoctorTermsUseCase,
+  getMyDoctorAgreementUseCase,
+  submitDoctorAgreementUseCase,
+  listDoctorAgreementsUseCase,
+  downloadDoctorAgreementPdfUseCase,
+  getPlatformTermsUseCase,
 };
 
 const DIContext = createContext<DIContextValue | undefined>(undefined);

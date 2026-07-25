@@ -13,6 +13,7 @@ import {
   resolveSecurityAccountSummaryFromSession,
   writeSecurityAuditLog,
 } from '@/services/securityAuditService';
+import { PLATFORM_TERMS_VERSION } from '@/content/platformTermsContent';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ const registrationProfileSchema = z.object({
   address: z.string().min(1).max(300),
   country: z.string().min(1).max(120),
   role: z.enum([UserRole.Patient, UserRole.Doctor]),
+  acceptedTermsVersion: z.string().min(1),
 });
 
 function getBearerToken(req: Request): string | null {
@@ -105,6 +107,10 @@ router.post('/register-profile', async (req, res) => {
     return res.status(400).json({ error: 'Invalid role' });
   }
 
+  if (payload.acceptedTermsVersion !== PLATFORM_TERMS_VERSION) {
+    return res.status(409).json({ error: 'TERMS_OUT_OF_DATE' });
+  }
+
   const email = typeof decoded.email === 'string' && decoded.email.trim()
     ? decoded.email.trim()
     : null;
@@ -128,6 +134,8 @@ router.post('/register-profile', async (req, res) => {
     createdAt,
     updatedAt: createdAt,
     createdBy: 'self_registration',
+    acceptedPlatformTermsVersion: payload.acceptedTermsVersion,
+    acceptedPlatformTermsAt: createdAt,
   };
 
   try {
@@ -189,6 +197,102 @@ router.post('/register-profile', async (req, res) => {
     }
     console.error('Registration profile persistence failed', error);
     res.status(500).json({ error: 'Failed to persist registration profile' });
+  }
+});
+
+const oauthProfileSchema = z.object({
+  acceptedTermsVersion: z.string().min(1).optional(),
+});
+
+// Called right after a Google (or other OAuth provider) sign-in. Idempotent:
+// if a Firestore profile already exists for this uid (returning user), it's a
+// no-op. For a genuinely new sign-in, a profile is created — defaulting to
+// Patient, since there's no role picker in the OAuth flow — but only once the
+// caller has actually accepted the current platform terms; the backend is the
+// authority on this (not a client-side "isNewUser" flag) so a user who
+// abandons the terms modal mid-flow can safely retry later rather than being
+// permanently stuck with an auth account but no profile.
+router.post('/oauth-profile', async (req, res) => {
+  const payload = validateBody(res, oauthProfileSchema, req.body, 'INVALID_PAYLOAD');
+  if (!payload) return;
+
+  const idToken = getBearerToken(req);
+  if (!idToken) {
+    return res.status(401).json({ error: 'Missing authentication credentials' });
+  }
+
+  const admin = getFirebaseAdmin();
+  let decoded: Awaited<ReturnType<ReturnType<typeof admin.auth>['verifyIdToken']>>;
+  try {
+    decoded = await admin.auth().verifyIdToken(idToken);
+  } catch (error) {
+    console.error('OAuth profile auth error', error);
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  const uid = decoded.uid;
+
+  try {
+    const existing = await admin.firestore().collection('users').doc(uid).get();
+    if (existing.exists) {
+      return res.json({ ok: true, created: false });
+    }
+
+    if (!payload.acceptedTermsVersion || payload.acceptedTermsVersion !== PLATFORM_TERMS_VERSION) {
+      return res.status(428).json({ error: 'TERMS_REQUIRED' });
+    }
+
+    const email = typeof decoded.email === 'string' && decoded.email.trim()
+      ? decoded.email.trim()
+      : null;
+    if (!email) {
+      return res.status(400).json({ error: 'Authenticated account has no email' });
+    }
+
+    const displayName = typeof decoded.name === 'string' ? decoded.name.trim() : '';
+    const [firstName, ...rest] = displayName.split(/\s+/).filter(Boolean);
+    const surname = rest.join(' ');
+
+    const createdAt = Date.now();
+    const profile = {
+      name: firstName || email.split('@')[0],
+      surname,
+      phone: '',
+      phoneNumber: '',
+      address: '',
+      country: '',
+      email,
+      role: UserRole.Patient,
+      createdAt,
+      updatedAt: createdAt,
+      createdBy: 'google_oauth',
+      acceptedPlatformTermsVersion: payload.acceptedTermsVersion,
+      acceptedPlatformTermsAt: createdAt,
+    };
+
+    await admin.firestore().collection('users').doc(uid).set(profile, { merge: true });
+    await admin.auth().setCustomUserClaims(uid, { role: UserRole.Patient, admin: false });
+
+    try {
+      await writeSecurityAuditLog({
+        type: 'user_registered',
+        success: true,
+        request: req,
+        user: {
+          userId: uid,
+          accountName: displayName || email,
+          accountEmail: email,
+          role: UserRole.Patient,
+        },
+      });
+    } catch (auditError) {
+      console.error('Failed to write OAuth registration audit log', auditError);
+    }
+
+    res.status(201).json({ ok: true, created: true, role: UserRole.Patient });
+  } catch (error) {
+    console.error('OAuth profile persistence failed', error);
+    res.status(500).json({ error: 'Failed to persist profile' });
   }
 });
 

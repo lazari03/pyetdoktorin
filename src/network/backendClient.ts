@@ -172,3 +172,23 @@ export async function backendFetch<T = unknown>(path: string, options: RequestIn
   const text = await readResponseTextSafe(response);
   return text ? (JSON.parse(text) as T) : ({} as T);
 }
+
+// For binary downloads (PDFs, etc.) — JSON.parse'ing the body like backendFetch
+// does would corrupt the bytes, so this is a minimal sibling that returns a Blob.
+export async function backendFetchBlob(path: string): Promise<Blob> {
+  const useProxy = typeof window !== 'undefined';
+  const url = useProxy ? `/api/backend${path}` : `${backendBaseUrl}${path}`;
+  const headers = new Headers();
+  const token = await getOptionalIdToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const response = await fetch(url, { headers, credentials: 'include', cache: 'no-store' });
+  if (!response.ok) {
+    const text = await readResponseTextSafe(response);
+    if (response.status === 401) handleSessionExpired();
+    const payload = parseBackendError(text);
+    const message = typeof payload?.error === 'string' ? payload.error : `Backend request failed with status ${response.status}`;
+    throw new BackendError(message, response.status);
+  }
+  return response.blob();
+}

@@ -60,13 +60,6 @@ function check() {
     warn("SMTP is not configured. Website contact form will return 503 in production.");
   }
 
-  // Paddle/paywall config (optional but commonly expected)
-  const paddleClientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
-  const paddlePriceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID;
-  if (isProd && (isNonEmpty(paddleClientToken) !== isNonEmpty(paddlePriceId))) {
-    warn("Paddle config is partially set. Set BOTH NEXT_PUBLIC_PADDLE_CLIENT_TOKEN and NEXT_PUBLIC_PADDLE_PRICE_ID (or neither).");
-  }
-
   // GA config (optional)
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID;
   if (isProd && !isNonEmpty(gaId)) {

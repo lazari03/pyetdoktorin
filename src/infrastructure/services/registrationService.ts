@@ -24,6 +24,7 @@ export class RegistrationService implements IRegistrationService {
           address: data.address,
           country: data.country,
           role: isDoctor ? UserRole.Doctor : UserRole.Patient,
+          acceptedTermsVersion: data.acceptedTermsVersion,
         }),
       });
     } catch (error) {

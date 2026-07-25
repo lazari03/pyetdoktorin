@@ -35,6 +35,7 @@ import type { MenuEntryDef, NavItemDef } from '@/navigation/navConfig';
 import { useNotificationsLogic } from '@/app/(app)/dashboard/notifications/useNotificationsLogic';
 import { useNotificationReadState } from '@/presentation/hooks/useNotificationReadState';
 import { useUserNotifications } from '@/presentation/hooks/useUserNotifications';
+import { usePushNotifications } from '@/presentation/hooks/usePushNotifications';
 import { useAuth } from '@/context/AuthContext';
 
 export type AppSectionId = 'dashboard' | 'admin' | 'clinic' | 'pharmacy';
@@ -265,6 +266,8 @@ export default function SectionShell({
     prescriptionNotifications,
   } = useNotificationsLogic(nav);
   const { isRead, markRead, markManyRead, unreadCount } = useNotificationReadState(user?.uid);
+
+  const { status: pushStatus, enable: enablePush } = usePushNotifications();
 
   const { data: userNotifData, mutate: mutateUserNotifications } = useUserNotifications(user?.uid);
   const userNotifItems = useMemo(() => userNotifData?.items ?? [], [userNotifData]);
@@ -839,6 +842,17 @@ export default function SectionShell({
                       })
                     )}
                   </div>
+
+                  {pushStatus === 'default' && (
+                    <button
+                      type="button"
+                      onClick={() => void enablePush()}
+                      className="block w-full px-4 py-2.5 text-center text-[11.5px] font-semibold text-gray-500 hover:bg-gray-50 border-t border-gray-100 transition-colors"
+                      data-analytics={`${sectionId}.topbar.notifications.enable_push`}
+                    >
+                      {t('enablePushNotifications') || 'Enable push notifications'}
+                    </button>
+                  )}
 
                   <Link
                     href={sectionNotificationsHref(sectionId)}

@@ -33,6 +33,7 @@ export const ADMIN_PATHS = {
   security: `${ROUTES.ADMIN}/security`,
   profile: `${ROUTES.ADMIN}/profile`,
   blog: `${ROUTES.ADMIN}/blog`,
+  doctorAgreements: `${ROUTES.ADMIN}/doctor-agreements`,
 } as const;
 
 export function dashboardDoctorProfilePath(doctorId: string) {

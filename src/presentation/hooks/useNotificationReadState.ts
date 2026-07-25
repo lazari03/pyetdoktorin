@@ -1,39 +1,54 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
-import { useNotificationReadStore } from '@/store/notificationReadStore';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import useSWR from 'swr';
+import { useDI } from '@/context/DIContext';
 
 const EMPTY_ARRAY: string[] = [];
 
 /**
- * Per-user read/unread tracking for notifications, backed by useNotificationReadStore
- * (Zustand + persist) so every mounted consumer — the topbar popover and the full
- * notifications page — reacts to the same live, localStorage-synced state.
+ * Per-user read/unread tracking for notifications, persisted server-side
+ * (account-bound) rather than in localStorage — read state must survive
+ * logout/login and follow the account, not the browser.
+ * `optimisticIds` bridges the gap between a mark-read click and the next
+ * SWR revalidation so the UI updates instantly.
  */
 export function useNotificationReadState(userId?: string | null) {
-  const readIds = useNotificationReadStore((s) => (userId ? s.readIdsByUser[userId] ?? EMPTY_ARRAY : EMPTY_ARRAY));
-  const markReadRaw = useNotificationReadStore((s) => s.markRead);
-  const markManyReadRaw = useNotificationReadStore((s) => s.markManyRead);
-  const pruneToRaw = useNotificationReadStore((s) => s.pruneTo);
+  const { listReadMarksUseCase, markReadMarkUseCase, markManyReadMarksUseCase } = useDI();
+  const { data: serverIds, mutate } = useSWR<string[]>(
+    userId ? ['read-marks', userId] : null,
+    () => listReadMarksUseCase.execute(),
+  );
+  const [optimisticIds, setOptimisticIds] = useState<string[]>(EMPTY_ARRAY);
 
-  const readSet = useMemo(() => new Set(readIds), [readIds]);
+  useEffect(() => {
+    setOptimisticIds(EMPTY_ARRAY);
+  }, [userId]);
+
+  const readSet = useMemo(
+    () => new Set([...(serverIds ?? EMPTY_ARRAY), ...optimisticIds]),
+    [serverIds, optimisticIds],
+  );
 
   const isRead = useCallback((id: string) => readSet.has(id), [readSet]);
 
   const markRead = useCallback((id: string) => {
-    if (!userId) return;
-    markReadRaw(userId, id);
-  }, [userId, markReadRaw]);
+    if (!userId || readSet.has(id)) return;
+    setOptimisticIds((prev) => [...prev, id]);
+    markReadMarkUseCase.execute(id).then(() => mutate()).catch(() => {});
+  }, [userId, readSet, markReadMarkUseCase, mutate]);
 
   const markManyRead = useCallback((ids: string[]) => {
-    if (!userId) return;
-    markManyReadRaw(userId, ids);
-  }, [userId, markManyReadRaw]);
+    const newIds = ids.filter((id) => !readSet.has(id));
+    if (!userId || newIds.length === 0) return;
+    setOptimisticIds((prev) => [...prev, ...newIds]);
+    markManyReadMarksUseCase.execute(newIds).then(() => mutate()).catch(() => {});
+  }, [userId, readSet, markManyReadMarksUseCase, mutate]);
 
-  const pruneTo = useCallback((liveIds: string[]) => {
-    if (!userId) return;
-    pruneToRaw(userId, liveIds);
-  }, [userId, pruneToRaw]);
+  // ponytail: read marks live in Firestore now, not localStorage, so the
+  // original "stop the local set growing forever" concern doesn't apply —
+  // pruning stays a no-op, kept only so callers don't need to change.
+  const pruneTo = useCallback((_liveIds: string[]) => {}, []);
 
   const unreadCount = useCallback((ids: string[]) => ids.filter((id) => !readSet.has(id)).length, [readSet]);
 

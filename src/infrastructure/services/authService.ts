@@ -4,6 +4,8 @@ import { auth } from '@/infrastructure/firebase/firebaseconfig';
 import { UserRole } from '@/domain/entities/UserRole';
 import { normalizeRole } from '@/domain/rules/userRules';
 import { fetchCurrentUserProfile } from '@/network/currentUser';
+import { backendFetch } from '@/network/backendClient';
+import { BackendError } from '@/application/errors/BackendError';
 
 import { sendPasswordResetEmail } from "firebase/auth";
 
@@ -145,8 +147,22 @@ export const login = async (
     }
 };
 
+// First-time Google sign-in has no Firestore profile yet — this creates one
+// (defaulting to Patient; there's no role picker in the OAuth flow) once the
+// platform terms have been accepted. Idempotent no-op for returning users.
+async function ensureOAuthProfile(idToken: string, acceptedTermsVersion?: string): Promise<void> {
+    await backendFetch('/api/auth/oauth-profile', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ acceptedTermsVersion }),
+    });
+}
+
 // Google sign-in (popup) — reuses the same session + profile resolution as email/password login.
-export const loginWithGoogle = async (): Promise<{ user: User; role: UserRole; emailVerified: boolean }> => {
+// `acceptedTermsVersion` is only needed the first time a given Google account signs in; pass it
+// once the caller has shown the terms modal (triggered by a thrown BackendError with code
+// 'TERMS_REQUIRED' on a first attempt without it).
+export const loginWithGoogle = async (acceptedTermsVersion?: string): Promise<{ user: User; role: UserRole; emailVerified: boolean }> => {
     try {
         const provider = new GoogleAuthProvider();
         const userCredential = await signInWithPopup(auth, provider);
@@ -157,6 +173,7 @@ export const loginWithGoogle = async (): Promise<{ user: User; role: UserRole; e
         // Token was just minted by signInWithPopup, so no forced refresh needed here.
         const idToken = await user.getIdToken();
         await establishServerSession(idToken);
+        await ensureOAuthProfile(idToken, acceptedTermsVersion);
 
         const currentProfile = await fetchCurrentUserProfile();
         const resolvedRole = normalizeRole(currentProfile.role) ?? UserRole.Patient;
@@ -170,6 +187,9 @@ export const loginWithGoogle = async (): Promise<{ user: User; role: UserRole; e
         return { user, role: resolvedRole, emailVerified };
     } catch (error) {
         console.error('Google login error:', error);
+        // Preserve BackendError (and its `.code`, e.g. 'TERMS_REQUIRED') so callers can react to
+        // the specific failure instead of just seeing a generic message.
+        if (error instanceof BackendError) throw error;
         const message = error instanceof Error ? error.message : 'Failed to sign in with Google';
         throw new Error(message || 'Failed to sign in with Google');
     }

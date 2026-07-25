@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useDI } from "@/context/DIContext";
+import { useReciepeStore } from "@/store/reciepeStore";
 import { useTranslation } from "react-i18next";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import Image from "next/image";
@@ -60,49 +60,49 @@ function EmptyState({ title, hint }: { title: string; hint: string }) {
 export default function PatientReciepesPage() {
   const { t } = useTranslation();
   const { role, user } = useAuth();
-  const { getReciepesByPatientUseCase } = useDI();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [reciepes, setReciepes] = useState<Reciepe[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  // Shared with dashboard/page.tsx's prescription count and useNotificationsLogic,
+  // so this list is fetched once per role/uid instead of independently per consumer.
+  const rawReciepes = useReciepeStore((s) => s.reciepes);
+  const loading = useReciepeStore((s) => s.loading);
+  const error = useReciepeStore((s) => s.error);
+  const fetchReciepes = useReciepeStore((s) => s.fetchReciepes);
+
   const load = useCallback(async () => {
-    if (!user?.uid) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await getReciepesByPatientUseCase.execute(user.uid);
-      const mapped = (response || []).map((r: ReciepePayload) => ({
-        id: r.id || r.patientId + String(r.createdAt ?? ""),
-        doctor: r.doctorName || "",
-        type: r.type || "standard",
-        reimbursementCode: r.reimbursementCode,
-        pharmacy: r.pharmacyName,
-        title: r.title || t("reciepeTitleDoctor") || "Reciepe",
-        medicines: Array.isArray(r.medicines)
-          ? r.medicines.join(", ")
-          : String(r.medicines ?? ""),
-        dosage: r.dosage || "",
-        notes: r.notes,
-        date: new Date(r.createdAt ?? Date.now()).toISOString().split("T")[0],
-        status: (r.status as Reciepe["status"]) || "pending",
-        signatureDataUrl: r.signatureDataUrl,
-      }));
-      setReciepes(mapped);
-      setActiveId((prev) => prev || mapped[0]?.id || null);
-    } catch (err) {
-      setReciepes([]);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [getReciepesByPatientUseCase, t, user?.uid]);
+    if (!user?.uid || !role) return;
+    await fetchReciepes(role, user.uid, true);
+  }, [fetchReciepes, role, user?.uid]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!user?.uid || !role) return;
+    fetchReciepes(role, user.uid);
+  }, [fetchReciepes, role, user?.uid]);
+
+  const reciepes: Reciepe[] = useMemo(() => {
+    return rawReciepes.map((r: ReciepePayload) => ({
+      id: r.id || r.patientId + String(r.createdAt ?? ""),
+      doctor: r.doctorName || "",
+      type: r.type || "standard",
+      reimbursementCode: r.reimbursementCode,
+      pharmacy: r.pharmacyName,
+      title: r.title || t("reciepeTitleDoctor") || "Reciepe",
+      medicines: Array.isArray(r.medicines)
+        ? r.medicines.join(", ")
+        : String(r.medicines ?? ""),
+      dosage: r.dosage || "",
+      notes: r.notes,
+      date: new Date(r.createdAt ?? Date.now()).toISOString().split("T")[0],
+      status: (r.status as Reciepe["status"]) || "pending",
+      signatureDataUrl: r.signatureDataUrl,
+    }));
+  }, [rawReciepes, t]);
+
+  useEffect(() => {
+    setActiveId((prev) => prev || reciepes[0]?.id || null);
+  }, [reciepes]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

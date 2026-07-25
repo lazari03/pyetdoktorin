@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { useDI } from "@/context/DIContext";
+import { useReciepeStore } from "@/store/reciepeStore";
 import Link from "next/link";
 import RedirectingModal from "@/presentation/components/RedirectingModal/RedirectingModal";
 import { UserRole } from "@/domain/entities/UserRole";
@@ -38,11 +39,40 @@ type PharmacyReciepe = {
 export default function PharmacyDashboardPage() {
   const { role, user } = useAuth();
   const { t } = useTranslation();
-  const { getReciepesByPharmacyUseCase, updateReciepeStatusUseCase } = useDI();
-  const [reciepes, setReciepes] = useState<PharmacyReciepe[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
+  const { updateReciepeStatusUseCase } = useDI();
   const notificationsHref = getRoleNotificationsPath(role) || PHARMACY_PATHS.notifications;
+
+  // Shared with pharmacy/reciepes/page.tsx and useNotificationsLogic, so this
+  // list is fetched once per pharmacy instead of independently per consumer.
+  const rawReciepes = useReciepeStore((s) => s.reciepes);
+  const loading = useReciepeStore((s) => s.loading);
+  const error = useReciepeStore((s) => s.error);
+  const fetchReciepes = useReciepeStore((s) => s.fetchReciepes);
+  const setRawReciepes = useReciepeStore((s) => s.setReciepes);
+
+  const load = useCallback(async () => {
+    if (!user?.uid || !role) return;
+    await fetchReciepes(role, user.uid, true);
+  }, [fetchReciepes, role, user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid || !role) return;
+    fetchReciepes(role, user.uid);
+  }, [fetchReciepes, role, user?.uid]);
+
+  const reciepes: PharmacyReciepe[] = useMemo(() => {
+    return rawReciepes.map((r: ReciepePayload) => ({
+      id: r.id || `${r.pharmacyId ?? ""}${r.createdAt ?? ""}`,
+      patient: r.patientName,
+      doctor: r.doctorName || "",
+      title: r.title || t("reciepeTitleDoctor") || "Reciepe",
+      medicines: Array.isArray(r.medicines) ? r.medicines.join(", ") : String(r.medicines ?? ""),
+      dosage: r.dosage || "",
+      createdAt: new Date(r.createdAt ?? Date.now()).toISOString().split("T")[0],
+      status: (r.status as PharmacyReciepe["status"]) || "pending",
+      signatureDataUrl: r.signatureDataUrl,
+    }));
+  }, [rawReciepes, t]);
 
   const notifications: PharmacyNotification[] = useMemo(() => {
     return reciepes.slice(0, 5).map((r) => ({
@@ -54,36 +84,6 @@ export default function PharmacyDashboardPage() {
     }));
   }, [reciepes, t]);
 
-  const load = useCallback(async () => {
-    if (!user?.uid) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await getReciepesByPharmacyUseCase.execute(user.uid);
-      const mapped = (response || []).map((r: ReciepePayload) => ({
-        id: r.id || `${r.pharmacyId ?? ""}${r.createdAt ?? ""}`,
-        patient: r.patientName,
-        doctor: r.doctorName || "",
-        title: r.title || t("reciepeTitleDoctor") || "Reciepe",
-        medicines: Array.isArray(r.medicines) ? r.medicines.join(", ") : String(r.medicines ?? ""),
-        dosage: r.dosage || "",
-        createdAt: new Date(r.createdAt ?? Date.now()).toISOString().split("T")[0],
-        status: (r.status as PharmacyReciepe["status"]) || "pending",
-        signatureDataUrl: r.signatureDataUrl,
-      }));
-      setReciepes(mapped);
-    } catch (err) {
-      setReciepes([]);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [getReciepesByPharmacyUseCase, t, user?.uid]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
   if (role !== UserRole.Pharmacy) return <RedirectingModal show />;
 
   const pendingCount = reciepes.filter((r) => r.status === "pending").length;
@@ -92,7 +92,7 @@ export default function PharmacyDashboardPage() {
   const markReciepe = async (id: string, status: "accepted" | "rejected") => {
     try {
       await updateReciepeStatusUseCase.execute(id, status);
-      setReciepes((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      setRawReciepes(rawReciepes.map((r) => (r.id === id ? { ...r, status } : r)));
       trackAnalyticsEvent('prescription_status_updated', { prescriptionId: id, status });
     } catch (error) {
       trackAnalyticsEvent('prescription_status_failed', {

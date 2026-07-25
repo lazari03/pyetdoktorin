@@ -32,9 +32,6 @@ function parseCsvEnv(name: string, fallback: string[] = []): string[] {
 export const env = {
   port: parseInt(process.env.PORT || '4000', 10),
   firebaseServiceAccount: requireEnv('FIREBASE_SERVICE_ACCOUNT'),
-  paddleEnv: process.env.PADDLE_ENV ?? 'sandbox',
-  paddleApiKey: process.env.PADDLE_API_KEY ?? '',
-  paddleWebhookSecret: process.env.PADDLE_WEBHOOK_SECRET ?? '',
   paywallAmountUsd: parseNumberEnv('PAYWALL_AMOUNT_USD', parseNumberEnv('NEXT_PUBLIC_PAYWALL_AMOUNT_USD', 13)),
   appointmentPriceEur: parseNumberEnv('APPOINTMENT_PRICE_EUR', parseNumberEnv('NEXT_PUBLIC_APPOINTMENT_PRICE_EUR', 13)),
   appointmentPriceCurrency: process.env.APPOINTMENT_PRICE_CURRENCY ?? process.env.NEXT_PUBLIC_APPOINTMENT_PRICE_CURRENCY ?? 'EUR',
@@ -43,4 +40,7 @@ export const env = {
   corsOrigins: parseCsvEnv('CORS_ORIGINS', []),
   frontendUrl: process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_BASE_URL || '',
   notificationsCleanupSecret: process.env.NOTIFICATIONS_CLEANUP_SECRET ?? '',
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? '',
+  vapidSubject: process.env.VAPID_SUBJECT || 'mailto:support@pyetdoktorin.al',
 };

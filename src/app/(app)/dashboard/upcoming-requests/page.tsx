@@ -1,46 +1,38 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigationCoordinator } from '@/navigation/NavigationCoordinator';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 
-import type { Appointment } from '@/domain/entities/Appointment';
+import { useAppointmentStore } from '@/store/appointmentStore';
 import RequestStateGate from '@/presentation/components/RequestStateGate/RequestStateGate';
 import { TableSkeleton } from '@/presentation/components/Skeleton/TableSkeleton';
 import { DASHBOARD_PATHS } from '@/navigation/paths';
-import { useDI } from '@/context/DIContext';
 
 export default function UpcomingRequestsPage() {
-  const [requests, setRequests] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<unknown>(null);
   const nav = useNavigationCoordinator();
   const { t } = useTranslation();
-  const { user, isAuthenticated } = useAuth();
-  const { listAppointmentsUseCase } = useDI();
-
-  const fetchRequests = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (isAuthenticated && user) {
-        const allAppointments = await listAppointmentsUseCase.execute();
-        const pendingRequests = allAppointments.filter((appt: Appointment) => appt.status === 'pending');
-        setRequests(pendingRequests);
-      } else {
-        setRequests([]);
-      }
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, listAppointmentsUseCase, user]);
+  const { user, role, isAuthenticated } = useAuth();
+  // Shared with dashboard/page.tsx, useAppointmentsViewModel, and
+  // useNotificationsLogic, so this list is fetched once instead of
+  // independently per consumer.
+  const { appointments, loading, error, fetchAppointments } = useAppointmentStore();
 
   useEffect(() => {
-    void fetchRequests();
-  }, [fetchRequests]);
+    if (isAuthenticated && user && role) {
+      fetchAppointments(role);
+    }
+  }, [isAuthenticated, user, role, fetchAppointments]);
+
+  const requests = useMemo(
+    () => (isAuthenticated && user ? appointments.filter((appt) => appt.status === 'pending') : []),
+    [appointments, isAuthenticated, user],
+  );
+
+  const fetchRequests = () => {
+    if (role) fetchAppointments(role, true);
+  };
 
   const handleJoin = (requestId: string) => {
     nav.toChatRoom(requestId);
