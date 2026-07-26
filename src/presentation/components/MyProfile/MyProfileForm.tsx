@@ -3,8 +3,6 @@ import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '@/domain/entities/UserRole';
 import { SignaturePad } from '@/presentation/components/SignaturePad';
-import { Button } from '@/presentation/ui/Button';
-import { Input } from '@/presentation/ui/Input';
 import { APPOINTMENT_PRICE_CURRENCY } from '@/config/paywallConfig';
 
 export interface MyProfileFormData {
@@ -57,6 +55,35 @@ interface MyProfileFormProps {
   onSignatureChange?: (dataUrl: string) => void;
 }
 
+const fieldClass =
+  'w-full rounded-xl border border-gray-200 px-3.5 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white';
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-purple-600">
+      {children}
+    </p>
+  );
+}
+
+const TextField = React.memo<{
+  label: string;
+  type?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  help?: string;
+  span2?: boolean;
+  min?: number;
+  step?: string;
+}>(({ label, type = 'text', value, onChange, help, span2, min, step }) => (
+  <div className={span2 ? 'sm:col-span-2' : undefined}>
+    <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+    <input type={type} value={value} onChange={onChange} min={min} step={step} className={fieldClass} />
+    {help && <p className="mt-1 text-[11px] text-gray-500">{help}</p>}
+  </div>
+));
+TextField.displayName = 'TextField';
+
 const ProfileImage = React.memo<{
   previewUrl: string | null;
   profilePicture?: string;
@@ -67,121 +94,67 @@ const ProfileImage = React.memo<{
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col items-center w-full md:w-40 mb-4 md:mb-0 gap-3">
+    <div className="flex flex-col items-center w-full md:w-36 shrink-0 gap-2.5">
       <Image
         src={previewUrl || profilePicture || "/img/profile_placeholder.png"}
         alt={t('profilePreview')}
-        width={88}
-        height={88}
-        className="w-22 h-22 rounded-full object-cover border border-purple-100 shadow-sm"
+        width={80}
+        height={80}
+        className="h-20 w-20 rounded-full object-cover border border-purple-100 shadow-sm"
         style={{ objectFit: 'cover' }}
         priority
       />
       <label
-        className={`inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white px-4 py-2 text-xs font-semibold text-purple-700 shadow-sm hover:bg-purple-50 cursor-pointer transition ${
+        className={`inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-white px-3.5 py-1.5 text-[11px] font-semibold text-purple-700 shadow-sm hover:bg-purple-50 cursor-pointer transition ${
           uploading ? 'opacity-60 cursor-not-allowed' : ''
         }`}
       >
         {uploading ? (t('uploading') || 'Uploading...') : (t('chooseProfilePicture') || 'Choose Profile Picture')}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={onFileChange}
-          className="hidden"
-          disabled={uploading}
-        />
+        <input type="file" accept="image/*" onChange={onFileChange} className="hidden" disabled={uploading} />
       </label>
       {selectedFileName && (
-        <span className="text-[11px] text-gray-500">
-          {t('selectedFile') || 'Selected File'}: {selectedFileName}
+        <span className="text-[10.5px] text-gray-500 text-center truncate max-w-full">
+          {selectedFileName}
         </span>
       )}
     </div>
   );
 });
-
 ProfileImage.displayName = 'ProfileImage';
 
-const FormInput = React.memo<{
-  label: string;
-  type: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}>(({ label, type, value, onChange }) => (
-  <div>
-    <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-    <input
-      type={type}
-      value={value}
-      onChange={onChange}
-      className="input input-bordered w-full rounded"
-    />
-  </div>
-));
+// ---------------------------------------------------------------------------
+// Doctor view — "Console": a dark, tabbed tool panel rather than a long
+// scrolling form. One section visible at a time via the left rail; all field
+// values still live in the shared `formData` state regardless of which tab
+// is mounted, so switching tabs never loses anything and Save always submits
+// everything together.
+// ---------------------------------------------------------------------------
 
-FormInput.displayName = 'FormInput';
+type ConsoleTabKey = 'basic' | 'professional' | 'signature';
 
-const FormTextarea = React.memo<{
-  label: string;
-  value: string | undefined;
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-}>(({ label, value, onChange }) => (
-  <div>
-    <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-    <textarea
-      value={value || ''}
-      onChange={onChange}
-      className="textarea textarea-bordered w-full rounded"
-    />
-  </div>
-));
+const consoleFieldBox = 'rounded-lg border border-[#262a35] bg-[#191c24] px-3.5 py-2.5';
+const consoleLabel = 'block text-[10px] font-bold uppercase tracking-[0.09em] text-[#8b93a7] mb-1';
+const consoleInput = 'w-full bg-transparent text-[13.5px] text-[#e7eaee] focus:outline-none placeholder:text-[#5a6070]';
 
-FormTextarea.displayName = 'FormTextarea';
-
-const SpecializationField = React.memo<{
-  specializations: string[];
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>, field: FormField, index: number) => void;
-  onRemove: (field: FormField, index: number) => void;
-  onAdd: (field: FormField) => void;
-}>(({ specializations, onInputChange, onRemove, onAdd }) => {
-  const { t } = useTranslation();
-
-  return (
-    <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">
-        {t('specializations') || 'Specializations'}
-      </label>
-      {specializations.map((spec, index) => (
-        <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-          <Input
-            type="text"
-            value={spec}
-            onChange={(e) => onInputChange(e, 'specializations', index)}
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            onClick={() => onRemove('specializations', index)}
-            variant="danger"
-            size="xs"
-            className="w-full sm:w-auto shrink-0"
-          >
-            {t('remove') || 'Remove'}
-          </Button>
-        </div>
-      ))}
-      <Button
-        type="button"
-        onClick={() => onAdd('specializations')}
-        size="xs"
-      >
-        {t('addSpecialization') || 'Add Specialization'}
-      </Button>
-    </div>
-  );
-});
-
-SpecializationField.displayName = 'SpecializationField';
+const ConsoleTab = React.memo<{ active: boolean; onClick: () => void; children: React.ReactNode }>(
+  ({ active, onClick, children }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-semibold transition ${
+        active ? 'bg-[#7c6ffa]/15 text-[#e7eaee]' : 'text-[#8b93a7] hover:text-[#e7eaee]'
+      }`}
+    >
+      <span
+        className={`h-1.5 w-1.5 shrink-0 rounded-full transition ${
+          active ? 'bg-[#7c6ffa] shadow-[0_0_0_3px_rgba(124,111,250,0.15)]' : 'bg-[#262a35]'
+        }`}
+      />
+      {children}
+    </button>
+  )
+);
+ConsoleTab.displayName = 'ConsoleTab';
 
 const MyProfileForm = ({
   formData,
@@ -201,14 +174,17 @@ const MyProfileForm = ({
   const [signatureBackup, setSignatureBackup] = useState('');
   const [signatureDraft, setSignatureDraft] = useState('');
   const [signatureSaveSignal, setSignatureSaveSignal] = useState(0);
+  const [activeTab, setActiveTab] = useState<ConsoleTabKey>('basic');
 
+  const isDoctor = role === UserRole.Doctor;
   const hasSignature = Boolean(formData.signatureDataUrl);
   const showSignatureEditor = signatureEditMode || !hasSignature;
+  const isComplete = Boolean(
+    formData.name && formData.surname && formData.specializations.length > 0 && hasSignature
+  );
 
   const handleSignatureUpdate = (dataUrl: string) => {
-    if (onSignatureChange) {
-      onSignatureChange(dataUrl);
-    }
+    onSignatureChange?.(dataUrl);
   };
 
   const beginSignatureEdit = () => {
@@ -218,9 +194,7 @@ const MyProfileForm = ({
   };
 
   const cancelSignatureEdit = () => {
-    if (onSignatureChange) {
-      onSignatureChange(signatureBackup);
-    }
+    onSignatureChange?.(signatureBackup);
     setSignatureDraft('');
     setSignatureEditMode(false);
   };
@@ -236,67 +210,36 @@ const MyProfileForm = ({
     if (file) {
       setSelectedFileName(file.name);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
+      reader.onloadend = () => setPreviewUrl(reader.result as string);
       reader.readAsDataURL(file);
-      if (onProfilePictureChange) {
-        onProfilePictureChange(file);
-      }
+      onProfilePictureChange?.(file);
     }
   }, [onProfilePictureChange]);
 
-  return (
-    <form onSubmit={handleSubmit} className="w-full space-y-5">
-      <div className="flex flex-col md:flex-row gap-6">
-        <ProfileImage
-          previewUrl={previewUrl}
-          profilePicture={formData.profilePicture}
-          uploading={uploading}
-          onFileChange={handleFileChange}
-          selectedFileName={selectedFileName}
-        />
-        <div className="flex-1 w-full space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">{t('name') || 'Name'}</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => handleInputChange(e, 'name')}
-                className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-              />
+  const initials = `${formData.name?.[0] ?? ''}${formData.surname?.[0] ?? ''}`.toUpperCase() || '–';
+
+  if (!isDoctor) {
+    return (
+      <form onSubmit={handleSubmit} className="w-full space-y-5">
+        <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
+          <ProfileImage
+            previewUrl={previewUrl}
+            profilePicture={formData.profilePicture}
+            uploading={uploading}
+            onFileChange={handleFileChange}
+            selectedFileName={selectedFileName}
+          />
+          <div className="flex-1 w-full space-y-1.5">
+            <SectionHeading>{t('basicDetails') || 'Basic details'}</SectionHeading>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <TextField label={t('name') || 'Name'} value={formData.name} onChange={(e) => handleInputChange(e, 'name')} />
+              <TextField label={t('surname') || 'Surname'} value={formData.surname} onChange={(e) => handleInputChange(e, 'surname')} />
+              <TextField label={t('email') || 'Email'} type="email" value={formData.email} onChange={(e) => handleInputChange(e, 'email')} />
+              <TextField label={t('phoneNumber') || 'Phone Number'} value={formData.phoneNumber} onChange={(e) => handleInputChange(e, 'phoneNumber')} />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">{t('surname') || 'Surname'}</label>
-              <input
-                type="text"
-                value={formData.surname}
-                onChange={(e) => handleInputChange(e, 'surname')}
-                className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">{t('email') || 'Email'}</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange(e, 'email')}
-                className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">{t('phoneNumber') || 'Phone Number'}</label>
-              <input
-                type="text"
-                value={formData.phoneNumber}
-                onChange={(e) => handleInputChange(e, 'phoneNumber')}
-                className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-              />
-            </div>
-            {role === UserRole.Patient && formData.reimbursementCode ? (
-              <div className="sm:col-span-2 rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3">
-                <label className="block text-xs font-medium text-sky-800 mb-1">
+            {formData.reimbursementCode ? (
+              <div className="rounded-xl border border-sky-100 bg-sky-50/70 px-3.5 py-2.5 mt-1">
+                <label className="block text-xs font-medium text-sky-800 mb-0.5">
                   {t('reimbursementCodeLabel') || 'Reimbursement code'}
                 </label>
                 <p className="text-sm font-semibold text-sky-900 break-all">{formData.reimbursementCode}</p>
@@ -305,143 +248,198 @@ const MyProfileForm = ({
                 </p>
               </div>
             ) : null}
-            {/* Doctor-only fields */}
-            {role === UserRole.Doctor && (
-              <>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    {t('consultationFee') || 'Consultation fee'} ({APPOINTMENT_PRICE_CURRENCY})
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    step="0.01"
-                    value={formData.consultationFee ?? ''}
-                    onChange={(e) => handleInputChange(e, 'consultationFee')}
-                    className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-                  />
-                  <p className="mt-1 text-[11px] text-gray-500">
-                    {t('consultationFeeHelp') || 'The price a patient pays for an appointment with you.'}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('about') || 'About'}</label>
-                  <textarea
-                    value={formData.about}
-                    onChange={(e) => handleInputChange(e, 'about')}
-                    className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white min-h-[120px]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('specializations') || 'Specializations'}</label>
-                  {formData.specializations.map((spec: string, index: number) => (
-                    <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                      <input
-                        type="text"
-                        value={spec}
-                        onChange={(e) => handleInputChange(e, 'specializations', index)}
-                        className="w-full flex-1 rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveField('specializations', index)}
-                        className="inline-flex items-center justify-center rounded-full border border-red-200 px-3 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 transition w-full sm:w-auto shrink-0"
-                      >
-                        {t('remove') || 'Remove'}
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => handleAddField('specializations')}
-                    className="inline-flex items-center rounded-full border border-purple-500 px-3 py-1 text-[11px] font-semibold text-purple-600 hover:bg-purple-500 hover:text-white transition"
-                  >
-                    {t('addSpecialization') || 'Add Specialization'}
-                  </button>
-                </div>
-              </>
-            )}
           </div>
-          {role === UserRole.Doctor && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-medium text-gray-600">
-                  {t('doctorSignature') || 'Doctor signature'}
-                </label>
-                {hasSignature && !signatureEditMode && (
-                  <button
-                    type="button"
-                    onClick={beginSignatureEdit}
-                    className="text-[11px] font-semibold text-purple-600 hover:text-purple-700"
-                  >
-                    {t('replaceSignature') || 'Replace'}
-                  </button>
-                )}
-                {signatureEditMode && hasSignature && (
-                  <button
-                    type="button"
-                    onClick={cancelSignatureEdit}
-                    className="text-[11px] font-semibold text-gray-500 hover:text-gray-700"
-                  >
-                    {t('cancel') || 'Cancel'}
-                  </button>
-                )}
+        </div>
+        <div className="flex justify-end border-t border-gray-100 pt-4">
+          <button
+            type="submit"
+            className="inline-flex items-center rounded-full bg-purple-600 px-6 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition shadow-md"
+          >
+            {t('saveChanges') || 'Save Changes'}
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="w-full rounded-2xl bg-[#12141a] shadow-xl overflow-hidden md:flex">
+      <div className="flex md:flex-col gap-1 md:w-[180px] shrink-0 bg-[#14161d] border-b md:border-b-0 md:border-r border-[#262a35] p-3 overflow-x-auto md:overflow-visible">
+        <ConsoleTab active={activeTab === 'basic'} onClick={() => setActiveTab('basic')}>
+          {t('basicDetails') || 'Basic details'}
+        </ConsoleTab>
+        <ConsoleTab active={activeTab === 'professional'} onClick={() => setActiveTab('professional')}>
+          {t('professionalDetails') || 'Professional details'}
+        </ConsoleTab>
+        <ConsoleTab active={activeTab === 'signature'} onClick={() => setActiveTab('signature')}>
+          {t('doctorSignature') || 'Signature'}
+        </ConsoleTab>
+      </div>
+
+      <div className="flex-1 p-5 sm:p-6 min-w-0">
+        <div className="flex items-center gap-3.5 mb-5">
+          <Image
+            src={previewUrl || formData.profilePicture || "/img/profile_placeholder.png"}
+            alt={t('profilePreview')}
+            width={52}
+            height={52}
+            className="h-[52px] w-[52px] rounded-xl object-cover shrink-0"
+            style={{ objectFit: 'cover' }}
+            priority
+          />
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[16px] font-bold text-[#e7eaee] truncate">
+              {formData.name || formData.surname ? `${formData.name} ${formData.surname}`.trim() : (initials === '–' ? t('yourName') || 'Your name' : initials)}
+            </h2>
+            <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${isComplete ? 'text-[#33c9c9]' : 'text-[#8b93a7]'}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${isComplete ? 'bg-[#33c9c9]' : 'bg-[#8b93a7]'}`} />
+              {isComplete ? (t('profileComplete') || 'Profile complete') : (t('profileIncomplete') || 'Incomplete')}
+            </span>
+          </div>
+          <label
+            className={`shrink-0 text-[11px] font-semibold text-[#8b93a7] hover:text-[#e7eaee] cursor-pointer transition ${uploading ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            {uploading ? (t('uploading') || 'Uploading...') : (t('changePhoto') || 'Change photo')}
+            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" disabled={uploading} />
+          </label>
+        </div>
+
+        {activeTab === 'basic' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={consoleFieldBox}>
+              <label className={consoleLabel}>{t('name') || 'Name'}</label>
+              <input className={consoleInput} value={formData.name} onChange={(e) => handleInputChange(e, 'name')} />
+            </div>
+            <div className={consoleFieldBox}>
+              <label className={consoleLabel}>{t('surname') || 'Surname'}</label>
+              <input className={consoleInput} value={formData.surname} onChange={(e) => handleInputChange(e, 'surname')} />
+            </div>
+            <div className={consoleFieldBox}>
+              <label className={consoleLabel}>{t('email') || 'Email'}</label>
+              <input className={consoleInput} type="email" value={formData.email} onChange={(e) => handleInputChange(e, 'email')} />
+            </div>
+            <div className={consoleFieldBox}>
+              <label className={consoleLabel}>{t('phoneNumber') || 'Phone Number'}</label>
+              <input className={`${consoleInput} font-mono tabular-nums`} value={formData.phoneNumber} onChange={(e) => handleInputChange(e, 'phoneNumber')} />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'professional' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={consoleFieldBox}>
+              <label className={consoleLabel}>{t('consultationFee') || 'Consultation fee'} ({APPOINTMENT_PRICE_CURRENCY})</label>
+              <input
+                className={`${consoleInput} font-mono tabular-nums text-[#33c9c9]`}
+                type="number"
+                min={1}
+                step="0.01"
+                value={formData.consultationFee ?? ''}
+                onChange={(e) => handleInputChange(e, 'consultationFee')}
+              />
+            </div>
+            <div className={consoleFieldBox}>
+              <label className={consoleLabel}>{t('specializations') || 'Specializations'}</label>
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {formData.specializations.map((spec: string, index: number) => (
+                  <div key={index} className="flex items-center gap-1.5 rounded-md bg-[#7c6ffa]/15 pl-2.5 pr-1 py-1">
+                    <input
+                      type="text"
+                      value={spec}
+                      onChange={(e) => handleInputChange(e, 'specializations', index)}
+                      placeholder={t('specialization') || 'Specialization'}
+                      className="bg-transparent text-[12.5px] font-semibold text-[#7c6ffa] focus:outline-none w-24 placeholder:text-[#7c6ffa]/60"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveField('specializations', index)}
+                      aria-label={t('remove') || 'Remove'}
+                      className="flex h-4 w-4 items-center justify-center text-[#7c6ffa] opacity-60 hover:opacity-100 transition text-xs leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => handleAddField('specializations')}
+                  className="inline-flex items-center rounded-md border border-dashed border-[#3a3f4d] px-2.5 py-1 text-[11.5px] font-semibold text-[#8b93a7] hover:text-[#e7eaee] hover:border-[#5a6070] transition"
+                >
+                  + {t('addSpecialization') || 'Add'}
+                </button>
               </div>
-              {hasSignature && !signatureEditMode ? (
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
-                  <Image
-                    src={formData.signatureDataUrl!}
-                    alt={t('doctorSignature') || 'Doctor signature'}
-                    width={300}
-                    height={120}
-                    unoptimized
-                    className="max-w-[260px] border border-gray-200 bg-white p-2 h-auto w-auto"
-                  />
-                  <p className="mt-2 text-[11px] text-gray-500">
+            </div>
+            <div className={`${consoleFieldBox} sm:col-span-2`}>
+              <label className={consoleLabel}>{t('about') || 'About'}</label>
+              <textarea
+                value={formData.about}
+                onChange={(e) => handleInputChange(e, 'about')}
+                rows={3}
+                className={`${consoleInput} resize-y leading-relaxed`}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'signature' && (
+          <div className={consoleFieldBox}>
+            {hasSignature && !signatureEditMode ? (
+              <div className="flex items-center gap-4">
+                <Image
+                  src={formData.signatureDataUrl!}
+                  alt={t('doctorSignature') || 'Doctor signature'}
+                  width={150}
+                  height={60}
+                  unoptimized
+                  className="h-14 w-auto max-w-[150px] rounded-md bg-white p-1.5"
+                />
+                <div className="flex-1">
+                  <p className="text-[11.5px] text-[#8b93a7]">
                     {t('signatureSavedHelp') || 'This signature will be applied to new prescriptions.'}
                   </p>
+                  <button type="button" onClick={beginSignatureEdit} className="mt-1.5 text-[11.5px] font-semibold text-[#7c6ffa] hover:text-[#9a90ff]">
+                    {t('replaceSignature') || 'Replace'}
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <SignaturePad
-                    onChange={handleSignatureUpdate}
-                    onDraftChange={setSignatureDraft}
-                    saveSignal={signatureSaveSignal}
-                    autoSave={false}
-                  />
-                  <div className="flex justify-end gap-2">
-                    {showSignatureEditor && (
-                      <button
-                        type="button"
-                        onClick={saveSignatureEdit}
-                        className="inline-flex items-center rounded-full bg-purple-600 px-4 py-1.5 text-[11px] font-semibold text-white hover:bg-purple-700 transition disabled:opacity-60"
-                        disabled={!signatureDraft}
-                      >
-                        {t('saveSignature') || 'Save signature'}
-                      </button>
-                    )}
-                    {hasSignature && !signatureEditMode && (
-                      <button
-                        type="button"
-                        onClick={beginSignatureEdit}
-                        className="inline-flex items-center rounded-full border border-purple-500 px-4 py-1.5 text-[11px] font-semibold text-purple-600 hover:bg-purple-500 hover:text-white transition"
-                      >
-                        {t('replaceSignature') || 'Replace'}
-                      </button>
-                    )}
-                  </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <SignaturePad
+                  onChange={handleSignatureUpdate}
+                  onDraftChange={setSignatureDraft}
+                  saveSignal={signatureSaveSignal}
+                  autoSave={false}
+                  labelClassName={consoleLabel}
+                />
+                <div className="flex justify-end gap-3">
+                  {hasSignature && signatureEditMode && (
+                    <button type="button" onClick={cancelSignatureEdit} className="text-[11.5px] font-semibold text-[#8b93a7] hover:text-[#e7eaee]">
+                      {t('cancel') || 'Cancel'}
+                    </button>
+                  )}
+                  {showSignatureEditor && (
+                    <button
+                      type="button"
+                      onClick={saveSignatureEdit}
+                      disabled={!signatureDraft}
+                      className="inline-flex items-center rounded-lg bg-[#7c6ffa] px-4 py-1.5 text-[11.5px] font-semibold text-white hover:bg-[#6c5eec] transition disabled:opacity-40"
+                    >
+                      {t('saveSignature') || 'Save signature'}
+                    </button>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
-          <div className="mt-6 flex justify-end">
-            <button
-              type="submit"
-              className="inline-flex items-center rounded-full bg-purple-600 px-6 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition shadow-md"
-            >
-              {t('saveChanges') || 'Save Changes'}
-            </button>
+              </div>
+            )}
           </div>
+        )}
+
+        <div className="flex justify-end mt-6">
+          <button
+            type="submit"
+            className="inline-flex items-center rounded-lg bg-[#7c6ffa] px-6 py-2 text-sm font-semibold text-white hover:bg-[#6c5eec] transition shadow-lg shadow-[#7c6ffa]/20"
+          >
+            {t('saveChanges') || 'Save Changes'}
+          </button>
         </div>
       </div>
     </form>

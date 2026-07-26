@@ -8,9 +8,10 @@ type Props = {
   onDraftChange?: (dataUrl: string) => void;
   saveSignal?: number;
   autoSave?: boolean;
+  labelClassName?: string;
 };
 
-export function SignaturePad({ onChange, onDraftChange, saveSignal, autoSave = true }: Props) {
+export function SignaturePad({ onChange, onDraftChange, saveSignal, autoSave = true, labelClassName }: Props) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [drawing, setDrawing] = useState(false);
@@ -153,7 +154,7 @@ export function SignaturePad({ onChange, onDraftChange, saveSignal, autoSave = t
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-gray-700">{t("signature") || "Signature"}</p>
+      <p className={labelClassName ?? "text-xs font-medium text-gray-700"}>{t("signature") || "Signature"}</p>
       <div className="rounded-2xl border border-gray-300 bg-white overflow-hidden">
         <canvas
           ref={canvasRef}

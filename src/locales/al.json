@@ -1539,5 +1539,10 @@
   "downloadFailed": "Shkarkimi i PDF-së dështoi",
   "termsModalEyebrow": "Para se të vazhdoni",
   "termsAndConditions": "Kushtet dhe Termat",
-  "termsAccept": "I kam lexuar dhe i pranoj"
+  "termsAccept": "I kam lexuar dhe i pranoj",
+  "basicDetails": "Të dhëna bazë",
+  "professionalDetails": "Të dhëna profesionale",
+  "changePhoto": "Ndrysho foton",
+  "profileComplete": "Profili i plotë",
+  "profileIncomplete": "I paplotë"
 }

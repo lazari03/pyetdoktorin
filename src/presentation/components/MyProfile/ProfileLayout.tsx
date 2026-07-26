@@ -73,7 +73,7 @@ export function ProfileLayout(props: Props) {
         </header>
 
         <div className="grid items-start gap-5 lg:grid-cols-3">
-          <section className="lg:col-span-2 bg-white rounded-3xl border border-purple-50 shadow-lg p-6">
+          <section className={role === UserRole.Doctor ? 'lg:col-span-2' : 'lg:col-span-2 bg-white rounded-3xl border border-purple-50 shadow-lg p-5'}>
             <MyProfileForm
               formData={formData}
               role={role}
@@ -84,12 +84,11 @@ export function ProfileLayout(props: Props) {
               onProfilePictureChange={handleProfilePictureChange}
               uploading={uploading}
               onSignatureChange={handleSignatureChange}
-
             />
           </section>
 
-          <aside className="flex flex-col h-full">
-            <div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3 flex-1 flex flex-col">
+          <aside className="flex flex-col gap-5">
+            <div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
               <p className="text-sm font-semibold text-gray-900">{t("securitySection") ?? "Security"}</p>
               <p className="text-xs text-gray-600">
                 {t("securityCopy") ?? "Reset your password or add extra protection."}
@@ -110,7 +109,7 @@ export function ProfileLayout(props: Props) {
               </div>
             </div>
 
-            <div className="mt-5 bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
+            <div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
               <p className="text-sm font-semibold text-gray-900">{t("preferences") ?? "Preferences"}</p>
               <p className="text-xs text-gray-600">
                 {t("preferencesCopy", "Choose your language and display preferences.")}
@@ -119,7 +118,7 @@ export function ProfileLayout(props: Props) {
               <AnalyticsConsentControl />
             </div>
 
-            <div className="mt-5 bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
+            <div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
               <p className="text-sm font-semibold text-gray-900">{t("dataPrivacySection") ?? "Your data"}</p>
               <p className="text-xs text-gray-600">
                 {t("dataPrivacyCopy") ??

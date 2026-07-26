@@ -1539,5 +1539,10 @@
   "downloadFailed": "Failed to download PDF",
   "termsModalEyebrow": "Before you continue",
   "termsAndConditions": "Terms & Conditions",
-  "termsAccept": "I have read and accept"
+  "termsAccept": "I have read and accept",
+  "basicDetails": "Basic details",
+  "professionalDetails": "Professional details",
+  "changePhoto": "Change photo",
+  "profileComplete": "Profile complete",
+  "profileIncomplete": "Incomplete"
 }
