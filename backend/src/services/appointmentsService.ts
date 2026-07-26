@@ -15,8 +15,12 @@ import {
 export type AppointmentStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
 
 export interface AppointmentInput {
-  patientId: string;
+  patientId?: string;
   patientName: string;
+  requesterId: string;
+  requesterName?: string;
+  payerId?: string;
+  familyMemberId?: string;
   doctorId: string;
   doctorName: string;
   appointmentType?: string;
@@ -111,35 +115,56 @@ const buildSlotId = (doctorId: string, preferredDate: string, preferredTime: str
   return raw.replace(/[^a-zA-Z0-9_-]/g, '_');
 };
 
-export async function listAppointmentsForUser(uid: string, role: UserRole): Promise<Appointment[]> {
-  const admin = getFirebaseAdmin();
-  const db = admin.firestore();
-  const baseCollection = db.collection(COLLECTION);
-  const filteredQuery = getAppointmentQueryForRole(baseCollection, uid, role);
-  const mapDocs = (docs: FirebaseFirestore.QueryDocumentSnapshot[]) =>
-    docs.map((doc) => {
-      const data = doc.data() as Appointment & { note?: string; notes?: string; status?: string };
-      const normalizedNotes = data.notes ?? data.note;
-      const base = { ...data, id: doc.id, status: normalizeStatus(data.status) } as Appointment;
-      if (normalizedNotes !== undefined) {
-        base.notes = normalizedNotes;
-      }
-      return base;
-    });
+function mapAppointmentDocs(docs: FirebaseFirestore.QueryDocumentSnapshot[]): Appointment[] {
+  return docs.map((doc) => {
+    const data = doc.data() as Appointment & { note?: string; notes?: string; status?: string };
+    const normalizedNotes = data.notes ?? data.note;
+    const base = { ...data, id: doc.id, status: normalizeStatus(data.status) } as Appointment;
+    if (normalizedNotes !== undefined) {
+      base.notes = normalizedNotes;
+    }
+    return base;
+  });
+}
 
+async function runAppointmentQuery(query: FirebaseFirestore.Query): Promise<Appointment[]> {
   try {
-    const snapshot = await filteredQuery.orderBy('createdAt', 'desc').limit(200).get();
-    return mapDocs(snapshot.docs);
+    const snapshot = await query.orderBy('createdAt', 'desc').limit(200).get();
+    return mapAppointmentDocs(snapshot.docs);
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     // Fallback for missing composite index in dev/preview environments.
     if (message.toLowerCase().includes('index')) {
-      const snapshot = await filteredQuery.limit(200).get();
-      const items = mapDocs(snapshot.docs);
+      const snapshot = await query.limit(200).get();
+      const items = mapAppointmentDocs(snapshot.docs);
       return items.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
     }
     throw error;
   }
+}
+
+export async function listAppointmentsForUser(uid: string, role: UserRole): Promise<Appointment[]> {
+  const admin = getFirebaseAdmin();
+  const db = admin.firestore();
+  const baseCollection = db.collection(COLLECTION);
+
+  if (role === UserRole.Patient) {
+    // A family member with no account of their own has no patientId match —
+    // only requesterId does — so both queries are merged here rather than
+    // relying on a single field filter.
+    const [asPatient, asRequester] = await Promise.all([
+      runAppointmentQuery(baseCollection.where('patientId', '==', uid)),
+      runAppointmentQuery(baseCollection.where('requesterId', '==', uid)),
+    ]);
+    const byId = new Map<string, Appointment>();
+    for (const appointment of [...asPatient, ...asRequester]) {
+      byId.set(appointment.id, appointment);
+    }
+    return Array.from(byId.values()).sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  }
+
+  const filteredQuery = getAppointmentQueryForRole(baseCollection, uid, role);
+  return runAppointmentQuery(filteredQuery);
 }
 
 export async function createAppointment(input: AppointmentInput): Promise<Appointment> {
@@ -219,7 +244,7 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
   }
   const admin = getFirebaseAdmin();
   const db = admin.firestore();
-  let patientId: string | undefined;
+  let requesterId: string | undefined;
   let patientName: string | undefined;
   let doctorName: string | undefined;
   await db.runTransaction(async (tx) => {
@@ -229,7 +254,7 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
       throw new AppointmentNotFoundError();
     }
     const appointment = appointmentSnap.data() as Appointment & { slotId?: string };
-    patientId = appointment.patientId;
+    requesterId = appointment.requesterId;
     patientName = appointment.patientName;
     doctorName = appointment.doctorName;
     const updates: Record<string, unknown> = { status: normalizedStatus };
@@ -247,10 +272,10 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
   });
 
   const copy = APPOINTMENT_STATUS_NOTIFICATION_COPY[normalizedStatus];
-  if (copy && patientId) {
+  if (copy && requesterId) {
     try {
       await createUserNotification({
-        userId: patientId,
+        userId: requesterId,
         type: `appointment_${normalizedStatus}`,
         title: copy.title,
         body: copy.body,
@@ -376,7 +401,11 @@ export async function markAppointmentPaymentProcessing(
       throw new AppointmentNotFoundError();
     }
     const appointment = appointmentSnap.data() as Appointment;
-    if (actor.role === UserRole.Patient && appointment.patientId !== actor.uid) {
+    if (
+      actor.role === UserRole.Patient &&
+      appointment.requesterId !== actor.uid &&
+      appointment.payerId !== actor.uid
+    ) {
       throw new PaymentNotAllowedError();
     }
     if (appointment.status !== 'accepted') {
@@ -405,7 +434,11 @@ export async function clearAppointmentPaymentProcessing(
       throw new AppointmentNotFoundError();
     }
     const appointment = appointmentSnap.data() as Appointment;
-    if (actor.role === UserRole.Patient && appointment.patientId !== actor.uid) {
+    if (
+      actor.role === UserRole.Patient &&
+      appointment.requesterId !== actor.uid &&
+      appointment.payerId !== actor.uid
+    ) {
       throw new PaymentNotAllowedError();
     }
     if (appointment.isPaid) {

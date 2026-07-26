@@ -21,6 +21,7 @@ import pushRouter from '@/routes/push';
 import doctorAgreementsRouter from '@/routes/doctorAgreements';
 import platformTermsRouter from '@/routes/platformTerms';
 import supportTicketsRouter from '@/routes/supportTickets';
+import familyRouter from '@/routes/family';
 import { notifyAdminsOfSystemFailure } from '@/services/adminAlertsService';
 import { createRateLimiter } from '@/middleware/rateLimit';
 import { attachRequestContext } from '@/middleware/requestContext';
@@ -94,6 +95,7 @@ app.use('/api/push', writeLimiter);
 app.use('/api/doctor-agreements', writeLimiter);
 app.use('/api/platform-terms', readLimiter);
 app.use('/api/support-tickets', writeLimiter);
+app.use('/api/family', writeLimiter);
 app.use(express.json());
 app.use(cookieParser());
 morgan.token('request-id', (req) => (req as express.Request).requestId ?? '-');
@@ -128,6 +130,7 @@ app.use('/api/push', pushRouter);
 app.use('/api/doctor-agreements', doctorAgreementsRouter);
 app.use('/api/platform-terms', platformTermsRouter);
 app.use('/api/support-tickets', supportTicketsRouter);
+app.use('/api/family', familyRouter);
 
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   // Ensure CORS headers are present on error responses so the browser

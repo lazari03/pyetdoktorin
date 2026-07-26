@@ -62,6 +62,14 @@ import { AdminSupportTicketsService } from '@/infrastructure/services/adminSuppo
 import type { IAdminSupportTicketsService } from '@/application/ports/IAdminSupportTicketsService';
 import { ListSupportTicketsUseCase } from '@/application/listSupportTicketsUseCase';
 import { UpdateSupportTicketUseCase } from '@/application/updateSupportTicketUseCase';
+import { FamilyService } from '@/infrastructure/services/familyService';
+import type { IFamilyService } from '@/application/ports/IFamilyService';
+import { ListFamilyMembersUseCase } from '@/application/listFamilyMembersUseCase';
+import { ListFamilyInvitesUseCase } from '@/application/listFamilyInvitesUseCase';
+import { AddFamilyMemberUseCase } from '@/application/addFamilyMemberUseCase';
+import { InviteFamilyMemberUseCase } from '@/application/inviteFamilyMemberUseCase';
+import { RespondToFamilyInviteUseCase } from '@/application/respondToFamilyInviteUseCase';
+import { RemoveFamilyMemberUseCase } from '@/application/removeFamilyMemberUseCase';
 import { EmailValidationService } from '@/infrastructure/services/emailValidationService';
 import type { IEmailValidationService } from '@/application/ports/IEmailValidationService';
 import { ValidateRegistrationEmailUseCase } from '@/application/validateRegistrationEmailUseCase';
@@ -169,6 +177,7 @@ export const doctorAgreementService: IDoctorAgreementService = new DoctorAgreeme
 export const adminDoctorAgreementsService: IAdminDoctorAgreementsService = new AdminDoctorAgreementsService();
 export const platformTermsService: IPlatformTermsService = new PlatformTermsService();
 export const supportTicketService: ISupportTicketService = new SupportTicketService();
+export const familyService: IFamilyService = new FamilyService();
 export const adminSupportTicketsService: IAdminSupportTicketsService = new AdminSupportTicketsService();
 export const emailValidationService: IEmailValidationService = new EmailValidationService();
 
@@ -205,6 +214,12 @@ export const createSupportTicketUseCase = new CreateSupportTicketUseCase(support
 export const listMySupportTicketsUseCase = new ListMySupportTicketsUseCase(supportTicketService);
 export const listSupportTicketsUseCase = new ListSupportTicketsUseCase(adminSupportTicketsService);
 export const updateSupportTicketUseCase = new UpdateSupportTicketUseCase(adminSupportTicketsService);
+export const listFamilyMembersUseCase = new ListFamilyMembersUseCase(familyService);
+export const listFamilyInvitesUseCase = new ListFamilyInvitesUseCase(familyService);
+export const addFamilyMemberUseCase = new AddFamilyMemberUseCase(familyService);
+export const inviteFamilyMemberUseCase = new InviteFamilyMemberUseCase(familyService);
+export const respondToFamilyInviteUseCase = new RespondToFamilyInviteUseCase(familyService);
+export const removeFamilyMemberUseCase = new RemoveFamilyMemberUseCase(familyService);
 export const validateRegistrationEmailUseCase = new ValidateRegistrationEmailUseCase(emailValidationService);
 export const getUserProfileUseCase = new GetUserProfileUseCase(userProfileService);
 export const updateUserProfileUseCase = new UpdateUserProfileUseCase(userProfileService, authService);

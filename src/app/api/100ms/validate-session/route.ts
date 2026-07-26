@@ -18,6 +18,7 @@ type SessionPayload = {
 type AppointmentDoc = {
   doctorId?: string;
   patientId?: string;
+  requesterId?: string;
   status?: string;
   isPaid?: boolean;
 };
@@ -83,7 +84,9 @@ export async function POST(req: Request) {
   const appointmentData = appointmentSnap.data() as AppointmentDoc;
   const appointmentStatus = String(appointmentData?.status || '').toLowerCase();
   const isDoctor = appointmentData?.doctorId === sessionPayload.userId;
-  const isPatient = appointmentData?.patientId === sessionPayload.userId;
+  const isPatient =
+    appointmentData?.patientId === sessionPayload.userId ||
+    appointmentData?.requesterId === sessionPayload.userId;
 
   if (!isDoctor && !isPatient) {
     return jsonError(VIDEO_ERROR_CODES.AppointmentForbidden, 403);

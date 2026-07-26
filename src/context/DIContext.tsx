@@ -82,6 +82,12 @@ import {
   listSupportTicketsUseCase,
   updateSupportTicketUseCase,
   validateRegistrationEmailUseCase,
+  listFamilyMembersUseCase,
+  listFamilyInvitesUseCase,
+  addFamilyMemberUseCase,
+  inviteFamilyMemberUseCase,
+  respondToFamilyInviteUseCase,
+  removeFamilyMemberUseCase,
 } from './di.services';
 
 interface DIContextValue {
@@ -166,6 +172,12 @@ interface DIContextValue {
   listSupportTicketsUseCase: typeof listSupportTicketsUseCase;
   updateSupportTicketUseCase: typeof updateSupportTicketUseCase;
   validateRegistrationEmailUseCase: typeof validateRegistrationEmailUseCase;
+  listFamilyMembersUseCase: typeof listFamilyMembersUseCase;
+  listFamilyInvitesUseCase: typeof listFamilyInvitesUseCase;
+  addFamilyMemberUseCase: typeof addFamilyMemberUseCase;
+  inviteFamilyMemberUseCase: typeof inviteFamilyMemberUseCase;
+  respondToFamilyInviteUseCase: typeof respondToFamilyInviteUseCase;
+  removeFamilyMemberUseCase: typeof removeFamilyMemberUseCase;
 }
 
 // All use cases are module-level singletons (see di.services.ts) so this
@@ -252,6 +264,12 @@ const diContextValue: DIContextValue = {
   listSupportTicketsUseCase,
   updateSupportTicketUseCase,
   validateRegistrationEmailUseCase,
+  listFamilyMembersUseCase,
+  listFamilyInvitesUseCase,
+  addFamilyMemberUseCase,
+  inviteFamilyMemberUseCase,
+  respondToFamilyInviteUseCase,
+  removeFamilyMemberUseCase,
 };
 
 const DIContext = createContext<DIContextValue | undefined>(undefined);

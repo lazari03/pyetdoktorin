@@ -4,8 +4,12 @@ export interface Appointment {
 	id: string;
 	doctorId: string;
 	doctorName: string;
-	patientId: string;
+	patientId?: string;
 	patientName?: string;
+	requesterId?: string;
+	requesterName?: string;
+	payerId?: string;
+	familyMemberId?: string;
 	appointmentType: string;
 	preferredDate: string;
 	preferredTime: string;

@@ -7,11 +7,13 @@ interface Doctor {
 }
 
 interface NewAppointmentState {
+  bookingFor: 'self' | string;
   selectedDoctor: Doctor | null;
   appointmentType: string;
   preferredDate: string;
   preferredTime: string;
   notes: string;
+  setBookingFor: (bookingFor: 'self' | string) => void;
   setSelectedDoctor: (doctor: Doctor | null) => void;
   setAppointmentType: (type: string) => void;
   setPreferredDate: (date: string) => void;
@@ -21,11 +23,13 @@ interface NewAppointmentState {
 }
 
 export const useNewAppointmentStore = create<NewAppointmentState>((set) => ({
+  bookingFor: '',
   selectedDoctor: null,
   appointmentType: 'Check-up',
   preferredDate: '',
   preferredTime: '',
   notes: '',
+  setBookingFor: (bookingFor) => set({ bookingFor }),
   setSelectedDoctor: (doctor) => set({ selectedDoctor: doctor }),
   setAppointmentType: (type) => set({ appointmentType: type }),
   setPreferredDate: (date) => set({ preferredDate: date }),
@@ -33,6 +37,7 @@ export const useNewAppointmentStore = create<NewAppointmentState>((set) => ({
   setNotes: (notes) => set({ notes }),
   resetAppointment: () =>
     set({
+      bookingFor: '',
       selectedDoctor: null,
       appointmentType: 'Check-up',
       preferredDate: '',

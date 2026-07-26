@@ -5,6 +5,7 @@ import { Appointment } from '@/domain/entities/Appointment';
 import { AppointmentStatus } from '@/domain/entities/AppointmentStatus';
 import { useAuth } from '@/context/AuthContext';
 import { useDI } from '@/context/DIContext';
+import { useFamily } from '@/presentation/hooks/useFamily';
 import { addMinutes, format, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';

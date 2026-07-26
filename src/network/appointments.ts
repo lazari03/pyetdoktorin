@@ -13,6 +13,8 @@ export interface CreateAppointmentPayload {
   preferredDate: string;
   preferredTime?: string;
   note?: string;
+  bookingFor?: 'self' | 'family';
+  familyMemberId?: string;
 }
 
 function normalizeAppointment(input: Appointment): Appointment {

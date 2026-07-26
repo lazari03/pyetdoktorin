@@ -7,6 +7,7 @@ import { UserRole } from "@/domain/entities/UserRole";
 import LanguageSwitcher from "@/presentation/components/LanguageSwitcher/LanguageSwitcher";
 import AnalyticsConsentControl from "@/presentation/components/AnalyticsConsentControl/AnalyticsConsentControl";
 import { MySupportTicketsCard } from "./MySupportTicketsCard";
+import { FamilyCard } from "./FamilyCard";
 import { DASHBOARD_PATHS, PHARMACY_PATHS, CLINIC_PATHS } from "@/navigation/paths";
 
 type Props = {
@@ -130,6 +131,8 @@ export function ProfileLayout(props: Props) {
               </p>
               <ExportActivityLogButton />
             </div>
+
+            {role !== UserRole.Admin && <FamilyCard />}
 
             {role !== UserRole.Admin && <MySupportTicketsCard helpHref={helpHref} />}
           </aside>

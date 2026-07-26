@@ -43,7 +43,7 @@ import { DashboardPageSkeleton } from "@/presentation/components/Skeleton/Dashbo
 import { useToast } from "@/presentation/components/Toast/ToastProvider";
 
 // Helper function to calculate monthly earnings
-function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string; feeAmount?: number }>, userId: string, _role: UserRole) {
+function calculateMonthlyEarnings(appointments: Array<{ doctorId: string; patientId?: string; patientName?: string; doctorName: string; status?: string; isPaid: boolean; preferredDate: string; feeAmount?: number }>, userId: string, _role: UserRole) {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -241,7 +241,7 @@ export default function Dashboard() {
     .filter((a) => a.patientId && effectiveRole === UserRole.Doctor)
     .map(
       (a): RecentPatient => ({
-        id: a.patientId,
+        id: a.patientId ?? "",
         name: a.patientName || "Patient",
         appointmentType: a.appointmentType,
         lastVisit: a.preferredDate,

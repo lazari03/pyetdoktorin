@@ -7,6 +7,8 @@ export interface CreateAppointmentInput {
   preferredDate: string;
   preferredTime?: string;
   note?: string;
+  bookingFor?: 'self' | 'family';
+  familyMemberId?: string;
 }
 
 export interface IAppointmentService {

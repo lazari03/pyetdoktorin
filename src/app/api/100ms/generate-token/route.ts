@@ -28,6 +28,7 @@ type RoomCodesResponse = {
 type AppointmentDoc = {
   doctorId?: string;
   patientId?: string;
+  requesterId?: string;
   status?: string;
   isPaid?: boolean;
   roomId?: string;
@@ -157,7 +158,9 @@ export async function POST(req: Request) {
   let appointmentData = appointmentSnap.data() as AppointmentDoc;
   const appointmentStatus = String(appointmentData?.status || '').toLowerCase();
   const isDoctor = appointmentData?.doctorId === authenticatedUserId;
-  const isPatient = appointmentData?.patientId === authenticatedUserId;
+  const isPatient =
+    appointmentData?.patientId === authenticatedUserId ||
+    appointmentData?.requesterId === authenticatedUserId;
   let isPaid = Boolean(appointmentData?.isPaid);
 
   if (!isDoctor && !isPatient) {

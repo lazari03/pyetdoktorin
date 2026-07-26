@@ -19,6 +19,8 @@ import {
   AppointmentError,
   AppointmentErrorCode,
 } from '@/errors/appointmentErrors';
+import { getFamilyMember } from '@/services/familyService';
+import { FamilyMemberError } from '@/errors/familyErrors';
 
 const router = Router();
 
@@ -30,6 +32,8 @@ const createAppointmentSchema = z.object({
   preferredTime: z.string().min(1),
   note: z.string().optional(),
   notes: z.string().optional(),
+  bookingFor: z.enum(['self', 'family']).default('self'),
+  familyMemberId: z.string().optional(),
 });
 
 const updateStatusSchema = z.object({
@@ -82,17 +86,39 @@ router.post('/', requireAuth([UserRole.Patient]), async (req: AuthenticatedReque
       issues: parsed.error.issues,
     });
   }
-  const { doctorId, doctorName, appointmentType, preferredDate, preferredTime, note, notes } = parsed.data;
+  const { doctorId, doctorName, appointmentType, preferredDate, preferredTime, note, notes, bookingFor, familyMemberId } = parsed.data;
   const [patientProfile, doctorProfile] = await Promise.all([
     getUserProfile(user.uid),
     getUserProfile(doctorId),
   ]);
   const patientDisplayName = buildDisplayName(patientProfile, 'Patient');
   const doctorDisplayName = buildDisplayName(doctorProfile, doctorName || 'Doctor');
+
+  let patientId: string | undefined = user.uid;
+  let patientName: string = patientDisplayName;
+  let resolvedFamilyMemberId: string | undefined;
+
+  if (bookingFor === 'family') {
+    if (!familyMemberId) {
+      return res.status(400).json({ error: AppointmentErrorCode.MissingRequiredFields });
+    }
+    const familyMember = await getFamilyMember(familyMemberId);
+    if (!familyMember || familyMember.ownerUserId !== user.uid || familyMember.status === 'declined') {
+      return res.status(403).json({ error: AppointmentErrorCode.Forbidden });
+    }
+    patientId = familyMember.linkedUserId;
+    patientName = [familyMember.name, familyMember.surname].filter(Boolean).join(' ');
+    resolvedFamilyMemberId = familyMember.id;
+  }
+
   try {
     const appointmentInput = {
-      patientId: user.uid,
-      patientName: patientDisplayName,
+      ...(patientId !== undefined ? { patientId } : {}),
+      patientName,
+      requesterId: user.uid,
+      requesterName: patientDisplayName,
+      payerId: user.uid,
+      ...(resolvedFamilyMemberId !== undefined ? { familyMemberId: resolvedFamilyMemberId } : {}),
       doctorId,
       doctorName: doctorDisplayName,
       preferredDate,
@@ -108,7 +134,7 @@ router.post('/', requireAuth([UserRole.Patient]), async (req: AuthenticatedReque
     const appointment = await createAppointment(appointmentInput);
     res.status(201).json(appointment);
   } catch (error) {
-    if (error instanceof AppointmentError) {
+    if (error instanceof AppointmentError || error instanceof FamilyMemberError) {
       return res.status(error.status).json({ error: error.code });
     }
     console.error('Error creating appointment:', error);
@@ -152,7 +178,12 @@ router.get('/:id', requireAuth(), async (req: AuthenticatedRequest, res) => {
     return res.status(404).json({ error: AppointmentErrorCode.NotFound });
   }
   const user = req.user!;
-  if (user.role !== UserRole.Admin && appointment.patientId !== user.uid && appointment.doctorId !== user.uid) {
+  if (
+    user.role !== UserRole.Admin &&
+    appointment.patientId !== user.uid &&
+    appointment.requesterId !== user.uid &&
+    appointment.doctorId !== user.uid
+  ) {
     return res.status(403).json({ error: AppointmentErrorCode.Forbidden });
   }
   res.json(appointment);
