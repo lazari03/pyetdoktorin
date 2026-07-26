@@ -46,7 +46,18 @@ function parseTimeToMinutes(time: string): number | null {
   return null;
 }
 
+interface FamilyMemberOption {
+  id: string;
+  name: string;
+  relationship: string;
+}
+
 export interface NewAppointmentViewModelResult {
+  // Who is this for
+  bookingFor: string;
+  setBookingFor: (bookingFor: string) => void;
+  familyMembers: FamilyMemberOption[];
+
   // Doctor selection
   selectedDoctor: SelectedDoctor | null;
   handleDoctorSelect: (doctor: {
@@ -91,6 +102,9 @@ export interface NewAppointmentViewModelResult {
 export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
   const { t } = useTranslation();
   const {
+    bookingFor,
+    setBookingFor,
+    familyMembers,
     selectedDoctor,
     setSelectedDoctor,
     appointmentType,
@@ -181,19 +195,25 @@ export function useNewAppointmentViewModel(): NewAppointmentViewModelResult {
   const canSubmit = useMemo(() => {
     return !!(
       !isSubmitting &&
+      bookingFor &&
       selectedDoctor &&
       preferredDate &&
       preferredTime &&
       appointmentType
     );
-  }, [isSubmitting, selectedDoctor, preferredDate, preferredTime, appointmentType]);
+  }, [isSubmitting, bookingFor, selectedDoctor, preferredDate, preferredTime, appointmentType]);
 
   // Check if summary has any content to display
   const hasSummaryContent = useMemo(() => {
-    return !!(selectedDoctor || preferredDate || preferredTime || appointmentType);
-  }, [selectedDoctor, preferredDate, preferredTime, appointmentType]);
+    return !!(bookingFor || selectedDoctor || preferredDate || preferredTime || appointmentType);
+  }, [bookingFor, selectedDoctor, preferredDate, preferredTime, appointmentType]);
 
   return {
+    // Who is this for
+    bookingFor,
+    setBookingFor,
+    familyMembers,
+
     // Doctor
     selectedDoctor: selectedDoctor as SelectedDoctor | null,
     handleDoctorSelect,

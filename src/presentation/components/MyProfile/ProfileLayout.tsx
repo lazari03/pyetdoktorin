@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import MyProfileForm, { FormField, MyProfileFormData } from "./MyProfileForm";
 import PasswordResetSection from "./PasswordResetSection";
@@ -29,8 +29,39 @@ type Props = {
   handleSignatureChange?: (dataUrl: string) => void;
 };
 
+type ProfileTabKey = "profile" | "family" | "messages";
+
+const TAB_LABELS: Record<ProfileTabKey, string> = {
+  profile: "profileTabProfile",
+  family: "familySectionTitle",
+  messages: "helpMyTickets",
+};
+
+function ProfileTabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full px-4 py-1.5 text-[12.5px] font-semibold transition ${
+        active ? "bg-purple-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function ProfileLayout(props: Props) {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<ProfileTabKey>("profile");
   const {
     formData,
     role,
@@ -77,66 +108,82 @@ export function ProfileLayout(props: Props) {
           </div>
         </header>
 
-        <div className="grid items-start gap-5 lg:grid-cols-3">
-          <section className={role === UserRole.Doctor ? 'lg:col-span-2' : 'lg:col-span-2 bg-white rounded-3xl border border-purple-50 shadow-lg p-5'}>
-            <MyProfileForm
-              formData={formData}
-              role={role}
-              handleInputChange={handleInput}
-              handleAddField={handleAddField}
-              handleRemoveField={handleRemoveField}
-              handleSubmit={handleSubmit}
-              onProfilePictureChange={handleProfilePictureChange}
-              uploading={uploading}
-              onSignatureChange={handleSignatureChange}
-            />
-          </section>
+        {role !== UserRole.Admin && (
+          <nav className="flex items-center gap-1.5 rounded-full border border-gray-100 bg-white p-1.5 w-fit shadow-sm">
+            {(Object.keys(TAB_LABELS) as ProfileTabKey[]).map((key) => (
+              <ProfileTabButton key={key} active={activeTab === key} onClick={() => setActiveTab(key)}>
+                {t(TAB_LABELS[key]) || key}
+              </ProfileTabButton>
+            ))}
+          </nav>
+        )}
 
-          <aside className="flex flex-col gap-5">
-            <div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
-              <p className="text-sm font-semibold text-gray-900">{t("securitySection") ?? "Security"}</p>
-              <p className="text-xs text-gray-600">
-                {t("securityCopy") ?? "Reset your password or add extra protection."}
-              </p>
-              <div className="bg-purple-50 border border-purple-100 rounded-2xl p-3">
-                <PasswordResetSection
-                  handlePasswordReset={handlePasswordReset}
-                  resetEmailSent={resetEmailSent}
-                />
-              </div>
-              <div className="rounded-2xl border border-gray-200 px-3 py-2">
-                <p className="text-[11px] uppercase tracking-wide text-gray-600 font-semibold">
-                  {t("recentLogin") ?? "Recent login"}
+        {activeTab === "family" && role !== UserRole.Admin ? (
+          <div className="max-w-2xl">
+            <FamilyCard />
+          </div>
+        ) : activeTab === "messages" && role !== UserRole.Admin ? (
+          <div className="max-w-2xl">
+            <MySupportTicketsCard helpHref={helpHref} />
+          </div>
+        ) : (
+          <div className="grid items-start gap-5 lg:grid-cols-3">
+            <section className={role === UserRole.Doctor ? 'lg:col-span-2' : 'lg:col-span-2 bg-white rounded-3xl border border-purple-50 shadow-lg p-5'}>
+              <MyProfileForm
+                formData={formData}
+                role={role}
+                handleInputChange={handleInput}
+                handleAddField={handleAddField}
+                handleRemoveField={handleRemoveField}
+                handleSubmit={handleSubmit}
+                onProfilePictureChange={handleProfilePictureChange}
+                uploading={uploading}
+                onSignatureChange={handleSignatureChange}
+              />
+            </section>
+
+            <aside className="flex flex-col gap-3">
+              <div className="bg-white rounded-2xl border border-purple-50 shadow-sm p-4 space-y-2">
+                <p className="text-sm font-semibold text-gray-900">{t("securitySection") ?? "Security"}</p>
+                <p className="text-xs text-gray-600">
+                  {t("securityCopy") ?? "Reset your password or add extra protection."}
                 </p>
-                <p className="text-sm text-gray-900">
-                  {recentLoginAt || t("recentLoginInfo") || new Date().toISOString()}
-                </p>
+                <div className="bg-purple-50 border border-purple-100 rounded-2xl p-3">
+                  <PasswordResetSection
+                    handlePasswordReset={handlePasswordReset}
+                    resetEmailSent={resetEmailSent}
+                  />
+                </div>
+                <div className="rounded-2xl border border-gray-200 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-600 font-semibold">
+                    {t("recentLogin") ?? "Recent login"}
+                  </p>
+                  <p className="text-sm text-gray-900">
+                    {recentLoginAt || t("recentLoginInfo") || new Date().toISOString()}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
-              <p className="text-sm font-semibold text-gray-900">{t("preferences") ?? "Preferences"}</p>
-              <p className="text-xs text-gray-600">
-                {t("preferencesCopy", "Choose your language and display preferences.")}
-              </p>
-              <LanguageSwitcher />
-              <AnalyticsConsentControl />
-            </div>
+              <div className="bg-white rounded-2xl border border-purple-50 shadow-sm p-4 space-y-2">
+                <p className="text-sm font-semibold text-gray-900">{t("preferences") ?? "Preferences"}</p>
+                <p className="text-xs text-gray-600">
+                  {t("preferencesCopy", "Choose your language and display preferences.")}
+                </p>
+                <LanguageSwitcher />
+                <AnalyticsConsentControl />
+              </div>
 
-            <div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
-              <p className="text-sm font-semibold text-gray-900">{t("dataPrivacySection") ?? "Your data"}</p>
-              <p className="text-xs text-gray-600">
-                {t("dataPrivacyCopy") ??
-                  "Request a copy of your activity log — we'll email it to your account address."}
-              </p>
-              <ExportActivityLogButton />
-            </div>
-
-            {role !== UserRole.Admin && <FamilyCard />}
-
-            {role !== UserRole.Admin && <MySupportTicketsCard helpHref={helpHref} />}
-          </aside>
-        </div>
+              <div className="bg-white rounded-2xl border border-purple-50 shadow-sm p-4 space-y-2">
+                <p className="text-sm font-semibold text-gray-900">{t("dataPrivacySection") ?? "Your data"}</p>
+                <p className="text-xs text-gray-600">
+                  {t("dataPrivacyCopy") ??
+                    "Request a copy of your activity log — we'll email it to your account address."}
+                </p>
+                <ExportActivityLogButton />
+              </div>
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   );

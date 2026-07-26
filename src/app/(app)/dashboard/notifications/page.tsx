@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import Link from "next/link";
 import { useNotificationsLogic } from './useNotificationsLogic';
 import { useNotificationReadState } from '@/presentation/hooks/useNotificationReadState';
+import { useUserNotifications } from '@/presentation/hooks/useUserNotifications';
+import { useDI } from '@/context/DIContext';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/domain/entities/UserRole';
 import { ListSkeleton } from '@/presentation/components/Skeleton/ListSkeleton';
@@ -30,6 +32,9 @@ function NotificationsPage() {
     retry,
   } = useNotificationsLogic(nav);
   const { isRead, markRead, markManyRead, pruneTo } = useNotificationReadState(user?.uid);
+  const { markUserNotificationReadUseCase, markAllUserNotificationsReadUseCase } = useDI();
+  const { data: userNotifData, mutate: mutateUserNotifications } = useUserNotifications(user?.uid);
+  const genericNotifications = useMemo(() => userNotifData?.items ?? [], [userNotifData]);
   const [page, setPage] = useState(0);
   const pageSize = 8;
   const focusId = searchParams?.get('focus') ?? null;
@@ -129,7 +134,7 @@ function NotificationsPage() {
     return <ListSkeleton items={5} />;
   }
 
-  if (appointmentNotifications.length === 0 && prescriptionNotifications.length === 0) {
+  if (appointmentNotifications.length === 0 && prescriptionNotifications.length === 0 && genericNotifications.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center py-16 text-gray-500">
         <p className="mb-4 text-[12.5px]">{t('noNewNotifications', 'No new notifications')}</p>
@@ -160,6 +165,16 @@ function NotificationsPage() {
     handleDismissNotification(appointmentId);
   };
 
+  const onGenericNotificationClick = async (id: string) => {
+    await markUserNotificationReadUseCase.execute(id);
+    void mutateUserNotifications();
+  };
+
+  const onMarkAllGenericRead = async () => {
+    await markAllUserNotificationsReadUseCase.execute();
+    void mutateUserNotifications();
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -182,6 +197,42 @@ function NotificationsPage() {
           {t('backToHome')}
         </Link>
       </div>
+
+      {genericNotifications.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[13.5px] font-bold text-gray-900">{t('accountUpdates') || 'Account updates'}</p>
+            <button
+              type="button"
+              onClick={onMarkAllGenericRead}
+              className="text-[11.5px] font-semibold text-purple-700 hover:text-purple-800"
+              data-analytics="dashboard.notifications.mark_all_read_generic"
+            >
+              {t('markAllRead') || 'Mark all read'}
+            </button>
+          </div>
+          <div className="rounded-lg border border-gray-100 divide-y divide-gray-100">
+            {genericNotifications.map((notification) => (
+              <div
+                key={notification.id}
+                onClick={() => onGenericNotificationClick(notification.id)}
+                className={`px-4 py-3 flex items-start gap-2 transition cursor-default ${
+                  !notification.read ? 'bg-purple-50/20' : ''
+                }`}
+              >
+                {!notification.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-purple-600" />}
+                <div className="min-w-0">
+                  <p className={`text-[12.5px] truncate ${!notification.read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                    {notification.title}
+                  </p>
+                  <p className="text-[11.5px] text-gray-600">{notification.body}</p>
+                  <p className="text-[10.5px] text-gray-400 mt-1">{formatDate(notification.createdAt)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
         <div className="flex items-center justify-between mb-3">

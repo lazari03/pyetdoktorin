@@ -8,7 +8,6 @@ export function useFamily() {
     listFamilyMembersUseCase,
     listFamilyInvitesUseCase,
     addFamilyMemberUseCase,
-    inviteFamilyMemberUseCase,
     respondToFamilyInviteUseCase,
     removeFamilyMemberUseCase,
   } = useDI();
@@ -38,21 +37,6 @@ export function useFamily() {
     }
   };
 
-  const inviteExistingUser = async (email: string, relationship: string) => {
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      await inviteFamilyMemberUseCase.execute(email, relationship);
-      await mutateMembers();
-      return true;
-    } catch (error) {
-      setSubmitError(error);
-      return false;
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const respondToInvite = async (id: string, accept: boolean) => {
     await respondToFamilyInviteUseCase.execute(id, accept);
     await Promise.all([mutateInvites(), mutateMembers()]);
@@ -70,7 +54,6 @@ export function useFamily() {
     submitting,
     submitError,
     addMember,
-    inviteExistingUser,
     respondToInvite,
     removeMember,
   };

@@ -17,7 +17,7 @@ export function MySupportTicketsCard({ helpHref }: { helpHref: string }) {
   const recent = tickets.slice(0, 3);
 
   return (
-    <div className="bg-white rounded-3xl border border-purple-50 shadow-lg p-5 space-y-3">
+    <div className="bg-white rounded-2xl border border-purple-50 shadow-sm p-4 space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-gray-900">{t('helpMyTickets') || 'My messages'}</p>
         <Link href={helpHref} className="text-[11px] font-semibold text-purple-600 hover:text-purple-700">

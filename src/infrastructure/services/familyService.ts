@@ -24,14 +24,6 @@ export class FamilyService implements IFamilyService {
     return result.member;
   }
 
-  async inviteExistingUser(email: string, relationship: string): Promise<FamilyMember> {
-    const result = await backendFetch<{ member: FamilyMember }>('/api/family', {
-      method: 'POST',
-      body: JSON.stringify({ email, relationship }),
-    });
-    return result.member;
-  }
-
   async respondToInvite(id: string, accept: boolean): Promise<FamilyMember> {
     const result = await backendFetch<{ member: FamilyMember }>(`/api/family/${id}/respond`, {
       method: 'PATCH',

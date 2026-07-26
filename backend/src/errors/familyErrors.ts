@@ -4,6 +4,7 @@ export const FamilyMemberErrorCode = {
   CreateFailed: 'FAMILY_MEMBER_CREATE_FAILED',
   FetchFailed: 'FAMILY_MEMBER_FETCH_FAILED',
   UpdateFailed: 'FAMILY_MEMBER_UPDATE_FAILED',
+  InvalidRole: 'FAMILY_MEMBER_INVALID_ROLE',
 } as const;
 
 export type FamilyMemberErrorCodeValue =
@@ -32,5 +33,12 @@ export class FamilyMemberForbiddenError extends FamilyMemberError {
   constructor(message?: string) {
     super(FamilyMemberErrorCode.Forbidden, 403, message);
     this.name = 'FamilyMemberForbiddenError';
+  }
+}
+
+export class FamilyMemberInvalidRoleError extends FamilyMemberError {
+  constructor(message?: string) {
+    super(FamilyMemberErrorCode.InvalidRole, 400, message ?? 'Only patient accounts can be added to a family group.');
+    this.name = 'FamilyMemberInvalidRoleError';
   }
 }

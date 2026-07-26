@@ -4,29 +4,24 @@ import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import {
   listMyFamilyMembers,
   listPendingInvites,
-  addFamilyMember,
-  inviteExistingUser,
+  addOrCreateFamilyMember,
   respondToInvite,
   updateFamilyMember,
   removeFamilyMember,
 } from '@/services/familyService';
 import { FamilyMemberError } from '@/errors/familyErrors';
+import { buildDisplayName, getUserProfile } from '@/services/userProfileService';
 
 const router = Router();
 
-const addMemberSchema = z.union([
-  z.object({
-    email: z.string().email(),
-    relationship: z.string().min(1).max(40),
-  }),
-  z.object({
-    name: z.string().min(1).max(120),
-    surname: z.string().max(120).optional(),
-    relationship: z.string().min(1).max(40),
-    dateOfBirth: z.string().max(20).optional(),
-    phoneNumber: z.string().max(40).optional(),
-  }),
-]);
+const addMemberSchema = z.object({
+  name: z.string().min(1).max(120),
+  surname: z.string().max(120).optional(),
+  email: z.string().email(),
+  relationship: z.string().min(1).max(40),
+  dateOfBirth: z.string().max(20).optional(),
+  phoneNumber: z.string().max(40).optional(),
+});
 
 const updateMemberSchema = z.object({
   name: z.string().min(1).max(120).optional(),
@@ -73,9 +68,9 @@ router.post('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
   }
   try {
     const uid = req.user!.uid;
-    const member = 'email' in parsed.data
-      ? await inviteExistingUser(uid, parsed.data.email, parsed.data.relationship)
-      : await addFamilyMember(uid, parsed.data);
+    const ownerProfile = await getUserProfile(uid);
+    const ownerName = buildDisplayName(ownerProfile, 'A family member');
+    const member = await addOrCreateFamilyMember(uid, ownerName, parsed.data);
     res.status(201).json({ member });
   } catch (error) {
     handleFamilyError(error, res, 'Failed to add family member');

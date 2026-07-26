@@ -85,7 +85,6 @@ import {
   listFamilyMembersUseCase,
   listFamilyInvitesUseCase,
   addFamilyMemberUseCase,
-  inviteFamilyMemberUseCase,
   respondToFamilyInviteUseCase,
   removeFamilyMemberUseCase,
 } from './di.services';
@@ -175,7 +174,6 @@ interface DIContextValue {
   listFamilyMembersUseCase: typeof listFamilyMembersUseCase;
   listFamilyInvitesUseCase: typeof listFamilyInvitesUseCase;
   addFamilyMemberUseCase: typeof addFamilyMemberUseCase;
-  inviteFamilyMemberUseCase: typeof inviteFamilyMemberUseCase;
   respondToFamilyInviteUseCase: typeof respondToFamilyInviteUseCase;
   removeFamilyMemberUseCase: typeof removeFamilyMemberUseCase;
 }
@@ -267,7 +265,6 @@ const diContextValue: DIContextValue = {
   listFamilyMembersUseCase,
   listFamilyInvitesUseCase,
   addFamilyMemberUseCase,
-  inviteFamilyMemberUseCase,
   respondToFamilyInviteUseCase,
   removeFamilyMemberUseCase,
 };

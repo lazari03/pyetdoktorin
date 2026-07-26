@@ -14,6 +14,8 @@ import { notifyFormSubmission } from '@/presentation/utils/formNotifications';
 
 export default function useNewAppointment() {
   const {
+    bookingFor,
+    setBookingFor,
     selectedDoctor,
     setSelectedDoctor,
     appointmentType,
@@ -36,12 +38,26 @@ export default function useNewAppointment() {
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const { user } = useAuth();
   const { createAppointmentUseCase, getResolvedSlotsUseCase } = useDI();
+  const { members: familyMembersRaw } = useFamily();
+  // Only members this account actually owns/manages are bookable — the
+  // families this account merely belongs to (as someone else's member) are
+  // for visibility only, not for booking on their behalf.
+  const confirmedFamilyMembers = familyMembersRaw.filter(
+    (m) => m.status === 'confirmed' && m.ownerUserId === user?.uid,
+  );
 
   useEffect(() => {
     if (user?.name) {
       setPatientName(user.name);
     }
   }, [user?.name]);
+
+  const selectedFamilyMember =
+    bookingFor !== 'self' ? confirmedFamilyMembers.find((m) => m.id === bookingFor) : undefined;
+  const resolvedPatientName =
+    bookingFor === 'self' ? patientName : selectedFamilyMember
+      ? [selectedFamilyMember.name, selectedFamilyMember.surname].filter(Boolean).join(' ')
+      : '';
 
   useEffect(() => {
     let active = true;
@@ -113,6 +129,12 @@ export default function useNewAppointment() {
       return;
     }
 
+    if (!bookingFor) {
+      trackAnalyticsEvent('appointment_booking_failed', { reason: 'missing_booking_for' });
+      setSubmitError(t('selectBookingForError'));
+      return;
+    }
+
     if (!selectedDoctor) {
       trackAnalyticsEvent('appointment_booking_failed', { reason: 'missing_doctor' });
       setSubmitError(t('selectDoctorError'));
@@ -135,8 +157,10 @@ export default function useNewAppointment() {
     const appointmentData: Omit<Appointment, 'id'> = {
       doctorId: selectedDoctor.id,
       doctorName: selectedDoctor.name,
-      patientId: user.uid,
-      patientName: user.name,
+      patientId: bookingFor === 'self' ? user.uid : selectedFamilyMember?.linkedUserId,
+      patientName: resolvedPatientName || user.name,
+      requesterId: user.uid,
+      requesterName: user.name,
       appointmentType,
       preferredDate,
       preferredTime,
@@ -153,6 +177,8 @@ export default function useNewAppointment() {
         preferredDate: appointmentData.preferredDate!,
         preferredTime: appointmentData.preferredTime,
         note: notes,
+        bookingFor: bookingFor === 'self' ? 'self' : 'family',
+        ...(bookingFor !== 'self' ? { familyMemberId: bookingFor } : {}),
       });
       void notifyFormSubmission({
         formType: 'appointment_request',
@@ -204,6 +230,10 @@ export default function useNewAppointment() {
   };
 
   return {
+    bookingFor,
+    setBookingFor,
+    familyMembers: confirmedFamilyMembers,
+    resolvedPatientName,
     selectedDoctor,
     setSelectedDoctor,
     appointmentType,

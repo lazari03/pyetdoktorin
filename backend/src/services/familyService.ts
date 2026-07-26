@@ -1,6 +1,12 @@
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
+import { UserRole } from '@/domain/entities/UserRole';
 import { createUserNotification } from '@/services/userNotificationsService';
-import { FamilyMemberForbiddenError, FamilyMemberNotFoundError } from '@/errors/familyErrors';
+import { sendPlatformEmail } from '@/services/emailService';
+import {
+  FamilyMemberForbiddenError,
+  FamilyMemberInvalidRoleError,
+  FamilyMemberNotFoundError,
+} from '@/errors/familyErrors';
 
 const COLLECTION = 'familyMembers';
 
@@ -9,6 +15,7 @@ export type FamilyMemberStatus = 'confirmed' | 'invited' | 'declined';
 export interface FamilyMember {
   id: string;
   ownerUserId: string;
+  ownerName?: string | undefined;
   linkedUserId?: string | undefined;
   name: string;
   surname?: string | undefined;
@@ -25,12 +32,19 @@ function mapDoc(doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseFirestore
   return { id: doc.id, ...data };
 }
 
-// ponytail: sorted in-memory rather than a compound (ownerUserId ==, createdAt
-// orderBy) query — family lists are small, no need for a composite index.
-export async function listMyFamilyMembers(ownerUserId: string): Promise<FamilyMember[]> {
+// ponytail: sorted/merged in-memory rather than compound Firestore queries —
+// family lists are small enough that this avoids needing composite indexes.
+export async function listMyFamilyMembers(uid: string): Promise<FamilyMember[]> {
   const db = getFirebaseAdmin().firestore();
-  const snap = await db.collection(COLLECTION).where('ownerUserId', '==', ownerUserId).get();
-  return snap.docs.map(mapDoc).sort((a, b) => b.createdAt - a.createdAt);
+  const [ownedSnap, memberOfSnap] = await Promise.all([
+    db.collection(COLLECTION).where('ownerUserId', '==', uid).get(),
+    db.collection(COLLECTION).where('linkedUserId', '==', uid).where('status', '==', 'confirmed').get(),
+  ]);
+  const byId = new Map<string, FamilyMember>();
+  for (const doc of [...ownedSnap.docs, ...memberOfSnap.docs]) {
+    byId.set(doc.id, mapDoc(doc));
+  }
+  return Array.from(byId.values()).sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function listPendingInvites(uid: string): Promise<FamilyMember[]> {
@@ -50,57 +64,105 @@ export async function getFamilyMember(id: string): Promise<FamilyMember | null> 
   return mapDoc(doc);
 }
 
-export async function addFamilyMember(
+/**
+ * Single entry point for adding a family member: looks the email up against
+ * existing accounts and branches accordingly —
+ *  - an existing Patient account is sent an in-app invite to accept/decline;
+ *  - an existing non-Patient account (e.g. a doctor) is rejected outright,
+ *    since a family member must be a patient;
+ *  - no matching account creates one (Patient role) on the spot and emails
+ *    the new owner a password-setup link, since there's no one to "invite".
+ */
+export async function addOrCreateFamilyMember(
   ownerUserId: string,
+  ownerName: string,
   input: {
     name: string;
     surname?: string | undefined;
+    email: string;
     relationship: string;
     dateOfBirth?: string | undefined;
     phoneNumber?: string | undefined;
   },
 ): Promise<FamilyMember> {
   const db = getFirebaseAdmin().firestore();
-  const doc = {
-    ownerUserId,
-    ...input,
-    status: 'confirmed' as const,
-    createdAt: Date.now(),
-  };
-  const ref = await db.collection(COLLECTION).add(doc);
-  return { id: ref.id, ...doc };
-}
+  const usersSnap = await db.collection('users').where('email', '==', input.email).limit(1).get();
 
-export async function inviteExistingUser(
-  ownerUserId: string,
-  email: string,
-  relationship: string,
-): Promise<FamilyMember> {
-  const db = getFirebaseAdmin().firestore();
-  const usersSnap = await db.collection('users').where('email', '==', email).limit(1).get();
-  if (usersSnap.empty) {
-    throw new FamilyMemberNotFoundError('No platform user found with that email');
+  if (!usersSnap.empty) {
+    const userDoc = usersSnap.docs[0]!;
+    const userData = userDoc.data();
+    const existingRole = String(userData.role ?? '');
+    if (existingRole !== UserRole.Patient) {
+      throw new FamilyMemberInvalidRoleError();
+    }
+    const doc = {
+      ownerUserId,
+      ownerName,
+      linkedUserId: userDoc.id,
+      name: [userData.name, userData.surname].filter(Boolean).join(' ').trim() || input.name,
+      relationship: input.relationship,
+      status: 'invited' as const,
+      invitedEmail: input.email,
+      createdAt: Date.now(),
+    };
+    const ref = await db.collection(COLLECTION).add(doc);
+
+    await createUserNotification({
+      userId: userDoc.id,
+      type: 'family_invite',
+      title: 'Family invitation',
+      body: `${ownerName} invited you to join their family group as "${input.relationship}". You can accept or decline from your profile settings.`,
+      metadata: { familyMemberId: ref.id },
+    });
+
+    return { id: ref.id, ...doc };
   }
-  const userDoc = usersSnap.docs[0]!;
-  const userData = userDoc.data();
+
+  // No existing account — create one on the new member's behalf.
+  const admin = getFirebaseAdmin();
+  const displayName = [input.name, input.surname].filter(Boolean).join(' ').trim() || input.name;
+  const userRecord = await admin.auth().createUser({
+    email: input.email,
+    displayName,
+  });
+  await admin.auth().setCustomUserClaims(userRecord.uid, { role: UserRole.Patient, admin: false });
+  await db.collection('users').doc(userRecord.uid).set({
+    name: input.name,
+    surname: input.surname ?? '',
+    role: UserRole.Patient,
+    email: input.email,
+    phone: input.phoneNumber ?? null,
+    phoneNumber: input.phoneNumber ?? null,
+    createdBy: 'family_invite',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  }, { merge: true });
+
   const doc = {
     ownerUserId,
-    linkedUserId: userDoc.id,
-    name: [userData.name, userData.surname].filter(Boolean).join(' ').trim() || email,
-    relationship,
-    status: 'invited' as const,
-    invitedEmail: email,
+    ownerName,
+    linkedUserId: userRecord.uid,
+    name: input.name,
+    ...(input.surname !== undefined ? { surname: input.surname } : {}),
+    relationship: input.relationship,
+    ...(input.dateOfBirth !== undefined ? { dateOfBirth: input.dateOfBirth } : {}),
+    ...(input.phoneNumber !== undefined ? { phoneNumber: input.phoneNumber } : {}),
+    status: 'confirmed' as const,
+    invitedEmail: input.email,
     createdAt: Date.now(),
   };
   const ref = await db.collection(COLLECTION).add(doc);
 
-  await createUserNotification({
-    userId: userDoc.id,
-    type: 'family_invite',
-    title: 'Family invitation',
-    body: `You've been invited to join a family group as "${relationship}". You can accept or decline from your profile settings.`,
-    metadata: { familyMemberId: ref.id },
-  });
+  try {
+    const resetLink = await admin.auth().generatePasswordResetLink(input.email);
+    await sendPlatformEmail({
+      to: input.email,
+      subject: 'Your Pyet Doktorin account has been created',
+      text: `Hi ${input.name},\n\n${ownerName} added you to their family group on Pyet Doktorin, so we've created an account for you (${input.email}).\n\nSet your password to log in: ${resetLink}\n\nOnce logged in, ${ownerName} will be able to book and pay for appointments on your behalf.`,
+    });
+  } catch (error) {
+    console.error('Failed to send family account-created email:', error);
+  }
 
   return { id: ref.id, ...doc };
 }
@@ -151,8 +213,9 @@ export async function updateFamilyMember(
   if (member.ownerUserId !== ownerUserId) {
     throw new FamilyMemberForbiddenError();
   }
-  if (member.linkedUserId) {
-    // Can't edit a linked platform user's own profile info on their behalf.
+  if (member.linkedUserId && (updates.name || updates.surname)) {
+    // Can't edit a linked platform user's own name/surname on their behalf —
+    // that's their profile, not the family relationship label.
     throw new FamilyMemberForbiddenError('Cannot edit a linked family member\'s profile');
   }
   await ref.update(updates);

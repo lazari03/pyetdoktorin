@@ -3,6 +3,7 @@ export type FamilyMemberStatus = 'confirmed' | 'invited' | 'declined';
 export interface FamilyMember {
   id: string;
   ownerUserId: string;
+  ownerName?: string;
   linkedUserId?: string;
   name: string;
   surname?: string;
@@ -17,6 +18,7 @@ export interface FamilyMember {
 export interface AddFamilyMemberInput {
   name: string;
   surname?: string;
+  email: string;
   relationship: string;
   dateOfBirth?: string;
   phoneNumber?: string;
@@ -26,7 +28,6 @@ export interface IFamilyService {
   listMine(): Promise<FamilyMember[]>;
   listInvites(): Promise<FamilyMember[]>;
   addMember(input: AddFamilyMemberInput): Promise<FamilyMember>;
-  inviteExistingUser(email: string, relationship: string): Promise<FamilyMember>;
   respondToInvite(id: string, accept: boolean): Promise<FamilyMember>;
   removeMember(id: string): Promise<void>;
 }

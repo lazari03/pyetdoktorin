@@ -67,7 +67,6 @@ import type { IFamilyService } from '@/application/ports/IFamilyService';
 import { ListFamilyMembersUseCase } from '@/application/listFamilyMembersUseCase';
 import { ListFamilyInvitesUseCase } from '@/application/listFamilyInvitesUseCase';
 import { AddFamilyMemberUseCase } from '@/application/addFamilyMemberUseCase';
-import { InviteFamilyMemberUseCase } from '@/application/inviteFamilyMemberUseCase';
 import { RespondToFamilyInviteUseCase } from '@/application/respondToFamilyInviteUseCase';
 import { RemoveFamilyMemberUseCase } from '@/application/removeFamilyMemberUseCase';
 import { EmailValidationService } from '@/infrastructure/services/emailValidationService';
@@ -217,7 +216,6 @@ export const updateSupportTicketUseCase = new UpdateSupportTicketUseCase(adminSu
 export const listFamilyMembersUseCase = new ListFamilyMembersUseCase(familyService);
 export const listFamilyInvitesUseCase = new ListFamilyInvitesUseCase(familyService);
 export const addFamilyMemberUseCase = new AddFamilyMemberUseCase(familyService);
-export const inviteFamilyMemberUseCase = new InviteFamilyMemberUseCase(familyService);
 export const respondToFamilyInviteUseCase = new RespondToFamilyInviteUseCase(familyService);
 export const removeFamilyMemberUseCase = new RemoveFamilyMemberUseCase(familyService);
 export const validateRegistrationEmailUseCase = new ValidateRegistrationEmailUseCase(emailValidationService);

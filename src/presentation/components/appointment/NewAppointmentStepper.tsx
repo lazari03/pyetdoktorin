@@ -11,6 +11,7 @@ export default function NewAppointmentStepper() {
 	const { t } = useTranslation();
 	const vm = useNewAppointmentViewModel();
 	const steps = [
+		{ key: 'who', title: t('stepWhoFor') || 'Who is this for?' },
 		{ key: 'doctor', title: t('stepChooseDoctor') },
 		{ key: 'schedule', title: t('stepSchedule') },
 		{ key: 'details', title: t('stepDetails') },
@@ -19,8 +20,9 @@ export default function NewAppointmentStepper() {
 	const [step, setStep] = useState(0);
 
 	const canGoNext = () => {
-		if (step === 0) return !!vm.selectedDoctor;
-		if (step === 1) return !!(vm.appointmentType && vm.preferredDate && vm.preferredTime);
+		if (step === 0) return !!vm.bookingFor;
+		if (step === 1) return !!vm.selectedDoctor;
+		if (step === 2) return !!(vm.appointmentType && vm.preferredDate && vm.preferredTime);
 		return true;
 	};
 
@@ -99,6 +101,50 @@ export default function NewAppointmentStepper() {
 							)}
 							{step === 0 && (
 								<div className="space-y-3">
+									<h2 className="text-lg font-semibold text-gray-900">{t('stepWhoFor') || 'Who is this for?'}</h2>
+									<p className="text-sm text-gray-600">
+										{t('stepWhoForDescription') ||
+											'Book for yourself, or for a family member you manage.'}
+									</p>
+									<div className="grid gap-2 sm:grid-cols-2">
+										<button
+											type="button"
+											onClick={() => vm.setBookingFor('self')}
+											className={`text-left rounded-xl border px-4 py-3 transition-colors ${
+												vm.bookingFor === 'self'
+													? 'border-purple-400 bg-purple-50'
+													: 'border-gray-200 bg-white hover:border-purple-200'
+											}`}
+										>
+											<p className="text-sm font-semibold text-gray-900">{t('bookingForMyself') || 'Myself'}</p>
+										</button>
+										{vm.familyMembers.map((member) => (
+											<button
+												key={member.id}
+												type="button"
+												onClick={() => vm.setBookingFor(member.id)}
+												className={`text-left rounded-xl border px-4 py-3 transition-colors ${
+													vm.bookingFor === member.id
+														? 'border-purple-400 bg-purple-50'
+														: 'border-gray-200 bg-white hover:border-purple-200'
+												}`}
+											>
+												<p className="text-sm font-semibold text-gray-900">{member.name}</p>
+												<p className="text-xs text-gray-500 capitalize">{member.relationship}</p>
+											</button>
+										))}
+									</div>
+									{vm.familyMembers.length === 0 && (
+										<p className="text-xs text-gray-500">
+											{t('bookingForNoFamily') ||
+												'No family members yet. Add them from your profile settings to book on their behalf.'}
+										</p>
+									)}
+								</div>
+							)}
+
+							{step === 1 && (
+								<div className="space-y-3">
 									<h2 className="text-lg font-semibold text-gray-900">{t('selectDoctor')}</h2>
 									<p className="text-sm text-gray-600">
 										{t('selectDoctorDescription') ||
@@ -112,7 +158,7 @@ export default function NewAppointmentStepper() {
 								</div>
 							)}
 
-							{step === 1 && (
+							{step === 2 && (
 								<div className="space-y-4">
 									<div>
 										<h2 className="text-lg font-semibold text-gray-900">{t('chooseDateAndTime')}</h2>
@@ -204,7 +250,7 @@ export default function NewAppointmentStepper() {
 								</div>
 							)}
 
-							{step === 2 && (
+							{step === 3 && (
 								<div className="space-y-3">
 									<h2 className="text-lg font-semibold text-gray-900">{t('visitDetails')}</h2>
 									<p className="text-sm text-gray-600">
@@ -220,11 +266,16 @@ export default function NewAppointmentStepper() {
 								</div>
 							)}
 
-							{step === 3 && (
+							{step === 4 && (
 								<div className="space-y-4">
 									<h2 className="text-lg font-semibold text-gray-900">{t('reviewConfirm')}</h2>
 									<p className="text-sm text-gray-600">{t('readyToConfirm') || 'Review the details before we reserve your slot.'}</p>
 									<div className="grid md:grid-cols-2 gap-3">
+										<SummaryItem
+											label={t('appointmentFor') || 'Appointment for'}
+											value={vm.bookingFor === 'self' ? t('bookingForMyself') || 'Myself' : vm.familyMembers.find((m) => m.id === vm.bookingFor)?.name || t('notSelected')}
+											boxed
+										/>
 										<SummaryItem label={t('doctor')} value={vm.selectedDoctor?.name || t('notSelected')} helper={vm.selectedDoctor?.specialization} boxed />
 										<SummaryItem label={t('appointmentType')} value={vm.appointmentType || t('notSelected')} boxed />
 										<SummaryItem label={t('preferredDate')} value={vm.preferredDate || t('notSelected')} boxed />
