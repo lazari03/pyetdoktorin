@@ -12,11 +12,7 @@ export function DoctorAgreementSection() {
   const [resigning, setResigning] = useState(false);
 
   if (loading) {
-    return (
-      <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-6">
-        <div className="h-24 animate-pulse rounded-2xl bg-gray-100" />
-      </section>
-    );
+    return <div className="h-24 animate-pulse rounded-2xl bg-gray-100" />;
   }
 
   if (!terms) return null;
@@ -34,7 +30,7 @@ export function DoctorAgreementSection() {
   };
 
   return (
-    <section className="bg-white rounded-3xl border border-purple-50 shadow-lg p-6 space-y-4">
+    <div className="space-y-4">
       <div>
         <p className="text-xs uppercase tracking-[0.18em] text-purple-600 font-semibold">
           {t('doctorContractEyebrow') || 'Agreement'}
@@ -67,13 +63,27 @@ export function DoctorAgreementSection() {
 
       {needsSignature && (
         <>
-          <div className="max-h-64 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3 text-[13px] leading-relaxed text-gray-700">
-            {terms.paragraphs.map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
+          <div className="max-h-[28rem] overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 p-5 space-y-5 text-[13px] leading-relaxed text-gray-700">
+            {terms.sections.map((section, index) => (
+              <div key={index} className="space-y-1.5">
+                <h3 className="text-sm font-semibold text-gray-900">{section.title}</h3>
+                {section.paragraphs.map((paragraph, pIndex) => (
+                  <p key={pIndex}>{paragraph}</p>
+                ))}
+                {section.bullets?.length ? (
+                  <ul className="list-disc pl-5 space-y-0.5">
+                    {section.bullets.map((bullet, bIndex) => (
+                      <li key={bIndex}>{bullet}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
             ))}
           </div>
 
-          <SignaturePad onChange={setSignatureDataUrl} />
+          <div className="max-w-xs">
+            <SignaturePad onChange={setSignatureDataUrl} />
+          </div>
 
           {submitError ? (
             <p className="text-xs text-red-600">
@@ -103,6 +113,6 @@ export function DoctorAgreementSection() {
           </div>
         </>
       )}
-    </section>
+    </div>
   );
 }

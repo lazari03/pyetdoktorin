@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit';
 import type { DoctorAgreement } from '@/services/doctorAgreementsService';
-import { DOCTOR_TERMS_TITLE, DOCTOR_TERMS_PARAGRAPHS } from '@/content/doctorTermsContent';
+import { DOCTOR_TERMS_TITLE, DOCTOR_TERMS_SECTIONS } from '@/content/doctorTermsContent';
 
 export function renderDoctorAgreementPdf(agreement: DoctorAgreement): PDFKit.PDFDocument {
   const doc = new PDFDocument({ margin: 56 });
@@ -20,10 +20,19 @@ export function renderDoctorAgreementPdf(agreement: DoctorAgreement): PDFKit.PDF
 
   doc.fontSize(12).font('Helvetica-Bold').text('Terms & Conditions');
   doc.moveDown(0.3);
-  doc.fontSize(10.5).font('Helvetica');
-  DOCTOR_TERMS_PARAGRAPHS.forEach((paragraph) => {
-    doc.text(paragraph, { align: 'justify' });
-    doc.moveDown(0.6);
+  DOCTOR_TERMS_SECTIONS.forEach((section) => {
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text(section.title);
+    doc.moveDown(0.2);
+    doc.fontSize(10.5).font('Helvetica');
+    section.paragraphs.forEach((paragraph) => {
+      doc.text(paragraph, { align: 'justify' });
+      doc.moveDown(0.4);
+    });
+    if (section.bullets?.length) {
+      doc.list(section.bullets, { bulletRadius: 1.5, textIndent: 12 });
+      doc.moveDown(0.4);
+    }
+    doc.moveDown(0.3);
   });
 
   doc.moveDown(0.5);

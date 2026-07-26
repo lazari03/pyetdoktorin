@@ -1,7 +1,13 @@
+export interface DoctorTermsSection {
+  title: string;
+  paragraphs: string[];
+  bullets?: string[];
+}
+
 export interface DoctorTerms {
   version: string;
   title: string;
-  paragraphs: string[];
+  sections: DoctorTermsSection[];
 }
 
 export interface DoctorAgreementStatus {

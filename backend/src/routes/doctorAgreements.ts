@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { getFirebaseAdmin } from '@/config/firebaseAdmin';
 import { UserRole } from '@/domain/entities/UserRole';
-import { DOCTOR_TERMS_VERSION, DOCTOR_TERMS_TITLE, DOCTOR_TERMS_PARAGRAPHS } from '@/content/doctorTermsContent';
+import { DOCTOR_TERMS_VERSION, DOCTOR_TERMS_TITLE, DOCTOR_TERMS_SECTIONS } from '@/content/doctorTermsContent';
 import { submitAgreement, getAgreement, listAgreementSummaries } from '@/services/doctorAgreementsService';
 import { renderDoctorAgreementPdf } from '@/services/pdf/doctorAgreementPdf';
 
@@ -22,7 +22,7 @@ const submitSchema = z.object({
 });
 
 router.get('/terms', requireAuth(), async (_req, res) => {
-  res.json({ version: DOCTOR_TERMS_VERSION, title: DOCTOR_TERMS_TITLE, paragraphs: DOCTOR_TERMS_PARAGRAPHS });
+  res.json({ version: DOCTOR_TERMS_VERSION, title: DOCTOR_TERMS_TITLE, sections: DOCTOR_TERMS_SECTIONS });
 });
 
 router.get('/me', requireAuth([UserRole.Doctor]), async (req: AuthenticatedRequest, res) => {

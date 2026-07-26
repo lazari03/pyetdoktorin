@@ -217,10 +217,16 @@ export const useMyProfile = () => {
         toast({ variant: "error", message: t("emailInUse", { defaultValue: "This email is already in use." }) });
       } else if (code === "auth/invalid-email") {
         toast({ variant: "error", message: t("invalidEmailAddress", { defaultValue: "Please enter a valid email address." }) });
+      } else if (error instanceof BackendError && error.message) {
+        // Surface the backend's actual reason (e.g. a validation failure)
+        // instead of a mystery generic message — this is what the user
+        // actually needs to fix the input and retry.
+        toast({ variant: "error", message: error.message });
       } else {
         toast({ variant: "error", message: t("profileUpdateFailed", { defaultValue: "Failed to update profile!" }) });
       }
       trackAnalyticsEvent("profile_update_failed");
+      console.error("Profile update failed:", error);
     }
   };
 
