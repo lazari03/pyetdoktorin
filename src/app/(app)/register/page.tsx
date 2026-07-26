@@ -17,6 +17,16 @@ import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 const inputClass = 'block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500';
 const fieldLabelClass = 'block mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500';
 
+function emailValidationErrorMessage(reason: string | undefined, t: (key: string) => string): string {
+    if (reason === 'disposable') {
+        return t('emailDisposableNotAllowed') || 'Temporary or disposable email addresses are not allowed. Please use a real email address.';
+    }
+    if (reason === 'no_mx') {
+        return t('emailDomainUnreachable') || "We couldn't verify that email address can receive mail. Please double-check it.";
+    }
+    return t('emailInvalidFormat') || 'Please enter a valid email address.';
+}
+
 function RegisterPageInner() {
     const { t } = useTranslation();
     const [formData, setFormData] = useState({
@@ -32,13 +42,19 @@ function RegisterPageInner() {
     });
 
     const [loading, setLoading] = useState(false);
+    const [validatingEmail, setValidatingEmail] = useState(false);
     const [error, setError] = useState('');
     const [terms, setTerms] = useState<PlatformTerms | null>(null);
     const [termsLoading, setTermsLoading] = useState(true);
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [acceptedTermsVersion, setAcceptedTermsVersion] = useState<string | null>(null);
     const nav = useNavigationCoordinator();
-    const { registerUserUseCase, establishSessionAllowUnverifiedUseCase, getPlatformTermsUseCase } = useDI();
+    const {
+        registerUserUseCase,
+        establishSessionAllowUnverifiedUseCase,
+        getPlatformTermsUseCase,
+        validateRegistrationEmailUseCase,
+    } = useDI();
 
     useEffect(() => {
         let cancelled = false;
@@ -108,7 +124,7 @@ function RegisterPageInner() {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (formData.password !== formData.confirmPassword) {
@@ -116,11 +132,26 @@ function RegisterPageInner() {
             return;
         }
 
+        setError('');
+        setValidatingEmail(true);
+        try {
+            const result = await validateRegistrationEmailUseCase.execute(formData.email.trim());
+            if (!result.valid) {
+                trackAnalyticsEvent('register_email_rejected', { reason: result.reason || 'unknown' });
+                setError(emailValidationErrorMessage(result.reason, t));
+                return;
+            }
+        } catch {
+            // Fail open on a validation-check network error — don't block a
+            // legitimate signup because the check itself was unreachable.
+        } finally {
+            setValidatingEmail(false);
+        }
+
         if (acceptedTermsVersion) {
             void performRegistration(acceptedTermsVersion);
             return;
         }
-        setError('');
         setShowTermsModal(true);
     };
 
@@ -299,9 +330,9 @@ function RegisterPageInner() {
             type="submit"
             data-analytics="auth.register.submit"
             className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
-            disabled={loading}
+            disabled={loading || validatingEmail}
           >
-            {loading ? t('registering') : t('secureRegisterCta')}
+            {loading ? t('registering') : validatingEmail ? (t('checkingEmail') || 'Checking email…') : t('secureRegisterCta')}
           </button>
         </form>
       </AuthShell>

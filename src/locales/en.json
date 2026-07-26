@@ -1605,5 +1605,9 @@
   "yes": "Yes",
   "helpWasThisHelpful": "Did this answer your question?",
   "helpGladItHelped": "Glad that helped.",
-  "helpNoSendMessage": "No, send a message"
+  "helpNoSendMessage": "No, send a message",
+  "emailDisposableNotAllowed": "Temporary or disposable email addresses are not allowed. Please use a real email address.",
+  "emailDomainUnreachable": "We couldn't verify that email address can receive mail. Please double-check it.",
+  "emailInvalidFormat": "Please enter a valid email address.",
+  "checkingEmail": "Checking email…"
 }

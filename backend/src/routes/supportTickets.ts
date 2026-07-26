@@ -10,7 +10,7 @@ import {
   getTicketById,
   updateTicketStatus,
 } from '@/services/supportTicketsService';
-import { createUserNotification } from '@/services/userNotificationsService';
+import { notifyAdmins } from '@/services/adminAlertsService';
 import { sendPlatformEmail } from '@/services/emailService';
 
 const router = Router();
@@ -50,22 +50,9 @@ router.post('/', requireAuth(), async (req: AuthenticatedRequest, res) => {
       ...parsed.data,
     });
 
-    try {
-      const adminsSnap = await admin.firestore().collection('users').where('role', '==', UserRole.Admin).get();
-      await Promise.all(
-        adminsSnap.docs.map((doc) =>
-          createUserNotification({
-            userId: doc.id,
-            type: 'support_ticket_created',
-            title: 'New support ticket',
-            body: `${userName}: ${ticket.subject}`,
-            metadata: { ticketId: ticket.id },
-          }),
-        ),
-      );
-    } catch (error) {
-      console.error('Failed to notify admins of new support ticket:', error);
-    }
+    void notifyAdmins('support_ticket_created', 'New support ticket', `${userName}: ${ticket.subject}`, {
+      ticketId: ticket.id,
+    });
 
     sendPlatformEmail({
       to: 'info@pyetdoktorin.al',

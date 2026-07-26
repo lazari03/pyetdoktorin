@@ -62,6 +62,9 @@ import { AdminSupportTicketsService } from '@/infrastructure/services/adminSuppo
 import type { IAdminSupportTicketsService } from '@/application/ports/IAdminSupportTicketsService';
 import { ListSupportTicketsUseCase } from '@/application/listSupportTicketsUseCase';
 import { UpdateSupportTicketUseCase } from '@/application/updateSupportTicketUseCase';
+import { EmailValidationService } from '@/infrastructure/services/emailValidationService';
+import type { IEmailValidationService } from '@/application/ports/IEmailValidationService';
+import { ValidateRegistrationEmailUseCase } from '@/application/validateRegistrationEmailUseCase';
 import { HandlePayNowUseCase } from '@/application/handlePayNowUseCase';
 import { GenerateRoomCodeUseCase } from '@/application/generateRoomCodeUseCase';
 import { GetTopDoctorsByAppointmentsUseCase } from '@/application/getTopDoctorsByAppointmentsUseCase';
@@ -167,6 +170,7 @@ export const adminDoctorAgreementsService: IAdminDoctorAgreementsService = new A
 export const platformTermsService: IPlatformTermsService = new PlatformTermsService();
 export const supportTicketService: ISupportTicketService = new SupportTicketService();
 export const adminSupportTicketsService: IAdminSupportTicketsService = new AdminSupportTicketsService();
+export const emailValidationService: IEmailValidationService = new EmailValidationService();
 
 export const handlePayNowUseCase = new HandlePayNowUseCase(appointmentPaymentService);
 export const generateRoomCodeUseCase = new GenerateRoomCodeUseCase(videoSessionService, analyticsService);
@@ -201,6 +205,7 @@ export const createSupportTicketUseCase = new CreateSupportTicketUseCase(support
 export const listMySupportTicketsUseCase = new ListMySupportTicketsUseCase(supportTicketService);
 export const listSupportTicketsUseCase = new ListSupportTicketsUseCase(adminSupportTicketsService);
 export const updateSupportTicketUseCase = new UpdateSupportTicketUseCase(adminSupportTicketsService);
+export const validateRegistrationEmailUseCase = new ValidateRegistrationEmailUseCase(emailValidationService);
 export const getUserProfileUseCase = new GetUserProfileUseCase(userProfileService);
 export const updateUserProfileUseCase = new UpdateUserProfileUseCase(userProfileService, authService);
 export const uploadProfilePictureUseCase = new UploadProfilePictureUseCase(userProfileService);

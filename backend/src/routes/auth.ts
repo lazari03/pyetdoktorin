@@ -15,6 +15,7 @@ import {
 } from '@/services/securityAuditService';
 import { PLATFORM_TERMS_VERSION } from '@/content/platformTermsContent';
 import { validateRegistrationEmail } from '@/services/emailValidationService';
+import { notifyAdmins } from '@/services/adminAlertsService';
 
 const router = Router();
 
@@ -174,20 +175,12 @@ router.post('/register-profile', async (req, res) => {
   try {
     await admin.firestore().collection('users').doc(decoded.uid).set(profile, { merge: true });
 
-    if (role === UserRole.Doctor) {
-      await admin.firestore().collection('notifications').add({
-        type: 'doctor_registration',
-        userId: decoded.uid,
-        name: payload.name,
-        surname: payload.surname,
-        phoneNumber: payload.phone,
-        address: payload.address,
-        country: payload.country,
-        email,
-        createdAt: new Date(),
-        status: 'pending',
-      });
-    }
+    void notifyAdmins(
+      'user_registered',
+      role === UserRole.Doctor ? 'New doctor registered' : 'New patient registered',
+      `${displayName || email} signed up${role === UserRole.Doctor ? ' and is awaiting approval' : ''}.`,
+      { userId: decoded.uid, role },
+    );
 
     await admin.auth().setCustomUserClaims(decoded.uid, {
       role,
@@ -310,6 +303,13 @@ router.post('/oauth-profile', async (req, res) => {
 
     await admin.firestore().collection('users').doc(uid).set(profile, { merge: true });
     await admin.auth().setCustomUserClaims(uid, { role: UserRole.Patient, admin: false });
+
+    void notifyAdmins(
+      'user_registered',
+      'New patient registered',
+      `${displayName || email} signed up via Google.`,
+      { userId: uid, role: UserRole.Patient },
+    );
 
     try {
       await writeSecurityAuditLog({

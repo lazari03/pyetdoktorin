@@ -725,7 +725,8 @@ export default function SectionShell({
             </p>
           </div>
 
-          {/* Center: search */}
+          {/* Center: search (not shown for admin) */}
+          {sectionId !== 'admin' && (
           <div className="flex-1 min-w-0 max-w-[200px] lg:max-w-xs mx-1 lg:mx-4 relative" ref={searchContainerRef}>
             <form onSubmit={handleSearchSubmit}>
               <div className="relative">
@@ -775,6 +776,7 @@ export default function SectionShell({
               </div>
             )}
           </div>
+          )}
 
           {/* Right: bell + CTA + profile */}
           <div className="flex items-center gap-1 lg:gap-2 ml-auto shrink-0">

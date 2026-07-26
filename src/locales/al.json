@@ -1605,5 +1605,9 @@
   "yes": "Po",
   "helpWasThisHelpful": "A ju përgjigji kjo pyetjes suaj?",
   "helpGladItHelped": "Gëzohemi që ndihmoi.",
-  "helpNoSendMessage": "Jo, dërgo një mesazh"
+  "helpNoSendMessage": "Jo, dërgo një mesazh",
+  "emailDisposableNotAllowed": "Adresat e emailit të përkohshme ose \"disposable\" nuk lejohen. Ju lutemi përdorni një adresë email reale.",
+  "emailDomainUnreachable": "Nuk mundëm ta verifikojmë që kjo adresë email mund të marrë mesazhe. Ju lutemi kontrollojeni edhe një herë.",
+  "emailInvalidFormat": "Ju lutemi shkruani një adresë email të vlefshme.",
+  "checkingEmail": "Duke kontrolluar email-in…"
 }

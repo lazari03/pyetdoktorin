@@ -3,6 +3,7 @@ import { env } from '@/config/env';
 import { UserRole } from '@/domain/entities/UserRole';
 import { canListAppointmentsForRole } from '@/domain/rules/userRoleRules';
 import { createUserNotification } from '@/services/userNotificationsService';
+import { notifyAdmins } from '@/services/adminAlertsService';
 import {
   AppointmentNotFoundError,
   InvalidAppointmentStatusError,
@@ -219,6 +220,8 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
   const admin = getFirebaseAdmin();
   const db = admin.firestore();
   let patientId: string | undefined;
+  let patientName: string | undefined;
+  let doctorName: string | undefined;
   await db.runTransaction(async (tx) => {
     const appointmentRef = db.collection(COLLECTION).doc(id);
     const appointmentSnap = await tx.get(appointmentRef);
@@ -227,6 +230,8 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
     }
     const appointment = appointmentSnap.data() as Appointment & { slotId?: string };
     patientId = appointment.patientId;
+    patientName = appointment.patientName;
+    doctorName = appointment.doctorName;
     const updates: Record<string, unknown> = { status: normalizedStatus };
     if (normalizedStatus === 'accepted' && actor === UserRole.Doctor) {
       updates.confirmedAt = Date.now();
@@ -254,6 +259,15 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
     } catch (error) {
       console.error('Failed to create appointment status notification:', error);
     }
+  }
+
+  if (normalizedStatus === 'accepted' || normalizedStatus === 'rejected') {
+    void notifyAdmins(
+      `appointment_${normalizedStatus}_admin`,
+      normalizedStatus === 'accepted' ? 'Appointment accepted' : 'Appointment declined',
+      `${doctorName || 'A doctor'} ${normalizedStatus} the appointment with ${patientName || 'a patient'}.`,
+      { appointmentId: id },
+    );
   }
 }
 

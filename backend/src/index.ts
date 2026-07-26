@@ -21,6 +21,7 @@ import pushRouter from '@/routes/push';
 import doctorAgreementsRouter from '@/routes/doctorAgreements';
 import platformTermsRouter from '@/routes/platformTerms';
 import supportTicketsRouter from '@/routes/supportTickets';
+import { notifyAdminsOfSystemFailure } from '@/services/adminAlertsService';
 import { createRateLimiter } from '@/middleware/rateLimit';
 import { attachRequestContext } from '@/middleware/requestContext';
 import { logEvent, logRequestError } from '@/utils/logging';
@@ -140,6 +141,11 @@ app.use((err: unknown, req: express.Request, res: express.Response, _next: expre
     }
   }
   logRequestError('unhandled_error', req, err);
+  void notifyAdminsOfSystemFailure(
+    'System error',
+    `An unhandled error occurred on ${req.method} ${req.path}. Check the server logs for details.`,
+    { path: req.path, method: req.method },
+  );
   res.status(500).json({ error: 'Internal server error' });
 });
 
