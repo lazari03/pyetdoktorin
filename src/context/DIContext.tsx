@@ -77,6 +77,10 @@ import {
   listDoctorAgreementsUseCase,
   downloadDoctorAgreementPdfUseCase,
   getPlatformTermsUseCase,
+  createSupportTicketUseCase,
+  listMySupportTicketsUseCase,
+  listSupportTicketsUseCase,
+  updateSupportTicketUseCase,
 } from './di.services';
 
 interface DIContextValue {
@@ -156,6 +160,10 @@ interface DIContextValue {
   listDoctorAgreementsUseCase: typeof listDoctorAgreementsUseCase;
   downloadDoctorAgreementPdfUseCase: typeof downloadDoctorAgreementPdfUseCase;
   getPlatformTermsUseCase: typeof getPlatformTermsUseCase;
+  createSupportTicketUseCase: typeof createSupportTicketUseCase;
+  listMySupportTicketsUseCase: typeof listMySupportTicketsUseCase;
+  listSupportTicketsUseCase: typeof listSupportTicketsUseCase;
+  updateSupportTicketUseCase: typeof updateSupportTicketUseCase;
 }
 
 // All use cases are module-level singletons (see di.services.ts) so this
@@ -237,6 +245,10 @@ const diContextValue: DIContextValue = {
   listDoctorAgreementsUseCase,
   downloadDoctorAgreementPdfUseCase,
   getPlatformTermsUseCase,
+  createSupportTicketUseCase,
+  listMySupportTicketsUseCase,
+  listSupportTicketsUseCase,
+  updateSupportTicketUseCase,
 };
 
 const DIContext = createContext<DIContextValue | undefined>(undefined);

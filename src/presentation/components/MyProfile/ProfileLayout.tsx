@@ -7,6 +7,8 @@ import { UserRole } from "@/domain/entities/UserRole";
 import LanguageSwitcher from "@/presentation/components/LanguageSwitcher/LanguageSwitcher";
 import AnalyticsConsentControl from "@/presentation/components/AnalyticsConsentControl/AnalyticsConsentControl";
 import { DoctorAgreementSection } from "./DoctorAgreementSection";
+import { MySupportTicketsCard } from "./MySupportTicketsCard";
+import { DASHBOARD_PATHS, PHARMACY_PATHS, CLINIC_PATHS } from "@/navigation/paths";
 
 type Props = {
   formData: MyProfileFormData;
@@ -43,6 +45,9 @@ export function ProfileLayout(props: Props) {
     handlePasswordReset,
     handleSignatureChange,
   } = props;
+
+  const helpHref =
+    role === UserRole.Pharmacy ? PHARMACY_PATHS.help : role === UserRole.Clinic ? CLINIC_PATHS.help : DASHBOARD_PATHS.help;
 
   const handleInput = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -126,6 +131,8 @@ export function ProfileLayout(props: Props) {
               </p>
               <ExportActivityLogButton />
             </div>
+
+            {role !== UserRole.Admin && <MySupportTicketsCard helpHref={helpHref} />}
           </aside>
         </div>
 

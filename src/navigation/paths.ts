@@ -18,6 +18,7 @@ export const DASHBOARD_PATHS = {
   reciepes: `${ROUTES.DASHBOARD}/reciepes`,
   patients: `${ROUTES.DASHBOARD}/patients`,
   pay: `${ROUTES.DASHBOARD}/pay`,
+  help: `${ROUTES.DASHBOARD}/help`,
 } as const;
 
 export function dashboardPayUrl(appointmentId: string): string {
@@ -34,6 +35,7 @@ export const ADMIN_PATHS = {
   profile: `${ROUTES.ADMIN}/profile`,
   blog: `${ROUTES.ADMIN}/blog`,
   doctorAgreements: `${ROUTES.ADMIN}/doctor-agreements`,
+  tickets: `${ROUTES.ADMIN}/tickets`,
 } as const;
 
 export function dashboardDoctorProfilePath(doctorId: string) {
@@ -55,6 +57,7 @@ export const CLINIC_PATHS = {
   notifications: `${ROUTES.CLINIC}/notifications`,
   earnings: `${ROUTES.CLINIC}/earnings`,
   profile: `${ROUTES.CLINIC}/profile`,
+  help: `${ROUTES.CLINIC}/help`,
 } as const;
 
 export const PHARMACY_PATHS = {
@@ -62,4 +65,5 @@ export const PHARMACY_PATHS = {
   reciepes: `${ROUTES.PHARMACY}/reciepes`,
   notifications: `${ROUTES.PHARMACY}/notifications`,
   profile: `${ROUTES.PHARMACY}/profile`,
+  help: `${ROUTES.PHARMACY}/help`,
 } as const;

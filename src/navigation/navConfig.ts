@@ -42,6 +42,7 @@ export function getDashboardNavDefs(role: UserRole): NavItemDef[] {
           labelKey: "reciepeTitleDoctor",
           fallback: "Reciepe",
         },
+        { key: "help", href: DASHBOARD_PATHS.help, labelKey: "help", fallback: "Help" },
       ];
     case UserRole.Patient:
       return [
@@ -70,6 +71,7 @@ export function getDashboardNavDefs(role: UserRole): NavItemDef[] {
           labelKey: "privateClinics",
           fallback: "Private clinics",
         },
+        { key: "help", href: DASHBOARD_PATHS.help, labelKey: "help", fallback: "Help" },
       ];
     default:
       return [];
@@ -85,7 +87,9 @@ export function getAdminNavDefs(): NavItemDef[] {
     { key: "payouts", href: ADMIN_PATHS.payouts, labelKey: "payouts", fallback: "Payouts" },
     { key: "security", href: ADMIN_PATHS.security, labelKey: "securityLogs", fallback: "Security Logs" },
     { key: "blog", href: ADMIN_PATHS.blog, labelKey: "blog", fallback: "Blog" },
-    { key: "doctorAgreements", href: ADMIN_PATHS.doctorAgreements, labelKey: "doctorAgreements", fallback: "Doctor Agreements" },];
+    { key: "doctorAgreements", href: ADMIN_PATHS.doctorAgreements, labelKey: "doctorAgreements", fallback: "Doctor Agreements" },
+    { key: "tickets", href: ADMIN_PATHS.tickets, labelKey: "supportTickets", fallback: "Support tickets" },
+  ];
 }
 
 export function getClinicNavDefs(): NavItemDef[] {
@@ -94,6 +98,7 @@ export function getClinicNavDefs(): NavItemDef[] {
     { key: "calendar", href: CLINIC_PATHS.calendar, labelKey: "calendar", fallback: "Calendar" },
     { key: "bookings", href: CLINIC_PATHS.bookings, labelKey: "bookingsTitle", fallback: "Bookings" },
     { key: "profile", href: CLINIC_PATHS.profile, labelKey: "Profile", fallback: "Profile" },
+    { key: "help", href: CLINIC_PATHS.help, labelKey: "help", fallback: "Help" },
   ];
 }
 
@@ -102,6 +107,7 @@ export function getPharmacyNavDefs(): NavItemDef[] {
     { key: "pharmacyDashboard", href: PHARMACY_PATHS.root, labelKey: "pharmacyDashboard", fallback: "Pharmacy dashboard" },
     { key: "reciepes", href: PHARMACY_PATHS.reciepes, labelKey: "pharmacyReciepesTitle", fallback: "Reciepes" },
     { key: "profile", href: PHARMACY_PATHS.profile, labelKey: "Profile", fallback: "Profile" },
+    { key: "help", href: PHARMACY_PATHS.help, labelKey: "help", fallback: "Help" },
   ];
 }
 

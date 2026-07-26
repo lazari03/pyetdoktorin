@@ -54,6 +54,14 @@ import { DownloadDoctorAgreementPdfUseCase } from '@/application/downloadDoctorA
 import { PlatformTermsService } from '@/infrastructure/services/platformTermsService';
 import type { IPlatformTermsService } from '@/application/ports/IPlatformTermsService';
 import { GetPlatformTermsUseCase } from '@/application/getPlatformTermsUseCase';
+import { SupportTicketService } from '@/infrastructure/services/supportTicketService';
+import type { ISupportTicketService } from '@/application/ports/ISupportTicketService';
+import { CreateSupportTicketUseCase } from '@/application/createSupportTicketUseCase';
+import { ListMySupportTicketsUseCase } from '@/application/listMySupportTicketsUseCase';
+import { AdminSupportTicketsService } from '@/infrastructure/services/adminSupportTicketsService';
+import type { IAdminSupportTicketsService } from '@/application/ports/IAdminSupportTicketsService';
+import { ListSupportTicketsUseCase } from '@/application/listSupportTicketsUseCase';
+import { UpdateSupportTicketUseCase } from '@/application/updateSupportTicketUseCase';
 import { HandlePayNowUseCase } from '@/application/handlePayNowUseCase';
 import { GenerateRoomCodeUseCase } from '@/application/generateRoomCodeUseCase';
 import { GetTopDoctorsByAppointmentsUseCase } from '@/application/getTopDoctorsByAppointmentsUseCase';
@@ -157,6 +165,8 @@ export const readMarksService: IReadMarksService = new ReadMarksService();
 export const doctorAgreementService: IDoctorAgreementService = new DoctorAgreementService();
 export const adminDoctorAgreementsService: IAdminDoctorAgreementsService = new AdminDoctorAgreementsService();
 export const platformTermsService: IPlatformTermsService = new PlatformTermsService();
+export const supportTicketService: ISupportTicketService = new SupportTicketService();
+export const adminSupportTicketsService: IAdminSupportTicketsService = new AdminSupportTicketsService();
 
 export const handlePayNowUseCase = new HandlePayNowUseCase(appointmentPaymentService);
 export const generateRoomCodeUseCase = new GenerateRoomCodeUseCase(videoSessionService, analyticsService);
@@ -187,6 +197,10 @@ export const submitDoctorAgreementUseCase = new SubmitDoctorAgreementUseCase(doc
 export const listDoctorAgreementsUseCase = new ListDoctorAgreementsUseCase(adminDoctorAgreementsService);
 export const downloadDoctorAgreementPdfUseCase = new DownloadDoctorAgreementPdfUseCase(adminDoctorAgreementsService);
 export const getPlatformTermsUseCase = new GetPlatformTermsUseCase(platformTermsService);
+export const createSupportTicketUseCase = new CreateSupportTicketUseCase(supportTicketService);
+export const listMySupportTicketsUseCase = new ListMySupportTicketsUseCase(supportTicketService);
+export const listSupportTicketsUseCase = new ListSupportTicketsUseCase(adminSupportTicketsService);
+export const updateSupportTicketUseCase = new UpdateSupportTicketUseCase(adminSupportTicketsService);
 export const getUserProfileUseCase = new GetUserProfileUseCase(userProfileService);
 export const updateUserProfileUseCase = new UpdateUserProfileUseCase(userProfileService, authService);
 export const uploadProfilePictureUseCase = new UploadProfilePictureUseCase(userProfileService);
