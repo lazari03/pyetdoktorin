@@ -14,11 +14,16 @@ import {
   writeSecurityAuditLog,
 } from '@/services/securityAuditService';
 import { PLATFORM_TERMS_VERSION } from '@/content/platformTermsContent';
+import { validateRegistrationEmail } from '@/services/emailValidationService';
 
 const router = Router();
 
 const sessionSchema = z.object({
   idToken: z.string().min(1),
+});
+
+const validateEmailSchema = z.object({
+  email: z.string().email(),
 });
 
 const registrationProfileSchema = z.object({
@@ -83,6 +88,25 @@ router.post('/session', async (req, res) => {
   }
 });
 
+// Public — called before the Firebase Auth account even exists, so the
+// frontend can reject a disposable/unreachable email before creating one.
+router.post('/validate-email', async (req, res) => {
+  const parsed = validateEmailSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.json({ valid: false, reason: 'invalid_format' });
+  }
+  try {
+    const result = await validateRegistrationEmail(parsed.data.email);
+    res.json(result);
+  } catch (error) {
+    console.error('Error validating registration email:', error);
+    // Fail open on unexpected errors (e.g. a DNS resolver hiccup) — this is a
+    // fraud-reduction check, not the sole gate, and register-profile below
+    // re-validates before a profile is actually created.
+    res.json({ valid: true });
+  }
+});
+
 router.post('/register-profile', async (req, res) => {
   const payload = validateBody(res, registrationProfileSchema, req.body, 'INVALID_REGISTRATION_PAYLOAD');
   if (!payload) return;
@@ -117,6 +141,15 @@ router.post('/register-profile', async (req, res) => {
 
   if (!email) {
     return res.status(400).json({ error: 'Authenticated account has no email' });
+  }
+
+  // Defense in depth — the frontend already calls /validate-email before
+  // creating the Firebase Auth account, but this is the actual gate that
+  // decides whether a usable profile (and therefore role/access) gets
+  // created at all.
+  const emailCheck = await validateRegistrationEmail(email);
+  if (!emailCheck.valid) {
+    return res.status(422).json({ error: 'EMAIL_NOT_ALLOWED', reason: emailCheck.reason });
   }
 
   const createdAt = Date.now();
@@ -247,6 +280,11 @@ router.post('/oauth-profile', async (req, res) => {
       : null;
     if (!email) {
       return res.status(400).json({ error: 'Authenticated account has no email' });
+    }
+
+    const emailCheck = await validateRegistrationEmail(email);
+    if (!emailCheck.valid) {
+      return res.status(422).json({ error: 'EMAIL_NOT_ALLOWED', reason: emailCheck.reason });
     }
 
     const displayName = typeof decoded.name === 'string' ? decoded.name.trim() : '';

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreditCardIcon, VideoCameraIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { useSupportTickets } from '@/presentation/hooks/useSupportTickets';
+import { trackAnalyticsEvent } from '@/presentation/utils/trackAnalyticsEvent';
 import type { CreateSupportTicketInput, SupportTicketStatus } from '@/application/ports/ISupportTicketService';
 
 const CATEGORIES = [
@@ -40,9 +41,15 @@ function FaqItem({
   const [submitError, setSubmitError] = useState(false);
   const [sent, setSent] = useState(false);
 
+  const handleYes = () => {
+    setAnswered('yes');
+    trackAnalyticsEvent('help_faq_helpful', { question, helpful: true });
+  };
+
   const handleNo = () => {
     setAnswered('no');
     setShowForm(true);
+    trackAnalyticsEvent('help_faq_helpful', { question, helpful: false });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,6 +61,7 @@ function FaqItem({
       setShowForm(false);
       setMessage('');
       setSent(true);
+      trackAnalyticsEvent('help_ticket_submitted', { topic, question });
     } else {
       setSubmitError(true);
     }
@@ -89,7 +97,7 @@ function FaqItem({
                 <span>{t('helpWasThisHelpful') || 'Did this answer your question?'}</span>
                 <button
                   type="button"
-                  onClick={() => setAnswered('yes')}
+                  onClick={handleYes}
                   className="font-semibold text-gray-500 hover:text-gray-700"
                   data-analytics="help.faq.helpful_yes"
                 >
@@ -167,6 +175,10 @@ function FaqItem({
 export function HelpPageContent() {
   const { t } = useTranslation();
   const { tickets, loading, submitting, submit } = useSupportTickets();
+
+  useEffect(() => {
+    trackAnalyticsEvent('help_page_viewed');
+  }, []);
 
   const topics = [
     t('helpTopicBooking') || 'Booking an appointment',
