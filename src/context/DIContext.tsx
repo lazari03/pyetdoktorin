@@ -10,7 +10,6 @@ import {
   appointmentBookingService,
   clinicBookingService,
   paymentSyncService,
-  handlePayNowUseCase,
   generateRoomCodeUseCase,
   getTopDoctorsByAppointmentsUseCase,
   getTopDoctorsByRequestsUseCase,
@@ -49,7 +48,6 @@ import {
   getUsersByRoleUseCase,
   applyVerificationCodeUseCase,
   establishSessionAllowUnverifiedUseCase,
-  clearPaymentProcessingUseCase,
   listAppointmentsUseCase,
   createAppointmentUseCase,
   quickMatchDoctorUseCase,
@@ -87,6 +85,7 @@ import {
   addFamilyMemberUseCase,
   respondToFamilyInviteUseCase,
   removeFamilyMemberUseCase,
+  createPolarCheckoutUseCase,
 } from './di.services';
 
 interface DIContextValue {
@@ -99,7 +98,6 @@ interface DIContextValue {
   appointmentBookingService: typeof appointmentBookingService;
   clinicBookingService: typeof clinicBookingService;
   paymentSyncService: typeof paymentSyncService;
-  handlePayNowUseCase: typeof handlePayNowUseCase;
   generateRoomCodeUseCase: typeof generateRoomCodeUseCase;
   getTopDoctorsByAppointmentsUseCase: typeof getTopDoctorsByAppointmentsUseCase;
   getTopDoctorsByRequestsUseCase: typeof getTopDoctorsByRequestsUseCase;
@@ -138,7 +136,6 @@ interface DIContextValue {
   getUsersByRoleUseCase: typeof getUsersByRoleUseCase;
   applyVerificationCodeUseCase: typeof applyVerificationCodeUseCase;
   establishSessionAllowUnverifiedUseCase: typeof establishSessionAllowUnverifiedUseCase;
-  clearPaymentProcessingUseCase: typeof clearPaymentProcessingUseCase;
   listAppointmentsUseCase: typeof listAppointmentsUseCase;
   createAppointmentUseCase: typeof createAppointmentUseCase;
   quickMatchDoctorUseCase: typeof quickMatchDoctorUseCase;
@@ -176,6 +173,7 @@ interface DIContextValue {
   addFamilyMemberUseCase: typeof addFamilyMemberUseCase;
   respondToFamilyInviteUseCase: typeof respondToFamilyInviteUseCase;
   removeFamilyMemberUseCase: typeof removeFamilyMemberUseCase;
+  createPolarCheckoutUseCase: typeof createPolarCheckoutUseCase;
 }
 
 // All use cases are module-level singletons (see di.services.ts) so this
@@ -190,7 +188,6 @@ const diContextValue: DIContextValue = {
   appointmentBookingService,
   clinicBookingService,
   paymentSyncService,
-  handlePayNowUseCase,
   generateRoomCodeUseCase,
   getTopDoctorsByAppointmentsUseCase,
   getTopDoctorsByRequestsUseCase,
@@ -229,7 +226,6 @@ const diContextValue: DIContextValue = {
   getUsersByRoleUseCase,
   applyVerificationCodeUseCase,
   establishSessionAllowUnverifiedUseCase,
-  clearPaymentProcessingUseCase,
   listAppointmentsUseCase,
   createAppointmentUseCase,
   quickMatchDoctorUseCase,
@@ -267,6 +263,7 @@ const diContextValue: DIContextValue = {
   addFamilyMemberUseCase,
   respondToFamilyInviteUseCase,
   removeFamilyMemberUseCase,
+  createPolarCheckoutUseCase,
 };
 
 const DIContext = createContext<DIContextValue | undefined>(undefined);

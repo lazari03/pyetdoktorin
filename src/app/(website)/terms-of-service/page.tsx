@@ -51,7 +51,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
     return {
       metadataTitle: "Terms and Conditions | Pyet Doktorin",
       metadataDescription:
-        "Terms and conditions for Pyet Doktorin, a software platform providing video-consultation and payment technology for independent doctors and their patients.",
+        "Terms and conditions for Pyet Doktorin, a B2B software platform providing scheduling and video-consultation technology to independent doctors and clinics.",
       eyebrow: "Legal",
       title: "Terms and Conditions",
       subtitle:
@@ -87,9 +87,9 @@ function getCopy(locale: Locale, companyName: string): Copy {
         {
           title: "2. Role of the platform",
           paragraphs: [
-            "Pyet Doktorin is a software-as-a-service (SaaS) platform. We provide independent, licensed doctors with the technology to offer video consultations to patients and to collect payment for their services. We connect patients with independent doctors — we do not provide medical services ourselves.",
+            "Pyet Doktorin is a business-to-business (B2B) software-as-a-service (SaaS) platform. We provide independent, licensed doctors and clinics with software tools — including professional profile management, appointment scheduling and availability management, secure video-consultation infrastructure, and digital workflow automation — that help them organize their practice and offer video consultations to their own patients. We connect patients with independent doctors so they can discover and book those doctors' services — we do not provide medical services ourselves, and we are not a party to the consultation a patient books.",
             "Pyet Doktorin does not employ doctors, does not practice medicine, and does not provide medical advice, diagnosis, or treatment. Before a doctor can join the platform, we verify their identity and the professional license or credentials they submit; this verification does not make the platform a party to, or provider of, the consultation itself.",
-            "Each doctor is an independent professional, solely and exclusively responsible for the medical services they choose to provide through the platform. The platform is not an ambulance service, emergency dispatch center, hospital, or substitute for urgent in-person examination.",
+            "Each doctor and clinic using Pyet Doktorin is an independent business, solely and exclusively responsible for their own professional activities, licenses, regulatory compliance, patient relationships, and the medical services they choose to provide through the platform. The platform is not an ambulance service, emergency dispatch center, hospital, or substitute for urgent in-person examination.",
           ],
           bullets: [
             "For urgent medical emergencies, contact Albania's National Medical Emergency service at 127.",
@@ -136,7 +136,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
           title: "6. Independent doctor obligations",
           paragraphs: [
             "Doctors and clinics using the platform act as independent, freelance professionals — never as employees or agents of Pyet Doktorin. They must hold the licenses, registrations, authorizations or professional status required by Albanian law for the services they provide, and the platform verifies this documentation before granting access.",
-            "Doctors remain solely and independently responsible for the legality, quality and professional standard of the medical service they deliver to the patient. Pyet Doktorin's role is limited to providing the video-call technology, scheduling tools and payment processing that support that independent relationship.",
+            "Doctors remain solely and independently responsible for the legality, quality and professional standard of the medical service they deliver to the patient. Pyet Doktorin's role is limited to providing the video-call technology, scheduling tools and other software that support that independent relationship.",
           ],
           bullets: [
             "Doctors must not provide services outside their scope of practice.",
@@ -241,7 +241,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
   return {
     metadataTitle: "Kushtet dhe kushtet e përdorimit | Pyet Doktorin",
     metadataDescription:
-      "Kushtet e përdorimit të Pyet Doktorin, një platformë softuerike që ofron teknologji video-konsultimi dhe pagese për mjekë të pavarur dhe pacientët e tyre.",
+      "Kushtet e përdorimit të Pyet Doktorin, një platformë softuerike B2B që ofron teknologji planifikimi dhe video-konsultimi për mjekë dhe klinika të pavarura.",
     eyebrow: "Juridike",
     title: "Kushtet dhe Kushtet e Përdorimit",
     subtitle:
@@ -277,9 +277,9 @@ function getCopy(locale: Locale, companyName: string): Copy {
       {
         title: "2. Roli i platformës",
         paragraphs: [
-          "Pyet Doktorin është një platformë softuerike (SaaS). Ne u ofrojmë mjekëve të pavarur e të licencuar teknologjinë për të ofruar video-konsultime me pacientët dhe për të mbledhur pagesën për shërbimet e tyre. Ne lidhim pacientët me mjekë të pavarur — ne vetë nuk ofrojmë shërbime mjekësore.",
+          "Pyet Doktorin është një platformë softuerike biznes-për-biznes (B2B SaaS). Ne u ofrojmë mjekëve dhe klinikave të pavarura e të licencuara mjete softuerike — përfshirë menaxhimin e profilit profesional, planifikimin e orareve dhe disponueshmërisë, infrastrukturë të sigurt për video-konsultime, dhe automatizim të rrjedhave dixhitale të punës — që i ndihmojnë të organizojnë praktikën e tyre dhe të ofrojnë video-konsultime me pacientët e tyre. Ne lidhim pacientët me mjekë të pavarur në mënyrë që ata të gjejnë dhe rezervojnë shërbimet e këtyre mjekëve — ne vetë nuk ofrojmë shërbime mjekësore dhe nuk jemi palë në konsultën që rezervon pacienti.",
           "Pyet Doktorin nuk punëson mjekë, nuk ushtron mjekësinë dhe nuk jep këshilla mjekësore, diagnozë apo trajtim. Përpara se një mjek të bashkohet me platformën, ne verifikojmë identitetin dhe licencën apo kredencialet profesionale që ai paraqet; ky verifikim nuk e bën platformën palë në konsultë apo ofrues të saj.",
-          "Çdo mjek është një profesionist i pavarur, i vetmi dhe ekskluzivi përgjegjës për shërbimet mjekësore që zgjedh t'i ofrojë përmes platformës. Platforma nuk është ambulancë, urgjencë kombëtare, spital apo zëvendësim i ekzaminimit fizik urgjent.",
+          "Çdo mjek dhe klinikë që përdor Pyet Doktorin është një biznes i pavarur, i vetmi dhe ekskluzivi përgjegjës për veprimtarinë e tij profesionale, licencat, përputhshmërinë rregullatore, marrëdhëniet me pacientët dhe shërbimet mjekësore që zgjedh t'i ofrojë përmes platformës. Platforma nuk është ambulancë, urgjencë kombëtare, spital apo zëvendësim i ekzaminimit fizik urgjent.",
         ],
         bullets: [
           "Për urgjenca shëndetësore, kontaktoni Urgjencën Kombëtare Mjekësore në numrin 127.",
@@ -326,7 +326,7 @@ function getCopy(locale: Locale, companyName: string): Copy {
         title: "6. Detyrimet e mjekut të pavarur",
         paragraphs: [
           "Mjekët dhe klinikat që përdorin platformën veprojnë si profesionistë të pavarur, freelance — kurrë si punonjës apo agjentë të Pyet Doktorin. Ata duhet të kenë licencat, regjistrimet, autorizimet ose statusin profesional që kërkohet nga ligji shqiptar për shërbimet që ofrojnë, dhe platforma verifikon këtë dokumentacion përpara se t'u japë akses.",
-          "Mjekët mbeten të vetmit dhe në mënyrë të pavarur përgjegjës për ligjshmërinë, cilësinë dhe standardin profesional të shërbimit mjekësor që i japin pacientit. Roli i Pyet Doktorin kufizohet në ofrimin e teknologjisë së video-thirrjeve, mjeteve të planifikimit dhe përpunimit të pagesave që mbështesin këtë marrëdhënie të pavarur.",
+          "Mjekët mbeten të vetmit dhe në mënyrë të pavarur përgjegjës për ligjshmërinë, cilësinë dhe standardin profesional të shërbimit mjekësor që i japin pacientit. Roli i Pyet Doktorin kufizohet në ofrimin e teknologjisë së video-thirrjeve, mjeteve të planifikimit dhe softuerëve të tjerë që mbështesin këtë marrëdhënie të pavarur.",
         ],
         bullets: [
           "Mjekët nuk duhet të ofrojnë shërbime jashtë fushës së tyre të kompetencës.",

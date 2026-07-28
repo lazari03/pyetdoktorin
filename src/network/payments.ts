@@ -1,4 +1,12 @@
 import { getAppointment } from "./appointments";
+import { backendFetch } from "./backendClient";
+
+export async function createPolarCheckout(appointmentId: string): Promise<{ checkoutUrl: string }> {
+  return backendFetch<{ checkoutUrl: string }>("/api/polar/create-checkout", {
+    method: "POST",
+    body: JSON.stringify({ appointmentId }),
+  });
+}
 
 export type PaymentSyncResponse = {
   ok: boolean;

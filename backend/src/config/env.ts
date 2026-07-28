@@ -43,4 +43,13 @@ export const env = {
   vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',
   vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? '',
   vapidSubject: process.env.VAPID_SUBJECT || 'mailto:support@pyetdoktorin.al',
+  polarAccessToken: process.env.POLAR_ACCESS_TOKEN ?? '',
+  // Manual override — if unset, the backend auto-registers its own webhook
+  // endpoint with Polar and uses the secret Polar generates for it.
+  polarWebhookSecret: process.env.POLAR_WEBHOOK_SECRET ?? '',
+  polarEnvironment: (process.env.POLAR_ENV === 'production' ? 'production' : 'sandbox') as 'production' | 'sandbox',
+  // This backend's own publicly-reachable URL, needed to register itself as
+  // a Polar webhook endpoint (e.g. https://api.pyetdoktorin.al or an ngrok
+  // tunnel URL while testing locally).
+  backendPublicUrl: process.env.BACKEND_PUBLIC_URL ?? '',
 };

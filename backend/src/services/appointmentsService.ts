@@ -231,6 +231,22 @@ export async function getAppointmentById(id: string): Promise<Appointment | null
   return base;
 }
 
+/**
+ * Appointments booked before fee-snapshotting existed have no feeAmount at
+ * all. Backfills a sensible default (once) so they remain payable rather
+ * than permanently stuck — never overwrites an already-stored fee.
+ */
+export async function ensureAppointmentFee(
+  id: string,
+  feeAmount: number,
+  feeCurrency: string,
+): Promise<{ feeAmount: number; feeCurrency: string }> {
+  const admin = getFirebaseAdmin();
+  const ref = admin.firestore().collection(COLLECTION).doc(id);
+  await ref.set({ feeAmount, feeCurrency }, { merge: true });
+  return { feeAmount, feeCurrency };
+}
+
 const APPOINTMENT_STATUS_NOTIFICATION_COPY: Partial<Record<AppointmentStatus, { title: string; body: string }>> = {
   accepted: { title: 'Appointment accepted', body: 'Your appointment has been accepted by the doctor.' },
   rejected: { title: 'Appointment rejected', body: 'Your appointment request was declined by the doctor.' },
@@ -404,7 +420,10 @@ export async function markAppointmentPaymentProcessing(
     if (
       actor.role === UserRole.Patient &&
       appointment.requesterId !== actor.uid &&
-      appointment.payerId !== actor.uid
+      appointment.payerId !== actor.uid &&
+      // patientId fallback: appointments booked before requesterId/payerId
+      // existed (pre-family-booking) only have this field set.
+      appointment.patientId !== actor.uid
     ) {
       throw new PaymentNotAllowedError();
     }
@@ -437,7 +456,8 @@ export async function clearAppointmentPaymentProcessing(
     if (
       actor.role === UserRole.Patient &&
       appointment.requesterId !== actor.uid &&
-      appointment.payerId !== actor.uid
+      appointment.payerId !== actor.uid &&
+      appointment.patientId !== actor.uid
     ) {
       throw new PaymentNotAllowedError();
     }

@@ -59,13 +59,6 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
   });
 }
 
-export async function markPaymentProcessing(id: string) {
-  return backendFetch<{ ok: boolean }>(`/api/appointments/${id}/payment-started`, {
-    method: 'POST',
-    body: JSON.stringify({}),
-  });
-}
-
 export async function clearPaymentProcessing(id: string) {
   return backendFetch<{ ok: boolean }>(`/api/appointments/${id}/payment-cancelled`, {
     method: 'POST',

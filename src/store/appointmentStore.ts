@@ -28,16 +28,6 @@ interface AppointmentState {
   fetchAppointments: (role?: UserRole | null, forceRefresh?: boolean) => Promise<void>;
   subscribeAppointments: (userId: string, role: UserRole) => () => void;
   setAppointmentPaid: (appointmentId: string, setAppointmentPaidUseCase: (appointmentId: string) => Promise<void>) => Promise<void>;
-  handlePayNow: (
-    appointmentId: string,
-    amount: number,
-    handlePayNowUseCase: (
-      appointmentId: string,
-      amount: number,
-      options?: { onClose?: () => void }
-    ) => Promise<void>,
-    options?: { onClose?: () => void }
-  ) => Promise<void>;
   checkIfPastAppointment: (appointmentId: string, checkIfPastAppointmentUseCase: (appointmentId: string) => Promise<boolean>) => Promise<boolean>;
   isPastAppointment: (date: string, time: string) => boolean;
   isAppointmentPast: (appointment: Appointment) => boolean;
@@ -126,8 +116,6 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     };
   },
   setAppointmentPaid: async (appointmentId, setAppointmentPaidUseCase) => setAppointmentPaidUseCase(appointmentId),
-  handlePayNow: async (appointmentId, amount, handlePayNowUseCase, options) =>
-    handlePayNowUseCase(appointmentId, amount, options),
   checkIfPastAppointment: async (appointmentId, checkIfPastAppointmentUseCase) => checkIfPastAppointmentUseCase(appointmentId),
   isPastAppointment: (date, time) => isPastAppointment(date, time),
   isAppointmentPast: (appointment) => isAppointmentPast(appointment, APPOINTMENT_DURATION_MINUTES),
